@@ -1,0 +1,235 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props')" />
+  <Import Project="..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props" Condition="Exists('..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BB4B9CF3-DFD0-43A5-98E8-42F056E16731}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ReactiveDomain.Tests</RootNamespace>
+    <AssemblyName>ReactiveDomain.Tests</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|x64'">
+    <OutputPath>bin\x64\Publish\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EventStore.ClientAPI">
+      <HintPath>..\..\..\packages\EventStore.Client.3.9.0\lib\net40\EventStore.ClientAPI.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FluentAssertions, Version=4.14.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\FluentAssertions.4.14.0\lib\net45\FluentAssertions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FluentAssertions.Core, Version=4.14.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\FluentAssertions.4.14.0\lib\net45\FluentAssertions.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\NLog.4.3.9\lib\net45\NLog.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ReactiveUI, Version=6.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\reactiveui-core.6.5.2\lib\Net45\ReactiveUI.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Reactive.Core, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Rx-Core.2.2.5\lib\net45\System.Reactive.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Reactive.Interfaces, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Rx-Interfaces.2.2.5\lib\net45\System.Reactive.Interfaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Reactive.Linq, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Rx-Linq.2.2.5\lib\net45\System.Reactive.Linq.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Reactive.PlatformServices, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Reactive.Windows.Threading, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Rx-XAML.2.2.5\lib\net45\System.Reactive.Windows.Threading.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.core, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\xunit.extensibility.core.2.1.0\lib\dotnet\xunit.core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.execution.desktop, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\xunit.extensibility.execution.2.1.0\lib\net45\xunit.execution.desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Asserts\Assert.cs" />
+    <Compile Include="Asserts\BooleanAsserts.cs" />
+    <Compile Include="Asserts\CollectionAsserts.cs" />
+    <Compile Include="Asserts\Comparers.cs" />
+    <Compile Include="Asserts\EqualityAsserts.cs" />
+    <Compile Include="Asserts\ExceptionAsserts.cs" />
+    <Compile Include="Asserts\Guards.cs" />
+    <Compile Include="Asserts\IdentityAsserts.cs" />
+    <Compile Include="Asserts\NullAsserts.cs" />
+    <Compile Include="Asserts\PropertyAsserts.cs" />
+    <Compile Include="Asserts\RangeAsserts.cs" />
+    <Compile Include="Asserts\Record.cs" />
+    <Compile Include="Asserts\Sdk\ArgumentFormatter.cs" />
+    <Compile Include="Asserts\Sdk\AssertComparer.cs" />
+    <Compile Include="Asserts\Sdk\AssertEqualityComparer.cs" />
+    <Compile Include="Asserts\Sdk\AssertEqualityComparerAdapter.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\AllException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\AssertActualExpectedException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\AssertCollectionCountException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\CollectionException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\ContainsException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\DoesNotContainException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\DoesNotMatchException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\EmptyException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\EndsWithException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\EqualException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\FalseException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\InRangeException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\IsAssignableFromException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\IsNotTypeException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\IsTypeException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\MatchesException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NotEmptyException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NotEqualException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NotInRangeException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NotNullException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NotSameException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\NullException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\ParameterCountMismatchException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\ProperSubsetException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\ProperSupersetException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\PropertyChangedException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\SameException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\SingleException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\StartsWithException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\SubsetException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\SupersetException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\ThrowsException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\TrueException.cs" />
+    <Compile Include="Asserts\Sdk\Exceptions\XunitException.cs" />
+    <Compile Include="Asserts\SetAsserts.cs" />
+    <Compile Include="Asserts\StringAsserts.cs" />
+    <Compile Include="Asserts\TypeAsserts.cs" />
+    <Compile Include="ConcurrentMessageQueue.cs" />
+    <Compile Include="EventStore\GetEventStoreRepositoryIntegrationTests.cs" />
+    <Compile Include="EventStore\TestAggregate.cs" />
+    <Compile Include="EventStore\TestAggregateCreated.cs" />
+    <Compile Include="EventStore\WoftamEvent.cs" />
+    <Compile Include="Helpers\Asserts.cs" />
+    <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
+    <Compile Include="Helpers\DispatcherUtil.cs" />
+    <Compile Include="Helpers\MessageComparer.cs" />
+    <Compile Include="Helpers\TestAggregate.cs" />
+    <Compile Include="Helpers\TestAggregateMessages.cs" />
+    <Compile Include="Helpers\TestCommandHandler.cs" />
+    <Compile Include="Helpers\TestCommands.cs" />
+    <Compile Include="Helpers\TestMessages.cs" />
+    <Compile Include="Helpers\TestQueue.cs" />
+    <Compile Include="Specifications\CommandBusSpecification.cs" />
+    <Compile Include="Specifications\MockRepositorySpecification.cs" />
+    <Compile Include="Mocks\MockEventStoreRepository.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Transport\MockTcpConnection.cs" />
+    <Compile Include="Transport\TcpBusClientSideTests.cs" />
+    <Compile Include="when_creating_a_message.cs" />
+    <Compile Include="when_ensuring_values.cs" />
+    <Compile Include="when_sending_commands.cs" />
+    <Compile Include="when_serializing_commands.cs" />
+    <Compile Include="when_using_mock_repository.cs" />
+    <Compile Include="when_using_testqueue.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain\ReactiveDomain.csproj">
+      <Project>{af28a6f8-0044-4cfa-a6eb-6000797223a0}</Project>
+      <Name>ReactiveDomain</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props'))" />
+    <Error Condition="!Exists('..\..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
