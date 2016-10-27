@@ -28,7 +28,7 @@
 
 using System;
 
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     public interface ILogger
     {

@@ -5,7 +5,7 @@ using System.Threading;
 using NLog;
 using ReactiveDomain.Memory;
 
-namespace Solaris.Storage.FileIO
+namespace ReactiveDomain.FileIO
 {
     public class BufferWriter: IDisposable
     {

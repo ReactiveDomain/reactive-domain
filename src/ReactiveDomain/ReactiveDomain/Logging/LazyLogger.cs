@@ -29,7 +29,7 @@
 using System;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     public class LazyLogger : ILogger
     {

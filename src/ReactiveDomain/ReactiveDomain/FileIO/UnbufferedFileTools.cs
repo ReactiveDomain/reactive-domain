@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using NLog;
 using ReactiveDomain.Memory;
 
-namespace Solaris.Storage.FileIO
+namespace ReactiveDomain.FileIO
 {
     public static unsafe class UnbufferedFileTools
     {

@@ -32,7 +32,7 @@ using System.Text;
 using System.Threading;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     public class ConsoleLogger : ILogger
     {

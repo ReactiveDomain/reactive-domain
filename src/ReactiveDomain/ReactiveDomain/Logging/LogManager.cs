@@ -2,7 +2,7 @@ using System;
 using NLog.Config;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     public static class LogManager
     {

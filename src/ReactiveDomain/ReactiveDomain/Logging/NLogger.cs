@@ -35,7 +35,7 @@ using NLog.Targets.Wrappers;
 using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     public static class NLoggerHelperMethods
     {

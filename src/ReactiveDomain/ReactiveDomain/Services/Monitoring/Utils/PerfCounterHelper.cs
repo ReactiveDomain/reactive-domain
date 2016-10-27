@@ -28,7 +28,7 @@
 
 using System;
 using System.Diagnostics;
-using ReactiveDomain.Log;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Services.Monitoring.Stats;
 
 namespace ReactiveDomain.Services.Monitoring.Utils

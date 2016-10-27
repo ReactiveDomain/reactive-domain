@@ -30,7 +30,7 @@ using System.Text;
 using NLog;
 using NLog.LayoutRenderers;
 
-namespace ReactiveDomain.Log
+namespace ReactiveDomain.Logging
 {
     [LayoutRenderer("logsdir")]
     public class NLogDirectoryLayoutRendered : LayoutRenderer

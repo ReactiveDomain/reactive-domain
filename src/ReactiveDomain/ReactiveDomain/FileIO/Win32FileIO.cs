@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace Win32FileIO
+namespace ReactiveDomain.FileIO
 {
     unsafe public class WinFileIO : IDisposable
     {

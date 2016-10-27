@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using ReactiveDomain.Util;
 
-namespace Solaris.Storage.FileIO
+namespace ReactiveDomain.FileIO
 {
     /// <summary>
     /// Provides an efficient file/directory enumeration 
