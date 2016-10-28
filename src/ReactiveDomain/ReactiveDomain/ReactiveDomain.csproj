@@ -149,6 +149,7 @@
     <Compile Include="Bus\QueuedHandlerPulse.cs" />
     <Compile Include="Bus\QueuedHandlerSleep.cs" />
     <Compile Include="Bus\QueuedHandlerThreadPool.cs" />
+    <Compile Include="Bus\QueuedSubscriber.cs" />
     <Compile Include="Bus\QueueMonitor.cs" />
     <Compile Include="Bus\QueueStatsCollector.cs" />
     <Compile Include="Bus\SubscriptionDisposer.cs" />
