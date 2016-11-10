@@ -12,7 +12,7 @@
     <tags>reactive domain cqrs</tags>
   </metadata>
   <files>
-    <file src="C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\*.*" target="lib" />
+    <file src=".\bin\x64\Debug\*.*" target="lib" />   <!-- had to put full path here -->
   </files>  
   
 </package>
