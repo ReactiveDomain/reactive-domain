@@ -56,8 +56,24 @@
       <HintPath>..\..\..\..\..\..\..\Workspaces\Greylock\Prototypes\Chris\DynamicMsgTests\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="JustGiving.EventStore.Http.Client, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\JustGiving.EventStore.Http.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="JustGiving.EventStore.Http.SubscriberHost, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\JustGiving.EventStore.Http.SubscriberHost.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Nito.AsyncEx.Dataflow, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -80,6 +96,14 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http.Extensions">
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\System.Net.Http.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives">
+      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\System.Net.Http.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Reactive.Core">
       <HintPath>..\..\..\packages\Rx-Core.2.2.5\lib\net45\System.Reactive.Core.dll</HintPath>
     </Reference>
@@ -306,16 +330,6 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\JustGiving.EventStore.Http\src\JustGiving.EventStore.Http.Client\JustGiving.EventStore.Http.Client.csproj">
-      <Project>{E88ED7CE-68BE-4846-8140-81D815B32FDF}</Project>
-      <Name>JustGiving.EventStore.Http.Client</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\JustGiving.EventStore.Http\src\JustGiving.EventStore.Http.SubscriberHost\JustGiving.EventStore.Http.SubscriberHost.csproj">
-      <Project>{60404aac-06b4-4da4-8237-4a17fbf9d83f}</Project>
-      <Name>JustGiving.EventStore.Http.SubscriberHost</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

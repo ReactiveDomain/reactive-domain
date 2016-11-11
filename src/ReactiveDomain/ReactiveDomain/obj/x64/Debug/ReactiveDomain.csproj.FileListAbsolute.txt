@@ -75,8 +75,10 @@ C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Reactive.PlatformServices.dll
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Reactive.Windows.Threading.dll
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Threading.Tasks.Dataflow.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\EventStore.ClientAPI.xml
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\Newtonsoft.Json.xml
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\Nito.AsyncEx.Dataflow.xml
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\NLog.xml
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\ReactiveUI.xml
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\Splat.pdb
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Reactive.Core.xml
@@ -88,3 +90,12 @@ C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\obj\x64\Debug\ReactiveDomain.csprojResolveAssemblyReference.cache
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\obj\x64\Debug\ReactiveDomain.dll
 C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\obj\x64\Debug\ReactiveDomain.pdb
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\JustGiving.EventStore.Http.Client.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\JustGiving.EventStore.Http.SubscriberHost.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\log4net.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Net.Http.Extensions.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Net.Http.Primitives.dll
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\JustGiving.EventStore.Http.Client.pdb
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\log4net.xml
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Net.Http.Extensions.xml
+C:\Users\ThurmaAL\Source\Repos\reactive-domain\src\ReactiveDomain\ReactiveDomain\bin\x64\Debug\System.Net.Http.Primitives.xml
