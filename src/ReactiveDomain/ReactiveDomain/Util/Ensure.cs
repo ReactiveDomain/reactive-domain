@@ -115,7 +115,7 @@ namespace ReactiveDomain.Util
         public static void Equal(int expected, int actual, string argumentName)
         {
             if (expected != actual)
-                throw new ArgumentException(string.Format("{0} expected value: {1}, actual value: {2}", argumentName, expected, actual));
+                throw new ArgumentException($"{argumentName} expected value: {expected}, actual value: {actual}");
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace ReactiveDomain.Util
         public static void Equal(long expected, long actual, string argumentName)
         {
             if (expected != actual)
-                throw new ArgumentException(string.Format("{0} expected value: {1}, actual value: {2}", argumentName, expected, actual));
+                throw new ArgumentException($"{argumentName} expected value: {expected}, actual value: {actual}");
         }
 
         /// <summary>
@@ -139,7 +139,19 @@ namespace ReactiveDomain.Util
         public static void Equal(bool expected, bool actual, string argumentName)
         {
             if (expected != actual)
-                throw new ArgumentException(string.Format("{0} expected value: {1}, actual value: {2}", argumentName, expected, actual));
+                throw new ArgumentException($"{argumentName} expected value: {expected}, actual value: {actual}");
+        }
+
+        /// <summary>
+        /// Ensure that the argument (a Guid) is equal to an expected value (throw an exception if it is not)
+        /// </summary>
+        /// <param name="expected"></param>
+        /// <param name="actual"></param>
+        /// <param name="argumentName"></param>
+        public static void Equal(Guid expected, Guid actual, string argumentName)
+        {
+            if (expected != actual)
+                throw new ArgumentException($"{argumentName} expected value: {expected}, actual value: {actual}");
         }
 
         /// <summary>
@@ -150,7 +162,7 @@ namespace ReactiveDomain.Util
         public static void PowerOf2(int argument, string argumentName)
         {
             if ((argument <= 0) || (((uint)argument) & ((uint)argument - 1)) != 0)
-                throw new ArgumentException(string.Format("{0}: {1} is not a power of 2", argumentName, argument));
+                throw new ArgumentException($"{argumentName}: {argument} is not a power of 2");
         }
 
         /// <summary>
@@ -162,7 +174,8 @@ namespace ReactiveDomain.Util
         public static void LessThan(int expected, int argument, string argumentName)
         {
             if (argument >= expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -174,7 +187,8 @@ namespace ReactiveDomain.Util
         public static void LessThan(long expected, long argument, string argumentName)
         {
             if (argument >= expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -186,7 +200,8 @@ namespace ReactiveDomain.Util
         public static void LessThan(decimal expected, decimal argument, string argumentName)
         {
             if (argument >= expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -198,7 +213,8 @@ namespace ReactiveDomain.Util
         public static void LessThanOrEqualTo(int expected, int argument, string argumentName)
         {
             if (argument > expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -210,7 +226,8 @@ namespace ReactiveDomain.Util
         public static void LessThanOrEqualTo(long expected, long argument, string argumentName)
         {
             if (argument > expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -222,7 +239,8 @@ namespace ReactiveDomain.Util
         public static void LessThanOrEqualTo(decimal expected, decimal argument, string argumentName)
         {
             if (argument > expected)
-                throw new ArgumentException(string.Format("{0} expected to be less than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be less than: {expected}, actual value: {argument}");
         }
         /// <summary>
         /// Ensure that the argument (an int) is &gt; some expected value (throw an exception if it is &lt;= expected)
@@ -233,7 +251,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThan(int expected, int argument, string argumentName)
         {
             if (argument <= expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -245,7 +264,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThan(long expected, long argument, string argumentName)
         {
             if (argument <= expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -257,7 +277,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThan(decimal expected, decimal argument, string argumentName)
         {
             if (argument <= expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -269,7 +290,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThanOrEqualTo(int expected, int argument, string argumentName)
         {
             if (argument < expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -281,7 +303,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThanOrEqualTo(long expected, long argument, string argumentName)
         {
             if (argument < expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -293,7 +316,8 @@ namespace ReactiveDomain.Util
         public static void GreaterThanOrEqualTo(decimal expected, decimal argument, string argumentName)
         {
             if (argument < expected)
-                throw new ArgumentException(string.Format("{0} expected to be greater than: {1}, actual value: {2}", argumentName, expected, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be greater than: {expected}, actual value: {argument}");
         }
 
         /// <summary>
@@ -306,7 +330,8 @@ namespace ReactiveDomain.Util
         public static void Between(int low, int high, int argument, string argumentName)
         {
             if (argument <= low || argument >= high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2}, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high}, actual value: {argument}");
         }
 
         /// <summary>
@@ -319,7 +344,8 @@ namespace ReactiveDomain.Util
         public static void Between(long low, long high, long argument, string argumentName)
         {
             if (argument <= low || argument >= high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2}, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high}, actual value: {argument}");
         }
 
         /// <summary>
@@ -332,7 +358,8 @@ namespace ReactiveDomain.Util
         public static void Between(decimal low, decimal high, decimal argument, string argumentName)
         {
             if (argument <= low || argument >= high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2}, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high}, actual value: {argument}");
         }
 
         /// <summary>
@@ -345,7 +372,8 @@ namespace ReactiveDomain.Util
         public static void BetweenOrEqual(int low, int high, int argument, string argumentName)
         {
             if (argument < low || argument > high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2} or equal, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high} or equal, actual value: {argument}");
         }
 
         /// <summary>
@@ -358,7 +386,8 @@ namespace ReactiveDomain.Util
         public static void BetweenOrEqual(long low, long high, long argument, string argumentName)
         {
             if (argument < low || argument > high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2} or equal, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high} or equal, actual value: {argument}");
         }
 
         /// <summary>
@@ -371,7 +400,8 @@ namespace ReactiveDomain.Util
         public static void BetweenOrEqual(decimal low, decimal high, decimal argument, string argumentName)
         {
             if (argument < low || argument > high)
-                throw new ArgumentException(string.Format("{0} expected to be between {1} and {2} or equal, actual value: {3}", argumentName, low, high, argument));
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between {low} and {high} or equal, actual value: {argument}");
         }
         /// <summary>
         /// Ensure that expected is not equal to the uninitialized value, generally indicating that is has been set  (throw an exception if it is)
