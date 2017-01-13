@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ReactiveDomain.Util
 {
@@ -36,7 +37,7 @@ namespace ReactiveDomain.Util
         {
             if (argument == null)
                 throw new ArgumentNullException(argumentName);
-            if (  argument.Count < 1)
+            if (argument.Count < 1)
                 throw new ArgumentOutOfRangeException(argumentName, argumentName + " must have items.");
         }
 
@@ -57,6 +58,17 @@ namespace ReactiveDomain.Util
         /// <param name="number"></param>
         /// <param name="argumentName"></param>
         public static void Positive(long number, string argumentName)
+        {
+            if (number <= 0)
+                throw new ArgumentOutOfRangeException(argumentName, argumentName + " should be positive.");
+        }
+
+        /// <summary>
+        /// Ensure that the argument (a decimal) is &gt;0 (throw an exception if it is &lt;=0)
+        /// </summary>
+        /// <param name="number"></param>
+        /// <param name="argumentName"></param>
+        public static void Positive(decimal number, string argumentName)
         {
             if (number <= 0)
                 throw new ArgumentOutOfRangeException(argumentName, argumentName + " should be positive.");
@@ -404,14 +416,44 @@ namespace ReactiveDomain.Util
                     $"{argumentName} expected to be between {low} and {high} or equal, actual value: {argument}");
         }
         /// <summary>
-        /// Ensure that expected is not equal to the uninitialized value, generally indicating that is has been set  (throw an exception if it is)
+        /// Ensure that expected is not equal to the uninitialized value, generally indicating that is has been set (throw an exception if it is)
         /// </summary>
         /// <param name="expected"></param>
         /// <param name="argumentName"></param>
         public static void NotDefault(DateTime expected, string argumentName)
         {
             if (expected == DateTime.MinValue)
-                throw new ArgumentException(argumentName, argumentName + " is equal to the default value :" + DateTime.MinValue);
+                throw new ArgumentException(argumentName, $"{argumentName} is equal to the default value :{DateTime.MinValue}");
+        }
+
+        /// <summary>
+        /// Ensure that the dictionary contains the specified key (throw an exception if it is not)
+        /// </summary>
+        /// <param name="lookup"></param>
+        /// <param name="key"></param>
+        /// <param name="argumentName"></param>
+        public static void ContainsKey<TKey, TValue>(Dictionary<TKey, TValue> lookup, TKey key, string argumentName)
+        {
+            NotNull(lookup, argumentName);
+            if (!lookup.ContainsKey(key))
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between true, but is found to be false.");
+        }
+
+        /// <summary>
+        /// Ensure that the enumerable contains the specified item (throw an exception if it is not)
+        /// </summary>
+        /// <param name="lookup"></param>
+        /// <param name="value"></param>
+        /// <param name="argumentName"></param>
+        public static void Contains<T>(IEnumerable<T> lookup, T value, string argumentName)
+        {
+            // ReSharper disable PossibleMultipleEnumeration
+            NotNull(lookup, argumentName);
+            if (!lookup.Contains(value))
+                throw new ArgumentException(
+                    $"{argumentName} expected to be between true, but is found to be false.");
+            // ReSharper restore PossibleMultipleEnumeration
         }
     }
 }
