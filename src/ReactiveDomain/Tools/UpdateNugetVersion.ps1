@@ -3,7 +3,7 @@ $currentScriptDirectory = Get-Location
 [System.IO.Directory]::SetCurrentDirectory($currentScriptDirectory.Path)
 
 Set-Location -Path ${PSScriptRoot}
-$solutiondir = Resolve-Path -Path "$currentScriptDirectory"
+$solutiondir = Resolve-Path -Path "$currentScriptDirectory\src\ReactiveDomain"
 
 Write-Host "Solution dir is " $solutiondir
 
