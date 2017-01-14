@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<package >
+<package>
   <metadata>
     <id>ReactiveDomain</id>
-    <version>0.6.6223</version>
+    <version>0.6.6223.15265</version>
     <authors>pki</authors>
     <owners>PKI</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -10,13 +10,13 @@
     <releaseNotes>Initial release</releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>reactive domain cqrs</tags>
-    <dependencies>           
+    <dependencies>
       <dependency id="EventStore.Client" version="3.9" />
       <dependency id="EventStore.Client.Embedded" version="3.9" />
       <dependency id="JustGiving.EventStore.Client" version="1.0.0" />
       <dependency id="JustGiving.EventStore.Http.Client" version="1.0.0" />
       <dependency id="JustGiving.EventStore.Http.SubscriberHost" version="1.0.0" />
-      <dependency id="Microsoft.Tpl.DataFlow" version="4.5.24" />      
+      <dependency id="Microsoft.Tpl.DataFlow" version="4.5.24" />
       <dependency id="Newtonsoft.Json" version="9.0" />
       <dependency id="Nito.AsyncEx.Dataflow" version="3.0" />
       <dependency id="Nito.AsyncEx.DataflowProxy" version="1.1.0" />
@@ -30,13 +30,12 @@
       <dependency id="Rx-Linq" version="2.2.5" />
       <dependency id="Rx-Main" version="2.2.5" />
       <dependency id="Rx-PlatformServices" version="2.2.5" />
-      <dependency id="Rx-XAML" version="2.2.5" />      
+      <dependency id="Rx-XAML" version="2.2.5" />
       <dependency id="Splat" version="1.6.2" />
-    </dependencies>       
+    </dependencies>
   </metadata>
   <files>
     <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll" target="lib" />
-    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll.config" target="lib" />    
-  </files>  
-  
+    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll.config" target="lib" />
+  </files>
 </package>
