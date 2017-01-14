@@ -9,11 +9,11 @@ set NUSPECDIR=%THISDIR%\ReactiveDomain
 %NUGET% update -self
 
 echo Restore all nugets
-%NUGET% restore %SOLUTIONDIR%\\ReactiveDomain.sln -NoCache -NonInteractive -ConfigFile %NUGETDIR%MyGet.NuGet.Config
+%NUGET% restore %SOLUTIONDIR%\ReactiveDomain.sln -NoCache -NonInteractive -ConfigFile %NUGETDIR%MyGet.NuGet.Config
 
 
 echo Building the ReactiveDomain Solution...
-"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" ReactiveDomain.sln /p:Configuration="Debug" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
+"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" %SOLUTIONDIR%\ReactiveDomain.sln /p:Configuration="Debug" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
 
 echo Updating NuGet version in nuspec file...
