@@ -3,14 +3,14 @@ $currentScriptDirectory = Get-Location
 [System.IO.Directory]::SetCurrentDirectory($currentScriptDirectory.Path)
 
 Set-Location -Path ${PSScriptRoot}
-$solutiondir = Resolve-Path -Path "$currentScriptDirectory\src\ReactiveDomain.Tests"
+$solutiondir = Resolve-Path -Path "$currentScriptDirectory\src\ReactiveDomain"
 
 Write-Host "Solution dir is " $solutiondir
 
 $path = "$solutiondir\ReactiveDomain.Tests\ReactiveDomain.Tests.nuspec"
 Write-Host "NuSpec File is" $path
 
-$dll = "$solutiondir\ReactiveDomain\bin\x64\Debug\ReactiveDomain.Tests.dll" 
+$dll = "$solutiondir\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.Tests.dll" 
 Write-Host "Loading dll: " $dll
 
 $Assembly = [Reflection.Assembly]::Loadfile($dll)
