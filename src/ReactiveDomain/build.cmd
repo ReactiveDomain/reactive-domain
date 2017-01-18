@@ -27,4 +27,4 @@ popd
 
 
 echo Push the nuget to PKI private feed
-%NUGET% push %NUSPECDIR%\*.nupkg 345541e5-c350-41fd-9541-2c1d091f5190 -source https://www.myget.org/F/pki_public/api/v2/package
+%NUGET% push %NUSPECDIR%\*.nupkg 345541e5-c350-41fd-9541-2c1d091f5190 -source https://www.myget.org/F/pki_invivo_private/api/v2/package
