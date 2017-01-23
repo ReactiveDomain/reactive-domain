@@ -437,7 +437,7 @@ namespace ReactiveDomain.Util
             NotNull(lookup, argumentName);
             if (!lookup.ContainsKey(key))
                 throw new ArgumentException(
-                    $"{argumentName} expected to be between true, but is found to be false.");
+                    $"{argumentName} expected to contain the key {key}, but it was not found.");
         }
 
         /// <summary>
@@ -452,8 +452,20 @@ namespace ReactiveDomain.Util
             NotNull(lookup, argumentName);
             if (!lookup.Contains(value))
                 throw new ArgumentException(
-                    $"{argumentName} expected to be between true, but is found to be false.");
+                    $"{argumentName} expected to contain the value {value}, but it was not found.");
             // ReSharper restore PossibleMultipleEnumeration
+        }
+
+        public static void True(Func<bool> expression, string expressionAsString)
+        {
+            if (!expression())
+                throw new ArgumentException($"{expressionAsString} expected to be true, but is found to be false.");
+        }
+
+        public static void False(Func<bool> expression, string expressionAsString)
+        {
+            if (expression())
+                throw new ArgumentException($"{expressionAsString} expected to be false, but is found to be true.");
         }
     }
 }
