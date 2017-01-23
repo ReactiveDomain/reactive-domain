@@ -26,6 +26,6 @@
   </metadata>
   <files>
     <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll" target="lib" />
-    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll.config" target="lib" />
+    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.pdb" target="lib" />    
   </files>
 </package>
