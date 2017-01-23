@@ -25,6 +25,6 @@
   <files>
 	<file src="..\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.dll" target="lib" />  
 	<file src="..\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.Tests.dll" target="lib" />
-	<file src="..\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.Tests.dll.config" target="lib" />	
+	<file src="..\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.Tests.pdb" target="lib" />	
   </files>   
 </package>
