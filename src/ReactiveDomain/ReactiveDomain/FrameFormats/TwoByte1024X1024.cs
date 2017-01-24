@@ -28,6 +28,10 @@ namespace ReactiveDomain.FrameFormats
         {
             BufferSize = sizeof(TwoByte1024X1024Frame);
         }
+
+        /// <summary>
+        /// Gets a pointer to the pixel buffer.
+        /// </summary>
         public override byte* PixelBuffer
         {
             get
@@ -39,7 +43,9 @@ namespace ReactiveDomain.FrameFormats
 
         public static int PixelBufferLength => 2 * 1024 * 1024;
 
-
+        /// <summary>
+        /// Gets or sets the number of this frame within the video.
+        /// </summary>
         public override long FrameNumber
         {
             get
@@ -54,6 +60,10 @@ namespace ReactiveDomain.FrameFormats
                 ((TwoByte1024X1024Frame*)Buffer)->FrameNumber = value;
             }
         }
+
+        /// <summary>
+        /// Gets or sets the unique ID of this video associated with this image.
+        /// </summary>
         public override Guid VideoId
         {
             get
@@ -74,6 +84,9 @@ namespace ReactiveDomain.FrameFormats
 
         }
 
+        /// <summary>
+        /// Gets or sets the unique ID for this frame.
+        /// </summary>
         public override Guid FrameId
         {
             get
@@ -93,6 +106,9 @@ namespace ReactiveDomain.FrameFormats
             }
         }
 
+        /// <summary>
+        /// Gets or sets the offset in milliseconds of this frame from the beginning of the video.
+        /// </summary>
         public override double Offset
         {
             get
@@ -111,7 +127,5 @@ namespace ReactiveDomain.FrameFormats
                 ((TwoByte1024X1024Frame*)Buffer)->OffsetMilliseconds = value;
             }
         }
-
-
     }
 }

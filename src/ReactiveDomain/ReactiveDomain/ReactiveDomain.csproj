@@ -192,6 +192,10 @@
     <Compile Include="FrameFormats\ThreeByte1024X1024.cs" />
     <Compile Include="FrameFormats\Image.cs" />
     <Compile Include="FrameFormats\TwoByte1024X1024.cs" />
+    <Compile Include="FrameFormats\TwoByte2048X2048.cs" />
+    <Compile Include="FrameFormats\TwoByte128X128.cs" />
+    <Compile Include="FrameFormats\TwoByte256X256.cs" />
+    <Compile Include="FrameFormats\TwoByte512X512.cs" />
     <Compile Include="Memory\BufferManager.cs" />
     <Compile Include="Memory\PinnedBuffer.cs" />
     <Compile Include="Memory\VideoSlice.cs" />
