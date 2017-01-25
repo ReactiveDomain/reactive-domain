@@ -197,7 +197,7 @@
     <Compile Include="FrameFormats\TwoByte256X256.cs" />
     <Compile Include="FrameFormats\TwoByte512X512.cs" />
     <Compile Include="Memory\BufferManager.cs" />
-    <Compile Include="Memory\NewWrappedImage.cs" />
+    <Compile Include="Memory\WrappedSquareImage.cs" />
     <Compile Include="Memory\PinnedBuffer.cs" />
     <Compile Include="Memory\VideoSlice.cs" />
     <Compile Include="Memory\WrappedBuffer.cs" />

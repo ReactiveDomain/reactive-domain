@@ -25,7 +25,7 @@ namespace ReactiveDomain.FrameFormats
     /// the frame. Generally this memory will be owned by an 
     /// instance of the RawFrameBuffer or VideoWriter class.
     /// </summary>
-    public unsafe class Image : IDisposable
+    public abstract unsafe class Image : IDisposable
     {
         private static readonly Logger Log = NLog.LogManager.GetLogger("Common");
         private bool _disposed;
@@ -35,6 +35,9 @@ namespace ReactiveDomain.FrameFormats
             get { CheckLifetime(); return _buffer; }
             private set { _buffer = value; }
         }
+        /// <summary>
+        /// This is the size of the entire frame, including the VideoFrameHeader, not just the image pixel buffer
+        /// </summary>
         public int BufferSize { get; protected set; }
 
 
@@ -51,7 +54,7 @@ namespace ReactiveDomain.FrameFormats
         }
 
         //n.b this should only be be called by generic or refection constructors
-        public Image()
+        protected Image()
         {
         }
 
@@ -71,6 +74,9 @@ namespace ReactiveDomain.FrameFormats
            
         }
 
+        /// <summary>
+        /// This pointer points to the first pixel in the buffer
+        /// </summary>
         public virtual byte* PixelBuffer
         {
             get
