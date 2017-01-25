@@ -25,7 +25,7 @@ namespace ReactiveDomain.FrameFormats
     /// the frame. Generally this memory will be owned by an 
     /// instance of the RawFrameBuffer or VideoWriter class.
     /// </summary>
-    public abstract unsafe class Image : IDisposable
+    public unsafe class Image : IDisposable
     {
         private static readonly Logger Log = NLog.LogManager.GetLogger("Common");
         private bool _disposed;
@@ -49,10 +49,12 @@ namespace ReactiveDomain.FrameFormats
             BufferSize = bufferSize;
             Interlocked.Exchange(ref _bufferAdded, True);
         }
+
         //n.b this should only be be called by generic or refection constructors
-        protected Image()
+        public Image()
         {
         }
+
         //n.b. this should only be called once and only when using the parameterless ctor
         public void SetBuffer(byte* buffer, int bufferSize)
         {
@@ -69,12 +71,87 @@ namespace ReactiveDomain.FrameFormats
            
         }
 
-       
-        public abstract byte* PixelBuffer { get; }
-        public abstract Guid VideoId { get; set; }
-        public abstract Guid FrameId { get; set; }
-        public abstract long FrameNumber { get; set; }
-        public abstract double Offset { get; set; }
+        public virtual byte* PixelBuffer
+        {
+            get
+            {
+                CheckLifetime();
+                return Buffer + sizeof(VideoFrameHeader);
+            }
+        }
+
+        public virtual Guid VideoId
+        { 
+            get
+            {
+                CheckLifetime();
+                return Utility.ParseGuidBuffer(((VideoFrameHeader*)Buffer)->VideoId);
+            }
+            set
+            {
+                CheckLifetime();
+                if (value == Guid.Empty)
+                {
+                    Log.Error("VideoId cannot be an empty Guid.");
+                    throw new ArgumentException("VideoId cannot be an empty Guid.");
+                }
+
+                value.CopyToBuffer(((VideoFrameHeader*) Buffer)->VideoId);
+            }
+        }
+
+        public virtual Guid FrameId
+        {
+            get
+            {
+                CheckLifetime();
+                return Utility.ParseGuidBuffer(((VideoFrameHeader*)Buffer)->FrameId);
+            }
+            set
+            {
+                CheckLifetime();
+                if (value == Guid.Empty)
+                {
+                    Log.Error("FrameId cannot be an empty Guid.");
+                    throw new ArgumentException("FrameId cannot be an empty Guid.");
+                }
+                value.CopyToBuffer(((VideoFrameHeader*)Buffer)->FrameId);
+            }
+        }
+
+        public virtual long FrameNumber
+        {
+            get
+            {
+                CheckLifetime();
+                return ((VideoFrameHeader*)Buffer)->FrameNumber;
+            }
+            set
+            {
+                CheckLifetime();
+                Ensure.Positive(value, "FrameNumber");
+                ((VideoFrameHeader*)Buffer)->FrameNumber = value;
+            }
+        }
+
+        public virtual double Offset
+        {
+            get
+            {
+                CheckLifetime();
+                return ((VideoFrameHeader*)Buffer)->OffsetMilliseconds;
+            }
+            set
+            {
+                CheckLifetime();
+                if (value < 0)
+                {
+                    Log.Error("Offset must be a positive value.");
+                    throw new ArgumentException("Offset must be a positive value.");
+                }
+                ((VideoFrameHeader*)Buffer)->OffsetMilliseconds = value;
+            }
+        }
 
         public VideoFrameHeader Header => *(VideoFrameHeader*) _buffer;
 
