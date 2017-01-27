@@ -30,6 +30,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -187,6 +188,7 @@
     <Compile Include="Transport\MockTcpConnection.cs" />
     <Compile Include="Transport\TcpBusClientSideTests.cs" />
     <Compile Include="when_creating_a_message.cs" />
+    <Compile Include="when_creating_wrappedimages.cs" />
     <Compile Include="when_ensuring_values.cs" />
     <Compile Include="when_sending_commands.cs" />
     <Compile Include="when_serializing_commands.cs" />
