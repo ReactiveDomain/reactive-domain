@@ -29,6 +29,12 @@ namespace ReactiveDomain.Memory
             var frameType = new T();
             return new WrappedImage<T>(this, CheckOutBuffer(frameType.BufferSize));
         }
+
+        public WrappedSquareImage GetWrappedSquareImage(int dimension, int bytesPerPixel)
+        {
+            return new WrappedSquareImage(this, CheckOutBuffer((long)(dimension * dimension * bytesPerPixel)), dimension, bytesPerPixel);
+        }
+
         private PinnedBuffer CheckOutBuffer(long size)
         {
             var buffer = FirstAvailableBuffer(size);
