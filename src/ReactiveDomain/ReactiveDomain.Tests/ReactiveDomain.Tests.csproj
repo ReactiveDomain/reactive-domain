@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props')" />
   <Import Project="..\..\..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props" Condition="Exists('..\..\..\packages\xunit.runner.msbuild.2.1.0\build\portable-net45+win8+wp8+wpa81\xunit.runner.msbuild.props')" />
@@ -55,19 +55,13 @@
       <HintPath>..\..\..\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="JustGiving.EventStore.Http.Client">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\JustGiving.EventStore.Http.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="JustGiving.EventStore.Http.SubscriberHost">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.0\lib\JustGiving.EventStore.Http.SubscriberHost.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.Extensions">
