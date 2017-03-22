@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using ReactiveDomain.Messaging;
 
 // ReSharper disable MemberCanBeProtected.Global
@@ -43,6 +44,32 @@ namespace ReactiveDomain.Tests.Helpers
         public override int MsgTypeId { get { return TypeId; } }
         public GrandChildTestMessage(){}
     }
-   
+
+    public class CountedTestMessage : Message
+    {
+        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId { get { return TypeId; } }
+        public int MessageNumber;
+
+        public CountedTestMessage(int msgNumber)
+        {
+            MessageNumber = msgNumber;
+        }
+    }
+
+    public class CountedEvent : DomainEvent
+    {
+        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId { get { return TypeId; } }
+        public int MessageNumber;
+
+        public CountedEvent(int msgNumber,
+                Guid correlationId,
+                Guid sourceId)
+                : base(correlationId, sourceId)
+        {
+            MessageNumber = msgNumber;
+        }
+    }
 }
 

@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Bus;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Tests.Helpers;
 using Xunit;
@@ -29,10 +24,14 @@ namespace ReactiveDomain.Tests
         [Fact]
         public void can_handle_message() 
         {
-            Assert.Equal(BusMessages.Count, 1);
+            Assert.IsOrBecomesTrue(
+                () => BusMessages.Count == 1,
+                null,
+                $"Expected 1 Message, found {BusMessages.Count}");
+
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1, 
-                null,
+                1000,
                 $"Expected 1 Message, found {_messageSubscriber.TimesTestMessageHandled}");
         }
 
@@ -41,11 +40,15 @@ namespace ReactiveDomain.Tests
         {
             var msg2 = new TestMessage();
             Bus.Publish(msg2);
-            Assert.Equal(BusMessages.Count, 2);
+            Assert.IsOrBecomesTrue(
+                () => BusMessages.Count == 2,
+                null,
+                $"Expected 2 Messages on bus, found {BusMessages.Count}");
+
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 2,
                 null,
-                $"Expected 2 Messages, found {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 2 Messages handled, found {_messageSubscriber.TimesTestMessageHandled}");
         }
 
         [Fact]
@@ -53,7 +56,10 @@ namespace ReactiveDomain.Tests
         {
             var msg2 = new TestMessage2();
             Bus.Publish(msg2);
-            Assert.Equal(BusMessages.Count, 2);
+            Assert.IsOrBecomesTrue(
+                () => BusMessages.Count == 2,
+                null,
+                $"Expected 2 Messages on bus, found {BusMessages.Count}");
 
             Message deQdMsg;
             if (BusMessages.TryDequeue(out deQdMsg))
@@ -69,11 +75,11 @@ namespace ReactiveDomain.Tests
 
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1,
-                null,
+                1000,
                 $"Expected 1 TestMessage, found {_messageSubscriber.TimesTestMessageHandled}");
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _messageSubscriber.TimesTestMessage2Handled) == 1,
-                null,
+                100,
                 $"Expected 1 TestMessage2, found {_messageSubscriber.TimesTestMessage2Handled}");
         }
 

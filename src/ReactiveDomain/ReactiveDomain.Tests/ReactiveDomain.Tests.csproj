@@ -177,6 +177,12 @@
     <Compile Include="Asserts\SetAsserts.cs" />
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
+    <Compile Include="can_deal_with_unhandled_messages.cs" />
+    <Compile Include="can_handle_high_volume_queued_messages.cs" />
+    <Compile Include="can_handle_multiple_publisher_threads_queued.cs" />
+    <Compile Include="can_handle_ordered_queued_messages.cs" />
+    <Compile Include="can_process_queued_messages.cs" />
+    <Compile Include="can_unsubscribe_queued_messages.cs" />
     <Compile Include="ConcurrentMessageQueue.cs" />
     <Compile Include="EventStore\GetEventStoreRepositoryIntegrationTests.cs" />
     <Compile Include="EventStore\TestAggregate.cs" />
@@ -184,13 +190,16 @@
     <Compile Include="EventStore\WoftamEvent.cs" />
     <Compile Include="Helpers\Asserts.cs" />
     <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
+    <Compile Include="Helpers\CountedMessageSubscriber.cs" />
     <Compile Include="Helpers\DispatcherUtil.cs" />
     <Compile Include="Helpers\MessageComparer.cs" />
     <Compile Include="Helpers\TestAggregate.cs" />
     <Compile Include="Helpers\TestAggregateMessages.cs" />
     <Compile Include="Helpers\TestCommandHandler.cs" />
     <Compile Include="Helpers\TestCommands.cs" />
+    <Compile Include="Helpers\TestMessagePublisher.cs" />
     <Compile Include="Helpers\TestMessages.cs" />
+    <Compile Include="Helpers\TestMessageSubscriber.cs" />
     <Compile Include="Helpers\TestQueue.cs" />
     <Compile Include="Specifications\CommandBusSpecification.cs" />
     <Compile Include="Specifications\MockRepositorySpecification.cs" />
@@ -203,7 +212,9 @@
     <Compile Include="when_ensuring_values.cs" />
     <Compile Include="when_sending_commands.cs" />
     <Compile Include="when_serializing_commands.cs" />
+    <Compile Include="when_using_counted_message_subscriber.cs" />
     <Compile Include="when_using_mock_repository.cs" />
+    <Compile Include="when_using_queued_subscriber.cs" />
     <Compile Include="when_using_testqueue.cs" />
   </ItemGroup>
   <ItemGroup>
