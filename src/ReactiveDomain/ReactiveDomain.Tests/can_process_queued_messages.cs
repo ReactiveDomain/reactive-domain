@@ -42,12 +42,12 @@ namespace ReactiveDomain.Tests
             Bus.Publish(msg2);
             Assert.IsOrBecomesTrue(
                 () => BusMessages.Count == 2,
-                null,
+                1000,
                 $"Expected 2 Messages on bus, found {BusMessages.Count}");
 
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 2,
-                null,
+                1000,
                 $"Expected 2 Messages handled, found {_messageSubscriber.TimesTestMessageHandled}");
         }
 

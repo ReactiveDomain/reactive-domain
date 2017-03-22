@@ -64,7 +64,7 @@ namespace ReactiveDomain.Tests
 
             Assert.IsOrBecomesTrue(
                 () => BusMessages.Count == FirstTaskMax,
-                FirstTaskMax,
+                FirstTaskMax*2,
                 $"Expected message count to be {FirstTaskMax} Messages, found {BusMessages.Count }");
 
             Assert.IsOrBecomesTrue(
