@@ -25,6 +25,8 @@ namespace ReactiveDomain.Tests.Helpers
 
         public List<int> MsgOrder;
         public  List<int> EventOrder;
+        private readonly Object _lockThis = new Object();
+
         public CountedMessageSubscriber(IGeneralBus bus) : base(bus)
         {
             EventOrder = new List<int>();
@@ -40,18 +42,24 @@ namespace ReactiveDomain.Tests.Helpers
 
         public void Handle(CountedTestMessage message)
         {
-            MessagesHandled++;
-            LastMessageHandled = message.MessageNumber;
+            lock (_lockThis)
+            {
+                MessagesHandled++;
+                LastMessageHandled = message.MessageNumber;
 
-            MsgOrder.Add(message.MessageNumber);            
+                MsgOrder.Add(message.MessageNumber);
+            }
 
         }
 
         public void Handle(CountedEvent message)
         {
-            EventsHandled++;
-            LastEventHandled = message.MessageNumber;
-            EventOrder.Add(message.MessageNumber);
+            lock (_lockThis)
+            {
+                EventsHandled++;
+                LastEventHandled = message.MessageNumber;
+                EventOrder.Add(message.MessageNumber);
+            }
 
         }
 
@@ -61,11 +69,14 @@ namespace ReactiveDomain.Tests.Helpers
         /// <returns></returns>
         public bool MessagesInOrder()
         {
-            int lastMsg = 0;
-            foreach (int i in MsgOrder)
+            lock (_lockThis)
             {
-                if (lastMsg > i) return false;
-                lastMsg = i;
+                int lastMsg = 0;
+                foreach (int i in MsgOrder)
+                {
+                    if (lastMsg > i) return false;
+                    lastMsg = i;
+                }
             }
             return true;
         }
@@ -76,14 +87,17 @@ namespace ReactiveDomain.Tests.Helpers
         /// <returns></returns>
         public bool EventsInOrder()
         {
-            int lastMsg = -1;
-            foreach (int i in EventOrder)
+            lock (_lockThis)
             {
-                if (lastMsg > i)
-                    return false;
-                if (lastMsg != i-1)
-                    return false;
-                lastMsg = i;
+                int lastMsg = -1;
+                foreach (int i in EventOrder)
+                {
+                    if (lastMsg > i)
+                        return false;
+                    if (lastMsg != i - 1)
+                        return false;
+                    lastMsg = i;
+                }
             }
             return true;
         }

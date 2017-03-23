@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using ReactiveDomain.Bus;
-using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Tests.Helpers
 {
@@ -26,35 +21,34 @@ namespace ReactiveDomain.Tests.Helpers
 
         public TestMessageSubscriber(IGeneralBus bus) : base(bus)
         {
-            Subscribe<TestMessage>(this);
-            Subscribe<TestMessage2>(this);
-            Subscribe<ChildTestMessage>(this);
-            //Subscribe<ParentTestMessage>(this);
-
             TimesTestMessageHandled = 0;
             TimesTestMessage2Handled = 0;
             TimesChildTestMessageHandled = 0;
             ParentTestMessage = 0;
+
+            Subscribe<TestMessage>(this);
+            Subscribe<TestMessage2>(this);
+            Subscribe<ChildTestMessage>(this);
         }
 
         public void Handle(TestMessage message)
         {
-            TimesTestMessageHandled++;
+            Interlocked.Increment(ref TimesTestMessageHandled);
         }
 
         public void Handle(TestMessage2 message)
-        {
-            TimesTestMessage2Handled++;
+        {            
+            Interlocked.Increment(ref TimesTestMessage2Handled);
         }
 
         public void Handle(ChildTestMessage message)
         {
-            TimesChildTestMessageHandled++;
+            Interlocked.Increment(ref TimesChildTestMessageHandled);
         }
 
         public void Handle(ParentTestMessage message)
         {
-            ParentTestMessage++;
+            Interlocked.Increment(ref ParentTestMessage);
         }
     }
 
@@ -74,28 +68,28 @@ namespace ReactiveDomain.Tests.Helpers
 
         public TestInheritedMessageSubscriber(IGeneralBus bus) : base(bus)
         {
-            Subscribe<GrandChildTestMessage>(this);
-            Subscribe<ChildTestMessage>(this);
-            Subscribe<ParentTestMessage>(this);
-
             TimesGrandChildTestMessageHandled = 0;
             TimesChildTestMessageHandled = 0;
             TimesParentTestMessageHandled = 0;
+
+            Subscribe<GrandChildTestMessage>(this);
+            Subscribe<ChildTestMessage>(this);
+            Subscribe<ParentTestMessage>(this);
         }
 
         public void Handle(ChildTestMessage message)
         {
-            TimesChildTestMessageHandled++;
+            Interlocked.Increment(ref TimesChildTestMessageHandled);
         }
 
         public void Handle(ParentTestMessage message)
         {
-            TimesParentTestMessageHandled++;
+            Interlocked.Increment(ref TimesParentTestMessageHandled);
         }
 
         public void Handle(GrandChildTestMessage message)
         {
-            TimesGrandChildTestMessageHandled++;
+            Interlocked.Increment(ref TimesGrandChildTestMessageHandled);
         }
     }
 }
