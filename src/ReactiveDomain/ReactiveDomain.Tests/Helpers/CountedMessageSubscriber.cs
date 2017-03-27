@@ -35,11 +35,6 @@ namespace ReactiveDomain.Tests.Helpers
             Subscribe<CountedEvent>(this);
         }
 
-        public override void HandleDynamic(dynamic message)
-        {
-            Handle(message);
-        }
-
         public void Handle(CountedTestMessage message)
         {
             lock (_lockThis)

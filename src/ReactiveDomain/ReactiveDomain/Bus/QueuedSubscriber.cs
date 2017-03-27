@@ -5,7 +5,6 @@ using ReactiveDomain.Messaging;
 namespace ReactiveDomain.Bus
 {
     public abstract class QueuedSubscriber :
-                            IHandle<Message>,
                             IDisposable
     {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
@@ -14,13 +13,13 @@ namespace ReactiveDomain.Bus
         private readonly IGeneralBus _internalBus;
         protected object Last = null;
 
-        public abstract void HandleDynamic(dynamic message);
         protected QueuedSubscriber(IGeneralBus bus)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _generalBus = bus;
             _internalBus = new CommandBus("SubscriptionBus");
-            _messageQueue = new QueuedHandler(this, "SubscriptionQueue");
+
+            _messageQueue = new QueuedHandler(new AdHocHandler<Message>(_internalBus.Publish), "SubscriptionQueue");
             _messageQueue.Start();
         }
 
@@ -50,15 +49,6 @@ namespace ReactiveDomain.Bus
                 _subscriptions?.ForEach(s => s.Dispose());
                 _disposed = true;
             }
-        }
-
-        public virtual void Handle(Message message)
-        {
-            if (Last == message) return;
-
-            Last = message;
-            dynamic msg = message;
-            HandleDynamic(msg);
         }
     }
 }
