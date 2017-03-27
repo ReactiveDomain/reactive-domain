@@ -14,10 +14,10 @@ namespace ReactiveDomain.Tests.Helpers
         public long ParentTestMessage;
         public long TimesTestMessageHandled;
         public long TimesTestMessage2Handled;
-        public override void HandleDynamic(dynamic message)
-        {
-            Handle(message);
-        }
+        //public override void HandleDynamic(dynamic message)
+        //{
+        //    Handle(message);
+        //}
 
         public TestMessageSubscriber(IGeneralBus bus) : base(bus)
         {
@@ -29,6 +29,11 @@ namespace ReactiveDomain.Tests.Helpers
             Subscribe<TestMessage>(this);
             Subscribe<TestMessage2>(this);
             Subscribe<ChildTestMessage>(this);
+        }
+
+        public override void HandleDynamic(dynamic message)
+        {
+            Handle(message);
         }
 
         public void Handle(TestMessage message)
