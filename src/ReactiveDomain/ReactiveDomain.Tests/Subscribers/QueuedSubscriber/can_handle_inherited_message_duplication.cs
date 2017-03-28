@@ -23,6 +23,11 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 
         protected override void Given()
         {
+            //n.b the subscriber subscribes to the following
+            // Subscribe<TestDomainEvent>(this);
+            //Subscribe<ParentTestDomainEvent>(this);
+            //Subscribe<ChildTestDomainEvent>(this);
+            //Subscribe<GrandChildTestDomainEvent>(this);
             MessageSubscriber = new TestInheritedMessageSubscriber(Bus,false);
         }
         protected override void When()
@@ -47,7 +52,46 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             Bus.Publish(msg4);
             Assert.Equal(BusMessages.Count, 4);
         }
+        [Fact]
+        public void grand_child_invokes_all_handlers_four_times()
+        {
+            //n.b. the number of duplications matched the number of times we have subscribed to the hierarchy
+            //see the next test where we do not subscribe to Message
+            // the subscription to Test Event does not matter because it tis outside the heirarchy
 
+            MessageSubscriber.Subscribe<Message>(MessageSubscriber);
+            MessageSubscriber.Reset();
+            TestQueue.Clear();
+            Bus.Publish(new GrandChildTestDomainEvent(TestCorrelationId, ChildMsgId));
+
+            BusMessages
+               .AssertNext<GrandChildTestDomainEvent>(TestCorrelationId)
+               .AssertEmpty();
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.TestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 Test Domain Event Handled, found {MessageSubscriber.TestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.GrandChildTestDomainEventHandleCount) == 4,
+               1000,
+               $"Expected 3 GrandChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ChildTestDomainEventHandleCount) == 4,
+                1000,
+                $"Expected 3 ChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ParentTestDomainEventHandleCount) == 4,
+                1000,
+                $"Expected 3 Parent Test Domain Event handled, found {MessageSubscriber.ParentTestDomainEventHandleCount}");
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.MessageHandleCount) == 4,
+               1000,
+               $"Expected 3 Parent Test Domain Event handled, found {MessageSubscriber.MessageHandleCount}");
+        }
         [Fact]
         public void grand_child_invokes_all_handlers_thrice()
         {
