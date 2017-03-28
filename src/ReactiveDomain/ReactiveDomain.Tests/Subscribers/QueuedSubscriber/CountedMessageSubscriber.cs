@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ReactiveDomain.Bus;
+using ReactiveDomain.Tests.Helpers;
 
-namespace ReactiveDomain.Tests.Helpers
+namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 {
     /// <summary>
     /// Class used for testing QueuedSubscriber 
@@ -13,7 +11,7 @@ namespace ReactiveDomain.Tests.Helpers
     /// that can be used to check message ordering.
     /// </summary>
     public class CountedMessageSubscriber :
-                    QueuedSubscriber,
+                    Bus.QueuedSubscriber,
                     IHandle<CountedTestMessage>,
                     IHandle<CountedEvent>
     {

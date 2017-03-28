@@ -193,7 +193,7 @@
     <Compile Include="EventStore\WoftamEvent.cs" />
     <Compile Include="Helpers\Asserts.cs" />
     <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
-    <Compile Include="Helpers\CountedMessageSubscriber.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\CountedMessageSubscriber.cs" />
     <Compile Include="Helpers\DispatcherUtil.cs" />
     <Compile Include="Helpers\MessageComparer.cs" />
     <Compile Include="Helpers\TestAggregate.cs" />
@@ -217,7 +217,7 @@
     <Compile Include="when_ensuring_values.cs" />
     <Compile Include="when_sending_commands.cs" />
     <Compile Include="when_serializing_commands.cs" />
-    <Compile Include="when_using_counted_message_subscriber.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\when_using_counted_message_subscriber.cs" />
     <Compile Include="when_using_mock_repository.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\when_using_queued_subscriber.cs" />
     <Compile Include="when_using_testqueue.cs" />

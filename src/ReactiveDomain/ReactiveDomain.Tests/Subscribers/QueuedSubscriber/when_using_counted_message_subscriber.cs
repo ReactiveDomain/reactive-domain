@@ -1,5 +1,6 @@
 ﻿using ReactiveDomain.Tests.Helpers;
 using ReactiveDomain.Tests.Specifications;
+using ReactiveDomain.Tests.Subscribers.QueuedSubscriber;
 
 namespace ReactiveDomain.Tests
 {
