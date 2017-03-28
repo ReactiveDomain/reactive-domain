@@ -1,5 +1,6 @@
 using System.Threading;
 using ReactiveDomain.Bus;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Tests.Helpers;
 
 namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
@@ -9,12 +10,14 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         IHandle<TestDomainEvent>,
         IHandle<ParentTestDomainEvent>,
         IHandle<ChildTestDomainEvent>,
-        IHandle<GrandChildTestDomainEvent>
+        IHandle<GrandChildTestDomainEvent>,
+        IHandle<Message>
     {
         public long TestDomainEventHandleCount;
         public long ParentTestDomainEventHandleCount;
         public long ChildTestDomainEventHandleCount;
         public long GrandChildTestDomainEventHandleCount;
+        public long MessageHandleCount;
 
         public TestInheritedMessageSubscriber(IGeneralBus bus, bool idenpotent = true) : base(bus, idenpotent)
         {
@@ -32,6 +35,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             ParentTestDomainEventHandleCount = 0;
             ChildTestDomainEventHandleCount = 0;
             GrandChildTestDomainEventHandleCount = 0;
+            MessageHandleCount = 0;
         }
 
         public void Handle(TestDomainEvent message)
@@ -51,6 +55,11 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         public void Handle(GrandChildTestDomainEvent message)
         {
             Interlocked.Increment(ref GrandChildTestDomainEventHandleCount);
+        }
+
+        public void Handle(Message message)
+        {
+            Interlocked.Increment(ref MessageHandleCount);
         }
     }
 }
