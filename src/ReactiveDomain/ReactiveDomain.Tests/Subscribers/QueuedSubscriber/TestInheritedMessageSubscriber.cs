@@ -18,16 +18,22 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 
         public TestInheritedMessageSubscriber(IGeneralBus bus, bool idenpotent = true) : base(bus, idenpotent)
         {
-            TestDomainEventHandleCount = 0;
-            ParentTestDomainEventHandleCount = 0;
-            ChildTestDomainEventHandleCount = 0;
-            GrandChildTestDomainEventHandleCount = 0;
+            Reset();
 
             Subscribe<TestDomainEvent>(this);
             Subscribe<ParentTestDomainEvent>(this);
             Subscribe<ChildTestDomainEvent>(this);
             Subscribe<GrandChildTestDomainEvent>(this);
         }
+
+        public void Reset()
+        {
+            TestDomainEventHandleCount = 0;
+            ParentTestDomainEventHandleCount = 0;
+            ChildTestDomainEventHandleCount = 0;
+            GrandChildTestDomainEventHandleCount = 0;
+        }
+
         public void Handle(TestDomainEvent message)
         {
             Interlocked.Increment(ref TestDomainEventHandleCount);
