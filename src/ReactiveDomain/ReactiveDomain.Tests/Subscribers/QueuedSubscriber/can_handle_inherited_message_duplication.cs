@@ -48,10 +48,103 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             Assert.Equal(BusMessages.Count, 4);
         }
 
+        [Fact]
+        public void grand_child_invokes_all_handlers_thrice()
+        {
+            MessageSubscriber.Reset();
+            TestQueue.Clear();
+            Bus.Publish(new GrandChildTestDomainEvent(TestCorrelationId, ChildMsgId));
 
+            BusMessages
+               .AssertNext<GrandChildTestDomainEvent>(TestCorrelationId)
+               .AssertEmpty();
 
-        [Fact]//(Skip = "test is broken")]
-        public void duplicate_message_handle_invocations_are_correct()
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.TestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 Test Domain Event Handled, found {MessageSubscriber.TestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.GrandChildTestDomainEventHandleCount) == 3,
+               1000,
+               $"Expected 3 GrandChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ChildTestDomainEventHandleCount) == 3,
+                1000,
+                $"Expected 3 ChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ParentTestDomainEventHandleCount) == 3,
+                1000,
+                $"Expected 3 Parent Test Domain Event handled, found {MessageSubscriber.ParentTestDomainEventHandleCount}");
+        }
+        [Fact]
+        public void child_invokes_parent_and_child_handlers_twice()
+        {
+            MessageSubscriber.Reset();
+            TestQueue.Clear();
+            Bus.Publish(new ChildTestDomainEvent(TestCorrelationId, ChildMsgId));
+
+            BusMessages
+               .AssertNext<ChildTestDomainEvent>(TestCorrelationId)
+               .AssertEmpty();
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.TestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 Test Domain Event Handled, found {MessageSubscriber.TestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.GrandChildTestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 GrandChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ChildTestDomainEventHandleCount) == 2,
+                1000,
+                $"Expected 2 ChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ParentTestDomainEventHandleCount) == 2,
+                1000,
+                $"Expected 2 Parent Test Domain Event handled, found {MessageSubscriber.ParentTestDomainEventHandleCount}");
+        }
+        [Fact]
+        public void parent_invokes_only_parent_handler_once()
+        {
+            MessageSubscriber.Reset();
+            TestQueue.Clear();
+
+            Bus.Publish(new ParentTestDomainEvent(TestCorrelationId, ChildMsgId));
+
+            BusMessages
+               .AssertNext<ParentTestDomainEvent>(TestCorrelationId)
+               .AssertEmpty();
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.TestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 Test Domain Event Handled, found {MessageSubscriber.TestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+               () => Interlocked.Read(ref MessageSubscriber.GrandChildTestDomainEventHandleCount) == 0,
+               1000,
+               $"Expected 0 GrandChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ChildTestDomainEventHandleCount) == 0,
+                1000,
+                $"Expected 0 ChildTestDomainEvent handled , found {MessageSubscriber.ChildTestDomainEventHandleCount}");
+
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref MessageSubscriber.ParentTestDomainEventHandleCount) == 1,
+                1000,
+                $"Expected 1 Parent Test Domain Event handled, found {MessageSubscriber.ParentTestDomainEventHandleCount}");
+        }
+
+        [Fact]
+        public void multiple_duplicate_message_handle_invocations_are_correct()
         {
            BusMessages
                 .AssertNext<TestDomainEvent>(TestCorrelationId)
