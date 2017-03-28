@@ -8,31 +8,38 @@ namespace ReactiveDomain.Bus
                             IDisposable
     {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
+
         private readonly QueuedHandler _messageQueue;
         private readonly IGeneralBus _generalBus;
         private readonly IGeneralBus _internalBus;
         protected object Last = null;
 
-        protected QueuedSubscriber(IGeneralBus bus)
+        protected QueuedSubscriber(IGeneralBus bus, bool idenpotent = true)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _generalBus = bus;
             _internalBus = new CommandBus("SubscriptionBus");
 
-            _messageQueue = new QueuedHandler(new AdHocHandler<Message>(_internalBus.Publish), "SubscriptionQueue");
+            if (idenpotent)
+                _messageQueue = new QueuedHandler(
+                                        new IdenpotentHandler<Message>(
+                                                new AdHocHandler<Message>(_internalBus.Publish)
+                                                ),
+                                        "SubscriptionQueue");
+            else
+                _messageQueue = new QueuedHandler(
+                                        new AdHocHandler<Message>(_internalBus.Publish),
+                                        "SubscriptionQueue");
             _messageQueue.Start();
         }
 
         public void Subscribe<T>(IHandle<T> handler) where T : Message
         {
             _internalBus.Subscribe<T>(handler);
-
-            Action<T> publish = _messageQueue.Publish;
-            var adHocHandler = new AdHocHandler<T>(publish);
-            _subscriptions.Add(_generalBus.Subscribe<T>(adHocHandler));
+            _subscriptions.Add(
+                _generalBus.Subscribe<T>(new AdHocHandler<T>(_messageQueue.Handle))
+                              );
         }
-
-
         public void Dispose()
         {
             Dispose(true);

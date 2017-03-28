@@ -134,9 +134,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BootStrap.cs" />
+    <Compile Include="Bus\AdHocHandler - Copy.cs" />
     <Compile Include="Bus\AdHocTypedCommandHandler.cs" />
     <Compile Include="Bus\AdHocCommandHandler.cs" />
-    <Compile Include="Bus\AdHocHandler.cs" />
+    <Compile Include="Bus\IdenpotentHandler.cs" />
     <Compile Include="Bus\BusConnector.cs" />
     <Compile Include="Bus\BusWrapper.cs" />
     <Compile Include="Bus\CommandBus.cs" />

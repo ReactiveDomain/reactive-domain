@@ -4,7 +4,7 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Tests.Helpers;
 using Xunit;
 
-namespace ReactiveDomain.Tests
+namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable InconsistentNaming
     public class can_process_queued_messages : when_using_queued_subscriber
@@ -30,9 +30,9 @@ namespace ReactiveDomain.Tests
                 $"Expected 1 Message, found {BusMessages.Count}");
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1, 
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1, 
                 1000,
-                $"Expected 1 Message, found {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 1 Message, found {MessageSubscriber.TimesTestMessageHandled}");
         }
 
         [Fact]
@@ -46,9 +46,9 @@ namespace ReactiveDomain.Tests
                 $"Expected 2 Messages on bus, found {BusMessages.Count}");
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 2,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 2,
                 1000,
-                $"Expected 2 Messages handled, found {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 2 Messages handled, found {MessageSubscriber.TimesTestMessageHandled}");
         }
 
         [Fact]
@@ -74,13 +74,13 @@ namespace ReactiveDomain.Tests
             Assert.False(BusMessages.TryDequeue(out deQdMsg));
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1,
                 1000,
-                $"Expected 1 TestMessage, found {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 1 TestMessage, found {MessageSubscriber.TimesTestMessageHandled}");
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessage2Handled) == 1,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessage2Handled) == 1,
                 100,
-                $"Expected 1 TestMessage2, found {_messageSubscriber.TimesTestMessage2Handled}");
+                $"Expected 1 TestMessage2, found {MessageSubscriber.TimesTestMessage2Handled}");
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace ReactiveDomain.Tests
         {
             var ex =
                  Assert.Throws<ArgumentNullException>(
-                                                        () => new TestMessageSubscriber(null)
+                                                        () => new TestQueuedSubscriber(null)
                                                     );
         }
 
@@ -113,22 +113,22 @@ namespace ReactiveDomain.Tests
             Assert.False(BusMessages.TryDequeue(out deQdMsg));
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1,
                 1000,
-                $"Expected 1 TestMessage, found {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 1 TestMessage, found {MessageSubscriber.TimesTestMessageHandled}");
 
 
             Assert.IsOrBecomesTrue(
-            () => Interlocked.Read(ref _messageSubscriber.TimesChildTestMessageHandled) == 1,
+            () => Interlocked.Read(ref MessageSubscriber.TimesChildTestMessageHandled) == 1,
                 null,
-                $"Expected 1 ChildTestMessage, found {_messageSubscriber.TimesChildTestMessageHandled}");
+                $"Expected 1 ChildTestMessage, found {MessageSubscriber.TimesChildTestMessageHandled}");
 
         }
 
         [Fact]
         public void can_handle_multiple_subscribers()
         {
-            TestMessageSubscriber secondSubscriber = new TestMessageSubscriber(Bus);
+            TestQueuedSubscriber secondSubscriber = new TestQueuedSubscriber(Bus);
 
             var msg2 = new TestMessage2();
             Bus.Publish(msg2);
@@ -156,9 +156,9 @@ namespace ReactiveDomain.Tests
             Assert.False(BusMessages.TryDequeue(out deQdMsg));
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1,
                 1000,
-                $"Expected 1 TestMessage, handled by first subscriber {_messageSubscriber.TimesTestMessageHandled}");
+                $"Expected 1 TestMessage, handled by first subscriber {MessageSubscriber.TimesTestMessageHandled}");
 
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref secondSubscriber.TimesTestMessageHandled) == 0,
@@ -166,9 +166,9 @@ namespace ReactiveDomain.Tests
                 $"Expected 0 TestMessage handled by second subscriber, found {secondSubscriber.TimesTestMessageHandled}");
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessage2Handled) == 2,
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessage2Handled) == 2,
                 1000,
-                $"Expected 2 TimesTestMessage2Handled by secondSubscriber, found {_messageSubscriber.TimesTestMessage2Handled}");
+                $"Expected 2 TimesTestMessage2Handled by secondSubscriber, found {MessageSubscriber.TimesTestMessage2Handled}");
 
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref secondSubscriber.TimesTestMessage2Handled) == 2,
@@ -176,65 +176,6 @@ namespace ReactiveDomain.Tests
                 $"Expected 2 TimesTestMessage2Handled by second subscriber, found {secondSubscriber.TimesTestMessage2Handled}");
         }
 
-        [Fact(Skip = "test is broken")]
-        public void can_handle_inherited_messages()
-        {
-            TestInheritedMessageSubscriber secondSubscriber = new TestInheritedMessageSubscriber(Bus);
-
-            var msg2 = new ParentTestMessage();
-            Bus.Publish(msg2);
-            Assert.Equal(BusMessages.Count, 2);
-
-            var msg3 = new ChildTestMessage();
-            Bus.Publish(msg3);
-            Assert.Equal(BusMessages.Count, 3);
-
-            var msg4 = new GrandChildTestMessage();
-            Bus.Publish(msg4);
-            Assert.Equal(BusMessages.Count, 4);
-
-            Message deQdMsg;
-            if (BusMessages.TryDequeue(out deQdMsg))
-            {
-                Assert.IsType<TestMessage>(deQdMsg);
-            }
-            if (BusMessages.TryDequeue(out deQdMsg))
-            {
-                Assert.IsType<ParentTestMessage>(deQdMsg);
-            }
-
-            if (BusMessages.TryDequeue(out deQdMsg))
-            {
-                Assert.IsType<ChildTestMessage>(deQdMsg);
-            }
-
-            if (BusMessages.TryDequeue(out deQdMsg))
-            {
-                Assert.IsType<GrandChildTestMessage>(deQdMsg);
-            }
-
-            Assert.False(BusMessages.TryDequeue(out deQdMsg));
-
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.TimesTestMessageHandled) == 1,
-                1000,
-                $"Expected 1 TestMessage, handled by first subscriber {_messageSubscriber.TimesTestMessageHandled}");
-
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref secondSubscriber.TimesParentTestMessageHandled) == 1,
-                1000,
-                $"Expected 1 TimesParentTestMessageHandled by second subscriber, found {secondSubscriber.TimesParentTestMessageHandled}");
-
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref secondSubscriber.TimesChildTestMessageHandled) == 1,
-                1000,
-                $"Expected 1 TimesChildTestMessageHandled by second subscriber, found {secondSubscriber.TimesChildTestMessageHandled}");
-
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref secondSubscriber.TimesGrandChildTestMessageHandled) == 1,
-                1000,
-                $"Expected 1 TimesGrandChildTestMessageHandled by second subscriber, found {secondSubscriber.TimesGrandChildTestMessageHandled}");
-
-        }
+       
     }
 }

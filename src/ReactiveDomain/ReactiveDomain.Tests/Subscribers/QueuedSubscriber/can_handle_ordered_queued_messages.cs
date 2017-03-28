@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using ReactiveDomain.Tests.Helpers;
 using Xunit;
 
-namespace ReactiveDomain.Tests
+namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
     public class can_handle_ordered_queued_messages : when_using_counted_message_subscriber

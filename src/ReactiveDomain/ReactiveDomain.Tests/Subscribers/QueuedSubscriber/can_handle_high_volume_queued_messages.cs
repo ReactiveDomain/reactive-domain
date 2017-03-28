@@ -1,10 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Tests.Helpers;
+﻿using ReactiveDomain.Tests.Helpers;
 using Xunit;
 
-namespace ReactiveDomain.Tests
+namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
     public class can_handle_high_volume_queued_messages : when_using_queued_subscriber
@@ -47,7 +44,7 @@ namespace ReactiveDomain.Tests
             _pub4.StopPublishing();
 
             // verify all the messages were handled
-            Assert.True(_messageSubscriber.TimesTestMessageHandled == BusMessages.Count);
+            Assert.IsOrBecomesTrue(()=>MessageSubscriber.TimesTestMessageHandled == BusMessages.Count);
         }
     }
 }
