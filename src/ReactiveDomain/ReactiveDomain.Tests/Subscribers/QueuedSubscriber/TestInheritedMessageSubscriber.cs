@@ -16,7 +16,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         public long ChildTestDomainEventHandleCount;
         public long GrandChildTestDomainEventHandleCount;
 
-        public TestInheritedMessageSubscriber(IGeneralBus bus, bool idenpotent = true) : base(bus, idenpotent)
+        public TestInheritedMessageSubscriber(IGeneralBus bus, bool idempotent = true) : base(bus, idempotent)
         {
             TestDomainEventHandleCount = 0;
             ParentTestDomainEventHandleCount = 0;

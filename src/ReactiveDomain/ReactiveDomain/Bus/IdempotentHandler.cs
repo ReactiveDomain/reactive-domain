@@ -5,7 +5,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Bus
 {
-    public class IdenpotentHandler<T> : IHandle<T> where T:Message
+    public class IdempotentHandler<T> : IHandle<T> where T:Message
     {
         private readonly IHandle<T> _handler;
         private readonly int _bufferSize;
@@ -14,7 +14,7 @@ namespace ReactiveDomain.Bus
 
 
         //n.b. keep the buffer size small as this is scanned on every execution
-        public IdenpotentHandler(IHandle<T> handle, int bufferSize = 5)
+        public IdempotentHandler(IHandle<T> handle, int bufferSize = 5)
         {
             Ensure.NotNull(handle, "handle");
             Ensure.GreaterThan(1, bufferSize, "buffersize");

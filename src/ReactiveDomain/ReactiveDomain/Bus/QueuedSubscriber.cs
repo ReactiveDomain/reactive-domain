@@ -14,15 +14,15 @@ namespace ReactiveDomain.Bus
         private readonly IGeneralBus _internalBus;
         protected object Last = null;
 
-        protected QueuedSubscriber(IGeneralBus bus, bool idenpotent = true)
+        protected QueuedSubscriber(IGeneralBus bus, bool idempotent = true)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _generalBus = bus;
             _internalBus = new CommandBus("SubscriptionBus");
 
-            if (idenpotent)
+            if (idempotent)
                 _messageQueue = new QueuedHandler(
-                                        new IdenpotentHandler<Message>(
+                                        new IdempotentHandler<Message>(
                                                 new AdHocHandler<Message>(_internalBus.Publish)
                                                 ),
                                         "SubscriptionQueue");
