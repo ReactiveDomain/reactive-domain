@@ -9,20 +9,16 @@ namespace ReactiveDomain.Bus
                                                                   where R : CommandResponse
     {
         private readonly Func<T, R> _handleCommand;
-        private readonly Func<CancelCommand, Unit> _handleCancel;
         private readonly bool _wrapExceptions;
 
 
         public AdHocTypedCommandHandler(
                     Func<T, R> handleCommandCommand,
-                     Func<CancelCommand, Unit> handleCancel = null,
                     bool wrapExceptions = true)
         {
             Ensure.NotNull(handleCommandCommand, "handle");
             _handleCommand = handleCommandCommand;
-            _handleCancel = handleCancel;
             _wrapExceptions = wrapExceptions;
-            if (_handleCancel == null) _handleCancel = c => Unit.Default;
         }
 
         public CommandResponse Handle(T command)
@@ -38,17 +34,6 @@ namespace ReactiveDomain.Bus
                 throw;
             }
 
-        }
-
-        public void RequestCancel(CancelCommand cancelRequest)
-        {
-            try
-            {
-                _handleCancel(cancelRequest);
-            }
-            catch (Exception)
-            {
-            }
         }
     }
 }

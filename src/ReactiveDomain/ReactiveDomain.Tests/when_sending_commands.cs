@@ -101,7 +101,7 @@ namespace ReactiveDomain.Tests
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
             bus.Subscribe(new AdHocHandler<Success>(cmd => Interlocked.Exchange(ref gotSuccess, 1)));
             bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
-            bus.Subscribe(new AdHocHandler<CancelCommand>(cmd => Interlocked.Exchange(ref gotCancel, 1)));
+            bus.Subscribe(new AdHocHandler<Canceled>(cmd => Interlocked.Exchange(ref gotCancel, 1)));
             bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotSuccess) == 1, null, "Expected Success");
             Assert.True(gotFail == 0, "Unexpected fail received.");
@@ -114,6 +114,7 @@ namespace ReactiveDomain.Tests
             long gotFail = 0;
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => false));
             bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
+            Assert.IsOrBecomesTrue(()=>bus.HasSubscriberFor<TestCommands.TestCommand>());
             Assert.Throws<CommandException>(
                 () => bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotFail) == 1, null, "Expected Fail");
@@ -193,7 +194,7 @@ namespace ReactiveDomain.Tests
                     cmd =>
                     {
                         Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException("I knew this would happen.",cmd);
+                        throw new CommandException("I knew this would happen.", cmd);
                     }));
 
             bus.Subscribe(new AdHocHandler<CommandResponse>(
@@ -265,7 +266,7 @@ namespace ReactiveDomain.Tests
                     cmd =>
                     {
                         Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException(errText,cmd);
+                        throw new CommandException(errText, cmd);
                     },
                     // ReSharper disable once RedundantArgumentDefaultValue
                     wrapExceptions: true));
@@ -286,9 +287,9 @@ namespace ReactiveDomain.Tests
             Assert.False(passed, "Expected false return");
             Assert.IsType(typeof(Fail), response);
             Assert.IsType(typeof(CommandException), ((Fail)response).Exception);
-            
-            Assert.True(string.Equals($"{command.GetType().Name}: {errText}", ((Fail)response).Exception.Message,StringComparison.Ordinal));
-            
+
+            Assert.True(string.Equals($"{command.GetType().Name}: {errText}", ((Fail)response).Exception.Message, StringComparison.Ordinal));
+
 
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
@@ -356,6 +357,7 @@ namespace ReactiveDomain.Tests
                     Interlocked.Exchange(ref responseData, cmd.Data);
                 }
                 ));
+            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TypedTestCommand>());
 
             bus.Fire(new TestCommands.TypedTestCommand(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Success");
@@ -503,7 +505,7 @@ namespace ReactiveDomain.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd2) == 1, msg: "Expected Cmd2 handled");
         }
-        [Fact]
+        [Fact(Skip="Distributed commands are currently disabled")]
         public void passing_commands_on_connected_busses_should_pass()
         {
             var bus = new CommandBus("local");
@@ -530,18 +532,18 @@ namespace ReactiveDomain.Tests
         public void unsubscribed_commands_should_throw_ack_timeout()
         {
             var bus = new CommandBus("local");
-            long cancelPublished = 0;
-            bus.Subscribe(new AdHocHandler<CancelCommand>(c => Interlocked.Increment(ref cancelPublished)));
+            long publishedMessageCount = 0;
+            bus.Subscribe(new AdHocHandler<Message>(c => Interlocked.Increment(ref publishedMessageCount)));
             Assert.Throws<CommandNotHandledException>(() =>
                  bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref cancelPublished) == 1, msg: "Expected cancel published");
+
+            Assert.True(Interlocked.Read(ref publishedMessageCount) == 0, userMessage: "Expected no messages published");
         }
         [Fact]
         public void slow_commands_should_throw_timeout()
         {
             var bus = new CommandBus("local");
             long gotCmd1 = 0;
-            long cancelRecieved = 0;
             long cancelPublished = 0;
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
                    cmd =>
@@ -549,42 +551,31 @@ namespace ReactiveDomain.Tests
                        Interlocked.Exchange(ref gotCmd1, 1);
                        Task.Delay(1000).Wait();
                        return true;
-                   },
-                    (cancel, currentCmdId) =>
-                    {
-                        if (cancel.CommandType == typeof(TestCommands.TestCommand) &&
-                            (currentCmdId == cancel.CommandId))
-                            Interlocked.Increment(ref cancelRecieved);
-                        return Unit.Default;
-                    }));
-            bus.Subscribe(new AdHocHandler<CancelCommand>(c => Interlocked.Increment(ref cancelPublished)));
+                   }));
+            bus.Subscribe(new AdHocHandler<Canceled>(c => Interlocked.Increment(ref cancelPublished)));
+            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
 
             Assert.Throws<CommandTimedOutException>(() =>
                  bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref cancelPublished) == 1, msg: "Expected cancel published");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref cancelRecieved) == 1, msg: "Expected cancel received");
         }
         [Fact]
-        public void tryfire_unsubscribed_commands_should_return_ack_timeout()
+        public void tryfire_unsubscribed_commands_should_return_throw_commandNotHandledException()
         {
             var bus = new CommandBus("local");
-            long cancelPublished = 0;
-            bus.Subscribe(new AdHocHandler<CancelCommand>(c => Interlocked.Increment(ref cancelPublished)));
             CommandResponse response;
             var passed = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
 
             Assert.False(passed, "Expected false return");
             Assert.IsType(typeof(Fail), response);
             Assert.IsType(typeof(CommandNotHandledException), ((Fail)response).Exception);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref cancelPublished) == 1, msg: "Expected cancel published");
         }
         [Fact]
         public void tryfire_slow_commands_should_return_timeout()
         {
             var bus = new CommandBus("local");
             long gotCmd1 = 0;
-            long cancelRecieved = 0;
 
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
                    cmd =>
@@ -592,13 +583,6 @@ namespace ReactiveDomain.Tests
                        Interlocked.Exchange(ref gotCmd1, 1);
                        Task.Delay(1000).Wait();
                        return true;
-                   },
-                   (cancel, currentCmdId) =>
-                   {
-                       if (cancel.CommandType == typeof(TestCommands.TestCommand) &&
-                         (currentCmdId == cancel.CommandId))
-                           Interlocked.Increment(ref cancelRecieved);
-                       return Unit.Default;
                    }));
 
             CommandResponse response;
@@ -608,11 +592,10 @@ namespace ReactiveDomain.Tests
             Assert.IsType(typeof(Fail), response);
             Assert.IsType(typeof(CommandTimedOutException), ((Fail)response).Exception);
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref cancelRecieved) == 1, msg: "Expected cancel received");
 
         }
 
-        [Fact]
+        [Fact(Skip="Connected bus scenarios currently disabled")]
         public void tryfire_oversubscribed_commands_should_return_false()
         {
             var bus = new CommandBus("local");
@@ -621,7 +604,6 @@ namespace ReactiveDomain.Tests
             long gotCmd = 0;
             long proccessedCmd = 0;
             long cancelPublished = 0;
-            long cancelRecieved = 0;
             long cancelReturned = 0;
 
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
@@ -631,14 +613,7 @@ namespace ReactiveDomain.Tests
                      Task.Delay(250).Wait();
                      Interlocked.Increment(ref proccessedCmd);
                      return true;
-                 },
-                (cancel, currentCmdId) =>
-                {
-                    if (cancel.CommandType == typeof(TestCommands.TestCommand) &&
-                          (currentCmdId == cancel.CommandId))
-                        Interlocked.Increment(ref cancelRecieved);
-                    return Unit.Default;
-                }));
+                 }));
             bus2.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
                     cmd =>
                     {
@@ -646,13 +621,6 @@ namespace ReactiveDomain.Tests
                         Task.Delay(250).Wait();
                         Interlocked.Increment(ref proccessedCmd);
                         return true;
-                    },
-                    (cancel, currentCmdId) =>
-                    {
-                        if (cancel.CommandType == typeof(TestCommands.TestCommand) &&
-                         (currentCmdId == cancel.CommandId))
-                            Interlocked.Increment(ref cancelRecieved);
-                        return Unit.Default;
                     }));
             bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
                  cmd =>
@@ -661,15 +629,8 @@ namespace ReactiveDomain.Tests
                      Task.Delay(250).Wait();
                      Interlocked.Increment(ref proccessedCmd);
                      return true;
-                 },
-                (cancel, currentCmdId) =>
-                {
-                    if (cancel.CommandType == typeof(TestCommands.TestCommand2) &&
-                          (currentCmdId == cancel.CommandId))
-                        Interlocked.Increment(ref cancelRecieved);
-                    return Unit.Default;
-                }));
-            bus2.Subscribe(new AdHocHandler<CancelCommand>(c => Interlocked.Increment(ref cancelPublished)));
+                 }));
+            bus2.Subscribe(new AdHocHandler<Canceled>(c => Interlocked.Increment(ref cancelPublished)));
             bus2.Subscribe(new AdHocHandler<Fail>(
                 c =>
                 {
@@ -696,14 +657,11 @@ namespace ReactiveDomain.Tests
                 msg: "Expected cancel published once");
 
             Assert.IsOrBecomesTrue(
-             () => Interlocked.Read(ref cancelRecieved) == 1,
-             msg: "Expected cancel received once, actual " + cancelRecieved);
-            Assert.IsOrBecomesTrue(
                        () => Interlocked.Read(ref cancelReturned) == 1,
                        msg: "Expected cancel returned once, actual " + cancelReturned);
 
         }
-        [Fact]
+        [Fact(Skip="Connected bus scenarios currently disabled")]
         public void fire_oversubscribed_commands_should_throw_oversubscribed()
         {
             var bus = new CommandBus("local");
@@ -802,11 +760,17 @@ namespace ReactiveDomain.Tests
                      return true;
                  });
             bus.Subscribe(hndl);
+            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
+
             bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
             bus.Unsubscribe(hndl);
+            Assert.IsOrBecomesFalse(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
+
             Assert.Throws<CommandNotHandledException>(
                 () => bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
             bus.Subscribe(hndl);
+            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
+
             bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(
                 () => Interlocked.Read(ref proccessedCmd) == 2,
@@ -841,68 +805,46 @@ namespace ReactiveDomain.Tests
                 msg: "Expected command handled twice, got" + proccessedCmd);
         }
 
-        [Fact]
-        public void cancelable_commands_can_be_canceled()
-        {
-            var bus = new CommandBus("local");
-            var handler = new CancelableTestCommandHandler();
-            bus.Subscribe((IHandleCommand<TestCommands.TestCommand>)handler);
-            var cmd = new TestCommands.TestCommand(Guid.NewGuid(), null);
-            Task.Delay(100).ContinueWith(t => bus.RequestCancel(cmd));
 
-            Assert.Throws<CommandCanceledException>(
-             () =>
-             {
-                 try
-                 {
-                     bus.Fire(cmd);
-                 }
-                 catch (Exception ex)
-                 {
-                     throw ex.InnerException;
-                 }
-             });
-
-        }
-        [Fact]
+        [Fact(Skip = "Needs to be move to new token based cancellation")]
         public void noncancelable_commands_will_ignore_cancel()
         {
-            var bus = new CommandBus("local");
-            var handler = new TestCommandHandler();
-            bus.Subscribe((IHandleCommand<TestCommands.TestCommand3>)handler);
-            var cmd = new TestCommands.TestCommand3(Guid.NewGuid(), null);
-            Task.Delay(100).ContinueWith(t => bus.RequestCancel(cmd));
+            //var bus = new CommandBus("local");
+            //var handler = new TestCommandHandler();
+            //bus.Subscribe((IHandleCommand<TestCommands.TestCommand3>)handler);
+            //var cmd = new TestCommands.TestCommand3(Guid.NewGuid(), null);
+            //Task.Delay(100).ContinueWith(t => bus.RequestCancel(cmd));
 
-            bus.Fire(cmd);
+            //bus.Fire(cmd);
 
         }
-        [Fact]
+        [Fact(Skip = "Needs to be move to new token based cancellation")]
         public void cancel_should_not_cancel_others()
         {
-            var bus = new CommandBus("local");
-            var handler = new CancelableTestCommandHandler();
-            bus.Subscribe((IHandleCommand<TestCommands.TestCommand>)handler);
-            bus.Subscribe((IHandleCommand<TestCommands.TestCommand2>)handler);
-            var handler2 = new TestCommandHandler();
-            bus.Subscribe((IHandleCommand<TestCommands.TestCommand3>)handler2);
-            var cmd1 = new TestCommands.TestCommand(Guid.NewGuid(), null);
-            var cmd2 = new TestCommands.TestCommand2(Guid.NewGuid(), null);
-            var cmd3 = new TestCommands.TestCommand3(Guid.NewGuid(), null);
-            Task.Delay(100).ContinueWith(t => bus.RequestCancel(cmd1));
-            Task.Run(() => bus.Fire(cmd2));
-            Task.Run(() => bus.Fire(cmd3));
-            Assert.Throws<CommandCanceledException>(
-                () =>
-                {
-                    try
-                    {
-                        bus.Fire(cmd1);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw ex.InnerException;
-                    }
-                });
+            //var bus = new CommandBus("local");
+            //var handler = new CancelableTestCommandHandler();
+            //bus.Subscribe((IHandleCommand<TestCommands.TestCommand>)handler);
+            //bus.Subscribe((IHandleCommand<TestCommands.TestCommand2>)handler);
+            //var handler2 = new TestCommandHandler();
+            //bus.Subscribe((IHandleCommand<TestCommands.TestCommand3>)handler2);
+            //var cmd1 = new TestCommands.TestCommand(Guid.NewGuid(), null);
+            //var cmd2 = new TestCommands.TestCommand2(Guid.NewGuid(), null);
+            //var cmd3 = new TestCommands.TestCommand3(Guid.NewGuid(), null);
+            //Task.Delay(100).ContinueWith(t => bus.RequestCancel(cmd1));
+            //Task.Run(() => bus.Fire(cmd2));
+            //Task.Run(() => bus.Fire(cmd3));
+            //Assert.Throws<CommandCanceledException>(
+            //    () =>
+            //    {
+            //        try
+            //        {
+            //            bus.Fire(cmd1);
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            throw ex.InnerException;
+            //        }
+            //    });
         }
 
     }

@@ -8,12 +8,7 @@ namespace ReactiveDomain.Tests.Helpers
     public class TestCommandHandler :
         IHandleCommand<TestCommands.TestCommand3>
     {
-      
-        public void RequestCancel(CancelCommand cancelRequest)
-        {
-           //ignore cancel
-        }
-
+   
         public CommandResponse Handle(TestCommands.TestCommand3 command)
         {
             for (int i = 0; i < 5; i++)

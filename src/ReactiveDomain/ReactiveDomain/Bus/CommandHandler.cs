@@ -10,12 +10,10 @@ namespace ReactiveDomain.Bus
         private static readonly Logger Log = LogManager.GetLogger("ReactiveDomain");
         private readonly IPublisher _bus;
         private readonly IHandleCommand<T> _handler;
-        public AdHocHandler<CancelCommand> CancelHandler; 
         public CommandHandler(IPublisher bus, IHandleCommand<T> handler)
         {
             _bus = bus;
             _handler = handler;
-            CancelHandler = new AdHocHandler<CancelCommand>(RequestCancel);
         }
 
         public void Handle(T message)
@@ -35,18 +33,6 @@ namespace ReactiveDomain.Bus
                     _bus.Publish(message.Fail(ex));
                 }
             });
-        }
-
-
-        public void RequestCancel(CancelCommand message)
-        {
-            try
-            {
-                _handler.RequestCancel(message);
-            }
-            catch (Exception)
-            {
-            }
         }
     }
 }

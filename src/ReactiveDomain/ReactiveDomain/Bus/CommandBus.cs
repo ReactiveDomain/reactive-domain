@@ -29,19 +29,7 @@ namespace ReactiveDomain.Bus
             _manager = new CommandManager(this);
             _handleWrappers = new Dictionary<Type, object>();
         }
-
-        public void RequestCancel(Command command)
-        {
-            try
-            {
-                Publish(command.BuildCancel());
-            }
-            catch
-            {
-                //ignore
-            }
-        }
-
+        
         /// <summary>
         /// 
         /// </summary>
@@ -56,6 +44,16 @@ namespace ReactiveDomain.Bus
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
         {
+            var tCmd = command as TokenCancellableCommand;
+            if (tCmd?.IsCanceled ?? false)
+            {
+                Publish(tCmd.Canceled());
+                return;
+            }
+            if (!HasSubscriberFor(command.MsgTypeId))
+                // Publish(command); //a connected bus might handle this
+                throw new CommandNotHandledException(command);
+
             var rslt = Execute(command, responseTimeout, ackTimeout);
             if (rslt is Success) return;
 
@@ -122,9 +120,19 @@ namespace ReactiveDomain.Bus
         {
             try
             {
+                //todo: we're not chaining through the fire method here because it doesn't give 
+                //us the command response to return so there is some duplicated checks 
+                var tCmd = command as TokenCancellableCommand;
+                if (tCmd?.IsCanceled ?? false)
+                {
+                    response = tCmd.Canceled();
+                    Publish(response);
+                    return false;
+                }
                 if (!HasSubscriberFor(command.MsgTypeId))
-                   // Publish(command); //a connected bus might handle this
+                    // Publish(command); //a connected bus might handle this
                     throw new CommandNotHandledException(command);
+
                 response = Execute(command, responseTimeout, ackTimeout);
             }
             catch (Exception ex)
@@ -147,7 +155,6 @@ namespace ReactiveDomain.Bus
             var handleWrapper = new CommandHandler<T>(this, handler);
             _handleWrappers.Add(typeof(T), handleWrapper);
             Subscribe(handleWrapper);
-            Subscribe(handleWrapper.CancelHandler);
             return new SubscriptionDisposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command
@@ -155,7 +162,6 @@ namespace ReactiveDomain.Bus
             object wrapper;
             if (!_handleWrappers.TryGetValue(typeof(T), out wrapper)) return;
             Unsubscribe((CommandHandler<T>)wrapper);
-            Unsubscribe(((CommandHandler<T>)wrapper).CancelHandler);
             _handleWrappers.Remove(typeof(T));
         }
 

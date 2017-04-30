@@ -177,6 +177,7 @@
     <Compile Include="Asserts\SetAsserts.cs" />
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
+    <Compile Include="can_cancel_commands_via_cancellation_token.cs" />
     <Compile Include="Helpers\TestEvents.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\can_deal_with_unhandled_messages.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\can_handle_high_volume_queued_messages.cs" />
@@ -192,7 +193,6 @@
     <Compile Include="EventStore\TestAggregateCreated.cs" />
     <Compile Include="EventStore\WoftamEvent.cs" />
     <Compile Include="Helpers\Asserts.cs" />
-    <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\CountedMessageSubscriber.cs" />
     <Compile Include="Helpers\DispatcherUtil.cs" />
     <Compile Include="Helpers\MessageComparer.cs" />

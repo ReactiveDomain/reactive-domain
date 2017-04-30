@@ -68,6 +68,9 @@
       <HintPath>..\..\..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -84,6 +87,9 @@
     <Reference Include="ReactiveUI, Version=6.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\reactiveui-core.6.5.2\lib\Net45\ReactiveUI.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="ReactiveUI.6.5.0.0.Fakes">
+      <HintPath>FakesAssemblies\ReactiveUI.6.5.0.0.Fakes.dll</HintPath>
     </Reference>
     <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
@@ -203,6 +209,7 @@
     <Compile Include="Messaging\PriorityQueue.cs" />
     <Compile Include="Messaging\TimeoutService.cs" />
     <Compile Include="Bus\TransientSubscriber.cs" />
+    <Compile Include="Messaging\TokenCancellableCommand.cs" />
     <Compile Include="Transport\TcpOutboundMessageHandler.cs" />
     <Compile Include="Transport\TcpInboundMessageHandler.cs" />
     <Compile Include="Transport\TcpBusSide.cs" />
@@ -326,6 +333,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <Fakes Include="Fakes\ReactiveUI.fakes" />
     <None Include="Logging\NLog.config" />
     <None Include="Messaging\NLog.xsd">
       <SubType>Designer</SubType>

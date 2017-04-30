@@ -49,7 +49,7 @@ namespace ReactiveDomain.Bus
                                         },
                                         () =>
                                         {
-                                            _bus.Publish(command.BuildCancel());
+                                            _bus.Publish(new Canceled(command));
                                             CommandTracker tr;
                                             if(_pendingCommands.TryRemove(command.MsgId, out tr))
                                                 tr.Dispose();
