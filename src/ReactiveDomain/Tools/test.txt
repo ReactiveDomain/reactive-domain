@@ -1,0 +1,10 @@
+Select disk 0
+clean
+create partition primary size=300
+format quick fs=fat32 label='System'
+assign letter='S'
+active
+create partition primary
+format quick fs=ntfs label='Windows'
+assign letter='W'
+exit
