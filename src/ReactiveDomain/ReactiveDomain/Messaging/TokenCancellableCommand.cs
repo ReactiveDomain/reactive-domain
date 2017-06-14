@@ -4,8 +4,6 @@ using ReactiveDomain.Bus;
 
 namespace ReactiveDomain.Messaging
 {
-    //todo: remove cancelation features from command
-    //todo: move this into reactive-domain
     /// <summary>
     /// A command that supports cancellation via cancelation tokens
     /// n.b. this will only work inside a single process

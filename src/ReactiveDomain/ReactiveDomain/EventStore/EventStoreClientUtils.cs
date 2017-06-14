@@ -77,15 +77,10 @@ namespace ReactiveDomain.EventStore
         {
             JToken eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
             var typeName = (string)eventClrTypeName;
-            //todo: remove this
-            //hack conversion for namespace
             var type = Type.GetType(typeName);
             if (type == null)
             {
-                var fullname = typeName.Split(',').First();
-                var name = fullname.Split('.').Last();
-                typeName = $"Greylock.StudyManagement.Messages.{name}, Greylock.StudyManagement, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
-                type = Type.GetType(typeName);
+                throw new UnkownTypeException(typeName);
             }
             object @event = null;
             try
@@ -99,6 +94,7 @@ namespace ReactiveDomain.EventStore
             
             return @event;
         }
+
 
         public static string GetStreamNameBasedOnDomainObjectType(
                                                                     this Type typeofDomainObject,
@@ -160,5 +156,11 @@ namespace ReactiveDomain.EventStore
                                                                  subscriptionDropped,
                                                                  userCredentials);
         }
+    }
+
+    public class UnkownTypeException : Exception
+    {
+        public UnkownTypeException(string typeName):base($"TypeName'{typeName}' was not found in the currently loaded appdomains.")
+        {}
     }
 }
