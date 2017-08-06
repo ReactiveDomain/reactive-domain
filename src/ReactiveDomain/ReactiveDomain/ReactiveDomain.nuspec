@@ -12,7 +12,6 @@
     <tags>reactive domain cqrs</tags>
     <dependencies>
       <dependency id="EventStore.Client.Embedded" version="3.9.2" />
-      <dependency id="JustGiving.EventStore.Client" version="1.0.1" />
       <dependency id="Microsoft.Tpl.DataFlow" version="4.5.24" />
       <dependency id="Nito.AsyncEx.Dataflow" version="3.0" />
       <dependency id="NLog" version="4.3.10" />
