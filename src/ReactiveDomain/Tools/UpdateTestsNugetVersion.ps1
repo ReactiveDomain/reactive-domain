@@ -1,6 +1,7 @@
-# UpdateNugetVersion.ps1: Build script to modify reactiveDomain .nuspec file
-#			  Packages.config file will be checked for the correct
-#			  Nuget version and will insert that version in the nuspec file	
+# UpdateTestNugetVersion.ps1: 	Build script to modify reactiveDomain.Tests .nuspec file
+#			 	Packages.config file will be checked for the correct
+#			  	Nuget version and will insert that version in the nuspec file
+#	                  	before the ReactiveDomain.Tests nuGet is built	
 #
 # Author: Allen Thurman
 #
