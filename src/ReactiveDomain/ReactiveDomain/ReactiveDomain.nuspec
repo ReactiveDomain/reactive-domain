@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain</id>
-    <version>0.6</version>
+    <version>0.6.6428.29086</version>
     <authors>pki</authors>
     <owners>PKI</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -13,11 +13,10 @@
     <dependencies>
       <dependency id="EventStore.Client.Embedded" version="3.9.2" />
       <dependency id="Microsoft.Tpl.DataFlow" version="4.5.24" />
-      <dependency id="Nito.AsyncEx.Dataflow" version="3.0" />
+      <dependency id="Nito.AsyncEx.Dataflow" version="3.0.0" />
       <dependency id="NLog" version="4.3.10" />
       <dependency id="NuGet.CommandLine" version="3.4.3" />
-      <dependency id="ReactiveUI" version="6.5" />
-      <dependency id="reactiveui-events" version="6.5" />
+      <dependency id="ReactiveUI" version="6.5.2" />
       <dependency id="Rx-PlatformServices" version="2.2.5" />
       <dependency id="Rx-XAML" version="2.2.5" />
       <dependency id="Splat" version="1.6.2" />
@@ -25,6 +24,6 @@
   </metadata>
   <files>
     <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll" target="lib" />
-    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.pdb" target="lib" />    
+    <file src="..\ReactiveDomain\bin\x64\Debug\ReactiveDomain.pdb" target="lib" />
   </files>
 </package>
