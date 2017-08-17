@@ -22,6 +22,10 @@ Write-Host "Solution dir is " $solutiondir
 $path = "$solutiondir\ReactiveDomain.Tests\ReactiveDomain.Tests.nuspec"
 Write-Host "NuSpec File is" $path
 
+
+
+# Get version of reactivedomain.tests dll ********************************************
+
 $dll = "$solutiondir\ReactiveDomain.Tests\bin\x64\Debug\ReactiveDomain.Tests.dll" 
 Write-Host "Loading ReactiveDomain.Tests dll: " $dll
 
@@ -32,7 +36,23 @@ $Assemblyversion = $AssemblyName.version.ToString()
 Write-Host 
 Write-Host "ReactiveDomain.Tests Assembly version is" $Assemblyversion
 
-# Get version of the Dependent packages that are installed
+# ************************************************************************************
+
+# Get version of reactivedomain dll **************************************************
+$RDdll = "$solutiondir\ReactiveDomain\bin\x64\Debug\ReactiveDomain.dll" 
+Write-Host "Loading ReactiveDomain.dll: " $RDdll
+
+$RDAssembly = [Reflection.Assembly]::Loadfile($RDdll)
+$RDAssemblyName = $RDAssembly.GetName()
+$RDAssemblyversion = $RDAssemblyName.version.ToString()
+
+Write-Host 
+Write-Host "ReactiveDomain Assembly version is" $RDAssemblyversion
+
+# ************************************************************************************
+
+
+# Get version of the Dependent packages that are installed ****************************************
 $packagexml = [xml](Get-Content $packages_Config)
 
 $FA = $packagexml.SelectSingleNode('//packages/package[@id="FluentAssertions"]')
@@ -71,6 +91,8 @@ $xunitRV = $packagexml.SelectSingleNode('//packages/package[@id="xunit.runner.vi
 $xunitRVVersion = $xunitRV.version
 Write-Host "Xunit.runner.visualstudio Nuget version is" $xunitRVVersion
 
+# *************************************************************************************************
+
 
 # Open reactiveDomain.tests.nuspec file for editing
 $xml = [xml](Get-Content $path)
@@ -82,6 +104,10 @@ $node.version = $Assemblyversion
 # Modify the .nuspec file to get the versions of the dependencies
 $faNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="FluentAssertions"]')
 $faNode.version = $FluentAssertionsVersion
+
+# Modify the .nuspec file to get the versions of the dependencies
+$rdNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="ReactiveDomain"]')
+$rdNode.version = $RDAssemblyversion
 
 $xunitNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="xunit"]')
 $xunitNode.version = $xunitVersion
