@@ -177,6 +177,15 @@
     <Compile Include="Asserts\SetAsserts.cs" />
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
+    <Compile Include="Helpers\TestEvents.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_deal_with_unhandled_messages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_handle_high_volume_queued_messages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_handle_inherited_message_duplication.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_handle_inherited_messages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_handle_multiple_publisher_threads_queued.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_handle_ordered_queued_messages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_process_queued_messages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\can_unsubscribe_queued_messages.cs" />
     <Compile Include="ConcurrentMessageQueue.cs" />
     <Compile Include="EventStore\GetEventStoreRepositoryIntegrationTests.cs" />
     <Compile Include="EventStore\TestAggregate.cs" />
@@ -184,18 +193,23 @@
     <Compile Include="EventStore\WoftamEvent.cs" />
     <Compile Include="Helpers\Asserts.cs" />
     <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\CountedMessageSubscriber.cs" />
     <Compile Include="Helpers\DispatcherUtil.cs" />
     <Compile Include="Helpers\MessageComparer.cs" />
     <Compile Include="Helpers\TestAggregate.cs" />
     <Compile Include="Helpers\TestAggregateMessages.cs" />
     <Compile Include="Helpers\TestCommandHandler.cs" />
     <Compile Include="Helpers\TestCommands.cs" />
+    <Compile Include="Helpers\TestMessagePublisher.cs" />
     <Compile Include="Helpers\TestMessages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\TestInheritedMessageSubscriber.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\TestMessageSubscriber.cs" />
     <Compile Include="Helpers\TestQueue.cs" />
     <Compile Include="Specifications\CommandBusSpecification.cs" />
     <Compile Include="Specifications\MockRepositorySpecification.cs" />
     <Compile Include="Mocks\MockEventStoreRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\when_using_inherited_queued_subscriber.cs" />
     <Compile Include="Transport\MockTcpConnection.cs" />
     <Compile Include="Transport\TcpBusClientSideTests.cs" />
     <Compile Include="when_creating_a_message.cs" />
@@ -203,7 +217,9 @@
     <Compile Include="when_ensuring_values.cs" />
     <Compile Include="when_sending_commands.cs" />
     <Compile Include="when_serializing_commands.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\when_using_counted_message_subscriber.cs" />
     <Compile Include="when_using_mock_repository.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\when_using_queued_subscriber.cs" />
     <Compile Include="when_using_testqueue.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -221,6 +237,7 @@
       <Name>ReactiveDomain</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

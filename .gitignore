@@ -251,3 +251,5 @@ paket-files/
 .idea/
 *.sln.iml
 
+*.suo
+src/ReactiveDomain/.vs/ReactiveDomain/v14/.suo

@@ -56,14 +56,6 @@
       <HintPath>..\..\..\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="JustGiving.EventStore.Http.Client">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.1\lib\JustGiving.EventStore.Http.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="JustGiving.EventStore.Http.SubscriberHost">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.1\lib\JustGiving.EventStore.Http.SubscriberHost.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
       <Private>True</Private>
@@ -134,9 +126,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BootStrap.cs" />
+    <Compile Include="Bus\AdHocHandler - Copy.cs" />
     <Compile Include="Bus\AdHocTypedCommandHandler.cs" />
     <Compile Include="Bus\AdHocCommandHandler.cs" />
-    <Compile Include="Bus\AdHocHandler.cs" />
+    <Compile Include="Bus\IdempotentHandler.cs" />
     <Compile Include="Bus\BusConnector.cs" />
     <Compile Include="Bus\BusWrapper.cs" />
     <Compile Include="Bus\CommandBus.cs" />
@@ -169,6 +162,7 @@
     <Compile Include="Bus\QueuedHandlerPulse.cs" />
     <Compile Include="Bus\QueuedHandlerSleep.cs" />
     <Compile Include="Bus\QueuedHandlerThreadPool.cs" />
+    <Compile Include="Bus\QueuedSubscriber.cs" />
     <Compile Include="Bus\QueueMonitor.cs" />
     <Compile Include="Bus\QueueStatsCollector.cs" />
     <Compile Include="Bus\SubscriptionDisposer.cs" />
@@ -323,7 +317,9 @@
     <Compile Include="ViewObjects\ViewBase.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Logging\NLog.config" />
     <None Include="Messaging\NLog.xsd">
       <SubType>Designer</SubType>
