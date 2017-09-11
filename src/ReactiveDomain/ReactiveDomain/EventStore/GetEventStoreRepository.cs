@@ -75,15 +75,15 @@ namespace ReactiveDomain.EventStore
             var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
-            var sliceStart = 0;
+            long sliceStart = 0;
             StreamEventsSlice currentSlice;
             do
             {
-                var sliceCount = sliceStart + ReadPageSize <= version
+                long sliceCount = sliceStart + ReadPageSize <= version
                                     ? ReadPageSize
                                     : version - sliceStart;
-
-                currentSlice = _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, sliceStart, sliceCount, false).Result;
+                //todo: why does this need an int with v 4.0 of eventstore?
+                currentSlice = _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, sliceStart, (int)sliceCount, false).Result;
 
                 if (currentSlice.Status == SliceReadStatus.StreamNotFound)
                     throw new AggregateNotFoundException(id, typeof(TAggregate));

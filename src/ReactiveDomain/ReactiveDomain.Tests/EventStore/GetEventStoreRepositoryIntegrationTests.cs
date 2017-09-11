@@ -18,7 +18,7 @@ namespace ReactiveDomain.Tests.EventStore
 
     public class GetEventStoreRepositoryIntegrationTests : IDisposable
     {
-       
+        private const string SkipReason = "EventStore";
         /// <summary>
         /// Set this to the TCP endpoint on which the Event Store is running.
         /// </summary>
@@ -46,7 +46,7 @@ namespace ReactiveDomain.Tests.EventStore
         }
 
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanGetLatestVersionById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
@@ -56,7 +56,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(3000, retrieved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanGetSpecificVersionFromFirstPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
@@ -66,7 +66,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(64, retrieved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanGetSpecificVersionFromSubsequentPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 500 /* excludes TestAggregateCreated */);
@@ -76,7 +76,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(125, retrieved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanHandleLargeNumberOfEventsInOneTransaction()
         {
             const int numberOfEvents = 50000;
@@ -88,7 +88,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(numberOfEvents, saved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanSaveExistingAggregate()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
@@ -101,7 +101,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(150, secondSaved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void CanSaveMultiplesOfWritePageSize()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 1500 /* excludes TestAggregateCreated */);
@@ -110,7 +110,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(1500, saved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void ClearsEventsFromAggregateOnceCommitted()
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
@@ -120,7 +120,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(0, ((IAggregate)aggregateToSave).GetUncommittedEvents().Count);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void ThrowsOnRequestingSpecificVersionHigherThanExists()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -128,7 +128,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Throws<AggregateVersionException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId, 50));
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void GetsEventsFromCorrectStreams()
         {
             var aggregate1Id = SaveTestAggregateWithoutCustomHeaders(_repo, 100);
@@ -141,13 +141,13 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Equal(50, secondSaved.AppliedEventCount);
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void ThrowsOnGetNonExistentAggregate()
         {
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(Guid.NewGuid()));
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -160,7 +160,7 @@ namespace ReactiveDomain.Tests.EventStore
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
         }
 
-        [Fact(Skip = "EventStore")]
+        [Fact(Skip = SkipReason)]
         public void SavesCommitHeadersOnEachEvent()
         {
             var commitId = Guid.NewGuid();
