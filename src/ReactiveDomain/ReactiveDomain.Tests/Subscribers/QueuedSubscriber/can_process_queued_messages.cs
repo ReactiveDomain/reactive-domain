@@ -179,6 +179,8 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         [Fact]
         public void can_handle_all_messages()
         {
+            TestQueue.Clear();
+
             var cmdHandler = new TestCommandSubscriber(Bus);
 
             // this is just an example command - choice to fire this one was random
@@ -191,7 +193,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
                 TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(
-                ()=> BusMessages.Count >= 3,
+                ()=> BusMessages.Count == 3,
                 1000,
                 $"Expected 3 bus messages for InformUserCmd, found {BusMessages.Count}");
                
