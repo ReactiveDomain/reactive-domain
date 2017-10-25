@@ -22,7 +22,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         }
 
         [Fact]
-        public void can_handle_message() 
+        public void can_handle_message()
         {
             Assert.IsOrBecomesTrue(
                 () => BusMessages.Count == 1,
@@ -30,13 +30,13 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
                 $"Expected 1 Message, found {BusMessages.Count}");
 
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1, 
+                () => Interlocked.Read(ref MessageSubscriber.TimesTestMessageHandled) == 1,
                 1000,
                 $"Expected 1 Message, found {MessageSubscriber.TimesTestMessageHandled}");
         }
 
         [Fact]
-        public void can_handle_two_messages() 
+        public void can_handle_two_messages()
         {
             var msg2 = new TestMessage();
             Bus.Publish(msg2);
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         }
 
         [Fact]
-        public void can_handle_two_different_messages() 
+        public void can_handle_two_different_messages()
         {
             var msg2 = new TestMessage2();
             Bus.Publish(msg2);
@@ -84,12 +84,12 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         }
 
         [Fact]
-        public void cannot_create_queued_subscriber_without_bus() 
+        public void cannot_create_queued_subscriber_without_bus()
         {
             var ex =
-                 Assert.Throws<ArgumentNullException>(
-                                                        () => new TestQueuedSubscriber(null)
-                                                    );
+                Assert.Throws<ArgumentNullException>(
+                    () => new TestQueuedSubscriber(null)
+                );
         }
 
         [Fact]
@@ -119,7 +119,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
 
 
             Assert.IsOrBecomesTrue(
-            () => Interlocked.Read(ref MessageSubscriber.TimesChildTestMessageHandled) == 1,
+                () => Interlocked.Read(ref MessageSubscriber.TimesChildTestMessageHandled) == 1,
                 null,
                 $"Expected 1 ChildTestMessage, found {MessageSubscriber.TimesChildTestMessageHandled}");
 
@@ -176,6 +176,41 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
                 $"Expected 2 TimesTestMessage2Handled by second subscriber, found {secondSubscriber.TimesTestMessage2Handled}");
         }
 
-       
+        [Fact]
+        public void can_handle_all_messages()
+        {
+            var cmdHandler = new TestCommandSubscriber(Bus);
+
+            // this is just an example command - choice to fire this one was random
+            var cmd = new InformUserCmd("title",
+                                        "message",
+                                        Guid.NewGuid(),
+                                        null);
+            Bus.Fire(cmd,
+                "exception message",
+                TimeSpan.FromSeconds(5));
+
+            Assert.IsOrBecomesTrue(
+                ()=> BusMessages.Count >= 3,
+                1000,
+                $"Expected 3 bus messages for InformUserCmd, found {BusMessages.Count}");
+               
+
+            Message deQdMsg;
+            if (BusMessages.TryDequeue(out deQdMsg))
+            {
+                Assert.IsAssignableFrom<Message>(deQdMsg);
+            }
+
+            if (BusMessages.TryDequeue(out deQdMsg))
+            {
+                Assert.IsAssignableFrom<Message>(deQdMsg);
+            }
+
+            if (BusMessages.TryDequeue(out deQdMsg))
+            {
+                Assert.IsAssignableFrom<Message>(deQdMsg);
+            }
+        }
     }
 }

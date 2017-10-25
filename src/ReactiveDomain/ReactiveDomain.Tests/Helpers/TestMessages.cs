@@ -71,5 +71,25 @@ namespace ReactiveDomain.Tests.Helpers
             MessageNumber = msgNumber;
         }
     }
+
+    public class InformUserCmd : Command
+    {
+        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId => TypeId;
+
+        public readonly string Title;
+        public readonly string Message;
+
+        public InformUserCmd(
+            string title,
+            string message,
+            Guid correlationId,
+            Guid? sourceId)
+            : base(correlationId, sourceId)
+        {
+            Title = title;
+            Message = message;
+        }
+    }
 }
 
