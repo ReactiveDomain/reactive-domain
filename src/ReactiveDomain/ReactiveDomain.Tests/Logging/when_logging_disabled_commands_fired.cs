@@ -70,7 +70,7 @@ namespace ReactiveDomain.Tests.Logging
 
         }
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_commands_not_logged()
         {
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));

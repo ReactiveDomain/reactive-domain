@@ -49,7 +49,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_events_logged()
         {
             TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));

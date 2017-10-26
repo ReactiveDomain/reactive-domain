@@ -74,7 +74,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_commands_logged()
         {
 

@@ -10,7 +10,6 @@ using Xunit;
 namespace ReactiveDomain.Tests.Logging
 {
 
-
     // ReSharper disable once InconsistentNaming
     public class when_commands_fired :
         with_message_logging_enabled,
@@ -73,7 +72,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact]
+        [Fact(Skip="pending deletion of log stream")]
         public void can_verify_commands_logged()
         {
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
@@ -87,7 +86,6 @@ namespace ReactiveDomain.Tests.Logging
             Assert.True(_testCommandCount == 1, $"Last event count {_testCommandCount} doesn't match expected value {1}");
 
         }
-
 
         public void Handle(Message msg)
         {

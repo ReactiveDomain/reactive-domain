@@ -80,7 +80,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_high_volume_traffic_logged()
         {
             // Wait for last command to be queued

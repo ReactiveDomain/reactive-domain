@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
+using EventStore.ClientAPI;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Tests.Logging
@@ -35,6 +37,7 @@ namespace ReactiveDomain.Tests.Logging
             if (disposing)
             {
                 Logging?.Dispose();
+                //TODO: figure out how to delete test logging streams
             }
             _disposed = true;
             base.Dispose(disposing);

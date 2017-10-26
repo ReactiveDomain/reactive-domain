@@ -41,7 +41,7 @@ namespace ReactiveDomain.Logging
             get
             {
                 int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;                
-                return $"{_streamPrefix}log-{DateTime.UtcNow.Year}-{DateTime.UtcNow.Month}-{DateTime.UtcNow.Day}.{amPm}";
+                return $"{_streamPrefix}-Log-{DateTime.UtcNow.Year}-{DateTime.UtcNow.Month}-{DateTime.UtcNow.Day}.{amPm}";
             }
 
         }

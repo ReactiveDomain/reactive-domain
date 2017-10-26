@@ -40,7 +40,7 @@ namespace ReactiveDomain.Tests.Logging
 
         }
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_commands_not_logged_when_disabled()
         {
             Assert.False(Logging.Enabled);
@@ -110,7 +110,7 @@ namespace ReactiveDomain.Tests.Logging
 
         }
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_events_not_logged_when_disabled()
         {
             _countedEventCount = 0;
@@ -164,7 +164,7 @@ namespace ReactiveDomain.Tests.Logging
                 $"Found {_countedEventCount} of third set of events on log. Should be 0"));
         }
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_mixed_messages_not_logged_when_disabled()
         {
             _countedEventCount = 0;

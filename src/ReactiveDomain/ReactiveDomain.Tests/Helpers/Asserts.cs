@@ -45,7 +45,5 @@ namespace Xunit
                     $"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
             }
         }
-    }
-
-   
+    }  
 }

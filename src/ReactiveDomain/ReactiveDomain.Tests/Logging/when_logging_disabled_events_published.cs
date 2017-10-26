@@ -50,7 +50,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact]
+        [Fact(Skip = "pending deletion of log stream")]
         public void can_verify_events_not_logged()
         {
             // wait for all events to be queued
