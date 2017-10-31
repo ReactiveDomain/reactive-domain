@@ -11,7 +11,7 @@ namespace ReactiveDomain.Tests.Logging
     {
         //protected member Logging class that inherits from QueuedSubscriber
         protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"Test-{Guid.NewGuid():N}-";
+        protected string StreamName = $"Test-{Guid.NewGuid():N}";
 
         protected override void Given()
         {

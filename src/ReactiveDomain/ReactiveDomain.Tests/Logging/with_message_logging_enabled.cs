@@ -12,7 +12,7 @@ namespace ReactiveDomain.Tests.Logging
         with_event_store
     {
         protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"Test-{Guid.NewGuid():N}-";
+        protected string StreamName = $"Test-{Guid.NewGuid():N}";
 
         protected override void Given()
         {
