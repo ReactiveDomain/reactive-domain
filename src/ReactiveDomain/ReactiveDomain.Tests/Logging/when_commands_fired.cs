@@ -15,10 +15,11 @@ namespace ReactiveDomain.Tests.Logging
         with_message_logging_enabled,
         IHandle<Message>
     {
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private const int MaxCountedCommands = 25;
+
+        private Guid _correlationId;
         private IListener _listener;
 
-        private readonly int _maxCountedCommands = 25;
         private int _multiFireCount;
         private int _testCommandCount;
 
@@ -32,6 +33,8 @@ namespace ReactiveDomain.Tests.Logging
 
         protected override void When()
         {
+            _correlationId = Guid.NewGuid();
+
             // command must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
 
@@ -44,21 +47,15 @@ namespace ReactiveDomain.Tests.Logging
             _listener.Start(Logging.FullStreamName);
 
             // create and fire a set of commands
-            for (int i = 0; i < _maxCountedCommands; i++)
+            for (int i = 0; i < MaxCountedCommands; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                                        $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
-
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
 
             }
             var tstCmd = new TestCommands.TestCommand3(
@@ -72,15 +69,14 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact(Skip="pending deletion of log stream")]
-        public void can_verify_commands_logged()
+        [Fact(Skip = "pending deletion of log stream")]
+        public void all_commands_are_logged()
         {
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
             // Wait  for last command to be queued
+            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
 
-            //    // Wait  for last event to be queued
-            Assert.IsOrBecomesTrue(() => _multiFireCount == _maxCountedCommands, 9000);
-            Assert.True(_multiFireCount == _maxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {_maxCountedCommands}");
+            Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000);
+            Assert.True(_multiFireCount == MaxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
             Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000);
 
             Assert.True(_testCommandCount == 1, $"Last event count {_testCommandCount} doesn't match expected value {1}");
@@ -89,7 +85,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd) _multiFireCount++;
+            if (msg is TestCommands.TestCommand2) _multiFireCount++;
             if (msg is TestCommands.TestCommand3) _testCommandCount++;
         }
     }

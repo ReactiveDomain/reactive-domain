@@ -65,10 +65,9 @@ namespace ReactiveDomain.Tests.Logging
                         Guid.NewGuid()));
 
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
-                    Guid.NewGuid(),
-                    null);
+                var cmd = new TestCommands.TestCommand2(
+                                        Guid.NewGuid(),
+                                        null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -109,7 +108,7 @@ namespace ReactiveDomain.Tests.Logging
             Assert.Throws<TrueException>(() =>Assert.IsOrBecomesTrue(
                 () => _multiFireCount > 0,
                 9000,
-                $"Found {_multiFireCount} InformUserCmds on log - expected 0"));
+                $"Found {_multiFireCount} TestCommand2s on log - expected 0"));
 
             Assert.True(_multiFireCount == 0, $"Command count {_multiFireCount}  expected 0");
 
@@ -132,7 +131,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd) _multiFireCount++;
+            if (msg is TestCommands.TestCommand2) _multiFireCount++;
             if (msg is TestCommands.TestCommand3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
             if (msg is TestDomainEvent) _testDomainEventCount++;

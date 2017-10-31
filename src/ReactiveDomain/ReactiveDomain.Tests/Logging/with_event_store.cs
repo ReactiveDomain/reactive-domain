@@ -28,7 +28,6 @@ namespace ReactiveDomain.Tests.Logging
 
         protected override void Given()
         {
-
             TcpEndPointConnection = EventStoreConnection.Create(IntegrationTestTcpEndPoint);
             EventStore = new EventStoreLoader();
 
@@ -40,9 +39,6 @@ namespace ReactiveDomain.Tests.Logging
                     @"c:\program files\PerkinElmer\Greylock\eventStore"));
 
             Repo = new GetEventStoreRepository(EventStore.Connection);
-
-            Thread.Sleep(2000);
-            // is this where I need the sleep, or in child?
         }
 
         #region IDisposable

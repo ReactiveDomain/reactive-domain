@@ -57,8 +57,7 @@ namespace ReactiveDomain.Tests.Logging
                         Guid.NewGuid()));
 
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                                        $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -81,7 +80,7 @@ namespace ReactiveDomain.Tests.Logging
 
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_high_volume_traffic_logged()
+        public void call_messages_are_logged()
         {
             // Wait for last command to be queued
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(10));
@@ -100,7 +99,7 @@ namespace ReactiveDomain.Tests.Logging
 
             Assert.True(_countedEventCount == _maxCountedMessages, $"Message {_countedEventCount} doesn't match expected index {_maxCountedMessages}");
 
-            // Wait  for last InformUserCmd to be "heard" from logger/repo
+            // Wait  for last TestCommand2 to be "heard" from logger/repo
             Assert.IsOrBecomesTrue(() => _commandFireCount == _maxCountedMessages,
                 3000,
                  $"Command count {_commandFireCount} doesn't attain expected index {_maxCountedMessages}");
@@ -135,7 +134,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd)
+            if (msg is TestCommands.TestCommand2)
                 _commandFireCount++;
             else if (msg is TestCommands.TestCommand3)
                 _lastCommandCount++;

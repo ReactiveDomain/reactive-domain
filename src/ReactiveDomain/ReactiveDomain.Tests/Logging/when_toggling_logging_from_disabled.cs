@@ -41,7 +41,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_commands_not_logged_when_disabled()
+        public void commands_logged_only_while_logging_is_enabled()
         {
             Assert.False(Logging.Enabled);
 
@@ -50,10 +50,9 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
-                    Guid.NewGuid(),
-                    null);
+                var cmd = new TestCommands.TestCommand2(
+                                        Guid.NewGuid(),
+                                        null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -72,10 +71,9 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
-                    Guid.NewGuid(),
-                    null);
+                var cmd = new TestCommands.TestCommand2(
+                                        Guid.NewGuid(),
+                                        null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -93,10 +91,9 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
-                    Guid.NewGuid(),
-                    null);
+                var cmd = new TestCommands.TestCommand2(
+                                        Guid.NewGuid(),
+                                        null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -111,7 +108,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_events_not_logged_when_disabled()
+        public void events_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
 
@@ -165,7 +162,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_mixed_messages_not_logged_when_disabled()
+        public void mixed_messages_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
 
@@ -177,14 +174,9 @@ namespace ReactiveDomain.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
-                    Guid.NewGuid(),
-                    null);
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+                var cmd = new TestCommands.TestCommand2(
+                                        Guid.NewGuid(),
+                                        null);
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -209,8 +201,7 @@ namespace ReactiveDomain.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                     Guid.NewGuid(),
                     null);
 
@@ -242,8 +233,7 @@ namespace ReactiveDomain.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new InformUserCmd("title",
-                    $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                     Guid.NewGuid(),
                     null);
 
@@ -268,7 +258,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd)
+            if (msg is TestCommands.TestCommand2)
                 _multiFireCount++;
 
             if (msg is CountedEvent)

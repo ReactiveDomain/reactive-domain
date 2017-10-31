@@ -184,10 +184,10 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             var cmdHandler = new TestCommandSubscriber(Bus);
 
             // this is just an example command - choice to fire this one was random
-            var cmd = new InformUserCmd("title",
-                                        "message",
-                                        Guid.NewGuid(),
-                                        null);
+            var cmd = new TestCommands.TestCommand2(
+                Guid.NewGuid(),
+                null);
+
             Bus.Fire(cmd,
                 "exception message",
                 TimeSpan.FromSeconds(5));
@@ -195,7 +195,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             Assert.IsOrBecomesTrue(
                 ()=> BusMessages.Count == 3,
                 1000,
-                $"Expected 3 bus messages for InformUserCmd, found {BusMessages.Count}");
+                $"Expected 3 bus messages for TestCommand2, found {BusMessages.Count}");
                
 
             Message deQdMsg;

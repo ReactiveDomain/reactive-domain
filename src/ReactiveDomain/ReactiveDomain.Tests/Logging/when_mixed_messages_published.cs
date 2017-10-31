@@ -43,8 +43,7 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                                        $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -91,7 +90,7 @@ namespace ReactiveDomain.Tests.Logging
             Assert.True(_testDomainEventCount == _maxCountedEvents, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
 
 
-            // Wait  for last InformUserCmd to be "heard" from logger/repo
+            // Wait  for last TestCommand2 to be "heard" from logger/repo
             Assert.IsOrBecomesTrue(() => _multiFireCount == _maxCountedMessages, 
                 3000,
                  $"Command count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
@@ -105,7 +104,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd) _multiFireCount++;
+            if (msg is TestCommands.TestCommand2) _multiFireCount++;
             if (msg is TestCommands.TestCommand3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
             if (msg is TestDomainEvent) _testDomainEventCount++;

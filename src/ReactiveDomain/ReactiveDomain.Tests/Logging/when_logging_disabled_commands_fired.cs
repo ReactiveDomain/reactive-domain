@@ -46,18 +46,12 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedCommands; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new InformUserCmd("title",
-                                        $"message{i}",
+                var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
-
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
 
             }
             var tstCmd = new TestCommands.TestCommand3(
@@ -71,7 +65,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_commands_not_logged()
+        public void can_verify_commands_are_not_logged()
         {
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
             // Wait  for last command to be queued
@@ -94,7 +88,7 @@ namespace ReactiveDomain.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is InformUserCmd) _multiFireCount++;
+            if (msg is TestCommands.TestCommand2) _multiFireCount++;
             if (msg is TestCommands.TestCommand3) _testCommandCount++;
         }
     }
