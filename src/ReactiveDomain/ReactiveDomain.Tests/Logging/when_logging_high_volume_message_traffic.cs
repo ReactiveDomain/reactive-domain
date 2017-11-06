@@ -80,7 +80,7 @@ namespace ReactiveDomain.Tests.Logging
 
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void call_messages_are_logged()
+        public void all_messages_are_logged()
         {
             // Wait for last command to be queued
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(10));
