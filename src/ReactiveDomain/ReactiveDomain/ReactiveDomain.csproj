@@ -186,6 +186,7 @@
     <Compile Include="FrameFormats\TwoByte128X128.cs" />
     <Compile Include="FrameFormats\TwoByte256X256.cs" />
     <Compile Include="FrameFormats\TwoByte512X512.cs" />
+    <Compile Include="Logging\EventStoreMessageLogger.cs" />
     <Compile Include="Memory\BufferManager.cs" />
     <Compile Include="Memory\WrappedSquareImage.cs" />
     <Compile Include="Memory\PinnedBuffer.cs" />

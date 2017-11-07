@@ -71,5 +71,6 @@ namespace ReactiveDomain.Tests.Helpers
             MessageNumber = msgNumber;
         }
     }
+
 }
 

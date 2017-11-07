@@ -178,6 +178,18 @@
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
     <Compile Include="Helpers\TestEvents.cs" />
+    <Compile Include="Logging\when_commands_are_fired.cs" />
+    <Compile Include="Logging\when_events_are_published.cs" />
+    <Compile Include="Logging\when_logging_high_volume_message_traffic.cs" />
+    <Compile Include="Logging\when_logging_disabled_and_commands_are_fired.cs" />
+    <Compile Include="Logging\when_logging_disabled_and_events_are_published.cs" />
+    <Compile Include="Logging\when_logging_disabled_and_mixed_messages_are_published.cs" />
+    <Compile Include="Logging\when_mixed_messages_are_published.cs" />
+    <Compile Include="Logging\when_toggling_logging.cs" />
+    <Compile Include="Logging\when_toggling_logging_from_disabled.cs" />
+    <Compile Include="Logging\with_event_store.cs" />
+    <Compile Include="Logging\with_message_logging_disabled.cs" />
+    <Compile Include="Logging\with_message_logging_enabled.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\can_deal_with_unhandled_messages.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\can_handle_high_volume_queued_messages.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\can_handle_inherited_message_duplication.cs" />
@@ -202,6 +214,7 @@
     <Compile Include="Helpers\TestCommands.cs" />
     <Compile Include="Helpers\TestMessagePublisher.cs" />
     <Compile Include="Helpers\TestMessages.cs" />
+    <Compile Include="Subscribers\QueuedSubscriber\TestCommandSubscriber.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\TestInheritedMessageSubscriber.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\TestMessageSubscriber.cs" />
     <Compile Include="Helpers\TestQueue.cs" />
