@@ -11,7 +11,7 @@ namespace ReactiveDomain.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    public class when_commands_fired :
+    public class when_commands_are_fired :
         with_message_logging_enabled,
         IHandle<Message>
     {
@@ -26,7 +26,7 @@ namespace ReactiveDomain.Tests.Logging
         private TestCommandSubscriber _cmdHandler;
 
 
-        static when_commands_fired()
+        static when_commands_are_fired()
         {
             BootStrap.Load();
         }

@@ -11,11 +11,11 @@ namespace ReactiveDomain.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    public class when_logging_disabled_mixed_messages_published :
+    public class when_logging_disabled_and_mixed_messages_are_published :
         with_message_logging_disabled,
         IHandle<Message>
     {
-        static when_logging_disabled_mixed_messages_published()
+        static when_logging_disabled_and_mixed_messages_are_published()
         {
             BootStrap.Load();
         }
@@ -90,7 +90,7 @@ namespace ReactiveDomain.Tests.Logging
 
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_mixed_messages_not_logged()
+        public void mixed_messages_are_not_logged()
         {
             // all events published, commands fired
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));

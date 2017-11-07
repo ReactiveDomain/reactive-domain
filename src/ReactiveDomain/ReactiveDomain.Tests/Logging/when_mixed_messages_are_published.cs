@@ -9,7 +9,7 @@ using Xunit;
 namespace ReactiveDomain.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    public class when_mixed_messages_published :
+    public class when_mixed_messages_are_published :
         with_message_logging_enabled,
         IHandle<Message>
     {
@@ -74,7 +74,7 @@ namespace ReactiveDomain.Tests.Logging
 
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_commands_logged()
+        public void commands_are_logged()
         {
 
             TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));

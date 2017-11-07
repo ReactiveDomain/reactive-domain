@@ -11,11 +11,11 @@ namespace ReactiveDomain.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    public class when_logging_disabled_commands_fired :
+    public class when_logging_disabled_and_commands_are_fired :
         with_message_logging_disabled,
         IHandle<Message>
     {
-        static when_logging_disabled_commands_fired()
+        static when_logging_disabled_and_commands_are_fired()
         {
             BootStrap.Load();
         }
@@ -65,7 +65,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_commands_are_not_logged()
+        public void commands_are_not_logged()
         {
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
             // Wait  for last command to be queued

@@ -10,11 +10,11 @@ namespace ReactiveDomain.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    public class when_logging_disabled_events_published :
+    public class when_logging_disabled_and_events_are_published :
         with_message_logging_disabled,
         IHandle<DomainEvent>
     {
-        static when_logging_disabled_events_published()
+        static when_logging_disabled_and_events_are_published()
         {
             BootStrap.Load();
         }
@@ -51,7 +51,7 @@ namespace ReactiveDomain.Tests.Logging
 
 
         [Fact(Skip = "pending deletion of log stream")]
-        public void can_verify_events_not_logged()
+        public void events_are_not_logged()
         {
             // wait for all events to be queued
             TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
