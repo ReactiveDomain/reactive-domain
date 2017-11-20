@@ -9,7 +9,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
     // ReSharper disable once InconsistentNaming
     public class can_deal_with_unhandled_messages : when_using_counted_message_subscriber
     {
-        private int FirstTaskMax = 1000000;
+        private int FirstTaskMax = 2000;
         private int TimeoutInMs = 5000;
 
         private Task _t1;
@@ -71,7 +71,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             _t2.Start();    // publish more messages - no subscriber is available
 
             //Messages and events are published. Don't know how to prove no one handles them.
-            Assert.IsOrBecomesTrue(() => BusMessages.Count == FirstTaskMax * 3, TimeoutInMs, $"Expected {FirstTaskMax * 3} Messages, found {BusMessages.Count}");
+            Assert.IsOrBecomesTrue(() => BusMessages.Count == FirstTaskMax * 3, 100, $"Expected {FirstTaskMax * 3} Messages, found {BusMessages.Count}");
         }
     }
 }
