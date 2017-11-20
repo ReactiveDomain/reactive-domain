@@ -6,6 +6,12 @@ namespace ReactiveDomain.Tests.Helpers
 {
     public class TestCommands
     {
+        public class TimeoutTestCommand : Command
+        {
+            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+            public override int MsgTypeId => TypeId;
+            public TimeoutTestCommand(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+        }
         public class TestCommand : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);

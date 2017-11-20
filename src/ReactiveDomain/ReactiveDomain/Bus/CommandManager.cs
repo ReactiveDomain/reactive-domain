@@ -57,7 +57,9 @@ namespace ReactiveDomain.Bus
                                         ackTimeout ?? DefaultAckTimout,
                                         responseTimeout ?? DefaultResponseTimout);
 
-                if (_pendingCommands.TryAdd(command.MsgId, tracker)) return tcs;
+                if (_pendingCommands.TryAdd(command.MsgId, tracker))
+                    return tcs;
+                //unable to add tracker
                 tracker?.Dispose();
                 throw new Exception("Unable to add command tracker to dictionary.");
             }
