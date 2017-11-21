@@ -88,7 +88,7 @@ namespace ReactiveDomain.Bus
                 throw new CommandException("Error executing command: ", ex, command);
             }
 
-
+            //start new task/thread to publish command
             Task.Run(() =>
             {
                 try
@@ -105,6 +105,7 @@ namespace ReactiveDomain.Bus
             });
             try
             {
+                //blocking caller until result is set 
                 return tcs.Task.Result;
             }
             catch (AggregateException aggEx)

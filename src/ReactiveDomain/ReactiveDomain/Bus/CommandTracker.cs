@@ -12,8 +12,7 @@ namespace ReactiveDomain.Bus
         private static readonly Logger Log = NLog.LogManager.GetLogger("ReactiveDomain");
         private readonly Command _command;
         private readonly TaskCompletionSource<CommandResponse> _tcs;
-        private readonly TimeSpan _responseTimeout;
-        private readonly CancellationTokenSource _canelTokenSource;
+        private readonly TimeSpan _completionTimeout;
         private readonly Action _completionAction;
         private readonly Action _cancelAction;
         private bool _disposed = false;
@@ -22,6 +21,8 @@ namespace ReactiveDomain.Bus
         private const long PendingResponse = 1;
         private const long Complete = 2;
         private long _state;
+        private Timer _ackTimer;
+        private Timer _completionTimer;
 
         public CommandTracker(
             Command command,
@@ -29,18 +30,16 @@ namespace ReactiveDomain.Bus
             Action completionAction,
             Action cancelAction,
             TimeSpan ackTimeout,
-            TimeSpan responseTimeout)
+            TimeSpan completionTimeout)
         {
-            _canelTokenSource = new CancellationTokenSource();
             _command = command;
             _tcs = tcs;
-            _responseTimeout = responseTimeout;
+            _completionTimeout = completionTimeout;
             _completionAction = completionAction;
             _cancelAction = cancelAction;
             _state = PendingAck;
-
-            Task.Delay(ackTimeout, _canelTokenSource.Token).ContinueWith(_ => AckTimeout());
-
+            _ackTimer = new Timer(AckTimeout, null, (int)ackTimeout.TotalMilliseconds, Timeout.Infinite);
+            
         }
 
         public void Handle(CommandResponse message)
@@ -62,10 +61,11 @@ namespace ReactiveDomain.Bus
                     _cancelAction();
                 return;
             }
-            Task.Delay(_responseTimeout, _canelTokenSource.Token).ContinueWith(_ => ResponseTimeout());
+            _completionTimer = new Timer(CompletionTimeout, null, (int)_completionTimeout.TotalMilliseconds, Timeout.Infinite);
+
         }
 
-        public void AckTimeout()
+        public void AckTimeout(object state = null)
         {
             if (Interlocked.Read(ref _state) == PendingAck)
             {
@@ -75,10 +75,10 @@ namespace ReactiveDomain.Bus
                         Log.Error(_command.GetType().Name + " command not handled (no handler)");
                     _cancelAction();
                 }
-            }
+            }            
         }
 
-        public void ResponseTimeout()
+        public void CompletionTimeout(object state = null)
         {
             if (Interlocked.Read(ref _state) == PendingResponse)
             {
@@ -110,7 +110,8 @@ namespace ReactiveDomain.Bus
                     _tcs.TrySetCanceled();
                 }
                 _tcs.Task.Dispose();
-                _canelTokenSource.Dispose();
+                _ackTimer?.Dispose();
+                _completionTimer?.Dispose();
 
             }
             _disposed = true;
