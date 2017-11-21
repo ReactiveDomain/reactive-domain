@@ -67,7 +67,7 @@ namespace ReactiveDomain.Tests
                         .AssertEmpty();
         }
         [Fact]
-        public void can_cancel_immediatly()
+        public void can_cancel_immediately()
         {
             TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
             TokenSource.Cancel();
