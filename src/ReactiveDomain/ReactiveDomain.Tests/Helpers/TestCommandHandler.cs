@@ -13,7 +13,7 @@ namespace ReactiveDomain.Tests.Helpers
         {
             for (int i = 0; i < 5; i++)
             {
-                Thread.Sleep(50);
+                Thread.Sleep(10);
             }
             return command.Succeed();
         }

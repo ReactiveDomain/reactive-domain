@@ -44,7 +44,10 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             _pub4.StopPublishing();
 
             // verify all the messages were handled
-            Assert.IsOrBecomesTrue(()=>MessageSubscriber.TimesTestMessageHandled == BusMessages.Count);
+            Assert.IsOrBecomesTrue(() => MessageSubscriber.TimesTestMessageHandled == BusMessages.Count,
+                TimeoutInMs,
+                $"Subscriber handled ParentTest message {MessageSubscriber.ParentTestMessage} times. Bus count = {BusMessages.Count}");
+
         }
     }
 }

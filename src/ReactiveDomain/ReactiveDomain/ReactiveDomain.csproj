@@ -56,14 +56,6 @@
       <HintPath>..\..\..\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="JustGiving.EventStore.Http.Client">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.1\lib\JustGiving.EventStore.Http.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="JustGiving.EventStore.Http.SubscriberHost">
-      <HintPath>..\..\..\packages\JustGiving.EventStore.Client.1.0.1\lib\JustGiving.EventStore.Http.SubscriberHost.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
       <Private>True</Private>
@@ -197,6 +189,7 @@
     <Compile Include="FrameFormats\TwoByte128X128.cs" />
     <Compile Include="FrameFormats\TwoByte256X256.cs" />
     <Compile Include="FrameFormats\TwoByte512X512.cs" />
+    <Compile Include="Logging\EventStoreMessageLogger.cs" />
     <Compile Include="Memory\BufferManager.cs" />
     <Compile Include="Memory\WrappedSquareImage.cs" />
     <Compile Include="Memory\PinnedBuffer.cs" />
@@ -329,8 +322,10 @@
     <Compile Include="ViewObjects\ViewBase.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <Fakes Include="Fakes\ReactiveUI.fakes" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Logging\NLog.config" />
     <None Include="Messaging\NLog.xsd">
       <SubType>Designer</SubType>
