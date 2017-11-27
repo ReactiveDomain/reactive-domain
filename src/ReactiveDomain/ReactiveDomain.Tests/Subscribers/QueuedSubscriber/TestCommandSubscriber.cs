@@ -21,12 +21,7 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
             _bus.Subscribe<TestCommands.TestCommand2> (this);
             _bus.Subscribe<TestCommands.TestCommand3>(this);
         }
-
-
-        public void RequestCancel(CancelCommand cancelRequest)
-        {
-
-        }
+              
 
         public CommandResponse Handle(TestCommands.TestCommand2 command)
         {
