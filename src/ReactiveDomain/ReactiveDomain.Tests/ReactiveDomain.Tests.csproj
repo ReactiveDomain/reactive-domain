@@ -177,7 +177,9 @@
     <Compile Include="Asserts\SetAsserts.cs" />
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
+    <Compile Include="can_cancel_commands_via_cancellation_token.cs" />
     <Compile Include="Helpers\TestEvents.cs" />
+    <Compile Include="Specifications\CommandQueueSpecification.cs" />
     <Compile Include="Logging\when_commands_are_fired.cs" />
     <Compile Include="Logging\when_events_are_published.cs" />
     <Compile Include="Logging\when_logging_high_volume_message_traffic.cs" />
@@ -204,7 +206,6 @@
     <Compile Include="EventStore\TestAggregateCreated.cs" />
     <Compile Include="EventStore\WoftamEvent.cs" />
     <Compile Include="Helpers\Asserts.cs" />
-    <Compile Include="Helpers\CancelableTestCommandHandler.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\CountedMessageSubscriber.cs" />
     <Compile Include="Helpers\DispatcherUtil.cs" />
     <Compile Include="Helpers\MessageComparer.cs" />
@@ -225,10 +226,12 @@
     <Compile Include="Subscribers\QueuedSubscriber\when_using_inherited_queued_subscriber.cs" />
     <Compile Include="Transport\MockTcpConnection.cs" />
     <Compile Include="Transport\TcpBusClientSideTests.cs" />
+    <Compile Include="when_command_handlers_timeout.cs" />
     <Compile Include="when_creating_a_message.cs" />
     <Compile Include="when_creating_wrappedimages.cs" />
     <Compile Include="when_ensuring_values.cs" />
     <Compile Include="when_sending_commands.cs" />
+    <Compile Include="when_sending_concurrent_commands.cs" />
     <Compile Include="when_serializing_commands.cs" />
     <Compile Include="Subscribers\QueuedSubscriber\when_using_counted_message_subscriber.cs" />
     <Compile Include="when_using_mock_repository.cs" />

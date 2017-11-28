@@ -9,22 +9,17 @@ namespace ReactiveDomain.Bus
     public class AdHocCommandHandler<T> : IHandleCommand<T> where T : Command
     {
         private readonly Func<T, bool> _handleCommand;
-        private readonly Func<CancelCommand, Guid, Unit> _handleCancel;
         private readonly bool _wrapExceptions;
         private Guid _currentCommand = Guid.Empty;
-        private readonly HashSet<Guid> _canceledCommands = new HashSet<Guid>();
 
 
         public AdHocCommandHandler(
                         Func<T, bool> handleCommandCommand,
-                        Func<CancelCommand, Guid, Unit> handleCancel = null,
                         bool wrapExceptions = true)
         {
             Ensure.NotNull(handleCommandCommand, "handle");
             _handleCommand = handleCommandCommand;
-            _handleCancel = handleCancel;
             _wrapExceptions = wrapExceptions;
-            if (_handleCancel == null) _handleCancel = (c, g) => Unit.Default;
         }
 
         public CommandResponse Handle(T command)
@@ -33,8 +28,9 @@ namespace ReactiveDomain.Bus
             _currentCommand = command.MsgId;
             try
             {
-                if (_canceledCommands.Contains(command.MsgId))
-                    throw new CommandCanceledException(command);
+                var tCmd = command as TokenCancellableCommand;
+                if (tCmd?.IsCanceled ?? false)
+                    return tCmd.Canceled();
 
                 passed = _handleCommand(command);
             }
@@ -46,18 +42,5 @@ namespace ReactiveDomain.Bus
             }
             return passed ? command.Succeed() : command.Fail();
         }
-        public void RequestCancel(CancelCommand cancelRequest)
-        {
-            try
-            {
-                _canceledCommands.Add(cancelRequest.CommandId);
-                _handleCancel(cancelRequest, _currentCommand);
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
     }
 }

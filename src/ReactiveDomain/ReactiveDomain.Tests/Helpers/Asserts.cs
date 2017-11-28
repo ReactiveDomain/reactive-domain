@@ -15,12 +15,12 @@ namespace Xunit
 
         public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string msg = null)
         {
-            if (!timeout.HasValue) timeout = 500;
+            if (!timeout.HasValue) timeout = 750;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             // ReSharper disable once LoopVariableIsNeverChangedInsideLoop - Yes it does
             while (!func())
             {
-                Thread.Sleep(1);
+                Thread.Sleep(10);
                 DispatcherUtil.DoEvents();
                 if (sw.ElapsedMilliseconds > timeout) break;
             }

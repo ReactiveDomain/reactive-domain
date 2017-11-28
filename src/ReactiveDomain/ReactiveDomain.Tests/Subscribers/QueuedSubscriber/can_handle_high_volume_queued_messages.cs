@@ -26,10 +26,10 @@ namespace ReactiveDomain.Tests.Subscribers.QueuedSubscriber
         void can_handle_multiple_publishers()
         {
             // start publishers
-            _pub1.StartPublishing(1);
-            _pub2.StartPublishing(1);
-            _pub3.StartPublishing(1);
-            _pub4.StartPublishing(1);
+            _pub1.StartPublishing(0);
+            _pub2.StartPublishing(0);
+            _pub3.StartPublishing(0);
+            _pub4.StartPublishing(0);
 
             // When we get to (or beyond) a predetermined number of messages published...
             Assert.IsOrBecomesTrue(
