@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
     <Version>0.7.3.0</Version>
     <Authors>PerkinElmer</Authors>
     <Company>PerkinElmer</Company>
@@ -35,9 +35,5 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
+  
 </Project>
