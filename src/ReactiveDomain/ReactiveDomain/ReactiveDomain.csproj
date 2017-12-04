@@ -7,27 +7,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client" Version="4.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="NLog" Version="4.4.12" />
+    <PackageReference Include="reactiveui" Version="6.5.2" />
+    <PackageReference Include="Rx-Main" Version="2.2.5" />
+    <PackageReference Include="Splat" Version="1.6.2" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="4.0.0" />
-    <PackageReference Include="log4net" Version="2.0.7" />
-    <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
-    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
-    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
-    <PackageReference Include="Microsoft.Tpl.Dataflow" Version="4.5.24" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-    <PackageReference Include="Nito.AsyncEx.Dataflow" Version="3.0.0" />
-    <PackageReference Include="Nito.AsyncEx.DataflowProxy" Version="1.1.0" />
-    <PackageReference Include="NLog" Version="4.3.10" />
-    <PackageReference Include="reactiveui" Version="6.5.2" />
-    <PackageReference Include="reactiveui-core" Version="6.5.2" />
-    <PackageReference Include="Rx-Core" Version="2.2.5" />
-    <PackageReference Include="Rx-Interfaces" Version="2.2.5" />
-    <PackageReference Include="Rx-Linq" Version="2.2.5" />
-    <PackageReference Include="Rx-Main" Version="2.2.5" />
-    <PackageReference Include="Rx-PlatformServices" Version="2.2.5" />
-    <PackageReference Include="Rx-XAML" Version="2.2.5" />
-    <PackageReference Include="Splat" Version="1.6.2" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationFramework" />
   </ItemGroup>
 
 </Project>
