@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain</id>
-    <version>0.6.6431.26096</version>
+    <version>$version$</version>
     <authors>pki</authors>
     <owners>PKI</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
