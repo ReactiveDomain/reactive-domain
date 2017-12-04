@@ -97,7 +97,16 @@ namespace ReactiveDomain.EventStore
                 };
                 _process.Start();
             }
-
+            Connect(
+                credentials,
+                server,
+                tcpPort);
+        }
+        public void Connect(
+                        UserCredentials credentials,
+                        IPAddress server,
+                        int tcpPort)
+        { 
             var tcpEndpoint = new IPEndPoint(server, tcpPort);
 
             var settings = ConnectionSettings.Create()
