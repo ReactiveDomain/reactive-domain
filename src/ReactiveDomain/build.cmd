@@ -1,11 +1,13 @@
 @echo off
 
 set THISDIR=%~dp0
-set NUGET=%THISDIR%\.nuget\Nuget.exe
+set NUGET=%THISDIR%.nuget\Nuget.exe
 set NUGETDIR=%THISDIR%\.nuget\
 set SOLUTIONDIR=%THISDIR%
 set NUSPECDIR=%THISDIR%\ReactiveDomain
 set TESTNUSPECDIR=%THISDIR%\ReactiveDomain.Tests
+
+echo %NUGET%
 
 %NUGET% update -self
 
@@ -27,20 +29,20 @@ pushd %NUSPECDIR%
 %NUGET% pack ReactiveDomain.nuspec
 popd
 
-echo Push the nuget to PKI private feed
-%NUGET% push %NUSPECDIR%\*.nupkg %APIKEY% -source %PKIFEED%
+REM echo Push the nuget to PKI private feed
+REM %NUGET% push %NUSPECDIR%\*.nupkg %APIKEY% -source %PKIFEED%
 
 
 
 REM Make ReactiveDomain.Tests Nuget ***********************************************************************************************
 
-echo Updating ReactiveDomain.Tests NuGet version in nuspec file...
-PowerShell.exe -ExecutionPolicy Bypass -Command "& '%SOLUTIONDIR%\Tools\UpdateTestsNugetVersion.ps1'"
+REM echo Updating ReactiveDomain.Tests NuGet version in nuspec file...
+REM PowerShell.exe -ExecutionPolicy Bypass -Command "& '%SOLUTIONDIR%\Tools\UpdateTestsNugetVersion.ps1'"
 
 echo Package using the nuspec file...
 pushd %TESTNUSPECDIR%
 %NUGET% pack ReactiveDomain.Tests.nuspec
 popd
 
-echo Push the nuget to PKI private feed
-%NUGET% push %TESTNUSPECDIR%\*.nupkg %APIKEY% -source %PKIFEED%
+REM echo Push the nuget to PKI private feed
+REM %NUGET% push %TESTNUSPECDIR%\*.nupkg %APIKEY% -source %PKIFEED%
