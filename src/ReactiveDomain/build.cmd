@@ -15,18 +15,18 @@ echo Restore all nugets
 %NUGET% restore %SOLUTIONDIR%\ReactiveDomain.sln -NoCache -NonInteractive -ConfigFile %NUGETDIR%MyGet.NuGet.Config
 
 
-echo Building the ReactiveDomain Solution...
-"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" %SOLUTIONDIR%\ReactiveDomain.sln /p:Configuration="Debug" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
+rem echo Building the ReactiveDomain Solution...
+rem "%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" %SOLUTIONDIR%\ReactiveDomain.sln /p:Configuration="Debug" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
 
 REM Make ReactiveDomain Nuget ***********************************************************************************************
 
-echo Updating ReactiveDomain NuGet version in nuspec file...
-PowerShell.exe -ExecutionPolicy Bypass -Command "& '%SOLUTIONDIR%\Tools\UpdateNugetVersion.ps1'"
+rem echo Updating ReactiveDomain NuGet version in nuspec file...
+rem PowerShell.exe -ExecutionPolicy Bypass -Command "& '%SOLUTIONDIR%\Tools\UpdateNugetVersion.ps1'"
 
 echo Package ReactiveDomain NuGet using the nuspec file...
 pushd %NUSPECDIR%
-%NUGET% pack ReactiveDomain.nuspec
+%NUGET% pack ReactiveDomain.nuspec -version "0.7.2"
 popd
 
 REM echo Push the nuget to PKI private feed
@@ -41,7 +41,7 @@ REM PowerShell.exe -ExecutionPolicy Bypass -Command "& '%SOLUTIONDIR%\Tools\Upda
 
 echo Package using the nuspec file...
 pushd %TESTNUSPECDIR%
-%NUGET% pack ReactiveDomain.Tests.nuspec
+%NUGET% pack ReactiveDomain.Tests.nuspec -version "0.7.2"
 popd
 
 REM echo Push the nuget to PKI private feed
