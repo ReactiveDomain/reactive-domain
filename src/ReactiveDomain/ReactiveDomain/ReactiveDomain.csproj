@@ -1,368 +1,39 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AF28A6F8-0044-4CFA-A6EB-6000797223A0}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ReactiveDomain</RootNamespace>
-    <AssemblyName>ReactiveDomain</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <TargetFrameworkProfile />
+    <TargetFramework>net462</TargetFramework>
+    <Platforms>x64</Platforms>
+    <Version>0.7.3.0</Version>
+    <Authors>PerkinElmer</Authors>
+    <Company>PerkinElmer</Company>
+    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
+    <Description />
+    <AssemblyVersion>0.7.3.0</AssemblyVersion>
+    <FileVersion>0.7.3.0</FileVersion>
+    <NeutralLanguage />
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|x64'">
-    <OutputPath>bin\x64\Publish\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>none</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
+  
   <ItemGroup>
-    <Reference Include="EventStore.ClientAPI">
-      <HintPath>..\..\..\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\..\..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Nito.AsyncEx.Dataflow, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Nito.AsyncEx.Dataflow.3.0.0\lib\net45\Nito.AsyncEx.Dataflow.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="NLog">
-      <HintPath>..\..\..\packages\NLog.4.3.10\lib\net45\NLog.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PresentationFramework" />
-    <Reference Include="ReactiveUI, Version=6.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\reactiveui-core.6.5.2\lib\Net45\ReactiveUI.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.Extensions">
-      <HintPath>..\..\..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http.Primitives">
-      <HintPath>..\..\..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http.WebRequest" />
-    <Reference Include="System.Reactive.Core">
-      <HintPath>..\..\..\packages\Rx-Core.2.2.5\lib\net45\System.Reactive.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reactive.Interfaces">
-      <HintPath>..\..\..\packages\Rx-Interfaces.2.2.5\lib\net45\System.Reactive.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reactive.Linq">
-      <HintPath>..\..\..\packages\Rx-Linq.2.2.5\lib\net45\System.Reactive.Linq.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Reactive.PlatformServices">
-      <HintPath>..\..\..\packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reactive.Windows.Threading, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Rx-XAML.2.2.5\lib\net45\System.Reactive.Windows.Threading.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\..\..\packages\Microsoft.Tpl.Dataflow.4.5.24\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Windows" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
+    <PackageReference Include="EventStore.Client" Version="4.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="NLog" Version="4.4.12" />
+    <PackageReference Include="reactiveui" Version="6.5.2" />
+    <PackageReference Include="Rx-Main" Version="2.2.5" />
+    <PackageReference Include="Splat" Version="1.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationFramework" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="BootStrap.cs" />
-    <Compile Include="Bus\AdHocHandler - Copy.cs" />
-    <Compile Include="Bus\AdHocTypedCommandHandler.cs" />
-    <Compile Include="Bus\AdHocCommandHandler.cs" />
-    <Compile Include="Bus\IdempotentHandler.cs" />
-    <Compile Include="Bus\BusConnector.cs" />
-    <Compile Include="Bus\BusWrapper.cs" />
-    <Compile Include="Bus\CommandBus.cs" />
-    <Compile Include="Bus\CommandManager.cs" />
-    <Compile Include="Bus\CommandTracker.cs" />
-    <Compile Include="Bus\DynamicHandler.cs" />
-    <Compile Include="Bus\HandleExtensions.cs" />
-    <Compile Include="Bus\IBus.cs" />
-    <Compile Include="Bus\ICommandPublisher.cs" />
-    <Compile Include="Bus\ICommandBus.cs" />
-    <Compile Include="Bus\IHandleCommand.cs" />
-    <Compile Include="Bus\IGeneralBus.cs" />
-    <Compile Include="Bus\IHandle.cs" />
-    <Compile Include="Bus\IMonitoredQueue.cs" />
-    <Compile Include="Bus\InMemoryBus.cs" />
-    <Compile Include="Bus\IPublisher.cs" />
-    <Compile Include="Bus\IQueuedHandler.cs" />
-    <Compile Include="Bus\ICommandSubscriber.cs" />
-    <Compile Include="Bus\ISubscriber.cs" />
-    <Compile Include="Bus\CommandHandler.cs" />
-    <Compile Include="Bus\MessageHandler.cs" />
-    <Compile Include="Bus\MultiQueuedHandler.cs" />
-    <Compile Include="Bus\NarrowingHandler.cs" />
-    <Compile Include="Bus\NullableBus.cs" />
-    <Compile Include="Bus\NullBus.cs" />
-    <Compile Include="Bus\QueuedHandler.cs" />
-    <Compile Include="Bus\QueuedHandlerAutoReset.cs" />
-    <Compile Include="Bus\QueuedHandlerDiscarding.cs" />
-    <Compile Include="Bus\QueuedHandlerMRES.cs" />
-    <Compile Include="Bus\QueuedHandlerPulse.cs" />
-    <Compile Include="Bus\QueuedHandlerSleep.cs" />
-    <Compile Include="Bus\QueuedHandlerThreadPool.cs" />
-    <Compile Include="Bus\QueuedSubscriber.cs" />
-    <Compile Include="Bus\QueueMonitor.cs" />
-    <Compile Include="Bus\QueueStatsCollector.cs" />
-    <Compile Include="Bus\SubscriptionDisposer.cs" />
-    <Compile Include="Diagnostics\MonitoredCommandBus.cs" />
-    <Compile Include="EventStore\EventStoreClientUtils.cs" />
-    <Compile Include="EventStore\EventStoreLoader.cs" />
-    <Compile Include="EventStore\EventStoreMsg.cs" />
-    <Compile Include="EventStore\IListener.cs" />
-    <Compile Include="EventStore\ReadModelBase.cs" />
-    <Compile Include="EventStore\StreamListener.cs" />
-    <Compile Include="EventStore\SynchronizableStreamListener.cs" />
-    <Compile Include="FileIO\BufferWriter.cs" />
-    <Compile Include="FileIO\MappedReader.cs" />
-    <Compile Include="FileIO\UnbufferedFileTools.cs" />
-    <Compile Include="FileIO\UnbufferedFindFile.cs" />
-    <Compile Include="FileIO\Win32FileIO.cs" />
-    <Compile Include="FrameFormats\ThreeByte1024X1024.cs" />
-    <Compile Include="FrameFormats\Image.cs" />
-    <Compile Include="FrameFormats\TwoByte1024X1024.cs" />
-    <Compile Include="FrameFormats\TwoByte2048X2048.cs" />
-    <Compile Include="FrameFormats\TwoByte128X128.cs" />
-    <Compile Include="FrameFormats\TwoByte256X256.cs" />
-    <Compile Include="FrameFormats\TwoByte512X512.cs" />
-    <Compile Include="Logging\EventStoreMessageLogger.cs" />
-    <Compile Include="Memory\BufferManager.cs" />
-    <Compile Include="Memory\WrappedSquareImage.cs" />
-    <Compile Include="Memory\PinnedBuffer.cs" />
-    <Compile Include="Memory\VideoSlice.cs" />
-    <Compile Include="Memory\WrappedBuffer.cs" />
-    <Compile Include="Memory\WrappedImage.cs" />
-    <Compile Include="Messaging\PriorityQueue.cs" />
-    <Compile Include="Messaging\TimeoutService.cs" />
-    <Compile Include="Bus\TransientSubscriber.cs" />
-    <Compile Include="Messaging\TokenCancellableCommand.cs" />
-    <Compile Include="Transport\TcpOutboundMessageHandler.cs" />
-    <Compile Include="Transport\TcpInboundMessageHandler.cs" />
-    <Compile Include="Transport\TcpBusSide.cs" />
-    <Compile Include="Bus\WideningHandler.cs" />
-    <Compile Include="Concurrent\ConcurrentQueue.cs" />
-    <Compile Include="Concurrent\ConcurrentStack.cs" />
-    <Compile Include="Domain\AggregateBase.cs" />
-    <Compile Include="Domain\ConflictDetector.cs" />
-    <Compile Include="Domain\ConflictingCommandException.cs" />
-    <Compile Include="Domain\ConventionEventRouter.cs" />
-    <Compile Include="Domain\ExtensionMethods.cs" />
-    <Compile Include="Domain\HandlerForDomainEventNotFoundException.cs" />
-    <Compile Include="Domain\IAggregate.cs" />
-    <Compile Include="Domain\IConflictWith.cs" />
-    <Compile Include="Domain\IConstructAggregates.cs" />
-    <Compile Include="Domain\IDetectConflicts.cs" />
-    <Compile Include="Domain\IMemento.cs" />
-    <Compile Include="Domain\IRepository.cs" />
-    <Compile Include="Domain\IRouteEvents.cs" />
-    <Compile Include="Domain\ISaga.cs" />
-    <Compile Include="Domain\ISagaRepository.cs" />
-    <Compile Include="Domain\PersistenceException.cs" />
-    <Compile Include="Domain\RegistrationEventRouter.cs" />
-    <Compile Include="Domain\RepositoryExtensions.cs" />
-    <Compile Include="Domain\SagaBase.cs" />
-    <Compile Include="EventStore\AggregateDeletedException.cs" />
-    <Compile Include="EventStore\AggregateNotFoundException.cs" />
-    <Compile Include="EventStore\AggregateVersionException.cs" />
-    <Compile Include="EventStore\GetEventStoreRepository.cs" />
-    <Compile Include="EventStore\AggregateFileRepository.cs" />
-    <Compile Include="Logging\ConsoleLogger.cs" />
-    <Compile Include="Logging\ILogger.cs" />
-    <Compile Include="Logging\LazyLogger.cs" />
-    <Compile Include="Logging\LogManager.cs" />
-    <Compile Include="Logging\NLogDirectoryLayoutRendered.cs" />
-    <Compile Include="Logging\NLogger.cs" />
-    <Compile Include="Messages\ICorrelatedMessage.cs" />
-    <Compile Include="Messages\IEvent.cs" />
-    <Compile Include="Messages\IQueueAffineMessage.cs" />
-    <Compile Include="Messaging\CallbackEnvelope.cs" />
-    <Compile Include="Messaging\Command.cs" />
-    <Compile Include="Messaging\CommandResponse.cs" />
-    <Compile Include="Messaging\DomainEvent.cs" />
-    <Compile Include="Messaging\Event.cs" />
-    <Compile Include="Messaging\Forwarder.cs" />
-    <Compile Include="Messaging\IEnvelope.cs" />
-    <Compile Include="Messaging\Message.cs" />
-    <Compile Include="Messaging\NoopEnvelope.cs" />
-    <Compile Include="Messaging\PublishEnvelope.cs" />
-    <Compile Include="Messaging\RequestResponseDispatcher.cs" />
-    <Compile Include="Messaging\SendToThisEnvelope.cs" />
-    <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReadModel\ReadModelProperty.cs" />
-    <Compile Include="Services\Monitoring\Stats\DiskIo.cs" />
-    <Compile Include="Services\Monitoring\Stats\GcStats.cs" />
-    <Compile Include="Services\Monitoring\Stats\QueueStats.cs" />
-    <Compile Include="Services\Monitoring\Stats\StatMetadata.cs" />
-    <Compile Include="Services\Monitoring\Stats\StatsContainer.cs" />
-    <Compile Include="Services\Monitoring\Utils\PerfCounterHelper.cs" />
-    <Compile Include="Services\Monitoring\Utils\StatsCsvEncoder.cs" />
-    <Compile Include="Transport\BufferManagement\BufferManager.cs" />
-    <Compile Include="Transport\BufferManagement\BufferPool.cs" />
-    <Compile Include="Transport\BufferManagement\BufferPoolStream.cs" />
-    <Compile Include="Transport\BufferManagement\UnableToAllocateBufferException.cs" />
-    <Compile Include="Transport\BufferManagement\UnableToCreateMemoryException.cs" />
-    <Compile Include="Transport\CommandSocket\TcpMessage.cs" />
-    <Compile Include="Transport\Formatting\FormatterBase.cs" />
-    <Compile Include="Transport\Formatting\IMessageFormatter.cs" />
-    <Compile Include="Transport\Formatting\RawMessageFormatter.cs" />
-    <Compile Include="Transport\Framing\IMessageFramer.cs" />
-    <Compile Include="Transport\Framing\LengthPrefixMessageFramer.cs" />
-    <Compile Include="Transport\Framing\LengthPrefixMessageFramerWithBufferPool.cs" />
-    <Compile Include="Transport\Framing\PackageFramingException.cs" />
-    <Compile Include="Transport\Framing\StxEtxMessageFramer.cs" />
-    <Compile Include="Transport\Helper.cs" />
-    <Compile Include="Transport\IMonitoredTcpConnection.cs" />
-    <Compile Include="Transport\ITcpConnection.cs" />
-    <Compile Include="Transport\Locks\SpinLock2.cs" />
-    <Compile Include="Transport\SocketArgsPool.cs" />
-    <Compile Include="Transport\SystemData\InspectionDecision.cs" />
-    <Compile Include="Transport\SystemData\InspectionResult.cs" />
-    <Compile Include="Transport\SystemData\TcpCommand.cs" />
-    <Compile Include="Transport\SystemData\TcpPackage.cs" />
-    <Compile Include="Transport\SystemData\UserCredentials.cs" />
-    <Compile Include="Transport\TcpBusClientSide.cs" />
-    <Compile Include="Transport\TcpBusServerSide.cs" />
-    <Compile Include="Transport\TcpClientConnector.cs" />
-    <Compile Include="Transport\TcpConfiguration.cs" />
-    <Compile Include="Transport\TcpConnection.cs" />
-    <Compile Include="Transport\TcpConnectionBase.cs" />
-    <Compile Include="Transport\TcpConnectionLockless.cs" />
-    <Compile Include="Transport\TcpConnectionMonitor.cs" />
-    <Compile Include="Transport\TcpConnectionSsl.cs" />
-    <Compile Include="Transport\TcpServerListener.cs" />
-    <Compile Include="Transport\TcpStats.cs" />
-    <Compile Include="Transport\TcpTypedConnection.cs" />
-    <Compile Include="Memory\Utility.cs" />
-    <Compile Include="Util\Application.cs" />
-    <Compile Include="Util\BytesFormatter.cs" />
-    <Compile Include="Util\Empty.cs" />
-    <Compile Include="Util\Ensure.cs" />
-    <Compile Include="Util\EnumerableExtensions.cs" />
-    <Compile Include="Util\FileStreamExtensions.cs" />
-    <Compile Include="Util\FileUtils.cs" />
-    <Compile Include="Util\Helper.cs" />
-    <Compile Include="Util\HostName.cs" />
-    <Compile Include="Util\IPEndPointComparer.cs" />
-    <Compile Include="Util\IpEndPointExtensions.cs" />
-    <Compile Include="Util\Json.cs" />
-    <Compile Include="Util\MD5Hash.cs" />
-    <Compile Include="Util\OS.cs" />
-    <Compile Include="Util\Runtime.cs" />
-    <Compile Include="Util\ShellExecutor.cs" />
-    <Compile Include="Util\StringExtensions.cs" />
-    <Compile Include="Util\Threading.cs" />
-    <Compile Include="Util\VersionInfo.cs" />
-    <Compile Include="ViewObjects\CommandBuilder.cs" />
-    <Compile Include="ViewObjects\UserView.cs" />
-    <Compile Include="ViewObjects\ViewBase.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Fakes Include="Fakes\ReactiveUI.fakes" />
-    <None Include="app.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Logging\NLog.config" />
-    <None Include="Messaging\NLog.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-  </Target>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="..\..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  
 </Project>
