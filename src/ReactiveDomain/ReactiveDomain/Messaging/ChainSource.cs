@@ -16,10 +16,10 @@ namespace ReactiveDomain.Messaging
         public Guid MsgId { get; }
         public Guid? SourceId { get; }
         public Guid CorrelationId { get; }
-        public Guid PrincipleId { get; }
+        public Guid PrincipalId { get; }
 
         public ChainSource(IChainedMessage source)
-            : this(source.MsgId, source.SourceId, source.CorrelationId, source.PrincipleId)
+            : this(source.MsgId, source.SourceId, source.CorrelationId, source.PrincipalId)
         {
         }
         [JsonConstructor]
@@ -27,12 +27,12 @@ namespace ReactiveDomain.Messaging
             Guid msgId,
             Guid? sourceId,
             Guid correlationId,
-            Guid principleId)
+            Guid PrincipalId)
         {
             MsgId = msgId;
             SourceId = sourceId;
             CorrelationId = correlationId;
-            PrincipleId = principleId;
+            PrincipalId = PrincipalId;
         }
 
     }

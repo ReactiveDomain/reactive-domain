@@ -8,19 +8,19 @@ namespace ReactiveDomain.Messaging
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public Guid PrincipleId { get; }
+        public Guid PrincipalId { get; }
         public readonly ChainSource Source;
         public ChainedCommand(IChainedMessage source) :
             base(source.CorrelationId, source.MsgId)
         {
-            PrincipleId = source.PrincipleId;
+            PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
 
-        public ChainedCommand(Guid correlationId, Guid? sourceId, Guid principleId) :
+        public ChainedCommand(Guid correlationId, Guid? sourceId, Guid PrincipalId) :
             base(correlationId, sourceId)
         {
-            PrincipleId = principleId;
+            PrincipalId = PrincipalId;
         }
 
     }

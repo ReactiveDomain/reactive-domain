@@ -10,19 +10,19 @@ namespace ReactiveDomain.Messaging
 
         public override int MsgTypeId => TypeId;
 
-        public Guid PrincipleId { get; }
+        public Guid PrincipalId { get; }
         public readonly ChainSource Source;
 
         protected ChainedEvent(IChainedMessage source) :
             base(source.CorrelationId, source.MsgId)
         {
-            PrincipleId = source.PrincipleId;
+            PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
-        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid principleId) :
+        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid PrincipalId) :
             base(correlationId, sourceId)
         {
-            PrincipleId = principleId;
+            PrincipalId = PrincipalId;
         }
     }
 
