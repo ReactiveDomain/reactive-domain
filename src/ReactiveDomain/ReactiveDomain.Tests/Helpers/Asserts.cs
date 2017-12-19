@@ -49,16 +49,12 @@ namespace Xunit
 
         public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            var canExecute = false;
-            using (cmd.CanExecute.Subscribe(x => canExecute = x))
-                True(canExecute);
+            using (cmd.CanExecute.Subscribe(True)) { }
         }
 
         public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            var canExecute = true;
-            using (cmd.CanExecute.Subscribe(x => canExecute = x))
-                False(canExecute);
+            using (cmd.CanExecute.Subscribe(False)) { }
         }
     }
 }
