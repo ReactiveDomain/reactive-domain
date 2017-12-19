@@ -2,6 +2,7 @@
 using System.Threading;
 using ReactiveDomain.Bus;
 using ReactiveDomain.Tests.Helpers;
+using ReactiveUI;
 
 // ReSharper disable once CheckNamespace - this is where it is supposed to be
 namespace Xunit
@@ -45,5 +46,19 @@ namespace Xunit
                     $"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
             }
         }
-    }  
+
+        public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
+        {
+            var canExecute = false;
+            using (cmd.CanExecute.Subscribe(x => canExecute = x))
+                True(canExecute);
+        }
+
+        public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
+        {
+            var canExecute = true;
+            using (cmd.CanExecute.Subscribe(x => canExecute = x))
+                False(canExecute);
+        }
+    }
 }
