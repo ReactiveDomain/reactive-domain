@@ -14,7 +14,7 @@ namespace ReactiveDomain.ViewObjects
     public static class CommandBuilder
     {
         /// <summary>
-        /// Creates a ReactiveCommand from an Action.
+        /// Creates a ReactiveCommand from an Action, with a defined CanExecute.
         /// </summary>
         /// <param name="canExecute"></param>
         /// <param name="action"></param>
@@ -31,7 +31,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand from an Action.
+        /// Creates a ReactiveCommand from an Action. The ReactiveCommand's CanExecute will always be true.
         /// </summary>
         /// <param name="action"></param>
         /// <param name="scheduler"></param>
@@ -66,8 +66,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// FromActionEx does the same thing as FromAction, except the action must be defined to take
-        /// an Object as input.
+        /// Creates a ReactiveCommand from an Action&lt;object&gt;, with a defined CanExecute.
         /// </summary>
         /// <param name="canExecute"></param>
         /// <param name="action"></param>
@@ -84,8 +83,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// FromActionEx does the same thing as FromAction, except the action must be defined to take
-        /// an Object as input.
+        /// Creates a ReactiveCommand from an Action&lt;object&gt;. The ReactiveCommand's CanExecute will always be true.
         /// </summary>
         /// <param name="action"></param>
         /// <param name="scheduler"></param>
