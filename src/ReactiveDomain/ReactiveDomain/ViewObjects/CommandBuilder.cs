@@ -20,7 +20,8 @@ namespace ReactiveDomain.ViewObjects
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null)
         {
-            return FromAction(_ => action(), canExecute, scheduler, userErrorMsg);
+            Action<Unit> a = _ => action();
+            return FromAction(a, canExecute, scheduler, userErrorMsg);
         }
 
         public static ReactiveCommand<Unit, Unit> FromAction(
@@ -28,34 +29,35 @@ namespace ReactiveDomain.ViewObjects
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null)
         {
-            return FromAction(_ => action(), null, scheduler, userErrorMsg);
+            Action<Unit> a = _ => action();
+            return FromAction(a, null, scheduler, userErrorMsg);
         }
-        public static ReactiveCommand<Unit, Unit> FromAction(
+        public static ReactiveCommand<object, Unit> FromAction(
                                                IObservable<bool> canExecute,
-                                               Action<Unit> action,
+                                               Action<object> action,
                                                IScheduler scheduler = null,
                                                string userErrorMsg = null)
         {
             return FromAction(action, canExecute, scheduler, userErrorMsg);
         }
 
-        public static ReactiveCommand<Unit, Unit> FromAction(
-                                                Action<Unit> action,
+        public static ReactiveCommand<object, Unit> FromAction(
+                                                Action<object> action,
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null)
         {
             return FromAction(action, null, scheduler, userErrorMsg);
         }
-        private static ReactiveCommand<Unit, Unit> FromAction(
-                                                Action<Unit> action,
+
+        private static ReactiveCommand<object, Unit> FromAction(
+                                                Action<object> action,
                                                 IObservable<bool> canExecute = null,
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null)
         {
-
             if (scheduler == null)
                 scheduler = RxApp.MainThreadScheduler;
-            Func<Unit, Task> task = async _ => await Task.Run(() => action(_));
+            Func<object, Task> task = async _ => await Task.Run(() => action(_));
             var cmd =
                 canExecute == null ?
                         ReactiveCommand.CreateFromTask(task, outputScheduler: scheduler) :
@@ -64,6 +66,26 @@ namespace ReactiveDomain.ViewObjects
             cmd.ThrownExceptions
                        .ObserveOn(MainThreadScheduler)
                        .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+            return cmd;
+        }
+
+        private static ReactiveCommand<Unit, Unit> FromAction(
+                                                Action<Unit> action,
+                                                IObservable<bool> canExecute = null,
+                                                IScheduler scheduler = null,
+                                                string userErrorMsg = null)
+        {
+            if (scheduler == null)
+                scheduler = RxApp.MainThreadScheduler;
+            Func<Unit, Task> task = async _ => await Task.Run(() => action(_));
+            var cmd =
+                canExecute == null ?
+                    ReactiveCommand.CreateFromTask(task, outputScheduler: scheduler) :
+                    ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
+
+            cmd.ThrownExceptions
+                .ObserveOn(MainThreadScheduler)
+                .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
             return cmd;
         }
 
@@ -191,7 +213,7 @@ namespace ReactiveDomain.ViewObjects
 
         /// <summary>
         /// BuildFireCommandEx() does the same thing as BuildFireCommand(), except commandFunc must be defined
-        /// as a function that takes Unit as input and returns Command as result.
+        /// as a function that takes Object as input and returns Command as result.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="canExecute"></param>
@@ -201,10 +223,10 @@ namespace ReactiveDomain.ViewObjects
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommandEx(
+        public static ReactiveCommand<object, Unit> BuildFireCommandEx(
                                 this IGeneralBus bus,
                                 IObservable<bool> canExecute,
-                                Func<Unit, Command> commandFunc,
+                                Func<object, Command> commandFunc,
                                 IScheduler scheduler = null,
                                 string userErrorMsg = null,
                                 TimeSpan? responseTimeout = null,
@@ -215,7 +237,7 @@ namespace ReactiveDomain.ViewObjects
 
         /// <summary>
         /// BuildFireCommandEx() does the same thing as BuildFireCommand(), except commandFunc must be defined
-        /// as a function that takes Unit as input and returns Command as result.
+        /// as a function that takes Object as input and returns Command as result.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="commandFunc"></param>
@@ -224,9 +246,9 @@ namespace ReactiveDomain.ViewObjects
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommandEx(
+        public static ReactiveCommand<object, Unit> BuildFireCommandEx(
                                                        this IGeneralBus bus,
-                                                       Func<Unit, Command> commandFunc,
+                                                       Func<object, Command> commandFunc,
                                                        IScheduler scheduler = null,
                                                        string userErrorMsg = null,
                                                        TimeSpan? responseTimeout = null,
@@ -235,9 +257,9 @@ namespace ReactiveDomain.ViewObjects
             return FireCommandEx(bus, commandFunc, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
-        private static ReactiveCommand<Unit, Unit> FireCommandEx(
+        private static ReactiveCommand<object, Unit> FireCommandEx(
             IGeneralBus bus,
-            Func<Unit, Command> commandFunc,
+            Func<object, Command> commandFunc,
             IObservable<bool> canExecute = null,
             IScheduler scheduler = null,
             string userErrorMsg = null,
@@ -247,7 +269,7 @@ namespace ReactiveDomain.ViewObjects
 
             if (scheduler == null)
                 scheduler = RxApp.MainThreadScheduler;
-            Func<Unit, Task> task = async _ => await Task.Run(() =>
+            Func<object, Task> task = async _ => await Task.Run(() =>
             {
                 var c = commandFunc(_);
                 if (c != null) bus.Fire(c, userErrorMsg, responseTimeout, ackTimeout);
@@ -264,7 +286,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
 
-        public static ReactiveCommand<Unit, Unit> BuildPublishCommand(
+        public static ReactiveCommand<Unit, Unit> BuildPublishEvent(
                                                     this IPublisher bus,
                                                     IObservable<bool> canExecute,
                                                     Func<Event> eventFunc,
@@ -273,7 +295,7 @@ namespace ReactiveDomain.ViewObjects
         {
             return PublishEvents(bus, new[] { eventFunc }, canExecute, scheduler, userErrorMsg);
         }
-        public static ReactiveCommand<Unit, Unit> BuildPublishCommand(
+        public static ReactiveCommand<Unit, Unit> BuildPublishEvent(
                                                    this IPublisher bus,
                                                    Func<Event> eventFunc,
                                                    IScheduler scheduler = null,
@@ -281,7 +303,7 @@ namespace ReactiveDomain.ViewObjects
         {
             return PublishEvents(bus, new[] { eventFunc }, null, scheduler, userErrorMsg);
         }
-        public static ReactiveCommand<Unit, Unit> BuildPublishCommand(
+        public static ReactiveCommand<Unit, Unit> BuildPublishEvent(
                                                 this IPublisher bus,
                                                 IObservable<bool> canExecute,
                                                 IEnumerable<Func<Event>> events,
@@ -290,7 +312,7 @@ namespace ReactiveDomain.ViewObjects
         {
             return PublishEvents(bus, events, canExecute, scheduler, userErrorMsg);
         }
-        public static ReactiveCommand<Unit, Unit> BuildPublishCommand(
+        public static ReactiveCommand<Unit, Unit> BuildPublishEvent(
                                                 this IPublisher bus,
                                                 IEnumerable<Func<Event>> events,
                                                 IScheduler scheduler = null,
