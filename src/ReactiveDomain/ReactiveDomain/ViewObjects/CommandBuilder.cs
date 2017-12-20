@@ -67,7 +67,7 @@ namespace ReactiveDomain.ViewObjects
 
         /// <summary>
         /// FromActionEx does the same thing as FromAction, except the action must be defined to take
-        /// an Object an input.
+        /// an Object as input.
         /// </summary>
         /// <param name="canExecute"></param>
         /// <param name="action"></param>
@@ -85,7 +85,7 @@ namespace ReactiveDomain.ViewObjects
 
         /// <summary>
         /// FromActionEx does the same thing as FromAction, except the action must be defined to take
-        /// an Object an input.
+        /// an Object as input.
         /// </summary>
         /// <param name="action"></param>
         /// <param name="scheduler"></param>
