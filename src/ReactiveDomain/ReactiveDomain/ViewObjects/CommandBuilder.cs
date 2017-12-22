@@ -497,7 +497,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except commandFunc must be defined
+        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except eventFunc must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
@@ -517,7 +517,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except commandFunc must be defined
+        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except eventFunc must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
@@ -535,7 +535,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except commandFunc must be defined
+        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except eventFuncs must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
@@ -555,7 +555,7 @@ namespace ReactiveDomain.ViewObjects
         }
 
         /// <summary>
-        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except commandFunc must be defined
+        /// BuildPublishEventEx() does the same thing as BuildPublishEvent(), except eventFuncs must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
