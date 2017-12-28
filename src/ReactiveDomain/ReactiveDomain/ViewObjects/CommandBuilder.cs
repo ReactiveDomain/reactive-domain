@@ -60,8 +60,14 @@ namespace ReactiveDomain.ViewObjects
                     ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                .ObserveOn(MainThreadScheduler)
-                .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
@@ -112,8 +118,14 @@ namespace ReactiveDomain.ViewObjects
                         ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                       .ObserveOn(MainThreadScheduler)
-                       .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
@@ -317,8 +329,14 @@ namespace ReactiveDomain.ViewObjects
                         ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                       .ObserveOn(MainThreadScheduler)
-                       .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
@@ -391,8 +409,14 @@ namespace ReactiveDomain.ViewObjects
                         ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                       .ObserveOn(MainThreadScheduler)
-                       .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
@@ -491,8 +515,14 @@ namespace ReactiveDomain.ViewObjects
                         ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                       .ObserveOn(MainThreadScheduler)
-                       .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
@@ -595,8 +625,14 @@ namespace ReactiveDomain.ViewObjects
                         ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
-                       .ObserveOn(MainThreadScheduler)
-                       .Subscribe(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)));
+                        .SelectMany(ex => Interactions.Errors.Handle(new UserError(userErrorMsg ?? ex.Message, ex)))
+                        .ObserveOn(MainThreadScheduler)
+                        .Subscribe(result =>
+                        {
+                            //This will return the recovery option returned from the registered user error handler
+                            //right now this is a simple message box in the view code behind
+                            /* n.b. this forces evaluation/execution of the select many  */
+                        });
             return cmd;
         }
 
