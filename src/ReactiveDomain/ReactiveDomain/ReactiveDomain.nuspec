@@ -18,7 +18,7 @@
       <dependency id="NLog" version="4.3.10" />
       <dependency id="NuGet.CommandLine" version="3.4.3" />
       <dependency id="Newtonsoft.Json" version="9.0.1" />
-      <dependency id="ReactiveUI" version="6.5.2" />
+      <dependency id="ReactiveUI" version="7.4.0" />
       <dependency id="Rx-PlatformServices" version="2.2.5" />
       <dependency id="Rx-XAML" version="2.2.5" />
       <dependency id="Splat" version="1.6.2" />
