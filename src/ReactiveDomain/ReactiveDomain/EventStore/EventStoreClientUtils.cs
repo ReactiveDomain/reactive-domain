@@ -147,10 +147,16 @@ namespace ReactiveDomain.EventStore
                                                                   Guid aggregateId = default(Guid))
         {
             string stream = typeofDomainObject.GetStreamNameBasedOnDomainObjectType(resolveLinkTos, aggregateId);
+            var defaultSettings = CatchUpSubscriptionSettings.Default;
             return eventStoreConnection.SubscribeToStreamFrom(
                                                                  stream,
                                                                  fromEventNumberExclusive,
-                                                                 resolveLinkTos,
+                                                                 new CatchUpSubscriptionSettings(
+                                                                        defaultSettings.MaxLiveQueueSize,
+                                                                        defaultSettings.ReadBatchSize,
+                                                                        defaultSettings.VerboseLogging,
+                                                                        resolveLinkTos,
+                                                                        defaultSettings.SubscriptionName), 
                                                                  eventAppeared,
                                                                  liveProcessingStarted,
                                                                  subscriptionDropped,
