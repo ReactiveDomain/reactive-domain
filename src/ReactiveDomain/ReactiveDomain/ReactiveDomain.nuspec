@@ -11,13 +11,11 @@
     <copyright>Copyright 2017</copyright>
     <tags>reactive domain cqrs</tags>
     <dependencies>
-      <dependency id="EventStore.Client.Embedded" version="3.9.2" />
+      <dependency id="EventStore.Client.Embedded" version="4.0.3" />
       <dependency id="log4net" version="2.0.7" />
-      <dependency id="Microsoft.Tpl.DataFlow" version="4.5.24" />
-      <dependency id="Nito.AsyncEx.Dataflow" version="3.0.0" />
-      <dependency id="NLog" version="4.3.10" />
+      <dependency id="NLog" version="4.4.12" />
       <dependency id="NuGet.CommandLine" version="3.4.3" />
-      <dependency id="Newtonsoft.Json" version="9.0.1" />
+      <dependency id="Newtonsoft.Json" version="10.0.3" />
       <dependency id="ReactiveUI" version="7.4.0" />
       <dependency id="Rx-PlatformServices" version="2.2.5" />
       <dependency id="Rx-XAML" version="2.2.5" />
