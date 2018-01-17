@@ -52,8 +52,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EventStore.ClientAPI">
-      <HintPath>..\..\..\packages\EventStore.Client.3.9.2\lib\net40\EventStore.ClientAPI.dll</HintPath>
+    <Reference Include="EventStore.ClientAPI, Version=4.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\EventStore.Client.4.0.3\lib\net40\EventStore.ClientAPI.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net">
@@ -196,6 +197,10 @@
     <Compile Include="Memory\VideoSlice.cs" />
     <Compile Include="Memory\WrappedBuffer.cs" />
     <Compile Include="Memory\WrappedImage.cs" />
+    <Compile Include="Messages\IChainedMessage.cs" />
+    <Compile Include="Messaging\ChainedCommand.cs" />
+    <Compile Include="Messaging\ChainedEvent.cs" />
+    <Compile Include="Messaging\ChainSource.cs" />
     <Compile Include="Messaging\PriorityQueue.cs" />
     <Compile Include="Messaging\TimeoutService.cs" />
     <Compile Include="Bus\TransientSubscriber.cs" />

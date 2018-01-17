@@ -46,13 +46,13 @@ namespace ReactiveDomain.EventStore
                 opt: StartConflictOption.Connect);
         }
         public void SetupEventStore(
-                                DirectoryInfo installPath,
-                                string args,
-                                UserCredentials credentials,
-                                IPAddress server,
-                                int tcpPort,
-                                ProcessWindowStyle windowStyle,
-                                StartConflictOption opt)
+            DirectoryInfo installPath,
+            string args,
+            UserCredentials credentials,
+            IPAddress server,
+            int tcpPort,
+            ProcessWindowStyle windowStyle,
+            StartConflictOption opt)
         {
             Ensure.NotNullOrEmpty(args, "args");
             Ensure.NotNull(credentials, "credentials");
@@ -85,19 +85,30 @@ namespace ReactiveDomain.EventStore
             {
                 _process = new Process
                 {
-                    StartInfo = {
-                                    WindowStyle = windowStyle,
-                                    UseShellExecute = true,
-                                    CreateNoWindow = false,
-                                    WorkingDirectory = installPath.FullName,
-                                    FileName = fullPath,
-                                    Arguments = args,
-                                    Verb ="runas"
-                                }
+                    StartInfo =
+                    {
+                        WindowStyle = windowStyle,
+                        UseShellExecute = true,
+                        CreateNoWindow = false,
+                        WorkingDirectory = installPath.FullName,
+                        FileName = fullPath,
+                        Arguments = args,
+                        Verb = "runas"
+                    }
                 };
                 _process.Start();
             }
-
+            Connect(
+                credentials,
+                server,
+                tcpPort);
+        }
+        
+        public void Connect(
+                        UserCredentials credentials,
+                        IPAddress server,
+                        int tcpPort)
+        {
             var tcpEndpoint = new IPEndPoint(server, tcpPort);
 
             var settings = ConnectionSettings.Create()
