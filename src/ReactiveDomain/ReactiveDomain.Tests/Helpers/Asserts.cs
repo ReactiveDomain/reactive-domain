@@ -108,6 +108,36 @@ namespace Xunit
         }
 
         /// <summary>
+        /// Verifies that two objects are not equal, using a default comparer.
+        /// </summary>
+        /// <typeparam name="T">The type of the objects to be compared</typeparam>
+        /// <param name="expected">The expected object</param>
+        /// <param name="actual">The actual object</param>
+        /// <param name="userMessage">The user message to be shown</param>
+        /// <exception cref="NotEqualException">Thrown when the objects are equal</exception>
+        public static void NotEqual<T>(T expected, T actual, string userMessage)
+        {
+            NotEqual(expected, actual, GetEqualityComparer<T>());
+        }
+
+        /// <summary>
+        /// Verifies that two objects are not equal, using a custom equality comparer.
+        /// </summary>
+        /// <typeparam name="T">The type of the objects to be compared</typeparam>
+        /// <param name="expected">The expected object</param>
+        /// <param name="actual">The actual object</param>
+        /// <param name="comparer">The comparer used to examine the objects</param>
+        /// <param name="userMessage">The user message to be shown</param>
+        /// <exception cref="NotEqualException">Thrown when the objects are equal</exception>
+        public static void NotEqual<T>(T expected, T actual, IEqualityComparer<T> comparer, string userMessage)
+        {
+            Assert.GuardArgumentNotNull("comparer", comparer);
+
+            if (comparer.Equals(expected, actual))
+                throw new NotEqualExceptionEx(ArgumentFormatter.Format(expected), ArgumentFormatter.Format(actual), userMessage);
+        }
+
+        /// <summary>
         /// Verifies that a ReactiveCommand can be executed.
         /// </summary>
         /// <typeparam name="TIn">The command's input type</typeparam>

@@ -56,10 +56,10 @@ namespace ReactiveDomain.Tests.Logging
 
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 9000);
-            Assert.True(_countedEventCount == _maxCountedEvents, $"Message {_countedEventCount} doesn't match expected index {_maxCountedEvents}");
+            Assert.Equal(_maxCountedEvents, _countedEventCount, $"Message {_countedEventCount} doesn't match expected index {_maxCountedEvents}");
             Assert.IsOrBecomesTrue(() => _testDomainEventCount == 1, 1000);
 
-            Assert.True(_testDomainEventCount == 1, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
+            Assert.Equal(1, _testDomainEventCount, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
         }
 
         public void Handle(DomainEvent message)

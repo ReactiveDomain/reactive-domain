@@ -177,6 +177,7 @@
     <Compile Include="Asserts\StringAsserts.cs" />
     <Compile Include="Asserts\TypeAsserts.cs" />
     <Compile Include="can_cancel_commands_via_cancellation_token.cs" />
+    <Compile Include="Helpers\NotEqualExceptionEx.cs" />
     <Compile Include="Helpers\EqualExceptionEx.cs" />
     <Compile Include="Helpers\TestEvents.cs" />
     <Compile Include="Specifications\CommandQueueSpecification.cs" />

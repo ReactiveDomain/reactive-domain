@@ -76,10 +76,10 @@ namespace ReactiveDomain.Tests.Logging
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000);
-            Assert.True(_multiFireCount == MaxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
+            Assert.Equal(MaxCountedCommands, _multiFireCount, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
             Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000);
 
-            Assert.True(_testCommandCount == 1, $"Last event count {_testCommandCount} doesn't match expected value {1}");
+            Assert.Equal(1, _testCommandCount, $"Last event count {_testCommandCount} doesn't match expected value {1}");
 
         }
 

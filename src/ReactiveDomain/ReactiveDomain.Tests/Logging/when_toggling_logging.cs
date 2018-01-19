@@ -49,15 +49,16 @@ namespace ReactiveDomain.Tests.Logging
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
             }
 
             Assert.IsOrBecomesTrue(
-                () => _multiFireCount == _maxCountedMessages,
-                1000,
-               $"First set of Commands count {_multiFireCount} not properly logged. Expected {_maxCountedMessages}");
+                    () => _multiFireCount == _maxCountedMessages,
+                    1000,
+                    $"First set of Commands count {_multiFireCount} not properly logged. Expected {_maxCountedMessages}");
 
             Logging.Enabled = false;
             _multiFireCount = 0;
@@ -69,15 +70,17 @@ namespace ReactiveDomain.Tests.Logging
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
             }
 
-            Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _multiFireCount > 0,
-                5000,
-                $"Found {_multiFireCount} of second set of commands on log. Should be 0"));
+            Assert.Throws<TrueException>(
+                () => Assert.IsOrBecomesTrue(
+                                () => _multiFireCount > 0,
+                                5000,
+                                $"Found {_multiFireCount} of second set of commands on log. Should be 0"));
 
             Logging.Enabled = true;
             _multiFireCount = 0;
@@ -88,29 +91,29 @@ namespace ReactiveDomain.Tests.Logging
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
             }
 
             var tstCmd = new TestCommands.TestCommand3(
-                Guid.NewGuid(),
-                null);
+                                        Guid.NewGuid(),
+                                        null);
 
-            Bus.Fire(tstCmd,
+            Bus.Fire(
+                tstCmd,
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
 
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(
-                () => _multiFireCount == _maxCountedMessages,
-                5000,
-               $"First set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
+                    () => _multiFireCount == _maxCountedMessages,
+                    5000,
+                    $"First set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
 
-            Assert.True(
-                _multiFireCount == _maxCountedMessages,
-                $"Third set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
+            Assert.Equal(_maxCountedMessages, _multiFireCount, $"Third set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
 
         }
 
@@ -123,15 +126,16 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedEvents; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
             }
 
             Assert.IsOrBecomesTrue(
-                () => _countedEventCount == _maxCountedEvents,
-                1000,
-               $"First set of Events count {_countedEventCount} - not properly logged");
+                    () => _countedEventCount == _maxCountedEvents,
+                    1000,
+                    $"First set of Events count {_countedEventCount} - not properly logged");
 
             Logging.Enabled = false;
             _countedEventCount = 0;
@@ -140,15 +144,17 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedEvents; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
             }
 
-            Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _countedEventCount > 0,
-                5000,
-                $"Found {_countedEventCount} of second set of events on log. Should be 0"));
+            Assert.Throws<TrueException>(
+                () => Assert.IsOrBecomesTrue(
+                                () => _countedEventCount > 0,
+                                5000,
+                                $"Found {_countedEventCount} of second set of events on log. Should be 0"));
 
             Logging.Enabled = true;
             _countedEventCount = 0;
@@ -157,15 +163,16 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedEvents; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
             }
 
             Assert.IsOrBecomesTrue(
-                () => _countedEventCount == _maxCountedEvents,
-                1000,
-               $"Third set of Events count {_countedEventCount} - not properly logged");
+                    () => _countedEventCount == _maxCountedEvents,
+                    1000,
+                   $"Third set of Events count {_countedEventCount} - not properly logged");
         }
 
         [Fact(Skip = "pending deletion of log stream")]
@@ -177,15 +184,17 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
 
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
 
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(1));
             }
@@ -193,12 +202,12 @@ namespace ReactiveDomain.Tests.Logging
             Assert.IsOrBecomesTrue(
                 () => _countedEventCount == _maxCountedMessages,
                 1000,
-               $"First set of Events count {_countedEventCount} - not properly logged");
+                $"First set of Events count {_countedEventCount} - not properly logged");
 
             Assert.IsOrBecomesTrue(
                 () => _multiFireCount == _maxCountedMessages,
                 1000,
-               $"First set of commands count {_multiFireCount} - not properly logged");
+                $"First set of commands count {_multiFireCount} - not properly logged");
 
             Logging.Enabled = false;
             _countedEventCount = 0;
@@ -208,29 +217,33 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
 
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
 
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(1));
             }
 
-            Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _countedEventCount > 0,
-                5000,
-                $"Found {_countedEventCount} of second set of messages on disabled log. Should be 0"));
+            Assert.Throws<TrueException>(
+                () => Assert.IsOrBecomesTrue(
+                                () => _countedEventCount > 0,
+                                5000,
+                                $"Found {_countedEventCount} of second set of messages on disabled log. Should be 0"));
 
             // hard to imagine getting here if the above fails...
-            Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _multiFireCount > 0,
-                5000,
-                $"Found {_multiFireCount} of second set of messages on disabled log. Should be 0"));
+            Assert.Throws<TrueException>(
+                () => Assert.IsOrBecomesTrue(
+                                () => _multiFireCount > 0,
+                                5000,
+                                $"Found {_multiFireCount} of second set of messages on disabled log. Should be 0"));
 
 
             Logging.Enabled = true;
@@ -241,28 +254,30 @@ namespace ReactiveDomain.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            Guid.NewGuid()));
 
                 var cmd = new TestCommands.TestCommand2(
                                         Guid.NewGuid(),
                                         null);
 
-                Bus.Fire(cmd,
+                Bus.Fire(
+                    cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(1));
             }
 
             Assert.IsOrBecomesTrue(
-                () => _countedEventCount == _maxCountedMessages,
-                1000,
-               $"Third set of Events count {_countedEventCount} - not properly logged");
+                    () => _countedEventCount == _maxCountedMessages,
+                    1000,
+                    $"Third set of Events count {_countedEventCount} - not properly logged");
 
             Assert.IsOrBecomesTrue(
-                () => _multiFireCount == _maxCountedMessages,
-                1000,
-               $"Third set of commands count {_multiFireCount} - not properly logged");
+                    () => _multiFireCount == _maxCountedMessages,
+                    1000,
+                    $"Third set of commands count {_multiFireCount} - not properly logged");
 
         }
 
