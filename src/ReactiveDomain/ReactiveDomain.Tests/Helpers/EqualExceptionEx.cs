@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
+// ReSharper disable once CheckNamespace - this is where it is supposed to be
 namespace Xunit.Sdk
 {
     /// <summary>
     /// Exception thrown when two values are unexpectedly not equal.
     /// </summary>
-#if XUNIT_VISIBILITY_INTERNAL 
+#if XUNIT_VISIBILITY_INTERNAL
     internal
 #else
     public
 #endif
-    class EqualException : AssertActualExpectedException
+    class EqualExceptionEx : AssertActualExpectedException
     {
         static readonly Dictionary<char, string> Encodings = new Dictionary<char, string>
         {
@@ -30,8 +31,8 @@ namespace Xunit.Sdk
         /// </summary>
         /// <param name="expected">The expected object value</param>
         /// <param name="actual">The actual object value</param>
-        public EqualException(object expected, object actual)
-            : base(expected, actual, "Assert.Equal() Failure")
+        public EqualExceptionEx(object expected, object actual, string userMessage)
+            : base(expected, actual, userMessage)
         {
             ActualIndex = -1;
             ExpectedIndex = -1;
@@ -44,8 +45,8 @@ namespace Xunit.Sdk
         /// <param name="actual">The actual string value</param>
         /// <param name="expectedIndex">The first index in the expected string where the strings differ</param>
         /// <param name="actualIndex">The first index in the actual string where the strings differ</param>
-        public EqualException(string expected, string actual, int expectedIndex, int actualIndex)
-            : base(expected, actual, "Assert.Equal() Failure")
+        public EqualExceptionEx(string expected, string actual, int expectedIndex, int actualIndex, string userMessage)
+            : base(expected, actual, userMessage)
         {
             ActualIndex = actualIndex;
             ExpectedIndex = expectedIndex;
