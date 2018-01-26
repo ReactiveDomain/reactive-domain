@@ -18,7 +18,7 @@ namespace ReactiveDomain.Tests.EventStore
 
     public class GetEventStoreRepositoryIntegrationTests : IDisposable
     {
-        private const string SkipReason = "EventStore";
+        private const string SkipReason = "Live EventStore Required";
         /// <summary>
         /// Set this to the TCP endpoint on which the Event Store is running.
         /// </summary>

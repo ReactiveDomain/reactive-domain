@@ -73,7 +73,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void commands_are_logged()
         {
 

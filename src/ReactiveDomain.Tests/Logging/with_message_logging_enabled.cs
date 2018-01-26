@@ -8,8 +8,10 @@ namespace ReactiveDomain.Tests.Logging
     public abstract class with_message_logging_enabled :
         with_event_store
     {
+        // set the skip reason to "" to run the tests
+        protected const string SkipReason = "Stream Cleanup Required";
         protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"Test-{Guid.NewGuid():N}";
+        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
 
         protected override void Given()
         {

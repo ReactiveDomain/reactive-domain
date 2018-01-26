@@ -9,9 +9,12 @@ namespace ReactiveDomain.Tests.Logging
         with_event_store,
         IDisposable
     {
+        // set the skip reason to "" to run the tests
+        protected const string SkipReason = "Stream Cleanup Required";
+        
         //protected member Logging class that inherits from QueuedSubscriber
         protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"Test-{Guid.NewGuid():N}";
+        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
 
         protected override void Given()
         {

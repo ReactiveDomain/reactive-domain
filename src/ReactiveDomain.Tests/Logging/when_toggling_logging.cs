@@ -39,7 +39,7 @@ namespace ReactiveDomain.Tests.Logging
 
         }
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void commands_logged_only_while_logging_is_enabled()
         {
             // create and fire a mixed set of commands and events
@@ -114,7 +114,7 @@ namespace ReactiveDomain.Tests.Logging
 
         }
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void events_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
@@ -168,7 +168,7 @@ namespace ReactiveDomain.Tests.Logging
                $"Third set of Events count {_countedEventCount} - not properly logged");
         }
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void mixed_messages_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;

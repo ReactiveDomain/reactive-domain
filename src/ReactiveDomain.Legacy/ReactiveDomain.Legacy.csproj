@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
+    <Platforms>x64</Platforms>
     <Version>0.8.0.0</Version>
     <Authors>PerkinElmer</Authors>
     <Company>PerkinElmer</Company>
@@ -13,13 +14,10 @@
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
-
 </Project>

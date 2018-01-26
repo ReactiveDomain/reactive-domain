@@ -90,7 +90,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void mixed_messages_are_not_logged()
         {
             // all events published, commands fired

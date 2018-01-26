@@ -50,7 +50,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void all_events_are_logged()
         {
             TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));

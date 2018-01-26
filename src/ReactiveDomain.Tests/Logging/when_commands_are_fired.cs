@@ -69,7 +69,7 @@ namespace ReactiveDomain.Tests.Logging
         }
 
 
-        [Fact(Skip = "pending deletion of log stream")]
+        [Fact(Skip = SkipReason)]
         public void all_commands_are_logged()
         {
             // Wait  for last command to be queued

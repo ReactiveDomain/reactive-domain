@@ -10,11 +10,13 @@ namespace ReactiveDomain.Core.Logging
         private static readonly ILogger GlobalLogger = GetLogger("GLOBAL-LOGGER");
         public static Func<string, ILogger> LogFactory { get; private set; }
         public static bool Initialized { get; private set; }
-        
-        static LogManager(){}
+
+        static LogManager() { }
 
         public static ILogger GetLogger(string logName)
         {
+            if (LogFactory == null)
+                LogFactory = (name) => new NullLogger();
             return new LazyLogger(() => LogFactory(logName));
         }
 
