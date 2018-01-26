@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFrameworks>netcoreapp2.0;net46</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' == 'Unix'">
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyName>ReactiveDomain.Domain.Tests</AssemblyName>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <RootNamespace>ReactiveDomain</RootNamespace>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <RuntimeFrameworkVersion>2.0.5</RuntimeFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyVersion Condition="$(AssemblyVersion) == ''">0.0.0</AssemblyVersion>
+    <FileVersion Condition="$(FileVersion) == ''">0.0.0</FileVersion>
+    <InformationalVersion Condition="$(InformationalVersion) == ''">0.0.0</InformationalVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <Optimize>False</Optimize>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <Optimize>True</Optimize>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <Title>ReactiveDomain.Domain.Tests</Title>
+    <Authors>Yves Reynhout;Christopher Condron</Authors>
+    <Description>This package contains the tests for the core types to use when building an event sourced model in C#.</Description>
+    <Copyright>Copyright © Linedata. All rights reserved.</Copyright>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AutoFixture.Idioms" Version="4.0.0-rc1" />
+    <PackageReference Include="CompareNetObjects" Version="3.9.0" />
+    <PackageReference Include="EventStore.Client" Version="4.1.0" />
+    <PackageReference Include="FluentValidation" Version="7.2.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="XUnit" Version="2.3.1" />
+    <PackageReference Include="PublicAPIGenerator" Version="6.5.0" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.1" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netcoreapp2.0' ">
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" />
+    <PackageReference Include="Docker.DotNet" Version="3.125.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+    <PackageReference Include="EventStore.Client" Version="4.0.0" />
+    <PackageReference Include="EventStore.Client.Embedded" Version="4.0.0" />
+  </ItemGroup>
+</Project>

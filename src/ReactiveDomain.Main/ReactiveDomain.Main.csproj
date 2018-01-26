@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <Version>0.8.0.0</Version>
+    <Authors>PerkinElmer</Authors>
+    <Company>PerkinElmer</Company>
+    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
+    <Description />
+    <AssemblyVersion>0.8.0.0</AssemblyVersion>
+    <FileVersion>0.8.0.0</FileVersion>
+    <NeutralLanguage />
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="VersionInfo.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Buffers\ReactiveDomain.Buffers.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Legacy\ReactiveDomain.Legacy.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Tests\ReactiveDomain.Tests.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.UI\ReactiveDomain.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  
+</Project>
