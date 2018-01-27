@@ -32,6 +32,9 @@
     <Copyright>Copyright © Linedata. All rights reserved.</Copyright>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="RepositoryTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>

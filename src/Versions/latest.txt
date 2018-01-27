@@ -147,13 +147,6 @@ namespace ReactiveDomain
     {
         System.Collections.Generic.IEnumerable<EventStore.ClientAPI.EventData> Translate(ReactiveDomain.EventSourceChangeset changeset);
     }
-    public interface IRepository<TRoot>
-        where TRoot : ReactiveDomain.AggregateRootEntity
-    {
-        System.Threading.Tasks.Task<TRoot> LoadAsync(ReactiveDomain.StreamName stream, System.Threading.CancellationToken ct = null);
-        System.Threading.Tasks.Task SaveAsync(ReactiveDomain.StreamName stream, TRoot instance, System.Guid causation, System.Guid correlation, ReactiveDomain.Metadata metadata = null, System.Threading.CancellationToken ct = null);
-        System.Threading.Tasks.Task<TRoot> TryLoadAsync(ReactiveDomain.StreamName stream, System.Threading.CancellationToken ct = null);
-    }
     public interface ISnapshotSource
     {
         void RestoreFromSnapshot(object snapshot);
@@ -215,14 +208,6 @@ namespace ReactiveDomain
         Found = 0,
         NotFound = 1,
         Deleted = 2,
-    }
-    public class Repository<TRoot> : ReactiveDomain.IRepository<TRoot>
-        where TRoot : ReactiveDomain.AggregateRootEntity
-    {
-        public Repository(System.Func<TRoot> factory, EventStore.ClientAPI.IEventStoreConnection connection, ReactiveDomain.EventSourceReaderConfiguration readerConfiguration, ReactiveDomain.EventSourceWriterConfiguration writerConfiguration) { }
-        public System.Threading.Tasks.Task<TRoot> LoadAsync(ReactiveDomain.StreamName stream, System.Threading.CancellationToken ct = null) { }
-        public System.Threading.Tasks.Task SaveAsync(ReactiveDomain.StreamName stream, TRoot instance, System.Guid causation, System.Guid correlation, ReactiveDomain.Metadata metadata = null, System.Threading.CancellationToken ct = null) { }
-        public System.Threading.Tasks.Task<TRoot> TryLoadAsync(ReactiveDomain.StreamName stream, System.Threading.CancellationToken ct = null) { }
     }
     public struct SliceSize : System.IEquatable<ReactiveDomain.SliceSize>
     {
