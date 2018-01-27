@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
- <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
+ <!--<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(OS)' == 'Unix'">
     <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+  </PropertyGroup>-->
   <PropertyGroup>
     <AssemblyName>ReactiveDomain.Domain</AssemblyName>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFramework>net462</TargetFramework>
+    <Platforms>x64</Platforms>   
     <RootNamespace>ReactiveDomain</RootNamespace>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -18,13 +19,13 @@
     <FileVersion Condition="$(FileVersion) == ''">0.0.0</FileVersion>
     <InformationalVersion Condition="$(InformationalVersion) == ''">0.0.0</InformationalVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <Optimize>False</Optimize>
     <!-- <DocumentationFile>bin\Debug\net46\ReactiveDomain.Domain.xml</DocumentationFile> -->
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <Optimize>True</Optimize>
     <!-- <DocumentationFile>bin\Release\net46\ReactiveDomain.Domain.xml</DocumentationFile> -->
@@ -51,10 +52,7 @@
     <IncludeBuildOutput>true</IncludeBuildOutput>
     <IncludeContentInPack>false</IncludeContentInPack>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+  <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
   </ItemGroup> 
 </Project>

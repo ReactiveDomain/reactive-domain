@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using EventStore.ClientAPI;
-#if NET46
+#if NET462
 using EventStore.ClientAPI.Embedded;
 using EventStore.Core;
 #endif
@@ -19,7 +19,7 @@ using ReactiveDomain;
 
 namespace ReactiveDomain
 {
-#if NET46
+#if NET462
     public class EmbeddedEventStoreFixture : IDisposable
     {
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
