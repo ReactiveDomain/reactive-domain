@@ -20,7 +20,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected GetEventStoreRepository Repo;
         protected override void Given()
         {
-            Repo = new GetEventStoreRepository(_connection);
+            Repo = new GetEventStoreRepository("UnitTest",_connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,

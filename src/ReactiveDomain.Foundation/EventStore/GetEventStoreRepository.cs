@@ -34,8 +34,8 @@ namespace ReactiveDomain.Foundation.EventStore
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public GetEventStoreRepository(IEventStoreConnection eventStoreConnection, IBus outBus = null)
-            : this(eventStoreConnection, (t, g) => string.Format("{0}-{1}", char.ToLower(t.Name[0]) + t.Name.Substring(1), g.ToString("N")), outBus)
+        public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
+            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
         {
         }
 

@@ -17,7 +17,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         public when_using_mock_repository(EmbeddedEventStoreFixture fixture)
         {
             _repos.Add(new MockEventStoreRepository());
-            _repos.Add(new GetEventStoreRepository(fixture.Connection));
+            _repos.Add(new GetEventStoreRepository("UnitTest",fixture.Connection));
         }
 
         [Fact]

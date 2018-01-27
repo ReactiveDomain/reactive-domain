@@ -30,7 +30,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         public GetEventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
             _connection = fixture.Connection;
-            _repo = new GetEventStoreRepository(_connection);
+            _repo = new GetEventStoreRepository("UnitTest",_connection);
         }
 
 
