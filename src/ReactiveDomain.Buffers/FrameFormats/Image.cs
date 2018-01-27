@@ -2,8 +2,8 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using ReactiveDomain.Buffers.Memory;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Buffers.FrameFormats
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ReactiveDomain.Buffers.FrameFormats;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Buffers.Memory
 {

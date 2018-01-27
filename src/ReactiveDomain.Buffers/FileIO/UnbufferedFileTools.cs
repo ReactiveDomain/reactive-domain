@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using ReactiveDomain.Buffers.Memory;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Buffers.FileIO
 {

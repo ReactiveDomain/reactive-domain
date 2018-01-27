@@ -1,5 +1,5 @@
 using System;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {

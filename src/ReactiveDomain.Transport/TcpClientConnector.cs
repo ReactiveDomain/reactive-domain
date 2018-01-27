@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Transport
 {

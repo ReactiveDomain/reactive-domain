@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using ReactiveDomain.Core.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Transport
 {

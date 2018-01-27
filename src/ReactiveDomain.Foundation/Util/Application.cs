@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Foundation.Util
 {

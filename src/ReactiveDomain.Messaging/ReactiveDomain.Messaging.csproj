@@ -19,9 +19,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 </Project>

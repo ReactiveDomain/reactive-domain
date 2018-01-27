@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using ReactiveDomain.Core.Util;
 using Formatting = Newtonsoft.Json.Formatting;
 
 namespace ReactiveDomain.Messaging.Util

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Messaging.Bus

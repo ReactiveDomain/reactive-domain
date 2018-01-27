@@ -30,7 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 using ReactiveDomain.Transport.Formatting;
 using ReactiveDomain.Transport.Framing;
 

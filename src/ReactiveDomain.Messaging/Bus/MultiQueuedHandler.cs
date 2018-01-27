@@ -33,8 +33,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using ReactiveDomain.Core.Util;
 using ReactiveDomain.Messaging.Messages;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {

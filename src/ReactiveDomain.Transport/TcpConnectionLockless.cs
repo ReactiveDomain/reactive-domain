@@ -32,9 +32,9 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
 using ReactiveDomain.Messaging.Concurrent;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 using ReactiveDomain.Transport.BufferManagement;
 
 namespace ReactiveDomain.Transport

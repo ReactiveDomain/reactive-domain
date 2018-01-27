@@ -55,9 +55,6 @@
     <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
-    <PackageReference Include="EventStore.Client" Version="4.0.0" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
-  </ItemGroup>
+  </ItemGroup> 
 </Project>

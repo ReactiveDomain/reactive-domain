@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Timers;
-using ReactiveDomain.Core.Logging;
 using ReactiveDomain.Transport.CommandSocket;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Transport
 {

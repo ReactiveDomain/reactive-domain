@@ -1,5 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Buffers.Memory
 {

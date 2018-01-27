@@ -28,7 +28,7 @@
 
 using System;
 using System.Net;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Transport.SystemData
 {

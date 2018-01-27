@@ -19,13 +19,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Buffers\ReactiveDomain.Buffers.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Legacy\ReactiveDomain.Legacy.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Tests\ReactiveDomain.Tests.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.UI\ReactiveDomain.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

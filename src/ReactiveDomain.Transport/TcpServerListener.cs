@@ -29,8 +29,8 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Transport
 {

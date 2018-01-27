@@ -17,13 +17,14 @@
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="reactiveui" Version="7.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Legacy\ReactiveDomain.Legacy.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationFramework" />
   </ItemGroup>
 </Project>

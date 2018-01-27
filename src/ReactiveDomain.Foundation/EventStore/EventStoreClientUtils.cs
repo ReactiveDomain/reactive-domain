@@ -5,9 +5,9 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ReactiveDomain.Core.Logging;
 using ReactiveDomain.Messaging;
-using ILogger = ReactiveDomain.Core.Logging.ILogger;
+using ReactiveDomain.Messaging.Logging;
+using ILogger = ReactiveDomain.Messaging.Logging.ILogger;
 
 namespace ReactiveDomain.Foundation.EventStore
 {

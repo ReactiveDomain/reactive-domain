@@ -10,9 +10,10 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.Projections;
 using EventStore.ClientAPI.SystemData;
 using Newtonsoft.Json;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 using ES_ILogger = EventStore.ClientAPI.ILogger;
+using ILogger = ReactiveDomain.Messaging.Logging.ILogger;
 
 
 namespace ReactiveDomain.Foundation.EventStore
@@ -26,7 +27,7 @@ namespace ReactiveDomain.Foundation.EventStore
             Error
         }
 
-        private readonly Core.Logging.ILogger _log = LogManager.GetLogger("Common");
+        private readonly ILogger _log = LogManager.GetLogger("Common");
 
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;

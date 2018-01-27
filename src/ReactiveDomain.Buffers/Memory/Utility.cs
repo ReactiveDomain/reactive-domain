@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Xml;
 
 namespace ReactiveDomain.Buffers.Memory
 {

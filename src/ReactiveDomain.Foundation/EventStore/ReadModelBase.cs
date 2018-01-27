@@ -1,8 +1,8 @@
 ﻿using System;
-using ReactiveDomain.Core.Util;
 using ReactiveDomain.Legacy;
 using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Foundation.EventStore
 {

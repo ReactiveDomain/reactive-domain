@@ -15,9 +15,9 @@
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
-  
+
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

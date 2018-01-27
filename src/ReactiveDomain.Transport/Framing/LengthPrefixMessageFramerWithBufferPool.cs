@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using ReactiveDomain.Core.Logging;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 using ReactiveDomain.Transport.BufferManagement;
 
 namespace ReactiveDomain.Transport.Framing

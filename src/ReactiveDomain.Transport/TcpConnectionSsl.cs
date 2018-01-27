@@ -36,10 +36,10 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-using ReactiveDomain.Core.Logging;
 using ReactiveDomain.Transport.Locks;
-using ReactiveDomain.Core.Util;
 using ReactiveDomain.Messaging.Concurrent;
+using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Transport
 {

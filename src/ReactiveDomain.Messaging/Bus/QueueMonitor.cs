@@ -27,7 +27,7 @@
 // 
 
 using System.Collections.Concurrent;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Messaging.Bus
 {

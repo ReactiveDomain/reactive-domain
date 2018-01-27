@@ -31,8 +31,8 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using ReactiveDomain.Core.Monitoring.Stats;
-using ReactiveDomain.Core.Util;
+using ReactiveDomain.Messaging.Monitoring.Stats;
+using ReactiveDomain.Messaging.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 

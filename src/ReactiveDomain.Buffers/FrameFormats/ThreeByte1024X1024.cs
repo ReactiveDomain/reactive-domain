@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using ReactiveDomain.Core.Logging;
+using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Buffers.FrameFormats
 {
