@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using ReactiveDomain.Testing;
 using Xunit.Sdk;
 
 namespace ReactiveDomain.Testing

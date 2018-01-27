@@ -1,7 +1,6 @@
 using Xunit;
 using PublicApiGenerator;
 using System.IO;
-using System.Diagnostics;
 
 namespace ReactiveDomain
 {

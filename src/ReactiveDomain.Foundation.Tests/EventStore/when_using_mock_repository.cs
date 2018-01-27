@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Tests.Helpers;
 using ReactiveDomain.Messaging.Bus;

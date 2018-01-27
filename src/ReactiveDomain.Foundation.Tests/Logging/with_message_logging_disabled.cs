@@ -3,7 +3,6 @@ using System.Threading;
 using EventStore.ClientAPI;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging.Tests.Specifications;
-using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {

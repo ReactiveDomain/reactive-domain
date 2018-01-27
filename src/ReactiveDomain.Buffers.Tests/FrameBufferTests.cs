@@ -1,6 +1,4 @@
 ﻿using System;
-using System.CodeDom;
-using System.Runtime.InteropServices;
 using ReactiveDomain.Buffers.FrameFormats;
 using ReactiveDomain.Buffers.Memory;
 using Xunit;

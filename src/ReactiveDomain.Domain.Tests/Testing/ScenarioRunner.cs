@@ -8,8 +8,6 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using KellermanSoftware.CompareNetObjects;
 using Newtonsoft.Json;
-using ReactiveDomain;
-using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Testing
 {

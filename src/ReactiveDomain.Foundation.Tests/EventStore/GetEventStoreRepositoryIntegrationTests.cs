@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
-using System.Threading;
 using EventStore.ClientAPI;
-using EventStore.ClientAPI.Embedded;
-using EventStore.Core;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using Xunit;

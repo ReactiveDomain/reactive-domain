@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using ReactiveDomain;
 
 namespace ReactiveDomain.Example
 {

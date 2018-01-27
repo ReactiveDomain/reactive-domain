@@ -1,6 +1,4 @@
 ﻿using System;
-using EventStore.ClientAPI;
-using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Helpers
 {

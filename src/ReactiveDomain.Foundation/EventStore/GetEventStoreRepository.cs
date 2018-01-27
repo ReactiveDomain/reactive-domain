@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -244,6 +243,7 @@ namespace ReactiveDomain.Foundation.EventStore
                         return false;
                     if (nonPublic)
                         return true;
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     return (propertyInfo.GetSetMethod(nonPublic) != null);
                 default:
                     return false;

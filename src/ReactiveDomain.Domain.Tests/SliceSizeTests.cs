@@ -1,7 +1,6 @@
 ﻿using System;
 using AutoFixture;
 using AutoFixture.Idioms;
-using ReactiveDomain;
 using Xunit;
 
 namespace ReactiveDomain

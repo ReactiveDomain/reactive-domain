@@ -15,7 +15,6 @@ using Docker.DotNet.Models;
 using System.Threading.Tasks;
 using Xunit;
 #endif
-using ReactiveDomain;
 
 namespace ReactiveDomain
 {
