@@ -30,8 +30,8 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 .Build();
             _node.StartAndWaitUntilReady().Wait();
 
-           // Connection = EmbeddedEventStoreConnection.Create(_node);
-            Connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
+            Connection = EmbeddedEventStoreConnection.Create(_node);
+           // Connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
             Connection.ConnectAsync().Wait();
         }
 
