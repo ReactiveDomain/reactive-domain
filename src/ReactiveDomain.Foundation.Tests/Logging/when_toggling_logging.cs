@@ -1,6 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
@@ -11,10 +10,15 @@ using Xunit.Sdk;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
         // ReSharper disable once InconsistentNaming
-        public class when_toggling_logging : 
+    [Collection("ESEmbeded")]
+    public class when_toggling_logging : 
         with_message_logging_enabled,
         IHandle<Message>
     {
+        public when_toggling_logging(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+            
+        }
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
@@ -40,7 +44,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-        [Fact(Skip = SkipReason)]
         public void commands_logged_only_while_logging_is_enabled()
         {
             // create and fire a mixed set of commands and events
@@ -115,7 +118,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-        [Fact(Skip = SkipReason)]
         public void events_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
@@ -169,7 +171,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                $"Third set of Events count {_countedEventCount} - not properly logged");
         }
 
-        [Fact(Skip = SkipReason)]
         public void mixed_messages_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;

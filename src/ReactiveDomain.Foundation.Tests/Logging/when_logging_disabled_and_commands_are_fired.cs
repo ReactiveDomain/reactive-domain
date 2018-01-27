@@ -1,6 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
@@ -12,6 +11,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_logging_disabled_and_commands_are_fired :
         with_message_logging_disabled,
         IHandle<Message>
@@ -21,6 +21,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
+        public when_logging_disabled_and_commands_are_fired(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+            
+        }
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
@@ -65,7 +69,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-        [Fact(Skip = SkipReason)]
         public void commands_are_not_logged()
         {
             TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
@@ -92,5 +95,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             if (msg is TestCommands.TestCommand2) _multiFireCount++;
             if (msg is TestCommands.TestCommand3) _testCommandCount++;
         }
+
+       
+     
     }
 }

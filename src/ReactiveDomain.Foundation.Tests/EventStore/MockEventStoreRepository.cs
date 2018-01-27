@@ -8,8 +8,6 @@ using EventStore.ClientAPI.SystemData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Legacy;
-using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using Unit = ReactiveDomain.Messaging.Util.Unit;
@@ -53,12 +51,12 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             _eventNameToEventTypeStreamName = name => $"$et-{name}";
         }
 
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             return TryGetById(id, int.MaxValue, out aggregate);
         }
 
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             aggregate = null;
             try
@@ -73,12 +71,12 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
         }
 
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             return GetById<TAggregate>(id, int.MaxValue);
         }
 
-        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
         {
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
@@ -91,11 +89,16 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             if (!_store.TryGetValue(streamName, out stream))
                 throw new AggregateNotFoundException(id, typeof(TAggregate));
 
+            var events = new List<Object>();
             foreach (var evnt in stream.Take(version))
-                aggregate.ApplyEvent(DeserializeEvent(evnt.Metadata, evnt.Data));
+                events.Add(DeserializeEvent(evnt.Metadata, evnt.Data));
 
-            if (aggregate.Version != version && version < Int32.MaxValue)
-                throw new AggregateVersionException(id, typeof(TAggregate), aggregate.Version, version);
+            aggregate.RestoreFromEvents(events);
+            
+            if (version != Int32.MaxValue && aggregate.ExpectedVersion != version -1)
+                throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
+
+            
 
             return aggregate;
         }
@@ -111,7 +114,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName));
         }
 
-        public void Save(IAggregate aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
         {
             var commitHeaders = new Dictionary<string, object>
             {
@@ -122,9 +125,8 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
             var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
             var categoryStreamName = _aggregateTypeToCategoryStreamName(aggregate.GetType());
-            var newEvents = aggregate.GetUncommittedEvents().Cast<object>().ToList();
-            var originalVersion = aggregate.Version - newEvents.Count;
-            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
+            var newEvents = aggregate.TakeEvents().ToList();
+          
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
             List<EventData> stream;
@@ -136,7 +138,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
             if (stream == null)
             {
-                if (expectedVersion == ExpectedVersion.Any || expectedVersion == ExpectedVersion.NoStream)
+                if (aggregate.ExpectedVersion == ExpectedVersion.Any || aggregate.ExpectedVersion == ExpectedVersion.NoStream)
                 {
                     stream = new List<EventData>();
                     _store.Add(streamName, stream);
@@ -149,9 +151,9 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 else throw new WrongExpectedVersionException("Stream " + streamName + " does not exist.");
             }
 
-            if (stream.Count != 0 && stream.Count - 1 != expectedVersion) // a new stream will be @ version 0 
+            if (stream.Count != 0 && stream.Count - 1  != aggregate.ExpectedVersion) // a new stream will be @ version 0 
                 throw new AggregateException(new WrongExpectedVersionException(
-                    $"Stream {streamName} at version {stream.Count}, expected version {expectedVersion}"));
+                    $"Stream {streamName} at version {stream.Count}, expected version {aggregate.ExpectedVersion}"));
 
 
             stream.AddRange(eventsToSave);
@@ -169,12 +171,12 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 etStream.Add(evt);
             }
 
-            foreach (var @event in aggregate.GetUncommittedEvents().Cast<object>().Where(@event => (@event as Message) != null))
+            foreach (var @event in newEvents.Where(@event => (@event as Message) != null))
             {
                 _bus.Publish(@event as Message);
                 _history.Add(new Tuple<string, Message>(streamName, @event as Message));
             }
-            aggregate.ClearUncommittedEvents();
+           // aggregate.ClearUncommittedEvents();
         }
 
 

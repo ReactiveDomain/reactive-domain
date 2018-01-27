@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using EventStore.ClientAPI;
 
 namespace ReactiveDomain
@@ -12,6 +14,11 @@ namespace ReactiveDomain
         private readonly EventRecorder _recorder;
         private readonly EventRouter _router;
         private long _expectedVersion;
+
+        Guid IEventSource.Id => Id;
+
+        //TODO: smooth this out
+        public Guid Id { get; protected set; }
 
         /// <summary>
         /// Initializes an event source's routing and recording behavior.
@@ -34,16 +41,30 @@ namespace ReactiveDomain
         {
             if (events == null)
                 throw new ArgumentNullException(nameof(events));
-
             if (_recorder.HasRecordedEvents)
                 throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
-
+         
             foreach (var @event in events)
             {
-                _router.Route(@event);
+                RestoreFromEvent(@event);
             }
+          }
+        //Avoid boxing and unboxing single values
+        void IEventSource.RestoreFromEvent(object @event)
+        {
+            RestoreFromEvent(@event);
         }
-
+        private void RestoreFromEvent(object @event)
+        {
+            if (@event == null)
+                throw new ArgumentNullException(nameof(@event));
+            if (_recorder.HasRecordedEvents)
+                throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
+            
+            if (_expectedVersion < 0) _expectedVersion = -1; //zero based
+            _expectedVersion++;
+            _router.Route(@event);
+        }
         object[] IEventSource.TakeEvents()
         {
             var records = _recorder.RecordedEvents;

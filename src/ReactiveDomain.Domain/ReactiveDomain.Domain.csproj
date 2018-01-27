@@ -53,10 +53,6 @@
     <IncludeContentInPack>false</IncludeContentInPack>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="IRepository.cs" />
-    <Compile Remove="Repository.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
   </ItemGroup> 
 </Project>

@@ -1,7 +1,6 @@
 ﻿using System;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
@@ -11,6 +10,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_logging_high_volume_message_traffic :
         with_message_logging_enabled,
         IHandle<Message>
@@ -18,6 +18,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
+        public when_logging_high_volume_message_traffic(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+            
+        }
         private readonly int _maxCountedMessages = 10000;
 
         private int _commandFireCount;
@@ -79,8 +83,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-
-        [Fact(Skip = SkipReason)]
+        
         public void all_messages_are_logged()
         {
             // Wait for last command to be queued

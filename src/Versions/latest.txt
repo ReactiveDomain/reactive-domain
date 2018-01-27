@@ -6,6 +6,7 @@ namespace ReactiveDomain
     public abstract class AggregateRootEntity : ReactiveDomain.IEventSource
     {
         protected AggregateRootEntity() { }
+        public System.Guid Id { get; set; }
         protected void Raise(object @event) { }
         protected void Register<TEvent>(System.Action<TEvent> route) { }
         protected void Register(System.Type typeOfEvent, System.Action<object> route) { }
@@ -140,6 +141,7 @@ namespace ReactiveDomain
     public interface IEventSource
     {
         long ExpectedVersion { get; set; }
+        System.Guid Id { get; }
         void RestoreFromEvents(System.Collections.Generic.IEnumerable<object> events);
         object[] TakeEvents();
     }

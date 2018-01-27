@@ -1,6 +1,4 @@
 ﻿using System;
-using ReactiveDomain.Legacy;
-using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Util;
 
@@ -42,12 +40,12 @@ namespace ReactiveDomain.Foundation.EventStore
             _listener.Start(stream, checkpoint, blockUntilLive, millisecondsTimeout);
         }
 
-        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IAggregate
+        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             _listener.Start<TAggregate>(id, checkpoint, blockUntilLive, millisecondsTimeout);
         }
 
-        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IAggregate
+        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             _listener.Start<TAggregate>(checkpoint, blockUntilLive, millisecondsTimeout);
         }

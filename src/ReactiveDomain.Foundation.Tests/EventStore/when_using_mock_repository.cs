@@ -5,7 +5,6 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
 using Xunit;
@@ -13,25 +12,17 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     // ReSharper disable InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_using_mock_repository
     {
         private readonly List<IRepository> _repos = new List<IRepository>();
 
-        public when_using_mock_repository()
+        public when_using_mock_repository(EmbeddedEventStoreFixture fixture)
         {
             _repos.Add(new MockEventStoreRepository());
-            // we only need this when adding new tests for the mock repo, otherwise we don't want to need an eventstore to run unit tests.
-            // _repos.Add(BuildDefaultRepo());
+            _repos.Add(new GetEventStoreRepository(fixture.Connection));
         }
-        private static GetEventStoreRepository BuildDefaultRepo()
-        {
-            var connSettings = ConnectionSettings.Create();
-            connSettings.UseConsoleLogger();
-            connSettings.SetDefaultUserCredentials(new UserCredentials("admin", "changeit"));
-            var conn = EventStoreConnection.Create(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 1113));
-            conn.ConnectAsync().Wait();
-            return new GetEventStoreRepository(conn, null);
-        }
+
         [Fact]
         public void can_save_new_aggregate()
         {
@@ -68,6 +59,21 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         }
 
         [Fact]
+        public void ThrowsOnRequestingSpecificVersionHigherThanExists()
+        {
+            foreach (var repo in _repos)
+            {
+                var id = Guid.NewGuid();
+                var tAgg = new TestAggregate(id);
+                tAgg.RaiseBy(1);
+                tAgg.RaiseBy(1);
+                tAgg.RaiseBy(1);
+                tAgg.RaiseBy(1); //v4
+                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                Assert.Throws<AggregateVersionException>(() => repo.GetById<TestAggregate>(id, 50));
+            }
+        }
+        [Fact]
         public void can_get_aggregate_at_version()
         {
             foreach (var repo in _repos)
@@ -76,21 +82,17 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 var tAgg = new TestAggregate(id);
                 tAgg.RaiseBy(1);
                 Assert.Equal((uint)1, tAgg.CurrentAmount());
-                Assert.Equal(2, tAgg.Version);
                 tAgg.RaiseBy(2);
                 Assert.Equal((uint)3, tAgg.CurrentAmount());
-                Assert.Equal(3, tAgg.Version);
-
                 // get latest version (v3)
                 repo.Save(tAgg, Guid.NewGuid(), h => { });
                 var v3Agg = repo.GetById<TestAggregate>(id);
                 Assert.Equal((uint)3, v3Agg.CurrentAmount());
-                Assert.Equal(3, v3Agg.Version);
 
                 //get version v2
                 var v2Agg = repo.GetById<TestAggregate>(id, 2);
                 Assert.Equal((uint)1, v2Agg.CurrentAmount());
-                Assert.Equal(2, v2Agg.Version);
+
             }
         }
         [Fact]
@@ -102,10 +104,9 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 var tAgg = new TestAggregate(id);
                 tAgg.RaiseBy(1);
                 Assert.Equal((uint)1, tAgg.CurrentAmount());
-                Assert.Equal(2, tAgg.Version);
+
                 tAgg.RaiseBy(2);
                 Assert.Equal((uint)3, tAgg.CurrentAmount());
-                Assert.Equal(3, tAgg.Version);
 
                 // get latest version (v3) then update & save
                 repo.Save(tAgg, Guid.NewGuid(), h => { });
@@ -146,8 +147,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         {
             foreach (var repo in _repos)
             {
-                var r = repo as MockEventStoreRepository;
-                if (r == null) continue;
+                if (!(repo is MockEventStoreRepository r)) continue;
                 var q = new TestQueue();
                 r.Subscribe(q);
 

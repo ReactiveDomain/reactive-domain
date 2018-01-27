@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading;
 using EventStore.ClientAPI;
-using ReactiveDomain.Legacy;
-using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -40,7 +38,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <typeparam name="TAggregate"></typeparam>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IAggregate
+        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             Start(typeof(TAggregate).GetCategoryEventStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
         }
@@ -52,7 +50,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="id"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IAggregate
+        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             Start(typeof(TAggregate).GetEventStreamNameByAggregatedId(id), checkpoint, blockUntilLive, millisecondsTimeout);
         }

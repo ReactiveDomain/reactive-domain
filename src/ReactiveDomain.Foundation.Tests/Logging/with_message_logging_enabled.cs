@@ -1,47 +1,33 @@
 ﻿using System;
 using System.Threading;
+using EventStore.ClientAPI;
 using ReactiveDomain.Foundation.EventStore;
+using ReactiveDomain.Messaging.Tests.Specifications;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    public abstract class with_message_logging_enabled :
-        with_event_store
+    public abstract class with_message_logging_enabled :CommandBusSpecification
     {
-        // set the skip reason to "" to run the tests
-        protected const string SkipReason = "Stream Cleanup Required";
+        private readonly IEventStoreConnection _connection;
+
+        protected with_message_logging_enabled(IEventStoreConnection connection)
+        {
+            _connection = connection;
+        }
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-
+        protected GetEventStoreRepository Repo;
         protected override void Given()
         {
-            base.Given();
-
+            Repo = new GetEventStoreRepository(_connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
-                EventStore.Connection,
+                _connection,
                 StreamName,
                 true);
 
             Thread.Sleep(2000); // needs a bit of time to set up the ES
         }
-
-        #region IDisposable
-
-        private bool _disposed;
-
-        protected override void Dispose(bool disposing)
-        {
-            if (_disposed) return;
-            if (disposing)
-            {
-                Logging?.Dispose();
-                //TODO: figure out how to delete test logging streams
-            }
-            _disposed = true;
-            base.Dispose(disposing);
-        }
-
-        #endregion
     }
 }

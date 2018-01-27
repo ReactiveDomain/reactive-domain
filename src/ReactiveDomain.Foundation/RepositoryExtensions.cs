@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace ReactiveDomain.Legacy.CommonDomain
+namespace ReactiveDomain.Foundation
 {
     public static class RepositoryExtensions
     {
-         public static void Save(this IRepository repository, IAggregate aggregate, Guid commitId)
+         public static void Save(this IRepository repository, IEventSource aggregate, Guid commitId)
          {
              repository.Save(aggregate, commitId, a => {});
          }

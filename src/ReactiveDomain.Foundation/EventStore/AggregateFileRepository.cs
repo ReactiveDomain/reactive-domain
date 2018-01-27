@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
-using ReactiveDomain.Legacy;
-using ReactiveDomain.Legacy.CommonDomain;
 
 namespace ReactiveDomain.Foundation.EventStore
 {
@@ -32,33 +30,33 @@ namespace ReactiveDomain.Foundation.EventStore
             _aggregateIdToFileName = aggregateIdToFileName;
             _fileFullName = (t, g) => Path.Combine(_folder.FullName, _aggregateIdToFileName(t, g));
         }
-        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
         {
             return GetById<TAggregate>(id);
         }
 
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             throw new NotImplementedException();
         }
 
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             throw new NotImplementedException();
         }
 
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             var fileText = File.ReadAllText(_fileFullName(typeof(TAggregate), id));
             return (TAggregate)JsonConvert.DeserializeObject(fileText, typeof(TAggregate), SerializerSettings);
         }
 
-        public DateTime GetCreationTimeById<TAggregate>(Guid id) where TAggregate : class, IAggregate
+        public DateTime GetCreationTimeById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             return File.GetCreationTime(_fileFullName(typeof(TAggregate), id));
         }
 
-        public DateTime GetLastModificationTimeById<TAggregate>(Guid id) where TAggregate : class, IAggregate
+        public DateTime GetLastModificationTimeById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             return File.GetLastWriteTime(_fileFullName(typeof(TAggregate), id));
         }
@@ -80,7 +78,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 .Select(Type.GetType);
         }
 
-        public IEnumerable<Guid> EnumerateAggregateInstancesFor<TAggregate>() where TAggregate : class, IAggregate
+        public IEnumerable<Guid> EnumerateAggregateInstancesFor<TAggregate>() where TAggregate : class, IEventSource
         {
             return EnumerateAggregateInstancesFor(typeof(TAggregate));
         }
@@ -97,7 +95,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
         }
 
-        public void Save(IAggregate aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
         {
             var jsonText = JsonConvert.SerializeObject(aggregate, SerializerSettings);
             File.WriteAllText(

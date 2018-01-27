@@ -3,7 +3,7 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Legacy
+namespace ReactiveDomain.Foundation
 {
     public interface ICatchupSteamSubscriber
     {

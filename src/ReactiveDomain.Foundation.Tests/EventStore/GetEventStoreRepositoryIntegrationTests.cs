@@ -1,29 +1,27 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using EventStore.ClientAPI;
+using EventStore.ClientAPI.Embedded;
+using EventStore.Core;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Legacy.CommonDomain;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     /// <summary>
-    /// Integration tests for the GetEventStoreRepository. These tests require a
-    /// running version of the Event Store, with a TCP endpoint as specified in the
-    /// IntegrationTestTcpEndPoint field (defaults to local loopback, port 1113).
+    /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
-
-    public class GetEventStoreRepositoryIntegrationTests : IDisposable
+    [Collection("ESEmbeded")]
+    public class GetEventStoreRepositoryIntegrationTests 
     {
-        private const string SkipReason = "Live EventStore Required";
-        /// <summary>
-        /// Set this to the TCP endpoint on which the Event Store is running.
-        /// </summary>
-        private static readonly IPEndPoint IntegrationTestTcpEndPoint = new IPEndPoint(IPAddress.Loopback, 1113);
-
+        private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
+       
         private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents)
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
@@ -31,52 +29,46 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             repository.Save(aggregateToSave, Guid.NewGuid(), d => { });
             return aggregateToSave.Id;
         }
-
-        private readonly IEventStoreConnection _connection;
+        
         private readonly GetEventStoreRepository _repo;
+        private readonly IEventStoreConnection _connection;
 
-
-        public GetEventStoreRepositoryIntegrationTests()
+        public GetEventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
-            var es = new EventStoreLoader();
-            es.SetupEventStore(new DirectoryInfo(@"C:\Program Files\PerkinElmer\Greylock\EventStore"));
-            _connection = EventStoreConnection.Create(IntegrationTestTcpEndPoint);
-            _connection.ConnectAsync().Wait();
+            _connection = fixture.Connection;
             _repo = new GetEventStoreRepository(_connection);
         }
 
 
-        [Fact(Skip = SkipReason)]
         public void CanGetLatestVersionById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
 
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId);
-            Assert.Equal(3001, retrieved.Version);
+            
             Assert.Equal(3000, retrieved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void CanGetSpecificVersionFromFirstPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
 
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId, 65);
-            Assert.Equal(65, retrieved.Version);
             Assert.Equal(64, retrieved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void CanGetSpecificVersionFromSubsequentPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 500 /* excludes TestAggregateCreated */);
 
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId, 126);
-            Assert.Equal(126, retrieved.Version);
             Assert.Equal(125, retrieved.AppliedEventCount);
         }
-
-        [Fact(Skip = SkipReason)]
+        //TODO fix this
+        //It looks like the eventstore is choking on writing
+        //the catageory and event type streams for this
+        // It just keeps logging checkpoints for them at very low numbers
+        [Fact(Skip = "Eventstore bug???")]
         public void CanHandleLargeNumberOfEventsInOneTransaction()
         {
             const int numberOfEvents = 50000;
@@ -84,11 +76,9 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, numberOfEvents /* excludes TestAggregateCreated */);
 
             var saved = _repo.GetById<TestWoftamAggregate>(aggregateId);
-            Assert.Equal(numberOfEvents + 1, saved.Version);
             Assert.Equal(numberOfEvents, saved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void CanSaveExistingAggregate()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
@@ -101,7 +91,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Assert.Equal(150, secondSaved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void CanSaveMultiplesOfWritePageSize()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 1500 /* excludes TestAggregateCreated */);
@@ -110,17 +99,15 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Assert.Equal(1500, saved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void ClearsEventsFromAggregateOnceCommitted()
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(10);
             _repo.Save(aggregateToSave, Guid.NewGuid(), d => { });
 
-            Assert.Equal(0, ((IAggregate)aggregateToSave).GetUncommittedEvents().Count);
+            Assert.Equal(0, ((IEventSource)aggregateToSave).TakeEvents().Count());
         }
 
-        [Fact(Skip = SkipReason)]
         public void ThrowsOnRequestingSpecificVersionHigherThanExists()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -128,7 +115,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Assert.Throws<AggregateVersionException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId, 50));
         }
 
-        [Fact(Skip = SkipReason)]
         public void GetsEventsFromCorrectStreams()
         {
             var aggregate1Id = SaveTestAggregateWithoutCustomHeaders(_repo, 100);
@@ -141,13 +127,11 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Assert.Equal(50, secondSaved.AppliedEventCount);
         }
 
-        [Fact(Skip = SkipReason)]
         public void ThrowsOnGetNonExistentAggregate()
         {
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(Guid.NewGuid()));
         }
 
-        [Fact(Skip = SkipReason)]
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -160,7 +144,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
         }
 
-        [Fact(Skip = SkipReason)]
         public void SavesCommitHeadersOnEachEvent()
         {
             var commitId = Guid.NewGuid();
@@ -185,11 +168,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 var deserializedCustomHeader2 = parsedMetadata.Property("CustomHeader2").Value.ToObject<string>();
                 Assert.Equal("CustomValue2", deserializedCustomHeader2);
             }
-        }
-
-        public void Dispose()
-        {
-            _connection.Close();
         }
     }
 }

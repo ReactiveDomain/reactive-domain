@@ -20,7 +20,7 @@
     <PackageReference Include="reactiveui" Version="7.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Legacy\ReactiveDomain.Legacy.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
   <ItemGroup>

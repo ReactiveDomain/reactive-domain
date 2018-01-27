@@ -1,6 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
@@ -11,10 +10,15 @@ using Xunit.Sdk;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_toggling_logging_from_disabled :
         with_message_logging_disabled,
         IHandle<Message>
     {
+        public when_toggling_logging_from_disabled(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+            
+        }
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
@@ -40,7 +44,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-        [Fact(Skip = SkipReason)]
         public void commands_logged_only_while_logging_is_enabled()
         {
             Assert.False(Logging.Enabled);
@@ -107,7 +110,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         }
 
-        [Fact(Skip = SkipReason)]
         public void events_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
@@ -161,7 +163,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 $"Found {_countedEventCount} of third set of events on log. Should be 0"));
         }
 
-        [Fact(Skip = SkipReason)]
         public void mixed_messages_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;

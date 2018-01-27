@@ -1,15 +1,14 @@
 using System;
-using ReactiveDomain.Legacy.CommonDomain;
 
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
-    public class TestWoftamAggregate : AggregateBase
+    public class TestWoftamAggregate : AggregateRootEntity
     {
         public TestWoftamAggregate(Guid aggregateId) : this()
         {
-            RaiseEvent(new TestWoftamAggregateCreated(aggregateId));
+            Raise(new TestWoftamAggregateCreated(aggregateId));
         }
-
+       
         private TestWoftamAggregate()
         {
             Register<TestWoftamAggregateCreated>(e => Id = e.AggregateId);
@@ -21,7 +20,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         public void ProduceEvents(int count)
         {
             for (int i = 0; i < count; i++)
-                RaiseEvent(new WoftamEvent("Woftam1-" + i, "Woftam2-" + i));
+                Raise(new WoftamEvent("Woftam1-" + i, "Woftam2-" + i));
         }
     }
 }

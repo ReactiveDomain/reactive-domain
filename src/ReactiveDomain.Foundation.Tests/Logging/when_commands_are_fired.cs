@@ -1,6 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Tests.Helpers;
@@ -11,6 +10,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_commands_are_fired :
         with_message_logging_enabled,
         IHandle<Message>
@@ -31,6 +31,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Messaging.BootStrap.Load();
         }
 
+        public when_commands_are_fired(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+        }
         protected override void When()
         {
             _correlationId = Guid.NewGuid();
@@ -69,7 +72,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
 
 
-        [Fact(Skip = SkipReason)]
         public void all_commands_are_logged()
         {
             // Wait  for last command to be queued
