@@ -1,4 +1,4 @@
-﻿namespace ReactiveDomain.ViewObjects
+﻿namespace ReactiveDomain.UI.ViewObjects
 {
     public class UserView
     {

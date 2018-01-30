@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.ViewObjects
+namespace ReactiveDomain.UI.ViewObjects
 {
     /// <summary>
     /// An immutable class for packaging exceptions with a user-facing message.

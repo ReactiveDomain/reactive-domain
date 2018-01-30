@@ -8,9 +8,8 @@ using ReactiveDomain.Bus;
 using ReactiveDomain.Messaging;
 using ReactiveUI;
 
-namespace ReactiveDomain.ViewObjects
+namespace ReactiveDomain.UI.ViewObjects
 {
-    // TODO: We may want to move this into a separate UI project so the main ReactiveDomain DLL doesn't depend on ReactiveUI.
     public static class CommandBuilder
     {
         /// <summary>

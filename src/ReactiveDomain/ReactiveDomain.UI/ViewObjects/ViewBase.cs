@@ -2,7 +2,7 @@
 
 using ReactiveDomain.Domain;
 
-namespace ReactiveDomain.ViewObjects
+namespace ReactiveDomain.UI.ViewObjects
 {
     public abstract class ViewBase
     {

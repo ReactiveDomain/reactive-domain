@@ -75,11 +75,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PresentationFramework" />
-    <Reference Include="ReactiveUI, Version=7.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\reactiveui-core.7.4.0\lib\Net45\ReactiveUI.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
       <Private>True</Private>
@@ -311,11 +306,6 @@
     <Compile Include="Util\StringExtensions.cs" />
     <Compile Include="Util\Threading.cs" />
     <Compile Include="Util\VersionInfo.cs" />
-    <Compile Include="ViewObjects\CommandBuilder.cs" />
-    <Compile Include="ViewObjects\Interactions.cs" />
-    <Compile Include="ViewObjects\UserError.cs" />
-    <Compile Include="ViewObjects\UserView.cs" />
-    <Compile Include="ViewObjects\ViewBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <Fakes Include="Fakes\ReactiveUI.fakes" />

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Reactive;
-using ReactiveUI;
+﻿using ReactiveUI;
 
-namespace ReactiveDomain.ViewObjects
+namespace ReactiveDomain.UI.ViewObjects
 {
     public static class Interactions
     {
