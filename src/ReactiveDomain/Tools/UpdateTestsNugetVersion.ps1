@@ -55,10 +55,6 @@ Write-Host "ReactiveDomain Assembly version is" $RDAssemblyversion
 # Get version of the Dependent packages that are installed ****************************************
 $packagexml = [xml](Get-Content $packages_Config)
 
-$FA = $packagexml.SelectSingleNode('//packages/package[@id="FluentAssertions"]')
-$FluentAssertionsVersion = $FA.version
-Write-Host "FluentAssertions Nuget version is" $FluentAssertionsVersion
-
 $xunit = $packagexml.SelectSingleNode('//packages/package[@id="xunit"]')
 $xunitVersion = $xunit.version
 Write-Host "Xunit Nuget version is" $xunitVersion
@@ -100,10 +96,6 @@ $node = $xml.package.metadata
 
 #Set nuget package to be version of the ReactiveDomain.Tests assembly
 $node.version = $Assemblyversion
-
-# Modify the .nuspec file to get the versions of the dependencies
-$faNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="FluentAssertions"]')
-$faNode.version = $FluentAssertionsVersion
 
 # Modify the .nuspec file to get the versions of the dependencies
 $rdNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="ReactiveDomain"]')

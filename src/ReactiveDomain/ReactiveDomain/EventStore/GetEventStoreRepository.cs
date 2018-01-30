@@ -75,15 +75,15 @@ namespace ReactiveDomain.EventStore
             var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
-            var sliceStart = 0;
+            long sliceStart = 0;
             StreamEventsSlice currentSlice;
             do
             {
                 var sliceCount = sliceStart + ReadPageSize <= version
                                     ? ReadPageSize
                                     : version - sliceStart;
-
-                currentSlice = _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, sliceStart, sliceCount, false).Result;
+                //todo: why does this need an int with v 4.0 of eventstore?
+                currentSlice = _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, sliceStart, (int)sliceCount, false).Result;
 
                 if (currentSlice.Status == SliceReadStatus.StreamNotFound)
                     throw new AggregateNotFoundException(id, typeof(TAggregate));
@@ -193,15 +193,20 @@ namespace ReactiveDomain.EventStore
             UserCredentials userCredentials = null,
             int readBatchSize = 500)
         {
+            var defaultSettings = CatchUpSubscriptionSettings.Default;
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
-                stream,
-                lastCheckpoint,
-                resolveLinkTos,
-                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
-                _ => liveProcessingStarted?.Invoke(),
-                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
-                userCredentials,
-                readBatchSize);
+                                                stream,
+                                                lastCheckpoint,
+                                                new CatchUpSubscriptionSettings(
+                                                        defaultSettings.MaxLiveQueueSize,
+                                                        readBatchSize,
+                                                        defaultSettings.VerboseLogging,
+                                                        resolveLinkTos,
+                                                        defaultSettings.SubscriptionName),
+                                                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
+                                                _ => liveProcessingStarted?.Invoke(),
+                                                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
+                                                userCredentials);
 
             return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
         }

@@ -38,14 +38,6 @@ $ES = $packagexml.SelectSingleNode('//packages/package[@id="EventStore.Client"]'
 $EventStoreVersion = $ES.version
 Write-Host "Event Store Nuget version is" $EventStoreVersion
 
-$Tpl = $packagexml.SelectSingleNode('//packages/package[@id="Microsoft.Tpl.Dataflow"]')
-$TplVersion = $Tpl.version
-Write-Host "TPL Dataflow Nuget version is" $TplVersion
-
-$NitoAsync = $packagexml.SelectSingleNode('//packages/package[@id="Nito.AsyncEx.Dataflow"]')
-$NitoAsyncVersion = $NitoAsync.version
-Write-Host "Nito Async Nuget version is" $NitoAsyncVersion
-
 $NLog = $packagexml.SelectSingleNode('//packages/package[@id="NLog"]')
 $NLogVersion = $NLog.version
 Write-Host "NLog Nuget version is" $NLogVersion
@@ -81,12 +73,6 @@ $node.version = $Assemblyversion
 # Modify the nuspec file to get the versions of the dependencies
 $esNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="EventStore.Client.Embedded"]')
 $esNode.version = $EventStoreVersion
-
-$TplNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="Microsoft.Tpl.DataFlow"]')
-$TplNode.version = $TplVersion
-
-$NitoNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="Nito.AsyncEx.Dataflow"]') 
-$NitoNode.version = $NitoAsyncVersion
 
 $NLogNode = $xml.SelectSingleNode('//package/metadata/dependencies/dependency[@id="NLog"]')
 $NLogNode.version = $NLogVersion
