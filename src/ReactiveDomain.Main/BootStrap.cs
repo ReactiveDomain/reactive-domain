@@ -1,8 +1,7 @@
 ﻿using System.Reflection;
 using ReactiveDomain.Messaging.Logging;
 
-
-namespace ReactiveDomain
+namespace ReactiveDomain.Main
 {
     public static class BootStrap
     {

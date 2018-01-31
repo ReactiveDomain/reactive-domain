@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ReactiveDomain.Domain.Tests.Testing;
 using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Example
+namespace ReactiveDomain.Domain.Tests.Example
 {
     [Collection(nameof(EmbeddedEventStoreCollection))]
     public class GroupScenarios

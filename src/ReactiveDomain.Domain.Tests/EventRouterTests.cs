@@ -1,7 +1,7 @@
 ﻿using System;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     namespace EventRouterTests
     {

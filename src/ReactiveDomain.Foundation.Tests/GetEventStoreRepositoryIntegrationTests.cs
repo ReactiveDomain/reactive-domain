@@ -4,9 +4,11 @@ using System.Text;
 using EventStore.ClientAPI;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
+using ReactiveDomain.Foundation.Testing;
+using ReactiveDomain.Foundation.Testing.EventStore;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Foundation.Tests
 {
     /// <summary>
     /// Integration tests for the GetEventStoreRepository. 

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Tests.Helpers
+namespace ReactiveDomain.Messaging.Testing
 {
     public class TestMessagePublisher
     {

@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class Usage
     {

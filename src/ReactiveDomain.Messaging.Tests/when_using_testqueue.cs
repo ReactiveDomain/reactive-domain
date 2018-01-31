@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
+using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests

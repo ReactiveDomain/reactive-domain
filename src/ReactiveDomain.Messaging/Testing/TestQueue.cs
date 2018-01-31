@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Tests.Helpers
+namespace ReactiveDomain.Messaging.Testing
 {
     public class TestQueue : IHandle<Message>
     {

@@ -2,7 +2,7 @@
 using System.Threading;
 using EventStore.ClientAPI;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging.Tests.Specifications;
+using ReactiveDomain.Messaging.Testing;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {

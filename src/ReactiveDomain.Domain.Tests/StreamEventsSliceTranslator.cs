@@ -4,7 +4,7 @@ using System.Text;
 using EventStore.ClientAPI;
 using Newtonsoft.Json;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class StreamEventsSliceTranslator : IStreamEventsSliceTranslator
     {

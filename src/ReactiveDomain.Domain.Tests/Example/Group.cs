@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Example
+namespace ReactiveDomain.Domain.Tests.Example
 {
     public class Group : AggregateRootEntity, ISnapshotSource
     {

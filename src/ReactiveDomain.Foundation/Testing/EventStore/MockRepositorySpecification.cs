@@ -3,7 +3,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Messaging.Tests;
 
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Foundation.Testing.EventStore
 {
     public abstract class MockRepositorySpecification : CommandBusSpecification
     {

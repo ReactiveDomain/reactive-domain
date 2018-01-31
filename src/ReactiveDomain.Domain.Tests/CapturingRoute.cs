@@ -1,4 +1,4 @@
-﻿namespace ReactiveDomain
+﻿namespace ReactiveDomain.Domain.Tests
 {
     public class CapturingRoute
     {

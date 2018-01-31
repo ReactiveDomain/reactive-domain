@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests
+namespace ReactiveDomain.Messaging.Testing
 {
     public class ConcurrentMessageQueue<T> : ConcurrentQueue<T> where T : Message
     {

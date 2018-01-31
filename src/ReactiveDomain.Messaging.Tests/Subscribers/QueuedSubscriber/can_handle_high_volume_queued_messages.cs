@@ -1,4 +1,4 @@
-﻿using ReactiveDomain.Messaging.Tests.Helpers;
+﻿using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber

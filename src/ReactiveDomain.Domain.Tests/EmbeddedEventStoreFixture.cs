@@ -2,9 +2,10 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using EventStore.ClientAPI;
-#if NET462
 using EventStore.ClientAPI.Embedded;
 using EventStore.Core;
+#if NET462
+
 #endif
 #if NETCOREAPP2_0 || NETSTANDARD2_0
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ using System.Threading.Tasks;
 using Xunit;
 #endif
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
 #if NET462
     public class EmbeddedEventStoreFixture : IDisposable

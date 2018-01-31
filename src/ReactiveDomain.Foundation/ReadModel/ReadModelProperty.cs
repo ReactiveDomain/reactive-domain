@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 
-namespace ReactiveDomain.UI.ReadModel
+namespace ReactiveDomain.Foundation.ReadModel
 {
 
     public class ReadModelProperty<T> : IObservable<T>

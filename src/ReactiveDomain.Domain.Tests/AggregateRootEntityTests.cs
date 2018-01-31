@@ -2,7 +2,7 @@
 using EventStore.ClientAPI;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     namespace AggregateRootEntityTests
     {

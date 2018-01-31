@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class CommandHandlerBuilderTests
     {
@@ -101,14 +101,13 @@ namespace ReactiveDomain
 
         private static int GetStep(Metadata metadata)
         {
-            return Convert.ToInt32(metadata.Single(metadatum => metadatum.Name == "step").Value);
+            return Convert.ToInt32(Enumerable.Single<Metadatum>(metadata, metadatum => metadatum.Name == "step").Value);
         }
 
         private static Metadata SetStep(Metadata metadata, int value)
         {
             return new Metadata(
-                metadata
-                    .Where(metadatum => metadatum.Name != "step")
+                Enumerable.Where<Metadatum>(metadata, metadatum => metadatum.Name != "step")
                     .Concat(new [] { new Metadatum("step", value.ToString()) })
                     .ToArray()
             );

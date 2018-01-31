@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class CapturingManyRoute
     {

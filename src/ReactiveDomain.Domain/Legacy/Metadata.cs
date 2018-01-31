@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain
 {
     public partial class Metadata

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
+using ReactiveDomain.Messaging.Testing;
 
 
 // ReSharper disable once CheckNamespace - this is where it is supposed to be

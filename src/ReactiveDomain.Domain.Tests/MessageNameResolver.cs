@@ -1,6 +1,6 @@
 using System;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     /// <summary>
     /// Resolves the canonical name of a message associated with a CLR type.

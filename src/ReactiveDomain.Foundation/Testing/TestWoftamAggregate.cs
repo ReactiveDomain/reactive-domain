@@ -1,6 +1,6 @@
 using System;
 
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Foundation.Testing
 {
     public class TestWoftamAggregate : AggregateRootEntity
     {

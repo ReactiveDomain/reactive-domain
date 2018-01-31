@@ -2,7 +2,7 @@ using System;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging.Messages;
 
-namespace ReactiveDomain.DLT
+namespace ReactiveDomain.PrivateLedger
 {
     public static class ChainSourcehelpers
     {

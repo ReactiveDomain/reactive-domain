@@ -2,7 +2,7 @@
 using System.Threading;
 
 // ReSharper disable MemberCanBeProtected.Global
-namespace ReactiveDomain.Messaging.Tests.Helpers
+namespace ReactiveDomain.Messaging.Testing
 {
 
     public class TestDomainEvent : DomainEvent

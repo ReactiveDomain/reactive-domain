@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Tests.Helpers
+namespace ReactiveDomain.Messaging.Testing
 {
     //No cancellation support
     public class TestCommandHandler :

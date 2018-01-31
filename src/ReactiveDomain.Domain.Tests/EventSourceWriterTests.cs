@@ -7,7 +7,7 @@ using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     [Collection(nameof(EmbeddedEventStoreCollection))]
     public class EventSourceWriterTests

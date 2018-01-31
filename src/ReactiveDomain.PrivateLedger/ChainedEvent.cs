@@ -3,7 +3,7 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Messages;
 
-namespace ReactiveDomain.DLT
+namespace ReactiveDomain.PrivateLedger
 {
     public class ChainedEvent : DomainEvent, IChainedMessage
     {

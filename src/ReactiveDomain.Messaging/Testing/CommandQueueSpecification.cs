@@ -1,8 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
 
-namespace ReactiveDomain.Messaging.Tests.Specifications
+namespace ReactiveDomain.Messaging.Testing
 {
     public abstract class CommandQueueSpecification
     {

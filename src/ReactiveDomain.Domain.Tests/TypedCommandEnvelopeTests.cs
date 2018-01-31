@@ -3,7 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class TypedCommandEnvelopeTests
     {
@@ -14,7 +14,7 @@ namespace ReactiveDomain
             SourceId = Guid.NewGuid();
             Command = new object();
             Principal = new ClaimsPrincipal();
-            Metadata = Metadata.None.With(
+            Metadata = ReactiveDomain.Metadata.None.With(
                 Enumerable
                     .Range(0, new Random().Next(0, 3))
                     .Select(index => new Metadatum("key" + index, "value" + index))
@@ -44,7 +44,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CorrelationId);
             Assert.Null(sut.SourceId);
             Assert.Null(sut.Principal);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CorrelationId);
             Assert.Null(sut.SourceId);
             Assert.Null(sut.Principal);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CommandId);
             Assert.Null(sut.SourceId);
             Assert.Null(sut.Principal);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CommandId);
             Assert.Equal(Guid.Empty, sut.CorrelationId);
             Assert.Null(sut.Principal);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CommandId);
             Assert.Equal(Guid.Empty, sut.CorrelationId);
             Assert.Null(sut.Principal);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
 
         [Fact]
@@ -122,7 +122,7 @@ namespace ReactiveDomain
             Assert.Equal(Guid.Empty, sut.CommandId);
             Assert.Equal(Guid.Empty, sut.CorrelationId);
             Assert.Null(sut.SourceId);
-            Assert.Same(Metadata.None, sut.Metadata);
+            Assert.Same(ReactiveDomain.Metadata.None, sut.Metadata);
         }
     }
 }

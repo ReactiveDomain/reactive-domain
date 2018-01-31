@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Foundation.Tests.Helpers;
+using ReactiveDomain.Foundation.Testing;
+using ReactiveDomain.Foundation.Testing.EventStore;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
+using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Foundation.Tests
 {
     // ReSharper disable InconsistentNaming
     [Collection("ESEmbeded")]

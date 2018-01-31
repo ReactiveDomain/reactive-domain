@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace ReactiveDomain.Messaging.Tests.Helpers
+namespace ReactiveDomain.Messaging.Testing
 {
     public class TestCommands
     {

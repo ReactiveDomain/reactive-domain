@@ -1,8 +1,8 @@
-using Xunit;
-using PublicApiGenerator;
 using System.IO;
+using PublicApiGenerator;
+using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class AssemblyEvolutionReporter
     {

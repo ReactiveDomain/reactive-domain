@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Foundation.Tests.Helpers
+namespace ReactiveDomain.Foundation.Testing
 {
     public class TestAggregate : AggregateRootEntity
     {

@@ -4,7 +4,7 @@ using AutoFixture;
 using AutoFixture.Idioms;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class MetadatumTests
     {
