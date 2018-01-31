@@ -3,7 +3,6 @@ using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
-using ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber;
 using Xunit;
 using Xunit.Sdk;
 

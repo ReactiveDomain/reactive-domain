@@ -1,8 +1,7 @@
 ﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 
-namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
+namespace ReactiveDomain.Messaging.Testing
 {
     public class TestCommandSubscriber :
                 IHandleCommand<TestCommands.TestCommand2>,

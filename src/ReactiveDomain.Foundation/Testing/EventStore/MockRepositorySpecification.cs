@@ -1,7 +1,6 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
-using ReactiveDomain.Messaging.Tests;
 
 namespace ReactiveDomain.Foundation.Testing.EventStore
 {

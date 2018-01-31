@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <Platforms>x64</Platforms>
-    <Version>0.8.1.0</Version>
+    <Version>0.8.2.0</Version>
     <Authors>PerkinElmer</Authors>
     <Company>PerkinElmer</Company>
     <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
     <Description />
-    <AssemblyVersion>0.8.1.0</AssemblyVersion>
-    <FileVersion>0.8.1.0</FileVersion>
+    <AssemblyVersion>0.8.2.0</AssemblyVersion>
+    <FileVersion>0.8.2.0</FileVersion>
     <NeutralLanguage />
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -24,8 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Buffers\ReactiveDomain.Buffers.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Legacy\ReactiveDomain.Legacy.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj" />

@@ -3,14 +3,24 @@ using System.Diagnostics;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Embedded;
 using EventStore.Core;
-using Xunit;
 
 namespace ReactiveDomain.Foundation.Testing.EventStore
 {
-    [CollectionDefinition("ESEmbeded")]
-    public class EsCollection : ICollectionFixture<EmbeddedEventStoreFixture>
-    {
-    }
+    /*
+     * Add the following class in the target assembly  to use this
+     [CollectionDefinition("ESEmbeded")]
+     public class EmbeddedEventStoreCollection : ICollectionFixture<Testing.EventStore.EmbeddedEventStoreFixture>
+     {
+     }
+
+     * then add this attribute and public ctor to any number of target fixutres
+     * eg:
+        [Collection("ESEmbeded")]     
+        public class test_fixure {
+        public test_fixture(EmbeddedEventStoreFixture eventstore)
+        {}
+        }
+     */
 
     public class EmbeddedEventStoreFixture : IDisposable
     {

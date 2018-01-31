@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 
-namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
+namespace ReactiveDomain.Messaging.Testing
 {
     /// <summary>
     /// Class used for testing QueuedSubscriber 
