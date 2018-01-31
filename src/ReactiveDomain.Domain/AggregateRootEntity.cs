@@ -59,8 +59,10 @@ namespace ReactiveDomain
             if (_recorder.HasRecordedEvents)
                 throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
             
-            if (_expectedVersion < 0) _expectedVersion = -1; //zero based
-            _expectedVersion++;
+            if (_expectedVersion < 0) // new aggregates have a expected version of -1 or -2
+                _expectedVersion = 0; // got first event (zero based)
+            else
+                _expectedVersion++;
             _router.Route(@event);
         }
         object[] IEventSource.TakeEvents()
