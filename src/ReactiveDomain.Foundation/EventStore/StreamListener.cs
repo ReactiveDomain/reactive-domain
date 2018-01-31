@@ -9,7 +9,7 @@ namespace ReactiveDomain.Foundation.EventStore
     public class StreamListener : IListener
     {
         protected readonly string ListenerName;
-        private readonly ICatchupSteamSubscriber _subscriptionTarget;
+        private readonly ICatchupStreamSubscriber _subscriptionTarget;
 
 
         private InMemoryBus _bus;
@@ -25,7 +25,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="listenerName"></param>
         /// <param name="subscriptionTarget">The target to subscribe to</param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
-        public StreamListener(string listenerName, ICatchupSteamSubscriber subscriptionTarget, string busName = null)
+        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, string busName = null)
         {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _subscriptionTarget = subscriptionTarget;

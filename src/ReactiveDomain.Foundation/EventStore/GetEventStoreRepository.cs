@@ -15,7 +15,7 @@ using ReactiveDomain.Messaging.Util;
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
 {
-    public class GetEventStoreRepository : IRepository, ICatchupSteamSubscriber
+    public class GetEventStoreRepository : IRepository, ICatchupStreamSubscriber
     {
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";

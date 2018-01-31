@@ -15,7 +15,7 @@ using Unit = ReactiveDomain.Messaging.Util.Unit;
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
-    public class MockEventStoreRepository : IRepository, ISubscriber, ICatchupSteamSubscriber
+    public class MockEventStoreRepository : IRepository, ISubscriber, ICatchupStreamSubscriber
     {
         private readonly IBus _bus;
         private const string EventClrTypeHeader = "EventClrTypeName";

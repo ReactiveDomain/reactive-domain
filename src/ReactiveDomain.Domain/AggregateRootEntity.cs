@@ -63,6 +63,7 @@ namespace ReactiveDomain
                 _expectedVersion = 0; // got first event (zero based)
             else
                 _expectedVersion++;
+
             _router.Route(@event);
         }
         object[] IEventSource.TakeEvents()

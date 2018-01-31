@@ -5,7 +5,7 @@ using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Foundation
 {
-    public interface ICatchupSteamSubscriber
+    public interface ICatchupStreamSubscriber
     {
         /// <summary>
         /// From EventStore client
