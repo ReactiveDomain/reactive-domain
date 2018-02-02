@@ -53,6 +53,7 @@ namespace ReactiveDomain.Messaging
         public static Dictionary<Type, int[]> DescendantsByType;
         private static readonly Dictionary<Type, int> MsgTypeIdByType;
         private static readonly Dictionary<int, Type> MsgTypeByTypeId;
+        private static readonly Dictionary<string, Type> MsgTypeByFullName;
 
         public static int MaxMsgTypeId;
         private static object _typeLoaderLock = new object();
@@ -60,6 +61,7 @@ namespace ReactiveDomain.Messaging
         {
             MsgTypeIdByType = new Dictionary<Type, int>();
             MsgTypeByTypeId = new Dictionary<int, Type>();
+            MsgTypeByFullName = new Dictionary<string, Type>();
             Setup();
             AppDomain.CurrentDomain.AssemblyLoad += CurrentDomain_AssemblyLoad;
         }
@@ -123,6 +125,7 @@ namespace ReactiveDomain.Messaging
                             {
                                 MsgTypeIdByType.Add(msgType, msgTypeId);
                                 MsgTypeByTypeId.Add(msgTypeId, msgType);
+                                MsgTypeByFullName.Add(msgType.FullName, msgType);
                                 typesAdded = true; //mark it so we can fire the event once per loaded assembly
                             }
                             parents.Add(msgTypeId, new List<int>());
@@ -283,6 +286,12 @@ namespace ReactiveDomain.Messaging
             Type type;
             if (MsgTypeByTypeId.TryGetValue(id, out type)) return type;
             throw new UnregisteredMessageException($"No message registered for TypeId {id}.");
+        }
+        public static Type GetMsgType(string fullname)
+        {
+            Type type;
+            if (MsgTypeByFullName.TryGetValue(fullname, out type)) return type;
+            throw new UnregisteredMessageException($"No message registered for type name {fullname}.");
         }
     }
 

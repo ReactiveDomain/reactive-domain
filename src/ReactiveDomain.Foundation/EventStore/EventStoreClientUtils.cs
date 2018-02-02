@@ -13,10 +13,10 @@ namespace ReactiveDomain.Foundation.EventStore
 {
     public static class EventStoreClientUtils
     {
-        // TODO: Move these to GreylockOptions.
         public const string EventStoreInstallationFolder = "EventStoreInstallationFolder";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string CategoryStreamNamePrefix = @"$ce";
+        public const string EventTypeStreamNamePrefix = @"$et";
         public const string LocalhostIp = "127.0.0.1";
         public const string EventStoreLogin = "admin";
         public const string DefaultEventStorePassword = "changeit";
@@ -60,6 +60,10 @@ namespace ReactiveDomain.Foundation.EventStore
         public static string GetCategoryEventStreamName(this Type typeofAggregateDomainObject)
         {
             return $"{CategoryStreamNamePrefix}-{typeofAggregateDomainObject.Name.ToCamelCase()}";
+        }
+        public static string GetEventTypeStreamName(this Type typeofAggregateDomainObject)
+        {
+            return $"{EventTypeStreamNamePrefix}-{typeofAggregateDomainObject.Name}";
         }
 
         public static DomainEvent DeserializedDomainEvent(this ResolvedEvent @event)
