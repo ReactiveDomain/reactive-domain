@@ -81,8 +81,8 @@ namespace ReactiveDomain.Tests.Logging
                 1000,
                 $"Last command logged to ES when logging should be disabled"));
 
-            Assert.False(_multiFireCount == _maxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {_maxCountedCommands}");
-            Assert.False(_testCommandCount == 1, $"Last event count {_testCommandCount} doesn't match expected value {1}");
+            Assert.NotEqual(_maxCountedCommands, _multiFireCount, $"Command count {_multiFireCount} doesn't match expected index {_maxCountedCommands}");
+            Assert.NotEqual(1, _testCommandCount, $"Last event count {_testCommandCount} doesn't match expected value 1");
 
         }
 

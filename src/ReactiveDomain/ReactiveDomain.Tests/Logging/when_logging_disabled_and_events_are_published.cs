@@ -60,17 +60,17 @@ namespace ReactiveDomain.Tests.Logging
             // see the enabled test
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                ()=>_countedEventCount > 0, 
-                1000,
-                $"Found {_countedEventCount} CountedEvents on log"));
+                                                    ()=>_countedEventCount > 0, 
+                                                    1000,
+                                                    $"Found {_countedEventCount} CountedEvents on log"));
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _testDomainEventCount > 0, 
-                1000,
-                $"Found {_testDomainEventCount} TestDomainEvents on log"));
+                                                    () => _testDomainEventCount > 0, 
+                                                    1000,
+                                                    $"Found {_testDomainEventCount} TestDomainEvents on log"));
 
             // counters are never incremented because they are not logged, therefore not "heard" by the repo listener
-            Assert.False(_countedEventCount == _maxCountedEvents, $"{_countedEventCount} CountedEvents found on Log");
-            Assert.True(_testDomainEventCount == 0, $"Last event count {_testDomainEventCount} is not 0");
+            Assert.NotEqual(_maxCountedEvents, _countedEventCount, $"{_countedEventCount} CountedEvents found on Log");
+            Assert.Equal(0, _testDomainEventCount, $"Last event count {_testDomainEventCount} is not 0");
         }
 
         public void Handle(DomainEvent message)
