@@ -1,15 +1,15 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
+using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_events_are_published : 
         with_message_logging_enabled,
         IHandle<DomainEvent>
@@ -18,7 +18,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         {
             BootStrap.Load();
         }
-
+        public when_events_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+        }
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
@@ -50,7 +52,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
 
 
-        [Fact(Skip = SkipReason)]
+        
         public void all_events_are_logged()
         {
             TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));

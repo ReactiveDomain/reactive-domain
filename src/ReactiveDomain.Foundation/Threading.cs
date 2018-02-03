@@ -2,7 +2,7 @@
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 
-namespace ReactiveDomain.UI
+namespace ReactiveDomain.Foundation
 {
     public static class Threading
     {

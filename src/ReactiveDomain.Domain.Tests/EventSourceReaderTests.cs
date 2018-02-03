@@ -5,10 +5,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
-using ReactiveDomain;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     [Collection(nameof(EmbeddedEventStoreCollection))]
     public class EventSourceReaderTests

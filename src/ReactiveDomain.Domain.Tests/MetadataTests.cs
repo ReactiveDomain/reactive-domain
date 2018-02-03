@@ -2,10 +2,9 @@
 using Albedo;
 using AutoFixture;
 using AutoFixture.Idioms;
-using ReactiveDomain;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class MetadataTests
     {
@@ -46,7 +45,7 @@ namespace ReactiveDomain
                 new Metadatum("name2", "value2")
             };
             var result = new Metadata(metadata).ToKeyValuePairs();
-            Assert.Equal(new []
+            Assert.Equal<KeyValuePair<string, string>[]>(new []
             {
                 new KeyValuePair<string, string>("name1", "value1"),
                 new KeyValuePair<string, string>("name2", "value2"),
@@ -63,7 +62,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.With(new Metadatum("name3", "value3")).ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name1", "value1"),
                 new KeyValuePair<string, string>("name2", "value2"),
@@ -75,14 +74,14 @@ namespace ReactiveDomain
         public void WithNameAndValueGuardsNameCanNotBeNull()
         {
             new GuardClauseAssertion(_fixture)
-                .Verify(new Methods<Metadata>().Select(_ => _.With(null, "value")));
+                .Verify(new Methods<Metadata>().Select<Metadata>(_ => _.With(null, "value")));
         }
 
         [Fact]
         public void WithNameAndValueGuardsValueCanNotBeNull()
         {
             new GuardClauseAssertion(_fixture)
-                .Verify(new Methods<Metadata>().Select(_ => _.With("name", null)));
+                .Verify(new Methods<Metadata>().Select<Metadata>(_ => _.With("name", null)));
         }
 
         [Fact]
@@ -95,7 +94,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.With("name3", "value3").ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name1", "value1"),
                 new KeyValuePair<string, string>("name2", "value2"),
@@ -107,7 +106,7 @@ namespace ReactiveDomain
         public void WithManyGuardsMetadataCanNotBeNull()
         {
             new GuardClauseAssertion(_fixture)
-                .Verify(new Methods<Metadata>().Select(_ => _.With(null)));
+                .Verify(new Methods<Metadata>().Select<Metadata>(_ => _.With(null)));
         }
 
         [Fact]
@@ -125,7 +124,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.With(range).ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name1", "value1"),
                 new KeyValuePair<string, string>("name2", "value2"),
@@ -144,7 +143,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.Without(new Metadatum("name1", "value1")).ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name2", "value2")
             }, result);
@@ -154,7 +153,7 @@ namespace ReactiveDomain
         public void WithoutGuardsNameCanNotBeNull()
         {
             new GuardClauseAssertion(_fixture)
-                .Verify(new Methods<Metadata>().Select(_ => _.Without((string)null)));
+                .Verify(new Methods<Metadata>().Select<Metadata>(_ => _.Without((string)null)));
         }
 
         [Fact]
@@ -167,7 +166,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.Without("name3").ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name1", "value1"),
                 new KeyValuePair<string, string>("name2", "value2")
@@ -185,7 +184,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.Without("name1").ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name2", "value2")
             }, result);
@@ -202,7 +201,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.Without("name1").ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name2", "value2"),
                 new KeyValuePair<string, string>("name3", "value3")
@@ -213,7 +212,7 @@ namespace ReactiveDomain
         public void WithoutManyGuardsMetadataCanNotBeNull()
         {
             new GuardClauseAssertion(_fixture)
-                .Verify(new Methods<Metadata>().Select(_ => _.Without((Metadatum[])null)));
+                .Verify(new Methods<Metadata>().Select<Metadata>(_ => _.Without((Metadatum[])null)));
         }
 
         [Fact]
@@ -233,7 +232,7 @@ namespace ReactiveDomain
             };
             var sut = new Metadata(metadata);
             var result = sut.Without(range).ToKeyValuePairs();
-            Assert.Equal(new[]
+            Assert.Equal<KeyValuePair<string, string>[]>(new[]
             {
                 new KeyValuePair<string, string>("name2", "value2"),
                 new KeyValuePair<string, string>("name3", "value3")

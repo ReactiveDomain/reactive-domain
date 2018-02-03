@@ -1,15 +1,14 @@
 ﻿using System;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy;
+using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests.Helpers;
-using ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber;
+using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
+    [Collection("ESEmbeded")]
     public class when_mixed_messages_are_published :
         with_message_logging_enabled,
         IHandle<Message>
@@ -17,6 +16,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
+        public when_mixed_messages_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        {
+            
+        }
         private readonly int _maxCountedMessages = 25;
         private int _multiFireCount;
         private int _testCommandCount;
@@ -74,7 +77,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
 
 
-        [Fact(Skip = SkipReason)]
+        
         public void commands_are_logged()
         {
 

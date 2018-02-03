@@ -1,13 +1,8 @@
-﻿using ReactiveDomain.Foundation.Tests.EventStore;
-using ReactiveDomain.Foundation.Tests.Helpers;
-using ReactiveDomain.Legacy.CommonDomain;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Tests;
-using ReactiveDomain.Messaging.Tests.Helpers;
-using ReactiveDomain.Messaging.Tests.Specifications;
+using ReactiveDomain.Messaging.Testing;
 
-namespace ReactiveDomain.Foundation.Tests.Specifications
+namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public abstract class MockRepositorySpecification : CommandBusSpecification
     {

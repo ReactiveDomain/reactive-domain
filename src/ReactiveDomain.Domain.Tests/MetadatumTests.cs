@@ -2,10 +2,9 @@
 using Albedo;
 using AutoFixture;
 using AutoFixture.Idioms;
-using ReactiveDomain;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     public class MetadatumTests
     {

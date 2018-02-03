@@ -8,10 +8,9 @@ using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using KellermanSoftware.CompareNetObjects;
 using Newtonsoft.Json;
-using ReactiveDomain;
 using ReactiveDomain.Testing;
 
-namespace ReactiveDomain.Testing
+namespace ReactiveDomain.Domain.Tests.Testing
 {
     public class ScenarioRunner
     {
@@ -62,7 +61,7 @@ namespace ReactiveDomain.Testing
             };
             var comparer = new CompareLogic(config);
             var expectedEvents = Array.ConvertAll(scenario.Thens,
-                then => new Testing.RecordedEvent(_converter(new StreamName(then.Stream)), then.Event));
+                then => new ReactiveDomain.Testing.RecordedEvent(_converter(new StreamName(then.Stream)), then.Event));
             var result = comparer.Compare(expectedEvents, recordedEvents);
             if (result.AreEqual) return scenario.Pass();
             return scenario.ButRecordedOtherEvents(recordedEvents); //, result.Differences.ToArray()
@@ -111,7 +110,7 @@ namespace ReactiveDomain.Testing
             return scenario.ButThrewException(exception);
         }
 
-        private async Task<Position> WriteGivens(Testing.RecordedEvent[] givens)
+        private async Task<Position> WriteGivens(ReactiveDomain.Testing.RecordedEvent[] givens)
         {
             var checkpoint = Position.Start;
             foreach (var stream in givens.GroupBy(given => given.Stream))
@@ -131,9 +130,9 @@ namespace ReactiveDomain.Testing
             return checkpoint;
         }
 
-        private async Task<Testing.RecordedEvent[]> ReadThens(Position position)
+        private async Task<ReactiveDomain.Testing.RecordedEvent[]> ReadThens(Position position)
         {
-            var recorded = new List<Testing.RecordedEvent>();
+            var recorded = new List<ReactiveDomain.Testing.RecordedEvent>();
             var slice = await _connection.ReadAllEventsForwardAsync(position, 1024, false, new UserCredentials("admin", "changeit"));
             recorded.AddRange(
                 slice.Events
@@ -141,7 +140,7 @@ namespace ReactiveDomain.Testing
                         !resolved.OriginalStreamId.StartsWith("$") 
                         && resolved.OriginalStreamId.StartsWith(_prefix.ToString())
                         && resolved.OriginalEvent.IsJson)
-                    .Select(resolved => new Testing.RecordedEvent(
+                    .Select(resolved => new ReactiveDomain.Testing.RecordedEvent(
                         new StreamName(resolved.OriginalStreamId),
                         JsonConvert.DeserializeObject(
                             Encoding.UTF8.GetString(resolved.OriginalEvent.Data),
@@ -156,7 +155,7 @@ namespace ReactiveDomain.Testing
                             !resolved.OriginalStreamId.StartsWith("$")
                             && resolved.OriginalStreamId.StartsWith(_prefix.ToString())
                             && resolved.OriginalEvent.IsJson)
-                        .Select(resolved => new Testing.RecordedEvent(
+                        .Select(resolved => new ReactiveDomain.Testing.RecordedEvent(
                             new StreamName(resolved.OriginalStreamId),
                             JsonConvert.DeserializeObject(
                                 Encoding.UTF8.GetString(resolved.OriginalEvent.Data),

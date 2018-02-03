@@ -2,13 +2,13 @@
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <Platforms>x64</Platforms>
-    <Version>0.8.0.0</Version>
+    <Version>0.8.2.0</Version>
     <Authors>PerkinElmer</Authors>
     <Company>PerkinElmer</Company>
     <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
     <Description />
-    <AssemblyVersion>0.8.0.0</AssemblyVersion>
-    <FileVersion>0.8.0.0</FileVersion>
+    <AssemblyVersion>0.8.2.0</AssemblyVersion>
+    <FileVersion>0.8.2.0</FileVersion>
     <NeutralLanguage />
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -18,9 +18,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Messaging.Tests\ReactiveDomain.Messaging.Tests.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj" />
   </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutputPath>..\..\bld\Debug</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>..\..\bld\Release</OutputPath>
+  </PropertyGroup>
 
 </Project>

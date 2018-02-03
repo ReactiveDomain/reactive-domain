@@ -13,6 +13,11 @@ namespace ReactiveDomain
         private readonly EventRouter _router;
         private long _expectedVersion;
 
+        Guid IEventSource.Id => Id;
+
+        //TODO: smooth this out
+        public Guid Id { get; protected set; }
+
         /// <summary>
         /// Initializes an event source's routing and recording behavior.
         /// </summary>
@@ -34,16 +39,33 @@ namespace ReactiveDomain
         {
             if (events == null)
                 throw new ArgumentNullException(nameof(events));
-
             if (_recorder.HasRecordedEvents)
                 throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
-
+         
             foreach (var @event in events)
             {
-                _router.Route(@event);
+                RestoreFromEvent(@event);
             }
+          }
+        //Avoid boxing and unboxing single values
+        void IEventSource.RestoreFromEvent(object @event)
+        {
+            RestoreFromEvent(@event);
         }
+        private void RestoreFromEvent(object @event)
+        {
+            if (@event == null)
+                throw new ArgumentNullException(nameof(@event));
+            if (_recorder.HasRecordedEvents)
+                throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
+            
+            if (_expectedVersion < 0) // new aggregates have a expected version of -1 or -2
+                _expectedVersion = 0; // got first event (zero based)
+            else
+                _expectedVersion++;
 
+            _router.Route(@event);
+        }
         object[] IEventSource.TakeEvents()
         {
             var records = _recorder.RecordedEvents;

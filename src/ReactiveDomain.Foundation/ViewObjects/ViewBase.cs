@@ -1,8 +1,6 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 
-using ReactiveDomain.Legacy.CommonDomain;
-
-namespace ReactiveDomain.UI.ViewObjects
+namespace ReactiveDomain.Foundation.ViewObjects
 {
     public abstract class ViewBase
     {

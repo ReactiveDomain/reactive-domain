@@ -6,7 +6,7 @@ using ReactiveUI;
 
 // ReSharper disable RedundantTypeArgumentsOfMethod
 
-namespace ReactiveDomain.UI
+namespace ReactiveDomain.Foundation
 {
     public abstract class TransientSubscriber : ReactiveObject, IDisposable
     {

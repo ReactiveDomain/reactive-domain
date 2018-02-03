@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
 
-namespace ReactiveDomain.Example
+namespace ReactiveDomain.Domain.Tests.Example
 {
     public class GroupRepository : IGroupRepository
     {

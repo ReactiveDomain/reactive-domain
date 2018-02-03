@@ -1,8 +1,7 @@
 ﻿using System;
-using ReactiveDomain;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     namespace EventRecorderTests
     {

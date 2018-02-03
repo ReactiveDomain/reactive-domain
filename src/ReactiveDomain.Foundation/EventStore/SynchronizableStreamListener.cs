@@ -1,5 +1,4 @@
 using System.Threading;
-using ReactiveDomain.Legacy;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -13,7 +12,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
         public SynchronizableStreamListener(
             string name,
-            ICatchupSteamSubscriber subscriptionTarget,
+            ICatchupStreamSubscriber subscriptionTarget,
             bool sync = false,
             string busName = null) :
                 base(name, subscriptionTarget, busName)

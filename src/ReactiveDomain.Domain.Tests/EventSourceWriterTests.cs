@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
-using ReactiveDomain;
 using Xunit;
 
-namespace ReactiveDomain
+namespace ReactiveDomain.Domain.Tests
 {
     [Collection(nameof(EmbeddedEventStoreCollection))]
     public class EventSourceWriterTests

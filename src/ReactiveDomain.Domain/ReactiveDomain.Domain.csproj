@@ -1,62 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
- <!--<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(OS)' == 'Unix'">
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>-->
   <PropertyGroup>
+    <RootNamespace>ReactiveDomain</RootNamespace>
     <AssemblyName>ReactiveDomain.Domain</AssemblyName>
     <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>   
-    <RootNamespace>ReactiveDomain</RootNamespace>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyVersion Condition="$(AssemblyVersion) == ''">0.0.0</AssemblyVersion>
-    <FileVersion Condition="$(FileVersion) == ''">0.0.0</FileVersion>
-    <InformationalVersion Condition="$(InformationalVersion) == ''">0.0.0</InformationalVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-    <Optimize>False</Optimize>
-    <!-- <DocumentationFile>bin\Debug\net46\ReactiveDomain.Domain.xml</DocumentationFile> -->
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-    <Optimize>True</Optimize>
-    <!-- <DocumentationFile>bin\Release\net46\ReactiveDomain.Domain.xml</DocumentationFile> -->
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-  </PropertyGroup>
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <PackageVersion Condition="$(PackageVersion) == ''">0.0.0</PackageVersion>
-    <PackageId>ReactiveDomain.Domain</PackageId>
-    <Title>ReactiveDomain.Domain</Title>
+    <Platforms>x64</Platforms>
+    <Version>0.8.2.0</Version>
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the core types to use when building an event sourced model in C#.</Description>
     <Copyright>Copyright © Linedata. All rights reserved.</Copyright>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://github.com/linedata/Aggregate-Source-Integration/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/linedata/Aggregate-Source-Integration</PackageProjectUrl>
-    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
-    <PackageTags>eventsourcing;ddd</PackageTags>
-    <IncludeSymbols>true</IncludeSymbols>
-    <IncludeSource>true</IncludeSource>
-    <IsTool>false</IsTool>
-    <RepositoryUrl>https://github.com/linedata/Aggregate-Source-Integration</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <IncludeBuildOutput>true</IncludeBuildOutput>
-    <IncludeContentInPack>false</IncludeContentInPack>
+    <Description />
+    <AssemblyVersion>0.8.2.0</AssemblyVersion>
+    <FileVersion>0.8.2.0</FileVersion>
+    <NeutralLanguage />
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="IRepository.cs" />
-    <Compile Remove="Repository.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" />
-  </ItemGroup> 
+  </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutputPath>..\..\bld\Debug</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>..\..\bld\Release</OutputPath>
+  </PropertyGroup>
+
 </Project>

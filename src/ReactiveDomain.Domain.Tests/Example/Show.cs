@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Threading;
 using Newtonsoft.Json;
-using ReactiveDomain;
 
-namespace ReactiveDomain.Example
+namespace ReactiveDomain.Domain.Tests.Example
 {
     public class Show
     {

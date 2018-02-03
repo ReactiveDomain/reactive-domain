@@ -9,7 +9,7 @@ using ReactiveUI;
 using ReactiveUI.Legacy;
 using ReactiveCommand = ReactiveUI.ReactiveCommand;
 
-namespace ReactiveDomain.UI.ViewObjects
+namespace ReactiveDomain.Foundation.ViewObjects
 {
     public static class CommandBuilder
     {

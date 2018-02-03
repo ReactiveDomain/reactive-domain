@@ -1,7 +1,6 @@
 ﻿using FluentValidation;
-using ReactiveDomain;
 
-namespace ReactiveDomain.Example
+namespace ReactiveDomain.Domain.Tests.Example
 {
     public static class CommandHandlerBuilderExtensions
     {

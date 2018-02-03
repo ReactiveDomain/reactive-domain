@@ -8,8 +8,6 @@ using EventStore.ClientAPI.SystemData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using ReactiveDomain.Legacy;
-using ReactiveDomain.Legacy.CommonDomain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Util;
@@ -17,7 +15,7 @@ using ReactiveDomain.Messaging.Util;
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
 {
-    public class GetEventStoreRepository : IRepository, ICatchupSteamSubscriber
+    public class GetEventStoreRepository : IRepository, ICatchupStreamSubscriber
     {
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
@@ -36,8 +34,8 @@ namespace ReactiveDomain.Foundation.EventStore
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public GetEventStoreRepository(IEventStoreConnection eventStoreConnection, IBus outBus = null)
-            : this(eventStoreConnection, (t, g) => string.Format("{0}-{1}", char.ToLower(t.Name[0]) + t.Name.Substring(1), g.ToString("N")), outBus)
+        public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
+            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
         {
         }
 
@@ -47,15 +45,15 @@ namespace ReactiveDomain.Foundation.EventStore
             _eventStoreConnection = eventStoreConnection;
             _aggregateIdToStreamName = aggregateIdToStreamName;
         }
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             return TryGetById(id, int.MaxValue, out aggregate);
         }
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             return GetById<TAggregate>(id, int.MaxValue);
         }
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IAggregate
+        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             try
             {
@@ -68,7 +66,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 return false;
             }
         }
-        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IAggregate
+        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
         {
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
@@ -76,8 +74,10 @@ namespace ReactiveDomain.Foundation.EventStore
             var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
+
             long sliceStart = 0;
             StreamEventsSlice currentSlice;
+            var appliedEventCount = 0;
             do
             {
                 long sliceCount = sliceStart + ReadPageSize <= version
@@ -95,12 +95,18 @@ namespace ReactiveDomain.Foundation.EventStore
                 sliceStart = currentSlice.NextEventNumber;
 
                 foreach (var evnt in currentSlice.Events)
-                    aggregate.ApplyEvent(DeserializeEvent(evnt.OriginalEvent.Metadata, evnt.OriginalEvent.Data));
+                {
+                    appliedEventCount++;
+                    aggregate.RestoreFromEvent(DeserializeEvent(evnt.OriginalEvent.Metadata, evnt.OriginalEvent.Data));
+                }
+
             } while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
+            if (version != Int32.MaxValue && version != appliedEventCount)
+                throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
+            if (version != Int32.MaxValue && aggregate.ExpectedVersion != version - 1)
+                throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
-            if (aggregate.Version != version && version < Int32.MaxValue)
-                throw new AggregateVersionException(id, typeof(TAggregate), aggregate.Version, version);
             return aggregate;
 
         }
@@ -117,7 +123,7 @@ namespace ReactiveDomain.Foundation.EventStore
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
-        public void Save(IAggregate aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
         {
             var commitHeaders = new Dictionary<string, object>
             {
@@ -127,9 +133,8 @@ namespace ReactiveDomain.Foundation.EventStore
             updateHeaders(commitHeaders);
 
             var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
-            var newEvents = aggregate.GetUncommittedEvents().Cast<object>().ToList();
-            var originalVersion = aggregate.Version - newEvents.Count;
-            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
+            var newEvents = aggregate.TakeEvents().ToList();
+            var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
             if (eventsToSave.Count < WritePageSize)
@@ -159,7 +164,7 @@ namespace ReactiveDomain.Foundation.EventStore
                     }
                     catch { }//TODO: see if we need to do something here
                 }
-            aggregate.ClearUncommittedEvents();
+            //aggregate.ClearUncommittedEvents();
         }
 
         public static EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers)
@@ -238,6 +243,7 @@ namespace ReactiveDomain.Foundation.EventStore
                         return false;
                     if (nonPublic)
                         return true;
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     return (propertyInfo.GetSetMethod(nonPublic) != null);
                 default:
                     return false;
