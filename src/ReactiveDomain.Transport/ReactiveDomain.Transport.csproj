@@ -16,6 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
 
