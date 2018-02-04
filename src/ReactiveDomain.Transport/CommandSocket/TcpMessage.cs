@@ -5,6 +5,7 @@ using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Logging;
 using ReactiveDomain.Messaging.Util;
+using Settings = ReactiveDomain.Messaging.Util.Json;
 
 namespace ReactiveDomain.Transport.CommandSocket
 {
@@ -39,7 +40,7 @@ namespace ReactiveDomain.Transport.CommandSocket
 
                 var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
                 reader.Read(); //property value
-                msg = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType);
+                msg = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Settings.JsonSettings);
             }
             Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgTypeId=" + msg.MsgTypeId);
             return new TcpMessage(msg, data);
@@ -68,7 +69,7 @@ namespace ReactiveDomain.Transport.CommandSocket
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName(MessageType.FullName);
-                writer.WriteValue(JsonConvert.SerializeObject(message));
+                writer.WriteValue(JsonConvert.SerializeObject(message, Settings.JsonSettings));
                 writer.WriteEnd();
             }
             Data = new ArraySegment<byte>(ms.ToArray());
