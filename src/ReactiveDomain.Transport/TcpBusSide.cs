@@ -18,7 +18,7 @@ namespace ReactiveDomain.Transport
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
         protected Timer StatsTimer;
-        protected ITcpConnection TcpConnection;
+        protected List<ITcpConnection> TcpConnection = new List<ITcpConnection>();
         protected LengthPrefixMessageFramer Framer = new LengthPrefixMessageFramer();
 
         protected TcpBusSide(
@@ -133,15 +133,21 @@ namespace ReactiveDomain.Transport
                 return;
             }
 
-            try
+            foreach (var conn in TcpConnection)
             {
-                var framed = Framer.FrameData((new TcpMessage(message).AsFramedArraySegment()));
-                TcpConnection.EnqueueSend(framed);
+                try
+                {
+                    var framed = Framer.FrameData(new TcpMessage(message).AsFramedArraySegment());
+                    conn.EnqueueSend(framed);
+                }
+                catch (Exception ex)
+                {
+                    Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                }
             }
-            catch (Exception ex)
-            {
-                Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
-            }
+
+
+
         }
     }
 
