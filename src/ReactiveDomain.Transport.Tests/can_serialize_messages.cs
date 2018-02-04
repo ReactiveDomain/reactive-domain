@@ -13,8 +13,6 @@ namespace ReactiveDomain.Transport.Tests
     // ReSharper disable InconsistentNaming
     public class when_creating_tcp_messages
     {
-      
-
         [Fact]
         public void bson_serialize_object_test()
         {
@@ -107,7 +105,7 @@ namespace ReactiveDomain.Transport.Tests
            
             var tcpMsg = new TcpMessage(_testEvent);
 
-            var tcpmsg2 = TcpMessage.FromFramedArraySegment(tcpMsg.AsFramedArraySegment());
+            var tcpmsg2 = TcpMessage.FromArraySegment(tcpMsg.Data);
             Assert.IsType<WoftamEvent>(tcpmsg2.WrappedMessage);
             var msg2 = tcpmsg2.WrappedMessage as WoftamEvent;
             Assert.NotNull(msg2);

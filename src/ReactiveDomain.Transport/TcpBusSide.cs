@@ -89,7 +89,7 @@ namespace ReactiveDomain.Transport
             TcpMessage tcpMessage;
             try
             {
-                tcpMessage = TcpMessage.FromFramedArraySegment(obj);
+                tcpMessage = TcpMessage.FromArraySegment(obj);
             }
             catch (Exception ex)
             {
@@ -137,7 +137,7 @@ namespace ReactiveDomain.Transport
             {
                 try
                 {
-                    var framed = Framer.FrameData(new TcpMessage(message).AsFramedArraySegment());
+                    var framed = Framer.FrameData(new TcpMessage(message).Data);
                     conn.EnqueueSend(framed);
                 }
                 catch (Exception ex)
