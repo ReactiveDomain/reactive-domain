@@ -35,7 +35,7 @@ namespace ReactiveDomain.Foundation.EventStore
         }
 
         public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
-            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
+            : this(eventStoreConnection, (t, g) => $"{domainPrefix}.{char.ToLower(t.Name[0])}{t.Name.Substring(1)}-{g:N}", outBus)
         {
         }
 
