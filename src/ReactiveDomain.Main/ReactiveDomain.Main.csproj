@@ -2,25 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Version>0.8.2.0</Version>
-    <Authors>PerkinElmer</Authors>
-    <Company>PerkinElmer</Company>
-    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
-    <Description />
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <FileVersion>0.8.2.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\build\net462\Debug</OutputPath>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="VersionInfo.cs" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Buffers\ReactiveDomain.Buffers.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
@@ -33,11 +17,5 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
   
 </Project>

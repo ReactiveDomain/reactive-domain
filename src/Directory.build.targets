@@ -13,7 +13,7 @@
         </CombinePath>
     </Target>
     <Target Name="BeforeBuild" DependsOnTargets="Restore"></Target>
-    <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="!$(IsCIBuild) And $(IsPackable) == 'True'" AfterTargets="Pack">
+    <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="!$(IsCIBuild) And $(IsPackable) == 'True' And $(OS) == 'WINDOWS_NT'" AfterTargets="Pack">
         <CombinePath BasePath="$(PackageOutputPath)" Paths="$(PackageId).$(PackageVersion).nupkg">
             <Output PropertyName="PackagePath" TaskParameter="CombinedPaths"></Output>
         </CombinePath>
@@ -42,12 +42,12 @@
         <RemoveDir Directories="@(DirectoriesToDelete)"/>
         <Delete Files="@(PackagesToDelete)"/>
     </Target>
-    <Target Name="EnsureLocalPackagesFolder" Condition="$(APPVEYOR) == '' And !Exists($(LocalPublishDirectory))">
+    <Target Name="EnsureLocalPackagesFolder" Condition="$(OS) == 'WINDOWS_NT' And $(APPVEYOR) == '' And !Exists($(LocalPublishDirectory))">
         <Message Importance="High" Text="Local publish directory not found, creating and adding nuget source" />
         <MakeDir Directories="$(LocalPublishDirectory)"></MakeDir>
     </Target>
     <!--Gets the path to nuget, downloads it if it doesn't exist runs nuget update -self once a maximum of once a day-->
-    <Target Name="EnsureNuget">
+    <Target Name="EnsureNuget" Condition="$(OS) == 'WINDOWS_NT'">
         <CombinePath BasePath="$(MSBuildThisFileDirectory)" Paths=".nuget">
             <Output PropertyName="NugetPath" TaskParameter="CombinedPaths"></Output>
         </CombinePath>
