@@ -2,21 +2,16 @@
   <PropertyGroup>
     <AssemblyName>ReactiveDomain.Domain.Tests</AssemblyName>
     <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>   
-    <Version>0.8.2.0</Version>
     <Title>ReactiveDomain.Domain.Tests</Title>
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the tests for the core types to use when building an event sourced model in C#.</Description>
-    <Copyright>Copyright © Linedata. All rights reserved.</Copyright>
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <FileVersion>0.8.2.0</FileVersion>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture.Idioms" Version="4.0.0-rc1" />
     <PackageReference Include="CompareNetObjects" Version="3.9.0" />
-    <PackageReference Include="EventStore.Client" Version="4.1.0" />
-    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" />
+    <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'"/>
+    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" Condition="'$(TargetFramework)'=='netstandard2.0'"/>
     <PackageReference Include="FluentValidation" Version="7.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="XUnit" Version="2.3.1" />
@@ -27,11 +22,4 @@
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
   </ItemGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
-  </Project>
+</Project>

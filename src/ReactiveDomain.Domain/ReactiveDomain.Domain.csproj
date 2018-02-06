@@ -2,28 +2,14 @@
   <PropertyGroup>
     <RootNamespace>ReactiveDomain</RootNamespace>
     <AssemblyName>ReactiveDomain.Domain</AssemblyName>
-    <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Version>0.8.2.0</Version>
+    <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the core types to use when building an event sourced model in C#.</Description>
-    <Copyright>Copyright © Linedata. All rights reserved.</Copyright>
-    <Description />
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <FileVersion>0.8.2.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="4.1.0" />
+    <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'"/>
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" Condition="'$(TargetFramework)'=='netstandard2.0'"/>
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
-
+  
 </Project>

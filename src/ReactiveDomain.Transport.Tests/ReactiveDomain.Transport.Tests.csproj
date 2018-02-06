@@ -27,11 +27,5 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
 
 </Project>

@@ -16,8 +16,10 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="4.1.0" />
-    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" />
+    
+    <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'"/>
+    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" Condition="'$(TargetFramework)'=='netstandard2.0'"/>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="reactiveui" Version="7.4.0" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
@@ -30,10 +32,4 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
 </Project>
