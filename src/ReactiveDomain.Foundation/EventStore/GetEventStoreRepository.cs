@@ -22,7 +22,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public const string CommitIdHeader = "CommitId";
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
-        private IBus _outBus;
+        private readonly IPublisher _outBus;
 
         private readonly Func<Type, Guid, string> _aggregateIdToStreamName;
 
@@ -34,12 +34,12 @@ namespace ReactiveDomain.Foundation.EventStore
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
-            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
+        public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IPublisher outBus = null)
+            : this(eventStoreConnection, (t, g) => $"{domainPrefix}.{char.ToLower(t.Name[0])}{t.Name.Substring(1)}-{g:N}", outBus)
         {
         }
 
-        public GetEventStoreRepository(IEventStoreConnection eventStoreConnection, Func<Type, Guid, string> aggregateIdToStreamName, IBus outBus = null)
+        public GetEventStoreRepository(IEventStoreConnection eventStoreConnection, Func<Type, Guid, string> aggregateIdToStreamName, IPublisher outBus = null)
         {
             _outBus = outBus;
             _eventStoreConnection = eventStoreConnection;
