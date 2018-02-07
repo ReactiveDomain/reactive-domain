@@ -31,6 +31,7 @@ namespace ReactiveDomain.Foundation.EventStore
             _subscriptionTarget = subscriptionTarget;
             ListenerName = listenerName;
         }
+
         /// <summary>
         /// Category Stream Listener
         /// i.e. $ce-[AggregateType]
@@ -38,10 +39,26 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <typeparam name="TAggregate"></typeparam>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
+        /// <param name="millisecondsTimeout"></param>
         public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             Start(typeof(TAggregate).GetCategoryEventStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
         }
+
+        /// <summary>
+        /// Event Stream Listener
+        /// i.e. $et-[MessageType]
+        /// </summary>
+        /// <param name="tMessage"></param>
+        /// <param name="checkpoint"></param>
+        /// <param name="blockUntilLive"></param>
+        /// <param name="millisecondsTimeout"></param>
+        public void Start(Type tMessage, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000)
+        {
+            if (!tMessage.IsSubclassOf(typeof(Event))) throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
+            Start(tMessage.GetEventTypeStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
+        }
+
         /// <summary>
         /// Aggregate Stream listener
         /// i.e. [AggregateType]-[id]
@@ -50,6 +67,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="id"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
+        /// <param name="millisecondsTimeout"></param>
         public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
             Start(typeof(TAggregate).GetEventStreamNameByAggregatedId(id), checkpoint, blockUntilLive, millisecondsTimeout);
@@ -62,6 +80,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="streamName"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
+        /// <param name="millisecondsTimeout"></param>
         public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000)
         {
             _liveLock.Reset();
@@ -94,7 +113,7 @@ namespace ReactiveDomain.Foundation.EventStore
         }
         #region Implementation of IDisposable
 
-        private bool _disposed = false;
+        private bool _disposed;
         public void Dispose()
         {
             Dispose(true);

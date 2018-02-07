@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace ReactiveDomain.Transport
             : base(hostIP, commandPort, messageBus)
         {
 
-            TcpConnection = tcpConnection ?? CreateTcpConnection(CommandEndpoint);
+            TcpConnection.Add(tcpConnection ?? CreateTcpConnection(CommandEndpoint));
         }
 
         private ITcpConnection CreateTcpConnection(IPEndPoint endPoint)
@@ -49,9 +50,10 @@ namespace ReactiveDomain.Transport
         {
             // assume that any connection error means that the Host isn't running, yet.  Just wait
             // a second and try again.
+            TcpConnection.Clear(); //client should only have one connection
             Thread.Sleep(1000);
             Log.Debug("TcpBusClientSide call to CreateConnectingTcpConnection() failed - SocketError= " + err + " - retrying.");
-            TcpConnection = CreateTcpConnection(CommandEndpoint);
+            TcpConnection.Add(CreateTcpConnection(CommandEndpoint));
         }
 
 
@@ -71,9 +73,9 @@ namespace ReactiveDomain.Transport
                     // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                     return;
                 }
-                TcpConnection.ReceiveAsync(callback);
+                TcpConnection[0].ReceiveAsync(callback); //client should only have one connection
             };
-            TcpConnection.ReceiveAsync(callback);
+            TcpConnection[0].ReceiveAsync(callback); //client should only have one connection
         }
 
     }
