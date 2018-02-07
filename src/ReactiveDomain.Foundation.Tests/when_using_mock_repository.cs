@@ -5,12 +5,13 @@ using ReactiveDomain.Foundation.Testing;
 using ReactiveDomain.Foundation.Testing.EventStore;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests
 {
     // ReSharper disable InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedEventStoreCollection))]
     public class when_using_mock_repository
     {
         private readonly List<IRepository> _repos = new List<IRepository>();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Domain.Tests

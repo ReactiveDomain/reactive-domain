@@ -18,10 +18,10 @@ namespace ReactiveDomain.PrivateLedger
             Source = source.GetMemento();
         }
 
-        public ChainedCommand(Guid correlationId, Guid? sourceId, Guid PrincipalId) :
+        public ChainedCommand(Guid correlationId, Guid? sourceId, Guid principalId) :
             base(correlationId, sourceId)
         {
-            PrincipalId = PrincipalId;
+            PrincipalId = principalId;
         }
 
     }

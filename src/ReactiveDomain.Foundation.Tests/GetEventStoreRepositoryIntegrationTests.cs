@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Testing;
 using ReactiveDomain.Foundation.Testing.EventStore;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests
@@ -13,7 +14,7 @@ namespace ReactiveDomain.Foundation.Tests
     /// <summary>
     /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedEventStoreCollection))]
     public class GetEventStoreRepositoryIntegrationTests 
     {
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);

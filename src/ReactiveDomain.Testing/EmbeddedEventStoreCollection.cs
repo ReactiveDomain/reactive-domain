@@ -1,7 +1,6 @@
-using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Domain.Tests
+namespace ReactiveDomain.Testing
 {
     [CollectionDefinition(nameof(EmbeddedEventStoreCollection))]
     public class EmbeddedEventStoreCollection : ICollectionFixture<EmbeddedEventStoreFixture>

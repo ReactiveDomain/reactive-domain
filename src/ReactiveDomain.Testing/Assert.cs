@@ -1,10 +1,7 @@
-﻿using System;
+﻿using ReactiveDomain.Messaging.Bus;
+using System;
 using System.Threading;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 
-
-// ReSharper disable once CheckNamespace - this is where it is supposed to be
 namespace Xunit
 {
     public partial class Assert
@@ -14,6 +11,19 @@ namespace Xunit
             var exp = Throws<CommandException>(fireAction);
             IsType<T>(exp.InnerException);
         }
+
+        public static void ArraySegmentEqual<T>(
+            T[] expectedSequence, T[] buffer, int offset = 0)
+        {
+            for (int i = 0; i < expectedSequence.Length; i++)
+            {
+                int b = i + offset;
+
+                True(buffer[b].Equals(expectedSequence[i]),
+                    $"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
+            }
+        }
+
         public static void IsOrBecomesFalse(Func<bool> func, int? timeout = null, string msg = null)
         {
             IsOrBecomesTrue(() => !func(), timeout, msg);
@@ -27,22 +37,12 @@ namespace Xunit
             while (!func())
             {
                 Thread.Sleep(10);
-                DispatcherUtil.DoEvents();
+                DispatchOtherThings();
                 if (sw.ElapsedMilliseconds > timeout) break;
             }
             True(func(), msg ?? "");
         }
-        
-        public static void ArraySegmentEqual<T>(
-            T[] expectedSequence, T[] buffer, int offset = 0)
-        {
-            for (int i = 0; i < expectedSequence.Length; i++)
-            {
-                int b = i + offset;
 
-                True(buffer[b].Equals(expectedSequence[i]),
-                    $"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
-            }
-        }
-    }  
+        static partial void DispatchOtherThings();
+    }
 }

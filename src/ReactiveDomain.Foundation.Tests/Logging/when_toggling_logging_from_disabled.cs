@@ -3,13 +3,14 @@ using ReactiveDomain.Foundation.Tests.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 using Xunit.Sdk;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedEventStoreCollection))]
     public class when_toggling_logging_from_disabled :
         with_message_logging_disabled,
         IHandle<Message>

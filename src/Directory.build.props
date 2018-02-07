@@ -11,6 +11,7 @@
         <NoPackageAnalysis>True</NoPackageAnalysis>
     </PropertyGroup>
     <PropertyGroup>
+        <Platforms>x64</Platforms>
         <Authors>PerkinElmer</Authors>
         <Company>PerkinElmer</Company>
         <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>

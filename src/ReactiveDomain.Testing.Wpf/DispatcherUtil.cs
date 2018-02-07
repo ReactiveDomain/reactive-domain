@@ -1,7 +1,7 @@
 ﻿using System.Security.Permissions;
 using System.Windows.Threading;
 
-namespace ReactiveDomain.Messaging.Testing
+namespace ReactiveDomain.Testing
 {
     public static class DispatcherUtil
     {

@@ -72,6 +72,7 @@ namespace ReactiveDomain.Transport.Tests.Transport
 
         public void Close(string reason)
         {
+            ConnectionClosed?.Invoke(this, SocketError.Success);
         }
 
         public override string ToString()

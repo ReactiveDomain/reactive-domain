@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Domain.Tests

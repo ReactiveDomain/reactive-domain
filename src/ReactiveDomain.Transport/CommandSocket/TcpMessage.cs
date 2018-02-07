@@ -32,7 +32,7 @@ namespace ReactiveDomain.Transport.CommandSocket
             Buffer.BlockCopy(data.Array, data.Offset + sizeof(int), messageBuffer, 0, messageBuffer.Length);
             var ms = new MemoryStream(messageBuffer);
             Message msg;
-            using (var reader = new BsonReader(ms))
+            using (var reader = new BsonDataReader(ms))
             {
                 var serializer = new JsonSerializer();
                 msg = (Message)serializer.Deserialize(reader, msgType);
@@ -46,7 +46,7 @@ namespace ReactiveDomain.Transport.CommandSocket
             MessageId = message.MsgTypeId;
             MessageType = message.GetType();
             var ms = new MemoryStream();
-            using (var writer = new BsonWriter(ms))
+            using (var writer = new BsonDataWriter(ms))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(writer, message, MessageType);
