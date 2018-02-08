@@ -14,7 +14,7 @@
             <Output PropertyName="LocalPublishDirectory" TaskParameter="CombinedPaths" />
         </CombinePath>
     </Target>
-    <Target Name="BeforeBuild" DependsOnTargets="Restore"></Target>
+    <Target Name="BeforeBuild" DependsOnTargets="Restore" Condition="$(MSBuildRuntimeType) == 'Full'"></Target>
     <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="$(DeployPackages) == 'True' And $(IsPackable) == 'True'" AfterTargets="Pack">
         <CombinePath BasePath="$(PackageOutputPath)" Paths="$(PackageId).$(PackageVersion).nupkg">
             <Output PropertyName="PackagePath" TaskParameter="CombinedPaths"></Output>
