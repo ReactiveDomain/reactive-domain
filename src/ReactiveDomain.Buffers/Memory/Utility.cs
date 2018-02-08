@@ -13,7 +13,7 @@ namespace ReactiveDomain.Buffers.Memory
                 other.FullName.TrimEnd(Path.DirectorySeparatorChar),
                 StringComparison.InvariantCultureIgnoreCase) == 0;
         }
-        
+
         public static bool NearlyEqual(float a, float b, float epsilon)
         {
             float absA = Math.Abs(a);
@@ -34,7 +34,7 @@ namespace ReactiveDomain.Buffers.Memory
             return diff / (absA + absB) < epsilon;
         }
 
-     
+
 
         //public static JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         //{
@@ -46,22 +46,24 @@ namespace ReactiveDomain.Buffers.Memory
         //    Formatting = Formatting.Indented
         //};
 
-      
 
-      
-      
-     
-       
 
-  
+
+
+
+
+
+
         /// <summary>
         /// Constants for use in video buffer management 
         /// Tightly coupled to the exact field layout and size of the BufferStructure
         /// </summary>
 
-      
+
 
         public const int FramesPerBuffer = 30;
+        private static unsafe void* destination;
+
         public static unsafe Guid ParseGuidBuffer(byte* buffer)
         {
             return new Guid(
@@ -98,8 +100,11 @@ namespace ReactiveDomain.Buffers.Memory
             x |= x >> 8;
             x |= x >> 16;
             return x + 1;
+
+
         }
         #region External
+#if NET462
         [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
         public static extern void CopyMemory(IntPtr destination, IntPtr source, uint length);
 
@@ -116,6 +121,21 @@ namespace ReactiveDomain.Buffers.Memory
         /// <returns></returns>
         [DllImport("msvcrt.dll", EntryPoint = "memset", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         public static extern IntPtr MemSet(IntPtr destination, int c, int count);
+#else
+        public static unsafe void CopyMemory(IntPtr destination, IntPtr source, uint length)
+        {
+            Buffer.MemoryCopy(destination.ToPointer(), source.ToPointer(), length, length);
+        }
+        public static unsafe void CopyMemory(byte* destination, byte* source, uint length)
+        {
+            Buffer.MemoryCopy(destination, source, length, length);
+        }
+
+        public static unsafe void MemSet(IntPtr destination, int c, int count)
+        {
+            System.Runtime.CompilerServices.Unsafe.InitBlock(destination.ToPointer(), (byte)c, (uint) count);
+        }
+#endif
 
         public static void Clear(IntPtr target, int sizeInBytes)
         {
