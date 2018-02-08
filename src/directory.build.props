@@ -1,14 +1,19 @@
 <Project>
     <PropertyGroup>
-        <IsCIBuild Condition="$(APPVEYOR) != ''">true</IsCIBuild>
-        <IsCIBuild Condition="$(APPVEYOR) == ''">false</IsCIBuild>
+        <BuildPropsImported>true</BuildPropsImported>
+    </PropertyGroup>
+    <PropertyGroup>
+        <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
+        <IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
+        <DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
+        <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
     </PropertyGroup>
     <PropertyGroup>
         <PackageVersionPrefix>0.8.6</PackageVersionPrefix>
         <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
         <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
         <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
-        <NoPackageAnalysis>True</NoPackageAnalysis>
+        <NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
     </PropertyGroup>
     <PropertyGroup>
         <Platforms>x64</Platforms>

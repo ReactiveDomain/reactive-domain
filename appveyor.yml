@@ -1,0 +1,6 @@
+image: Visual Studio 2017
+
+before_build:
+  - msbuild /t:restore ./src/ReactiveDomain.sln
+build:
+  project: ./src/ReactiveDomain.sln  

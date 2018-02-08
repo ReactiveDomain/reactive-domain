@@ -1,5 +1,7 @@
 <Project InitialTargets="Initialize">
-    <!-- <Import Condition="$(IsRestoreTargetsFileLoaded)" Project="$(MSBuildToolsPath)"/> -->
+    <PropertyGroup>
+        <BuildTargetsImported>true</BuildTargetsImported>
+    </PropertyGroup>
     <Target Name="Initialize" Condition="$(IsCIBuild) == false And $(IsPackable) == 'True'">
         <PropertyGroup>
             <BuildTime>$([System.DateTime]::UtcNow.ToString(yyyyMMddhhmm))</BuildTime>
@@ -11,21 +13,16 @@
         <CombinePath BasePath="$(HomeDirectory)" Paths="localPackages">
             <Output PropertyName="LocalPublishDirectory" TaskParameter="CombinedPaths" />
         </CombinePath>
-        <Message Importance="high" Text="tfs : $(TargetFrameworks)" />
-        <Message Importance="high" Text="tf : $(TargetFramework)" />
-    </Target>
-    <Target Name="Foo">
-        <Message Importance="High" Text="$(TargetFrameworkMoniker)" />
     </Target>
     <Target Name="BeforeBuild" DependsOnTargets="Restore"></Target>
-    <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="!$(IsCIBuild) And $(IsPackable) == 'True' And $(OS) == 'WINDOWS_NT'" AfterTargets="Pack">
+    <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="$(DeployPackages) == 'True' And $(IsPackable) == 'True'" AfterTargets="Pack">
         <CombinePath BasePath="$(PackageOutputPath)" Paths="$(PackageId).$(PackageVersion).nupkg">
             <Output PropertyName="PackagePath" TaskParameter="CombinedPaths"></Output>
         </CombinePath>
         <Message Importance="high" Text="Deploying Package Path $(PackagePath)"/>
         <Exec Command="$(NugetExePath) add &quot;$(PackagePath)&quot; -Source &quot;$(LocalPublishDirectory)&quot;" />
     </Target>
-    <Target Name="CleanOldPackages" DependsOnTargets="EnsureLocalPackagesFolder" AfterTargets="DeployPackage" Condition="$(IsPackable) == 'True'">
+    <Target Name="CleanOldPackages" DependsOnTargets="EnsureLocalPackagesFolder" AfterTargets="DeployPackage" Condition="$(DeployPackages) == 'True' And $(IsPackable) == 'True'">
         <Message Importance="high" Text="Local publish directory $(LocalPublishDirectory)"/>
         <CombinePath BasePath="$(LocalPublishDirectory)" Paths="$(PackageId)">
             <Output PropertyName="PackageDirectory" TaskParameter="CombinedPaths"></Output>
@@ -47,12 +44,12 @@
         <RemoveDir Directories="@(DirectoriesToDelete)"/>
         <Delete Files="@(PackagesToDelete)"/>
     </Target>
-    <Target Name="EnsureLocalPackagesFolder" Condition="$(OS) == 'WINDOWS_NT' And $(APPVEYOR) == '' And !Exists($(LocalPublishDirectory))">
+    <Target Name="EnsureLocalPackagesFolder" Condition="$(DeployPackages) == 'True' And !Exists($(LocalPublishDirectory))">
         <Message Importance="High" Text="Local publish directory not found, creating and adding nuget source" />
         <MakeDir Directories="$(LocalPublishDirectory)"></MakeDir>
     </Target>
     <!--Gets the path to nuget, downloads it if it doesn't exist runs nuget update -self once a maximum of once a day-->
-    <Target Name="EnsureNuget" Condition="$(OS) == 'WINDOWS_NT'">
+    <Target Name="EnsureNuget" Condition="$(DeployPackages) == 'True'">
         <CombinePath BasePath="$(MSBuildThisFileDirectory)" Paths=".nuget">
             <Output PropertyName="NugetPath" TaskParameter="CombinedPaths"></Output>
         </CombinePath>
@@ -72,7 +69,7 @@
         <Touch Condition="$(RunNugetUpdate)" Files="$(NugetLastUpdatedPath)" ForceTouch="true" AlwaysCreate="true"/>
         <Exec Condition="$(RunNugetUpdate)" Command="$(NugetExePath) update -self" />
     </Target>
-    <UsingTask TaskName="CheckLastModified" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <UsingTask TaskName="CheckLastModified" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" Condition="$(DeployPackages) == 'True'">
         <ParameterGroup>
             <FileName ParameterType="System.String" Required="true"/>
             <Age ParameterType="System.String" Required="true"/>
@@ -89,7 +86,7 @@
             </Code>
         </Task>
     </UsingTask>
-    <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" Condition="$(DeployPackages) == 'True'">
         <ParameterGroup>
             <Address ParameterType="System.String" Required="true"/>
             <FileName ParameterType="System.String" Required="true" />
@@ -103,7 +100,7 @@
             </Code>
         </Task>
     </UsingTask>
-    <UsingTask TaskName="AllButNewestItems" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <UsingTask TaskName="AllButNewestItems" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" Condition="$(DeployPackages) == 'True'">
         <ParameterGroup>
             <Items ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
             <NumberOfItemsToKeep ParameterType="System.Byte" Required="true"/>

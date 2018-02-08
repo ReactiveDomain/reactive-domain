@@ -36,7 +36,7 @@ namespace ReactiveDomain.Foundation.Tests
             _repo = new GetEventStoreRepository("UnitTest",_connection);
         }
 
-
+        [Fact]
         public void CanGetLatestVersionById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
@@ -46,6 +46,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(3000, retrieved.AppliedEventCount);
         }
 
+        [Fact]
         public void CanGetSpecificVersionFromFirstPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
@@ -54,6 +55,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(64, retrieved.AppliedEventCount);
         }
 
+        [Fact]
         public void CanGetSpecificVersionFromSubsequentPageById()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 500 /* excludes TestAggregateCreated */);
@@ -76,6 +78,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(numberOfEvents, saved.AppliedEventCount);
         }
 
+        [Fact]
         public void CanSaveExistingAggregate()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
@@ -88,6 +91,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(150, secondSaved.AppliedEventCount);
         }
 
+        [Fact]
         public void CanSaveMultiplesOfWritePageSize()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 1500 /* excludes TestAggregateCreated */);
@@ -96,6 +100,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(1500, saved.AppliedEventCount);
         }
 
+        [Fact]
         public void ClearsEventsFromAggregateOnceCommitted()
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
@@ -105,6 +110,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(0, ((IEventSource)aggregateToSave).TakeEvents().Count());
         }
 
+        [Fact]
         public void ThrowsOnRequestingSpecificVersionHigherThanExists()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -112,6 +118,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Throws<AggregateVersionException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId, 50));
         }
 
+        [Fact]
         public void GetsEventsFromCorrectStreams()
         {
             var aggregate1Id = SaveTestAggregateWithoutCustomHeaders(_repo, 100);
@@ -124,11 +131,13 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(50, secondSaved.AppliedEventCount);
         }
 
+        [Fact]
         public void ThrowsOnGetNonExistentAggregate()
         {
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(Guid.NewGuid()));
         }
 
+        [Fact]
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
@@ -141,6 +150,7 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
         }
 
+        [Fact]
         public void SavesCommitHeadersOnEachEvent()
         {
             var commitId = Guid.NewGuid();
