@@ -199,15 +199,16 @@ namespace ReactiveDomain.Foundation.EventStore
             UserCredentials userCredentials = null,
             int readBatchSize = 500)
         {
+            
+            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false, true);
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
-                resolveLinkTos,
+                settings,
                 (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
                 _ => liveProcessingStarted?.Invoke(),
                 (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
-                userCredentials,
-                readBatchSize);
+                userCredentials);
 
             return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
         }

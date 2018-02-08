@@ -5,7 +5,6 @@ using EventStore.ClientAPI;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Testing;
-using ReactiveDomain.Foundation.Testing.EventStore;
 using ReactiveDomain.Testing;
 using Xunit;
 
