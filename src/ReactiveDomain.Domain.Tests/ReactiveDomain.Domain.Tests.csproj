@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
     <AssemblyName>ReactiveDomain.Domain.Tests</AssemblyName>
-    <TargetFrameworks>netcoreapp2.0;net462</TargetFrameworks>
+    <IsTestProject>true</IsTestProject>
     <Title>ReactiveDomain.Domain.Tests</Title>
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the tests for the core types to use when building an event sourced model in C#.</Description>

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
     <AssemblyName>ReactiveDomain.Domain</AssemblyName>
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the core types to use when building an event sourced model in C#.</Description>
     <IsPackable>true</IsPackable>
@@ -10,9 +10,6 @@
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
     <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" Condition="'$(TargetFramework)'=='netstandard2.0'" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Testing\" />
   </ItemGroup>
   
 </Project>

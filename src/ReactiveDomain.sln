@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Messaging.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Testing", "ReactiveDomain.Testing\ReactiveDomain.Testing.csproj", "{3CE4F9C4-E54D-4D57-A101-0A226BE66526}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Testing.Wpf", "ReactiveDomain.Testing.Wpf\ReactiveDomain.Testing.Wpf.csproj", "{FD42DA81-FDB6-4DF5-9A90-AC6B559539C7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Buffers", "ReactiveDomain.Buffers\ReactiveDomain.Buffers.csproj", "{930A0EE7-8FDE-4035-9B9F-B8A0EE463FD8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Buffers.Tests", "ReactiveDomain.Buffers.Tests\ReactiveDomain.Buffers.Tests.csproj", "{A147902E-EDC8-4E60-979D-B44FA7A9E352}"
@@ -49,10 +47,6 @@ Global
 		{3CE4F9C4-E54D-4D57-A101-0A226BE66526}.Debug|x64.Build.0 = Debug|x64
 		{3CE4F9C4-E54D-4D57-A101-0A226BE66526}.Release|x64.ActiveCfg = Release|x64
 		{3CE4F9C4-E54D-4D57-A101-0A226BE66526}.Release|x64.Build.0 = Release|x64
-		{FD42DA81-FDB6-4DF5-9A90-AC6B559539C7}.Debug|x64.ActiveCfg = Debug|x64
-		{FD42DA81-FDB6-4DF5-9A90-AC6B559539C7}.Debug|x64.Build.0 = Debug|x64
-		{FD42DA81-FDB6-4DF5-9A90-AC6B559539C7}.Release|x64.ActiveCfg = Release|x64
-		{FD42DA81-FDB6-4DF5-9A90-AC6B559539C7}.Release|x64.Build.0 = Release|x64
 		{930A0EE7-8FDE-4035-9B9F-B8A0EE463FD8}.Debug|x64.ActiveCfg = Debug|x64
 		{930A0EE7-8FDE-4035-9B9F-B8A0EE463FD8}.Debug|x64.Build.0 = Debug|x64
 		{930A0EE7-8FDE-4035-9B9F-B8A0EE463FD8}.Release|x64.ActiveCfg = Release|x64

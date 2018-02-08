@@ -11,6 +11,11 @@
         <CombinePath BasePath="$(HomeDirectory)" Paths="localPackages">
             <Output PropertyName="LocalPublishDirectory" TaskParameter="CombinedPaths" />
         </CombinePath>
+        <Message Importance="high" Text="tfs : $(TargetFrameworks)" />
+        <Message Importance="high" Text="tf : $(TargetFramework)" />
+    </Target>
+    <Target Name="Foo">
+        <Message Importance="High" Text="$(TargetFrameworkMoniker)" />
     </Target>
     <Target Name="BeforeBuild" DependsOnTargets="Restore"></Target>
     <Target Name="DeployPackage" DependsOnTargets="EnsureLocalPackagesFolder;EnsureNuget" Condition="!$(IsCIBuild) And $(IsPackable) == 'True' And $(OS) == 'WINDOWS_NT'" AfterTargets="Pack">

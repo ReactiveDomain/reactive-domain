@@ -30,7 +30,8 @@
         <NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
     </PropertyGroup>
     <PropertyGroup>
-    <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath></PropertyGroup>
+        <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
+    </PropertyGroup>
     <Choose>
         <When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
             <PropertyGroup>
@@ -43,4 +44,12 @@
             </PropertyGroup>
         </When>
     </Choose>
+    <PropertyGroup Condition="$(OS) == 'WINDOWS_NT'">
+        <LibTargetFrameworks>net462;netstandard2.0</LibTargetFrameworks>
+        <TestTargetFrameworks>net462;netcoreapp2.0</TestTargetFrameworks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" $(OS) != 'WINDOWS_NT'">
+        <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks>
+        <TestTargetFrameworks>netcoreapp2.0</TestTargetFrameworks>
+    </PropertyGroup>
 </Project>
