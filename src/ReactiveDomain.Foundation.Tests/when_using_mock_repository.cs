@@ -11,7 +11,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests
 {
     // ReSharper disable InconsistentNaming
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EventStoreCollection))]
     public class when_using_mock_repository
     {
         private readonly List<IRepository> _repos = new List<IRepository>();

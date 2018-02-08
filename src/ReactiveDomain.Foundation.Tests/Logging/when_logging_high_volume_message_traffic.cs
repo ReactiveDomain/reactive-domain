@@ -10,7 +10,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EventStoreCollection))]
     public class when_logging_high_volume_message_traffic :
         with_message_logging_enabled,
         IHandle<Message>

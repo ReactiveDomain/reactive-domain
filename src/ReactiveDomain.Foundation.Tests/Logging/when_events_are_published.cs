@@ -10,7 +10,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EventStoreCollection))]
     public class when_events_are_published : 
         with_message_logging_enabled,
         IHandle<DomainEvent>

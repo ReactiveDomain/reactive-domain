@@ -11,7 +11,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EventStoreCollection))]
     public class when_logging_disabled_and_commands_are_fired :
         with_message_logging_disabled,
         IHandle<Message>
