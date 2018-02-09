@@ -10,6 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.3-rc" Condition="'$(TargetFramework)'=='netstandard2.0'" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
   </ItemGroup>
 </Project>

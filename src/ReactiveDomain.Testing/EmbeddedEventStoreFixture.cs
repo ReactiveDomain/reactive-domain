@@ -149,7 +149,7 @@ namespace ReactiveDomain.Testing
                 .KeepRetrying()
                 .SetDefaultUserCredentials(new UserCredentials("admin", "changeit"));
             var connectionName = $"M={Environment.MachineName},P={Process.GetCurrentProcess().Id},T={DateTimeOffset.UtcNow.Ticks}";
-            this.Connection = EventStoreConnection.Create(settings, endpoint, connectionName, new UserCredentials("admin", "changeit"));
+            this.Connection = EventStoreConnection.Create(settings, endpoint, connectionName);
             Console.WriteLine("[docker] connecting to eventstore");
             await this.Connection.ConnectAsync();
         }

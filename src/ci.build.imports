@@ -1,4 +1,4 @@
 <Project>
-    <Import Project="directory.build.props" Condition="$(TRAVIS) == 'true'" />
-    <Import Project="directory.build.targets" Condition="$(TRAVIS) == 'true'" />    
+    <Import Project="build.props" Condition="$(BuildPropsImported) == ''" />
+    <Import Project="build.targets" Condition="$(BuildTargetsImported) == ''" />    
 </Project>
