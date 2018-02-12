@@ -7,7 +7,7 @@
             <BuildTime>$([System.DateTime]::UtcNow.ToString(yyyyMMddhhmm))</BuildTime>
             <CheckForNugetUpdate>$([System.TimeSpan]::FromDays(1))</CheckForNugetUpdate>
             <PackageVersionSuffix>$(PackageVersionSuffix).$(BuildTime)</PackageVersionSuffix>
-            <PackageVersion>$(PackageVersionPrefix)$(PackageVersionSuffix)</PackageVersion>
+            <PackageVersion Condition="$(PackageVersion) == ''">$(PackageVersionPrefix)$(PackageVersionSuffix)</PackageVersion>
             <GeneratePackageOnBuild>$(IsPackable)</GeneratePackageOnBuild>
         </PropertyGroup>
         <CombinePath BasePath="$(HomeDirectory)" Paths="localPackages">
