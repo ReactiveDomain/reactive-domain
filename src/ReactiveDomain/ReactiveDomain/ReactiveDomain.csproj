@@ -308,7 +308,6 @@
     <Compile Include="Util\VersionInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Fakes Include="Fakes\ReactiveUI.fakes" />
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
