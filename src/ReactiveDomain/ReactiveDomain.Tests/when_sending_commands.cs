@@ -504,7 +504,7 @@ namespace ReactiveDomain.Tests
             Assert.Throws<CommandNotHandledException>(() =>
                  bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
 
-            Assert.True(Interlocked.Read(ref publishedMessageCount) == 0, userMessage: "Expected no messages published");
+            Assert.Equal(0, Interlocked.Read(ref publishedMessageCount), userMessage: "Expected no messages published");
         }
        
         [Fact]

@@ -6,7 +6,12 @@ using Xunit.Sdk;
 
 namespace Xunit
 {
-    public partial class Assert
+#if XUNIT_VISIBILITY_INTERNAL 
+    internal
+#else
+    public
+#endif
+    partial class Assert
     {
         /// <summary>
         /// Verifies that all items in the collection pass when executed against
@@ -21,7 +26,7 @@ namespace Xunit
             Assert.GuardArgumentNotNull("collection", collection);
             Assert.GuardArgumentNotNull("action", action);
 
-            var errors = new Stack<Tuple<int, Exception>>();
+            var errors = new Stack<Tuple<int, object, Exception>>();
             var array = collection.ToArray();
 
             for (var idx = 0; idx < array.Length; ++idx)
@@ -32,7 +37,7 @@ namespace Xunit
                 }
                 catch (Exception ex)
                 {
-                    errors.Push(new Tuple<int, Exception>(idx, ex));
+                    errors.Push(new Tuple<int, object, Exception>(idx, array[idx], ex));
                 }
             }
 
@@ -55,7 +60,7 @@ namespace Xunit
             int actualCount = elements.Length;
 
             if (expectedCount != actualCount)
-                throw new CollectionException(expectedCount, actualCount);
+                throw new CollectionException(collection, expectedCount, actualCount);
 
             for (int idx = 0; idx < actualCount; idx++)
             {
@@ -65,7 +70,7 @@ namespace Xunit
                 }
                 catch (Exception ex)
                 {
-                    throw new CollectionException(expectedCount, actualCount, idx, ex);
+                    throw new CollectionException(collection, expectedCount, actualCount, idx, ex);
                 }
             }
         }
@@ -79,6 +84,14 @@ namespace Xunit
         /// <exception cref="ContainsException">Thrown when the object is not present in the collection</exception>
         public static void Contains<T>(T expected, IEnumerable<T> collection)
         {
+            // If an equality comparer is not explicitly provided, call into ICollection<T>.Contains which may
+            // use the collection's equality comparer for types like HashSet and Dictionary.
+            var icollection = collection as ICollection<T>;
+            if (icollection != null && icollection.Contains(expected))
+                return;
+
+            // We don't throw if either ICollection<T>.Contains or our custom equality comparer says the collection
+            // has the item.
             Contains(expected, collection, GetEqualityComparer<T>());
         }
 
@@ -94,10 +107,9 @@ namespace Xunit
         {
             Assert.GuardArgumentNotNull("comparer", comparer);
             Assert.GuardArgumentNotNull("collection", collection);
-
-            foreach (var item in collection)
-                if (comparer.Equals(expected, item))
-                    return;
+            
+            if (collection.Contains(expected, comparer))
+                return;
 
             throw new ContainsException(expected, collection);
         }
@@ -130,6 +142,14 @@ namespace Xunit
         /// <exception cref="DoesNotContainException">Thrown when the object is present inside the container</exception>
         public static void DoesNotContain<T>(T expected, IEnumerable<T> collection)
         {
+            // If an equality comparer is not explicitly provided, call into ICollection<T>.Contains which may
+            // use the collection's equality comparer for types like HashSet and Dictionary.
+            var icollection = collection as ICollection<T>;
+            if (icollection != null && icollection.Contains(expected))
+                throw new DoesNotContainException(expected, collection);
+
+            // We don't throw only if both ICollection<T>.Contains and our custom equality comparer say the collection
+            // doesn't have the item.
             DoesNotContain(expected, collection, GetEqualityComparer<T>());
         }
 
@@ -146,9 +166,10 @@ namespace Xunit
             Assert.GuardArgumentNotNull("collection", collection);
             Assert.GuardArgumentNotNull("comparer", comparer);
 
-            foreach (var item in collection)
-                if (comparer.Equals(expected, item))
-                    throw new DoesNotContainException(expected, collection);
+            if (!collection.Contains(expected, comparer))
+                return;
+
+            throw new DoesNotContainException(expected, collection);
         }
 
         /// <summary>
@@ -178,8 +199,16 @@ namespace Xunit
         {
             Assert.GuardArgumentNotNull("collection", collection);
 
-            if (collection.GetEnumerator().MoveNext())
-                throw new EmptyException();
+            var enumerator = collection.GetEnumerator();
+            try
+            {
+                if (enumerator.MoveNext())
+                    throw new EmptyException(collection);
+            }
+            finally
+            {
+                (enumerator as IDisposable)?.Dispose();
+            }
         }
 
         /// <summary>
@@ -191,7 +220,7 @@ namespace Xunit
         /// <exception cref="EqualException">Thrown when the objects are not equal</exception>
         public static void Equal<T>(IEnumerable<T> expected, IEnumerable<T> actual)
         {
-            Equal<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(true));
+            Equal<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>());
         }
 
         /// <summary>
@@ -204,7 +233,7 @@ namespace Xunit
         /// <exception cref="EqualException">Thrown when the objects are not equal</exception>
         public static void Equal<T>(IEnumerable<T> expected, IEnumerable<T> actual, IEqualityComparer<T> comparer)
         {
-            Equal<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(true, new AssertEqualityComparerAdapter<T>(comparer)));
+            Equal<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(new AssertEqualityComparerAdapter<T>(comparer)));
         }
 
         /// <summary>
@@ -217,8 +246,16 @@ namespace Xunit
         {
             Assert.GuardArgumentNotNull("collection", collection);
 
-            if (!collection.GetEnumerator().MoveNext())
-                throw new NotEmptyException();
+            var enumerator = collection.GetEnumerator();
+            try
+            {
+                if (!enumerator.MoveNext())
+                    throw new NotEmptyException();
+            }
+            finally
+            {
+                (enumerator as IDisposable)?.Dispose();
+            }
         }
 
         /// <summary>
@@ -230,7 +267,7 @@ namespace Xunit
         /// <exception cref="NotEqualException">Thrown when the objects are equal</exception>
         public static void NotEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual)
         {
-            NotEqual<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(true));
+            NotEqual<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>());
         }
 
         /// <summary>
@@ -243,7 +280,7 @@ namespace Xunit
         /// <exception cref="NotEqualException">Thrown when the objects are equal</exception>
         public static void NotEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, IEqualityComparer<T> comparer)
         {
-            NotEqual<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(true, new AssertEqualityComparerAdapter<T>(comparer)));
+            NotEqual<IEnumerable<T>>(expected, actual, GetEqualityComparer<IEnumerable<T>>(new AssertEqualityComparerAdapter<T>(comparer)));
         }
 
         /// <summary>
@@ -271,7 +308,7 @@ namespace Xunit
         /// exactly one element.</exception>
         public static void Single(IEnumerable collection, object expected)
         {
-            Single(collection.Cast<object>(), item => Object.Equals(item, expected));
+            Single(collection.Cast<object>(), item => object.Equals(item, expected));
         }
 
         /// <summary>

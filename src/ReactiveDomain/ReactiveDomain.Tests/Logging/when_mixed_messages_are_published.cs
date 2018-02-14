@@ -82,12 +82,12 @@ namespace ReactiveDomain.Tests.Logging
 
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(() => _countedEventCount == _maxCountedMessages, 2000);
-            Assert.True(_countedEventCount == _maxCountedMessages, $"Message {_countedEventCount} doesn't match expected index {_maxCountedMessages}");
+            Assert.Equal(_maxCountedMessages, _countedEventCount, $"Message {_countedEventCount} doesn't match expected index {_maxCountedMessages}");
             Assert.IsOrBecomesTrue(() => _testDomainEventCount == _maxCountedEvents, 
                 1000,
                 $"Last event count {_testDomainEventCount} doesn't match expected value {_maxCountedEvents}");
 
-            Assert.True(_testDomainEventCount == _maxCountedEvents, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
+            Assert.Equal(_maxCountedEvents, _testDomainEventCount, $"Last event count {_testDomainEventCount} doesn't match expected value {_maxCountedEvents}");
 
 
             // Wait  for last TestCommand2 to be "heard" from logger/repo
@@ -95,11 +95,11 @@ namespace ReactiveDomain.Tests.Logging
                 3000,
                  $"Command count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
 
-            Assert.True(_multiFireCount == _maxCountedMessages, $"Command count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
+            Assert.Equal(_maxCountedMessages, _multiFireCount, $"Command count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
             
             // Wait  for last command to be "heard" from logger/repo
             Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000);
-            Assert.True(_testCommandCount == 1, $"Last command count {_testCommandCount} doesn't match expected value {1}");
+            Assert.Equal(1, _testCommandCount, $"Last command count {_testCommandCount} doesn't match expected value 1");
         }
 
         public void Handle(Message msg)

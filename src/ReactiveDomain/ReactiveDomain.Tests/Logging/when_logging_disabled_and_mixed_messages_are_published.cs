@@ -97,20 +97,19 @@ namespace ReactiveDomain.Tests.Logging
 
             // Wait  for last CountedEvent to be "heard" from logger/repo - times out because events not logged
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _countedEventCount > 0, 
-                1000,
-                $"Found {_countedEventCount} CountedEvents on log"));
+                                                    () => _countedEventCount > 0, 
+                                                    1000,
+                                                    $"Found {_countedEventCount} CountedEvents on log"));
 
-            Assert.True(_countedEventCount == 0,
-                         $"{_countedEventCount} CountedEvents found on Log");
+            Assert.Equal(0, _countedEventCount, $"{_countedEventCount} CountedEvents found on Log");
 
             // Wait  for last command to be queued - times out because events not logged
             Assert.Throws<TrueException>(() =>Assert.IsOrBecomesTrue(
-                () => _multiFireCount > 0,
-                9000,
-                $"Found {_multiFireCount} TestCommand2s on log - expected 0"));
+                                                    () => _multiFireCount > 0,
+                                                    9000,
+                                                    $"Found {_multiFireCount} TestCommand2s on log, expected 0"));
 
-            Assert.True(_multiFireCount == 0, $"Command count {_multiFireCount}  expected 0");
+            Assert.Equal(0, _multiFireCount, $"Command count {_multiFireCount}, expected 0");
 
 
             // Wait  for last TestDomainEvent to be "heard" from logger/repo - times out because events not logged
@@ -119,14 +118,14 @@ namespace ReactiveDomain.Tests.Logging
                 1000,
                 $"Found {_testDomainEventCount} TestDomainEvents on log, expected 0"));
 
-            Assert.True(_testDomainEventCount == 0, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
+            Assert.Equal(0, _testDomainEventCount, $"Last event count {_testDomainEventCount} doesn't match expected value 0");
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
-                () => _testCommandCount == 1, 
-                1000,
-                $"Found {_testCommandCount} TestCommand3s on log - expected 0"));
+                                                    () => _testCommandCount == 1, 
+                                                    1000,
+                                                    $"Found {_testCommandCount} TestCommand3s on log, expected 0"));
 
-            Assert.True(_testCommandCount == 0, $"Last event count {_testCommandCount} is not 0");
+            Assert.Equal(0, _testCommandCount, $"Last event count {_testCommandCount} is not 0");
         }
 
         public void Handle(Message msg)

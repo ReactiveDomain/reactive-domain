@@ -30,7 +30,7 @@ namespace ReactiveDomain.Tests
             Bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand3>(
                                     cmd => { Interlocked.Increment(ref _cmd3Count); return true; }));
 
-            Assert.True(_cmd1Count == 0, $"gotSuccess should be 0, found { _cmd1Count}");
+            Assert.Equal(0, _cmd1Count, $"gotSuccess should be 0, found { _cmd1Count}");
 
         }
 
