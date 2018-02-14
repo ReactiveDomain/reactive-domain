@@ -63,8 +63,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;
@@ -121,8 +121,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;
@@ -332,8 +332,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;
@@ -412,8 +412,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;
@@ -518,8 +518,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;
@@ -628,8 +628,8 @@ namespace ReactiveDomain.UI.ViewObjects
                         .ObserveOn(MainThreadScheduler)
                         .Subscribe(result =>
                         {
-                            //This will return the recovery option returned from the registered user error handler
-                            //right now this is a simple message box in the view code behind
+                            // This will return the recovery option returned from the registered user error handler,
+                            // e.g. a simple message box in the view code behind
                             /* n.b. this forces evaluation/execution of the select many  */
                         });
             return cmd;

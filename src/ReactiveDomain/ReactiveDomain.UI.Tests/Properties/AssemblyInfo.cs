@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ReactiveDomain.UI")]
+[assembly: AssemblyTitle("ReactiveDomain.UI.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("PerkinElmer")]
-[assembly: AssemblyProduct("ReactiveDomain.UI")]
+[assembly: AssemblyProduct("ReactiveDomain.UI.Tests")]
 [assembly: AssemblyCopyright("Copyright © 2018 PerkinElmer, Inc.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("41e9d508-5238-4efe-99a2-24700522d792")]
+[assembly: Guid("4a71b520-c962-45c7-a9f6-66352b5a9f80")]
 
 // Version information for an assembly consists of the following four values:
 //

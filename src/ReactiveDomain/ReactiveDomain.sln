@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.Tests", "Rea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.UI", "ReactiveDomain.UI\ReactiveDomain.UI.csproj", "{41E9D508-5238-4EFE-99A2-24700522D792}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.UI.Tests", "ReactiveDomain.UI.Tests\ReactiveDomain.UI.Tests.csproj", "{4A71B520-C962-45C7-A9F6-66352B5A9F80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,18 @@ Global
 		{41E9D508-5238-4EFE-99A2-24700522D792}.Release|Any CPU.Build.0 = Release|Any CPU
 		{41E9D508-5238-4EFE-99A2-24700522D792}.Release|x64.ActiveCfg = Release|Any CPU
 		{41E9D508-5238-4EFE-99A2-24700522D792}.Release|x64.Build.0 = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Debug|x64.Build.0 = Debug|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Publish|Any CPU.ActiveCfg = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Publish|Any CPU.Build.0 = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Publish|x64.ActiveCfg = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Publish|x64.Build.0 = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Release|x64.ActiveCfg = Release|Any CPU
+		{4A71B520-C962-45C7-A9F6-66352B5A9F80}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
