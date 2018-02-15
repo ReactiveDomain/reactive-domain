@@ -2,6 +2,7 @@
 using ReactiveDomain.Bus;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Tests.Helpers;
+using ReactiveDomain.Tests.Messaging;
 
 namespace ReactiveDomain.Tests.Specifications
 {
