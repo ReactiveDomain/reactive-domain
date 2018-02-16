@@ -107,9 +107,11 @@ namespace ReactiveDomain.Messaging.Bus
                 //blocking caller until result is set 
                 return tcs.Task.Result;
             }
-            catch (AggregateException aggEx)
-            {
-                throw aggEx.InnerException;
+            catch (AggregateException aggEx) {
+                if (aggEx.InnerException != null) {
+                    throw aggEx.InnerException;
+                }
+                throw;
             }
         }
 
@@ -121,7 +123,7 @@ namespace ReactiveDomain.Messaging.Bus
             try
             {
                 //todo: we're not chaining through the fire method here because it doesn't give 
-                //us the command response to return so there is some duplicated checks 
+                //us the command response to return so there are some duplicated checks 
                 var tCmd = command as TokenCancellableCommand;
                 if (tCmd?.IsCanceled ?? false)
                 {
@@ -144,8 +146,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         public bool TryFire(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
-            CommandResponse resp;
-            return TryFire(command, out resp, responseTimeout, ackTimeout);
+            return TryFire(command, out var _, responseTimeout, ackTimeout);
         }
 
         public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command
@@ -155,12 +156,11 @@ namespace ReactiveDomain.Messaging.Bus
             var handleWrapper = new CommandHandler<T>(this, handler);
             _handleWrappers.Add(typeof(T), handleWrapper);
             Subscribe(handleWrapper);
-            return new SubscriptionDisposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+            return new SubscriptionDisposer(() => {Unsubscribe(handler); return Unit.Default; });
         }
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command
         {
-            object wrapper;
-            if (!_handleWrappers.TryGetValue(typeof(T), out wrapper)) return;
+            if (!_handleWrappers.TryGetValue(typeof(T), out var wrapper)) return;
             Unsubscribe((CommandHandler<T>)wrapper);
             _handleWrappers.Remove(typeof(T));
         }
@@ -189,21 +189,21 @@ namespace ReactiveDomain.Messaging.Bus
     [Serializable]
     public class CommandException : Exception
     {
-        private readonly Command _command;
+        public readonly Command Command;
 
         public CommandException(Command command) : base($"{command?.GetType().Name}: Failed")
         {
-            _command = command;
+            Command = command;
         }
 
         public CommandException(string message, Command command) : base($"{command?.GetType().Name}: {message}")
         {
-            _command = command;
+            Command = command;
         }
 
         public CommandException(string message, Exception inner, Command command) : base($"{command?.GetType().Name}: {message}", inner)
         {
-            _command = command;
+            Command = command;
         }
 
         protected CommandException(
