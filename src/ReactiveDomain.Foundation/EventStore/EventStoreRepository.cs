@@ -22,7 +22,6 @@ namespace ReactiveDomain.Foundation.EventStore
         public const string CommitIdHeader = "CommitId";
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
-        private IBus _outBus;
 
         private readonly Func<Type, Guid, string> _aggregateIdToStreamName;
 
@@ -34,25 +33,31 @@ namespace ReactiveDomain.Foundation.EventStore
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public EventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
-            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
+        public EventStoreRepository(
+	        string domainPrefix,
+	        IEventStoreConnection eventStoreConnection)
+            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}"))
         {
         }
 
-        public EventStoreRepository(IEventStoreConnection eventStoreConnection, Func<Type, Guid, string> aggregateIdToStreamName, IBus outBus = null)
+        public EventStoreRepository(
+	        IEventStoreConnection eventStoreConnection,
+	        Func<Type, Guid, string> aggregateIdToStreamName)
         {
-            _outBus = outBus;
             _eventStoreConnection = eventStoreConnection;
             _aggregateIdToStreamName = aggregateIdToStreamName;
         }
+
         public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             return TryGetById(id, int.MaxValue, out aggregate);
         }
+
         public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
         {
             return GetById<TAggregate>(id, int.MaxValue);
         }
+
         public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource
         {
             try
@@ -66,6 +71,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 return false;
             }
         }
+
         public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
         {
             if (version <= 0)
@@ -155,15 +161,6 @@ namespace ReactiveDomain.Foundation.EventStore
 
                 transaction.CommitAsync().Wait();
             }
-            if (_outBus != null)
-                foreach (var evt in newEvents)
-                {
-                    try
-                    {
-                        _outBus.Publish((Message)evt);
-                    }
-                    catch { }//TODO: see if we need to do something here
-                }
             //aggregate.ClearUncommittedEvents();
         }
 
