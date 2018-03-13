@@ -14,7 +14,7 @@ namespace ReactiveDomain.Foundation.Tests
     /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
     [Collection(nameof(EventStoreCollection))]
-    public class GetEventStoreRepositoryIntegrationTests 
+    public class EventStoreRepositoryIntegrationTests 
     {
         private const string DomainPrefix = "UnitTest";
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
@@ -27,13 +27,13 @@ namespace ReactiveDomain.Foundation.Tests
             return aggregateToSave.Id;
         }
         
-        private readonly GetEventStoreRepository _repo;
+        private readonly EventStoreRepository _repo;
         private readonly IEventStoreConnection _connection;
 
-        public GetEventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
+        public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
             _connection = fixture.Connection;
-            _repo = new GetEventStoreRepository(DomainPrefix, _connection);
+            _repo = new EventStoreRepository(DomainPrefix, _connection);
         }
 
         [Fact]

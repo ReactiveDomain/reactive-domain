@@ -15,7 +15,7 @@ using ReactiveDomain.Messaging.Util;
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
 {
-    public class GetEventStoreRepository : IRepository, ICatchupStreamSubscriber
+    public class EventStoreRepository : IRepository, ICatchupStreamSubscriber
     {
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
@@ -29,17 +29,17 @@ namespace ReactiveDomain.Foundation.EventStore
         private readonly IEventStoreConnection _eventStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
-        static GetEventStoreRepository()
+        static EventStoreRepository()
         {
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public GetEventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
+        public EventStoreRepository(string domainPrefix, IEventStoreConnection eventStoreConnection, IBus outBus = null)
             : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}", outBus))
         {
         }
 
-        public GetEventStoreRepository(IEventStoreConnection eventStoreConnection, Func<Type, Guid, string> aggregateIdToStreamName, IBus outBus = null)
+        public EventStoreRepository(IEventStoreConnection eventStoreConnection, Func<Type, Guid, string> aggregateIdToStreamName, IBus outBus = null)
         {
             _outBus = outBus;
             _eventStoreConnection = eventStoreConnection;

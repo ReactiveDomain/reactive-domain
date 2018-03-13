@@ -17,10 +17,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-        protected GetEventStoreRepository Repo;
+        protected EventStoreRepository Repo;
         protected override void Given()
         {
-            Repo = new GetEventStoreRepository("UnitTest",_connection);
+            Repo = new EventStoreRepository("UnitTest",_connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,

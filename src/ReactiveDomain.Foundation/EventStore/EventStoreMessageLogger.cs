@@ -58,7 +58,7 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
 
-            var ed = GetEventStoreRepository.ToEventData(message.MsgId, message, metadata);
+            var ed = EventStoreRepository.ToEventData(message.MsgId, message, metadata);
             var data = new List<EventData> {ed};
 
             int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
