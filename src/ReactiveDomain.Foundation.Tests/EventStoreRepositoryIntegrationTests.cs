@@ -141,7 +141,7 @@ namespace ReactiveDomain.Foundation.Tests
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
-            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
+            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix.ToLower()}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
             var streamName = streamNameFormatter(typeof(TestWoftamAggregate), aggregateId);
             _connection.DeleteStreamAsync(streamName, 10).Wait();
 
