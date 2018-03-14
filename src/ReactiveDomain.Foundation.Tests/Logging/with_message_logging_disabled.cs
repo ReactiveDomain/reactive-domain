@@ -21,7 +21,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected EventStoreRepository Repo;
         protected override void Given()
         {
-            Repo = new EventStoreRepository("UnitTest",_connection);
+
+            Repo = new EventStoreRepository(new StreamNameBuilder("UnitTest"),_connection);
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,

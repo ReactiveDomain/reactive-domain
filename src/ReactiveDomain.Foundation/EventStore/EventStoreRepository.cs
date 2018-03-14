@@ -23,7 +23,7 @@ namespace ReactiveDomain.Foundation.EventStore
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
 
-        private readonly string _streamNamePrefix;
+        private readonly StreamNameBuilder _streamNameBuilder;
         private readonly IEventStoreConnection _eventStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
@@ -33,10 +33,10 @@ namespace ReactiveDomain.Foundation.EventStore
         }
 
         public EventStoreRepository(
-            string streamNamePrefix,
+            StreamNameBuilder streamNameBuilder,
             IEventStoreConnection eventStoreConnection)
         {
-            _streamNamePrefix = streamNamePrefix;
+            _streamNameBuilder = streamNameBuilder;
             _eventStoreConnection = eventStoreConnection;
         }
 
@@ -69,7 +69,7 @@ namespace ReactiveDomain.Foundation.EventStore
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
-            var streamName = GetStreamNameFor(typeof(TAggregate), id);
+            var streamName = _streamNameBuilder.Generate(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
 
@@ -114,12 +114,6 @@ namespace ReactiveDomain.Foundation.EventStore
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        private string GetStreamNameFor(Type type, Guid id)
-        {
-            // standard stream name formating [lowercaseprefix].[camelCaseName]-[id]
-            return $"{_streamNamePrefix.ToLower()}.{char.ToLower(type.Name[0])}{type.Name.Substring(1)}-{id:N}";
-        }
-
         public static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver() };
@@ -136,7 +130,7 @@ namespace ReactiveDomain.Foundation.EventStore
             };
             updateHeaders(commitHeaders);
 
-            var streamName = GetStreamNameFor(aggregate.GetType(), aggregate.Id);
+            var streamName = _streamNameBuilder.Generate(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();
             var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
