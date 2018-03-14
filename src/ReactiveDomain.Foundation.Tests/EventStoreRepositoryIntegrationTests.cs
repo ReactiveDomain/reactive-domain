@@ -14,11 +14,11 @@ namespace ReactiveDomain.Foundation.Tests
     /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
     [Collection(nameof(EventStoreCollection))]
-    public class EventStoreRepositoryIntegrationTests 
+    public class EventStoreRepositoryIntegrationTests
     {
         private const string DomainPrefix = "UnitTest";
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
-       
+
         private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents)
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
@@ -26,7 +26,7 @@ namespace ReactiveDomain.Foundation.Tests
             repository.Save(aggregateToSave, Guid.NewGuid(), d => { });
             return aggregateToSave.Id;
         }
-        
+
         private readonly EventStoreRepository _repo;
         private readonly IEventStoreConnection _connection;
 
@@ -42,7 +42,7 @@ namespace ReactiveDomain.Foundation.Tests
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
 
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId);
-            
+
             Assert.Equal(3000, retrieved.AppliedEventCount);
         }
 
@@ -141,7 +141,7 @@ namespace ReactiveDomain.Foundation.Tests
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
-            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
+            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix.ToLower()}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
             var streamName = streamNameFormatter(typeof(TestWoftamAggregate), aggregateId);
             _connection.DeleteStreamAsync(streamName, 10).Wait();
 
