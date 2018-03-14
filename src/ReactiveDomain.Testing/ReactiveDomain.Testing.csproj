@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports"/>
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <IsPackable>True</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="xunit.core" Version="2.3.1" />
