@@ -69,7 +69,7 @@ namespace ReactiveDomain.Foundation.EventStore
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
-            var streamName = GetStreamNameFor(typeof(TAggregate), id);
+            var streamName = StreamNameBuilder.Generate(_streamNamePrefix, typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
 
@@ -114,12 +114,6 @@ namespace ReactiveDomain.Foundation.EventStore
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        private string GetStreamNameFor(Type type, Guid id)
-        {
-            // standard stream name formating [lowercaseprefix].[camelCaseName]-[id]
-            return $"{_streamNamePrefix.ToLower()}.{char.ToLower(type.Name[0])}{type.Name.Substring(1)}-{id:N}";
-        }
-
         public static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver() };
@@ -136,7 +130,7 @@ namespace ReactiveDomain.Foundation.EventStore
             };
             updateHeaders(commitHeaders);
 
-            var streamName = GetStreamNameFor(aggregate.GetType(), aggregate.Id);
+            var streamName = StreamNameBuilder.Generate(_streamNamePrefix, aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();
             var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
