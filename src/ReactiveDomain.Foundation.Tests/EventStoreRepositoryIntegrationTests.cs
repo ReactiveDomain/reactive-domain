@@ -19,6 +19,7 @@ namespace ReactiveDomain.Foundation.Tests
         private const string DomainPrefix = "UnitTest";
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
 
+
         private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents)
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
@@ -29,11 +30,13 @@ namespace ReactiveDomain.Foundation.Tests
 
         private readonly EventStoreRepository _repo;
         private readonly IEventStoreConnection _connection;
+        private readonly StreamNameBuilder _streamNameBuilder;
 
         public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
             _connection = fixture.Connection;
-            _repo = new EventStoreRepository(DomainPrefix, _connection);
+            _streamNameBuilder = new StreamNameBuilder(DomainPrefix);
+            _repo = new EventStoreRepository(_streamNameBuilder, _connection);
         }
 
         [Fact]
@@ -141,8 +144,7 @@ namespace ReactiveDomain.Foundation.Tests
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
-            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix.ToLower()}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
-            var streamName = streamNameFormatter(typeof(TestWoftamAggregate), aggregateId);
+            var streamName = _streamNameBuilder.Generate(typeof(TestWoftamAggregate), aggregateId);
             _connection.DeleteStreamAsync(streamName, 10).Wait();
 
             // Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
