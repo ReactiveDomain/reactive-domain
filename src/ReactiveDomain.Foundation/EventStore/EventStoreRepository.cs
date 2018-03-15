@@ -121,14 +121,14 @@ namespace ReactiveDomain.Foundation.EventStore
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
-        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate, Action<IDictionary<string, object>> updateHeaders = null)
         {
             var commitHeaders = new Dictionary<string, object>
             {
-                {CommitIdHeader, commitId},
+                {CommitIdHeader, Guid.NewGuid() /*commitId*/},
                 {AggregateClrTypeHeader, aggregate.GetType().AssemblyQualifiedName}
             };
-            updateHeaders(commitHeaders);
+            updateHeaders?.Invoke(commitHeaders);
 
             var streamName = _streamNameBuilder.Generate(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();

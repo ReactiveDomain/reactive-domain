@@ -24,7 +24,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(numberOfEvents);
-            repository.Save(aggregateToSave, Guid.NewGuid(), d => { });
+            repository.Save(aggregateToSave);
             return aggregateToSave.Id;
         }
 
@@ -88,7 +88,7 @@ namespace ReactiveDomain.Foundation.Tests
 
             var firstSaved = _repo.GetById<TestWoftamAggregate>(savedId);
             firstSaved.ProduceEvents(50);
-            _repo.Save(firstSaved, Guid.NewGuid(), d => { });
+            _repo.Save(firstSaved);
 
             var secondSaved = _repo.GetById<TestWoftamAggregate>(savedId);
             Assert.Equal(150, secondSaved.AppliedEventCount);
@@ -108,7 +108,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(10);
-            _repo.Save(aggregateToSave, Guid.NewGuid(), d => { });
+            _repo.Save(aggregateToSave);
 
             Assert.Equal(0, ((IEventSource)aggregateToSave).TakeEvents().Count());
         }
@@ -155,10 +155,9 @@ namespace ReactiveDomain.Foundation.Tests
         [Fact]
         public void SavesCommitHeadersOnEachEvent()
         {
-            var commitId = Guid.NewGuid();
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(20);
-            _repo.Save(aggregateToSave, commitId, d =>
+            _repo.Save(aggregateToSave, d =>
             {
                 d.Add("CustomHeader1", "CustomValue1");
                 d.Add("CustomHeader2", "CustomValue2");
@@ -168,8 +167,9 @@ namespace ReactiveDomain.Foundation.Tests
             foreach (var serializedEvent in read.Events)
             {
                 var parsedMetadata = JObject.Parse(Encoding.UTF8.GetString(serializedEvent.OriginalEvent.Metadata));
+
                 var deserializedCommitId = parsedMetadata.Property("CommitId").Value.ToObject<Guid>();
-                Assert.Equal(commitId, deserializedCommitId);
+                Assert.NotNull(deserializedCommitId);
 
                 var deserializedCustomHeader1 = parsedMetadata.Property("CustomHeader1").Value.ToObject<string>();
                 Assert.Equal("CustomValue1", deserializedCustomHeader1);
