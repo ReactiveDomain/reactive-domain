@@ -95,7 +95,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
         }
 
-        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate, Action<IDictionary<string, object>> updateHeaders = null)
         {
             var jsonText = JsonConvert.SerializeObject(aggregate, SerializerSettings);
             File.WriteAllText(

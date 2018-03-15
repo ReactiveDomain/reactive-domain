@@ -29,7 +29,7 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
-                repo.Save(tAgg, Guid.NewGuid(), a => { });
+                repo.Save(tAgg);
                 var rAgg = repo.GetById<TestAggregate>(id);
                 Assert.NotNull(rAgg);
                 Assert.Equal(tAgg.Id, rAgg.Id);
@@ -43,14 +43,14 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
                 // Get v2
                 var v2Agg = repo.GetById<TestAggregate>(id);
                 Assert.Equal((uint)0, v2Agg.CurrentAmount());
                 // update v2
                 v2Agg.RaiseBy(1);
                 Assert.Equal((uint)1, v2Agg.CurrentAmount());
-                repo.Save(v2Agg, Guid.NewGuid(), h => { });
+                repo.Save(v2Agg);
                 // get v3
                 var v3Agg = repo.GetById<TestAggregate>(id);
                 Assert.Equal((uint)1, v3Agg.CurrentAmount());
@@ -68,7 +68,7 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1); //v4
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
                 Assert.Throws<AggregateVersionException>(() => repo.GetById<TestAggregate>(id, 50));
             }
         }
@@ -84,7 +84,7 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(2);
                 Assert.Equal((uint)3, tAgg.CurrentAmount());
                 // get latest version (v3)
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
                 var v3Agg = repo.GetById<TestAggregate>(id);
                 Assert.Equal((uint)3, v3Agg.CurrentAmount());
 
@@ -108,15 +108,15 @@ namespace ReactiveDomain.Foundation.Tests
                 Assert.Equal((uint)3, tAgg.CurrentAmount());
 
                 // get latest version (v3) then update & save
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
                 var v3Agg = repo.GetById<TestAggregate>(id);
                 v3Agg.RaiseBy(2);
-                repo.Save(v3Agg, Guid.NewGuid(), h => { });
+                repo.Save(v3Agg);
 
                 //Update & save original copy
                 tAgg.RaiseBy(6);
                 var r = repo; //copy iteration varible for closure
-                Assert.Throws<AggregateException>(() => r.Save(tAgg, Guid.NewGuid(), h => { }));
+                Assert.Throws<AggregateException>(() => r.Save(tAgg));
             }
         }
         [Fact]
@@ -135,7 +135,7 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1);
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg, h => { });
 
                 Assert.Equal(4, q.Messages.Count);
 
@@ -155,14 +155,14 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(2);
                 tAgg.RaiseBy(3);
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
 
                 var id2 = Guid.NewGuid();
                 var tAgg2 = new TestAggregate(id2);
                 tAgg2.RaiseBy(4);
                 tAgg2.RaiseBy(5);
                 tAgg2.RaiseBy(6);
-                repo.Save(tAgg2, Guid.NewGuid(), h => { });
+                repo.Save(tAgg2);
 
                 Assert.Equal(8, q.Messages.Count);
                 var bus = new InMemoryBus("all");
@@ -203,14 +203,14 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(2);
                 tAgg.RaiseBy(3);
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
 
                 var id2 = Guid.NewGuid();
                 var tAgg2 = new TestAggregate(id2);
                 tAgg2.RaiseBy(4);
                 tAgg2.RaiseBy(5);
                 tAgg2.RaiseBy(6);
-                repo.Save(tAgg2, Guid.NewGuid(), h => { });
+                repo.Save(tAgg2);
 
                 Assert.Equal(8, q.Messages.Count);
                 var bus = new InMemoryBus("all");
@@ -254,19 +254,19 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(2);
                 tAgg.RaiseBy(3);
-                repo.Save(tAgg, Guid.NewGuid(), h => { });
+                repo.Save(tAgg);
 
                 var id3 = Guid.NewGuid();
                 var tAgg3 = new TestWoftamAggregate(id3);
                 tAgg3.ProduceEvents(3);
-                repo.Save(tAgg3, Guid.NewGuid(), h => { });
+                repo.Save(tAgg3);
 
                 var id2 = Guid.NewGuid();
                 var tAgg2 = new TestAggregate(id2);
                 tAgg2.RaiseBy(4);
                 tAgg2.RaiseBy(5);
                 tAgg2.RaiseBy(6);
-                repo.Save(tAgg2, Guid.NewGuid(), h => { });
+                repo.Save(tAgg2);
 
 
 
