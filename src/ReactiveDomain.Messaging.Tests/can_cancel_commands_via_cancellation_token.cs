@@ -157,123 +157,86 @@ namespace ReactiveDomain.Messaging.Tests
 
 	// ReSharper disable once InconsistentNaming
 	public class can_cancel_nested_commands_via_cancellation_token :
-		IHandle<Message>,
 		IHandleCommand<TestTokenCancellableCmd>,
 		IHandleCommand<NestedTestTokenCancellableCmd>
 	{
-		private readonly ITestOutputHelper _output;
 		private readonly CommandBus _bus;
-		private readonly ConcurrentMessageQueue<Message> _messages =
-								new ConcurrentMessageQueue<Message>("");
-		public can_cancel_nested_commands_via_cancellation_token(ITestOutputHelper output)
+		public can_cancel_nested_commands_via_cancellation_token()
 		{
-			_output = output;
 			_bus = new CommandBus(
 							nameof(can_cancel_nested_commands_via_cancellation_token),
 							false,
 							TimeSpan.FromSeconds(2.5),
 							TimeSpan.FromSeconds(2.5));
 			Given();
-			When();
 		}
 
 		protected void Given()
 		{
 			_bus.Subscribe<TestTokenCancellableCmd>(this);
 			_bus.Subscribe<NestedTestTokenCancellableCmd>(this);
-			_bus.Subscribe<Message>(this);
 		}
 
 		protected CancellationTokenSource TokenSource;
-
-		protected void When()
-		{
-			TokenSource = new CancellationTokenSource();
-			_bus.TryFire(
-				new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
-		}
+		private bool _cancelFirst;
 		[Fact]
 		public void cancel_will_short_circuit_nested_commands()
 		{
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 5000);
-			Assert.True( Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
-			
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _ackCount) == 1, 5000);
-			TokenSource.Cancel();
-			Interlocked.Increment(ref _releaseCmd);
+			_cancelFirst = true;
+			TokenSource = new CancellationTokenSource();
+			Assert.CommandThrows<CommandCanceledException>(() =>
+			{
+				_bus.Fire(
+					new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
+			});
+			Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
+			Assert.True(Interlocked.Read(ref _gotNestedCmd) == 0, "Nested Command Fired");
 
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _gotNestedCmd) == 1, 500);
-			Assert.True(Interlocked.Read(ref _gotNestedCmd) == 0, "Received nested cmd");
-			
-
-			_messages
-				.AssertNext<AckCommand>(_ => true)
-				.AssertNext<TestTokenCancellableCmd>(_ => true)
-				.AssertNext<Canceled>(_ => true)
-				.AssertNext<Fail>(_ => true)
-				.AssertNext<Canceled>(_ => true)
-				.AssertEmpty();
-		
 		}
 		[Fact]
 		public void cancel_will_cancel_nested_commands()
 		{
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 5000);
-			Assert.True( Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
-			Interlocked.Increment(ref _releaseCmd);
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _gotNestedCmd) == 1, 5000);
-			Assert.True(Interlocked.Read(ref _gotNestedCmd) == 1, "Failed to receive nested cmd");
+			TokenSource = new CancellationTokenSource();
+			Assert.CommandThrows<CommandCanceledException>(() =>
+			{
+				_bus.Fire(
+					new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
+			});
+			Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
+			Assert.True(Interlocked.Read(ref _gotNestedCmd) == 1, "Nested Command received");
 
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _ackCount) == 2, 5000);
-			TokenSource.Cancel();
-			Interlocked.Increment(ref _releaseNestedCmd);
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _cancelCount) == 2, 5000);
-
-			_messages
-				.AssertNext<AckCommand>(_ => true)
-				.AssertNext<TestTokenCancellableCmd>(_ => true)
-				.AssertNext<Canceled>(_ => true)
-				.AssertNext<AckCommand>(_ => true)
-				.AssertNext<NestedTestTokenCancellableCmd>(_ => true)
-				.AssertNext<Canceled>(_ => true)
-				.AssertNext<Fail>(_ => true)
-				.AssertEmpty();
 		}
 
-		private long _ackCount;
-		private long _cancelCount;
-		public void Handle(Message msg) {
-			if (msg is TokenCancellableCommand) return;
-			_messages.Enqueue(msg);
-			if (msg is AckCommand) Interlocked.Increment(ref _ackCount);
-			if (msg is Canceled) Interlocked.Increment(ref _cancelCount);
-		}
+
 		private long _gotCmd;
-		private long _releaseCmd;
+
 		public CommandResponse Handle(TestTokenCancellableCmd command)
 		{
-			
-			_messages.Enqueue(command);
+
 			Interlocked.Increment(ref _gotCmd);
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _releaseCmd) == 1, 5000);
-			if (Interlocked.Read(ref _releaseCmd) != 1)
-				return command.Fail(new TimeoutException());
-
-			_bus.Fire(new NestedTestTokenCancellableCmd(Guid.NewGuid(), command.MsgId, command.CancellationToken));
-
+			var nestedCommand = new NestedTestTokenCancellableCmd(
+				Guid.NewGuid(),
+				command.MsgId,
+				command.CancellationToken);
+			if (_cancelFirst)
+			{
+				TokenSource.Cancel(); //global cancel
+				_bus.Fire(nestedCommand); // a pre canceled command will just return
+			}
+			else {
+				Assert.CommandThrows<CommandCanceledException>(
+					() => {
+						_bus.Fire(nestedCommand);
+					});
+			}
 			return command.IsCanceled ? command.Canceled() : command.Succeed();
 		}
 
 		private long _gotNestedCmd;
-		private long _releaseNestedCmd;
 		public CommandResponse Handle(NestedTestTokenCancellableCmd command)
 		{
-			_messages.Enqueue(command);
 			Interlocked.Increment(ref _gotNestedCmd);
-			SpinWait.SpinUntil(() => Interlocked.Read(ref _releaseNestedCmd) == 1, 5000);
-			if (Interlocked.Read(ref _releaseNestedCmd) != 1)
-				return command.Fail(new TimeoutException());
-
+			TokenSource.Cancel();
 			return command.IsCanceled ? command.Canceled() : command.Succeed();
 		}
 	}
