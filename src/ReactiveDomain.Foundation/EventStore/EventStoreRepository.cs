@@ -17,6 +17,7 @@ namespace ReactiveDomain.Foundation.EventStore
 {
     public class EventStoreRepository : IRepository, ICatchupStreamSubscriber
     {
+        public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
         public const string CommitIdHeader = "CommitId";
@@ -117,7 +118,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver() };
-            var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
+            var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrQualifiedTypeHeader).Value; // todo: fallback to using type name optionnaly
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
@@ -162,9 +163,8 @@ namespace ReactiveDomain.Foundation.EventStore
 
             var eventHeaders = new Dictionary<string, object>(headers)
             {
-                {
-                    EventClrTypeHeader, evnt.GetType().AssemblyQualifiedName
-                }
+                {EventClrTypeHeader, evnt.GetType().Name},
+                {EventClrQualifiedTypeHeader, evnt.GetType().AssemblyQualifiedName}
             };
             var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders, SerializerSettings));
             var typeName = evnt.GetType().Name;
