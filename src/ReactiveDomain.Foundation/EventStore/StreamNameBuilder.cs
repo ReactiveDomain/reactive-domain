@@ -37,7 +37,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public string Generate(Type type, Guid id)
         {
             string prefix = string.IsNullOrWhiteSpace(_prefix) ? string.Empty : $"{_prefix.ToLowerInvariant()}.";
-            return $"{prefix}{char.ToLowerInvariant(type.Name[0])}{type.Name.Substring(1)}-{id:N}";
+            return $"{prefix}{type.GetEventStreamNameByAggregatedId(id)}";
         }
     }
 }
