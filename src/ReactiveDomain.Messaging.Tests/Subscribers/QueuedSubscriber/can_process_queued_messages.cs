@@ -189,6 +189,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 
             Bus.Fire(cmd,
                 "exception message",
+                TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(
