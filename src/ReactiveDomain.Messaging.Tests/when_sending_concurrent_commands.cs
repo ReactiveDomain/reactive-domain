@@ -1,51 +1,68 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests
 {
-    public class when_sending_concurrent_commands : CommandQueueSpecification
-    {
-        public when_sending_concurrent_commands() : base(3)
-        {
+	// ReSharper disable once InconsistentNaming
+	public class when_sending_concurrent_commands :
+		IHandleCommand<TestCommands.TestCommand>,
+		IHandleCommand<TestCommands.TestCommand2>,
+		IHandleCommand<TestCommands.TestCommand3>
 
-        }
-        private long _cmd1Count = 0;
-        long _cmd2Count = 0;
-        long _cmd3Count = 0;
+	{
+		private readonly TimeSpan _2Sec = TimeSpan.FromSeconds(2);
+		private readonly CommandBus _bus;
+		private long _cmd1Count;
+		private long _cmd2Count;
+		private long _cmd3Count;
+		private readonly List<Command> _commands;
+		private int _count;
+		public when_sending_concurrent_commands()
+		{
+			_bus = new CommandBus("Test", false, _2Sec, _2Sec);
+			_bus.Subscribe<TestCommands.TestCommand>(this);
+			_bus.Subscribe<TestCommands.TestCommand2>(this);
+			_bus.Subscribe<TestCommands.TestCommand3>(this);
+			_commands = new List<Command>();
+			_count = 5;
+			for (int i = 0; i < _count; i++) {
+				_commands.Add(new TestCommands.TestCommand(Guid.NewGuid(), null));
+				_commands.Add(new TestCommands.TestCommand2(Guid.NewGuid(), null));
+				_commands.Add(new TestCommands.TestCommand3(Guid.NewGuid(), null));
+			}
+		}
 
-        protected override void Given()
-        {
-             
-             
-            Bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                                    cmd => { Interlocked.Increment(ref _cmd1Count); return true; }));
-            Bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                                    cmd => { Interlocked.Increment(ref _cmd2Count); return true; }));
-            Bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand3>(
-                                    cmd => { Interlocked.Increment(ref _cmd3Count); return true; }));
+		[Fact]
+		public void concurrent_commands_should_pass() {
 
-            Assert.True(_cmd1Count == 0, $"gotSuccess should be 0, found { _cmd1Count}");
+			Parallel.ForEach(_commands, cmd => _bus.Fire(cmd));
 
-        }
+			Assert.True(_cmd1Count == _count, $"Should be {_count}, found { _cmd1Count}");
+			Assert.True(_cmd2Count == _count, $"Should be {_count}, found { _cmd2Count}");
+			Assert.True(_cmd3Count == _count, $"Should be {_count}, found { _cmd3Count}");
+			}
 
-        protected override void When()
-        {
-            for (int i = 0; i < 50; i++)
-            {
-                Queue.Handle(new TestCommands.TestCommand(Guid.NewGuid(), null));
-                Queue.Handle(new TestCommands.TestCommand2(Guid.NewGuid(), null));
-                Queue.Handle(new TestCommands.TestCommand3(Guid.NewGuid(), null));
-            }
-        }
-        [Fact]
-        public void concurrent_commands_should_pass()
-        {
-            Assert.IsOrBecomesTrue(() => _cmd3Count == 50, 50 * 55 + 200, $"gotTimeout should be 50, found { _cmd3Count}");
-            Assert.IsOrBecomesTrue(() => _cmd1Count == 50, 2000, $"gotSuccess should be 50, found { _cmd1Count}");
-            Assert.IsOrBecomesTrue(() => _cmd2Count == 50, 2000, $"gotFail should be 50, found { _cmd2Count}");
-         }
-    }
+		public CommandResponse Handle(TestCommands.TestCommand command)
+		{
+			Interlocked.Increment(ref _cmd1Count);
+			return command.Succeed();
+		}
+
+		public CommandResponse Handle(TestCommands.TestCommand2 command)
+		{
+			Interlocked.Increment(ref _cmd2Count);
+			return command.Succeed();
+		}
+
+		public CommandResponse Handle(TestCommands.TestCommand3 command)
+		{
+			Interlocked.Increment(ref _cmd3Count);
+			return command.Succeed();
+		}
+	}
 }
