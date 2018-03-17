@@ -5,19 +5,6 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Subscribers\QueuedSubscriber\can_deal_with_unhandled_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_handle_high_volume_queued_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_handle_inherited_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_handle_inherited_message_duplication.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_handle_multiple_publisher_threads_queued.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_handle_ordered_queued_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_process_queued_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\can_unsubscribe_queued_messages.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\when_using_counted_message_subscriber.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\when_using_inherited_queued_subscriber.cs" />
-    <Compile Remove="Subscribers\QueuedSubscriber\when_using_queued_subscriber.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
@@ -28,8 +15,5 @@
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Subscribers\QueuedSubscriber\" />
   </ItemGroup>
 </Project>

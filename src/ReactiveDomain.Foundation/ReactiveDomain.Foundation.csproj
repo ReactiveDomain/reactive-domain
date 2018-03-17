@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports"/>
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Diagnostics\MonitoredCommandBus.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
@@ -21,6 +24,7 @@
     <Compile Remove="TransientSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Diagnostics\" />
     <Folder Include="Testing\" />
   </ItemGroup>
   <ItemGroup Condition="">
