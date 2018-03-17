@@ -9,7 +9,13 @@ namespace ReactiveDomain.Messaging.Tests
     public class when_command_handlers_timeout : CommandBusSpecification
     {
         long gotCmd1 = 0;
-
+	    public static IGeneralBus CmdBus;
+		static when_command_handlers_timeout() {
+			CmdBus = new CommandBus("",false,TimeSpan.FromMilliseconds(20),TimeSpan.FromMilliseconds(20));
+		}
+	    public when_command_handlers_timeout():base(CmdBus) {
+		    
+	    }
         protected override void Given()
         {
             Bus.Subscribe(new AdHocCommandHandler<TestCommands.TimeoutTestCommand>(
