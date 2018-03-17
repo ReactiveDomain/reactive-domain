@@ -518,7 +518,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void try_fire_slow_commands_should_return_timeout()
 		{
-			var bus = new CommandBus("local", false, TimeSpan.FromSeconds(0.1), TimeSpan.FromSeconds(0.1));
+			var bus = new CommandBus("local", false, TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(20));
 			long gotCmd1 = 0;
 
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
