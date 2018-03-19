@@ -29,7 +29,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public StreamNameBuilder() {}
 
         /// <summary>
-        /// Generate a standard stream name
+        /// Generate a standard stream name for a given aggregate id
         /// </summary>
         /// <param name="type"></param>
         /// <param name="id"></param>
@@ -38,6 +38,16 @@ namespace ReactiveDomain.Foundation.EventStore
         {
             string prefix = string.IsNullOrWhiteSpace(_prefix) ? string.Empty : $"{_prefix.ToLowerInvariant()}.";
             return $"{prefix}{type.GetEventStreamNameByAggregatedId(id)}";
+        }
+
+        /// <summary>
+        /// Generate a stream name for a category
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public string Generate(Type type)
+        {
+            return type.GetCategoryEventStreamName();
         }
     }
 }

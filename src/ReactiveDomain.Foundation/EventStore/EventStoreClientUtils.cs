@@ -47,19 +47,19 @@ namespace ReactiveDomain.Foundation.EventStore
             return new UserCredentials(EventStoreLogin, password);
         }
 
-        public static string ToCamelCase(this string str)
+        public static string ToCamelCaseInvariant(this string str)
         {
-            return Char.ToLower(str[0]) + str.Substring(1);
+            return Char.ToLowerInvariant(str[0]) + str.Substring(1);
         }
 
         public static string GetEventStreamNameByAggregatedId(this Type domainType, Guid aggregateId)
         {
-            return $"{domainType.Name.ToCamelCase()}-{aggregateId.ToString("N")}";
+            return $"{domainType.Name.ToCamelCaseInvariant()}-{aggregateId.ToString("N")}";
         }
 
         public static string GetCategoryEventStreamName(this Type typeofAggregateDomainObject)
         {
-            return $"{CategoryStreamNamePrefix}-{typeofAggregateDomainObject.Name.ToCamelCase()}";
+            return $"{CategoryStreamNamePrefix}-{typeofAggregateDomainObject.Name.ToCamelCaseInvariant()}";
         }
 
         public static DomainEvent DeserializedDomainEvent(this ResolvedEvent @event)
