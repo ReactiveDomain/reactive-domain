@@ -1,6 +1,5 @@
-﻿using ReactiveDomain.Foundation.EventStore;
+﻿using ReactiveDomain.Foundation.Testing;
 using System;
-using ReactiveDomain.Foundation.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests

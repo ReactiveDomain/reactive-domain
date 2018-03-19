@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Foundation.EventStore
+namespace ReactiveDomain.Foundation
 {
     /// <summary>
     /// Class responsible for generating standard stream names which follow a specific formating: [lowercaseprefix].[camelCaseName]-[id]
