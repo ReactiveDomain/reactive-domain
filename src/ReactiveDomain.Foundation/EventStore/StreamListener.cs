@@ -43,7 +43,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="blockUntilLive"></param>
         public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(_streamNameBuilder.Generate(typeof(TAggregate)), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.GenerateForCategory(typeof(TAggregate)), checkpoint, blockUntilLive, millisecondsTimeout);
         }
         /// <summary>
         /// Aggregate Stream listener
@@ -55,7 +55,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="blockUntilLive"></param>
         public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(_streamNameBuilder.Generate(typeof(TAggregate), id), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), checkpoint, blockUntilLive, millisecondsTimeout);
         }
 
         /// <summary>

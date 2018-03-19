@@ -1,30 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using EventStore.ClientAPI;
+﻿using EventStore.ClientAPI;
 using EventStore.ClientAPI.Exceptions;
-using EventStore.ClientAPI.SystemData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using Unit = ReactiveDomain.Messaging.Util.Unit;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
-    public class MockEventStoreRepository : IRepository, ISubscriber, ICatchupStreamSubscriber
+    public class MockEventStoreRepository : IRepository
     {
         private readonly IBus _bus;
         private const string EventClrTypeHeader = "EventClrTypeName";
         private const string AggregateClrTypeHeader = "AggregateClrTypeName";
         private const string CommitIdHeader = "CommitId";
 
-        private readonly Func<Type, Guid, string> _aggregateIdToStreamName;
-        private readonly Func<Type, string> _aggregateTypeToCategoryStreamName;
-        private readonly Func<string, string> _eventNameToEventTypeStreamName;
+        private readonly StreamNameBuilder _streamNameBuilder;
 
         private readonly Dictionary<string, List<EventData>> _store = new Dictionary<string, List<EventData>>();
 
@@ -37,18 +33,13 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public MockEventStoreRepository(IBus bus = null)
-            : this((t, g) => $"{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g.ToString("N")}")
+        public MockEventStoreRepository(
+            StreamNameBuilder streamNameBuilder, 
+            IBus bus = null)
         {
             _bus = bus ?? new InMemoryBus("Mock Repository Bus");
             _history = new List<Tuple<string, Message>>();
-        }
-
-        public MockEventStoreRepository(Func<Type, Guid, string> aggregateIdToStreamName)
-        {
-            _aggregateIdToStreamName = aggregateIdToStreamName;
-            _aggregateTypeToCategoryStreamName = t => $"$ce-{char.ToLower(t.Name[0]) + t.Name.Substring(1)}";
-            _eventNameToEventTypeStreamName = name => $"$et-{name}";
+            _streamNameBuilder = streamNameBuilder;
         }
 
         public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
@@ -81,7 +72,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
-            var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
             List<EventData> stream;
@@ -98,8 +89,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             if (version != Int32.MaxValue && aggregate.ExpectedVersion != version -1)
                 throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
-            
-
             return aggregate;
         }
 
@@ -108,7 +97,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        private static object DeserializeEvent(byte[] metadata, byte[] data)
+        public static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName));
@@ -123,8 +112,8 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             };
             updateHeaders?.Invoke(commitHeaders);
 
-            var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
-            var categoryStreamName = _aggregateTypeToCategoryStreamName(aggregate.GetType());
+            var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
+            var categoryStreamName = _streamNameBuilder.GenerateForCategory(aggregate.GetType());
             var newEvents = aggregate.TakeEvents().ToList();
           
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
@@ -161,7 +150,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
             foreach (var evt in eventsToSave)
             {
-                var etName = _eventNameToEventTypeStreamName(evt.Type);
+                var etName = _streamNameBuilder.GenerateForEventType(evt.Type);
                 List<EventData> etStream;
                 if (!_store.TryGetValue(etName, out etStream))
                 {
@@ -179,8 +168,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
            // aggregate.ClearUncommittedEvents();
         }
 
-
-
         private static EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers)
         {
             var data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(evnt, SerializerSettings));
@@ -197,22 +184,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             return new EventData(eventId, typeName, true, data, metadata);
         }
 
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
-        {
-            _bus.Subscribe(handler);
-            return new SubscriptionDisposer(() => { this.Unsubscribe(handler); return Unit.Default; });
-        }
-
-        public void Unsubscribe<T>(IHandle<T> handler) where T : Message
-        {
-            _bus.Unsubscribe(handler);
-        }
-
-        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message
-        {
-            return _bus.HasSubscriberFor<T>(includeDerived);
-        }
-
         public void ReplayAllOnto(IBus bus)
         {
             foreach (var tupple in _history)
@@ -227,6 +198,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 bus.Publish((Message)DeserializeEvent(evnt.Metadata, evnt.Data));
             }
         }
+
         public void ReplayCategoryOnto(IBus bus, string categoryName)
         {
             foreach (var tupple in _history)
@@ -234,48 +206,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 if (tupple.Item1.StartsWith(categoryName, StringComparison.Ordinal))
                     bus.Publish(tupple.Item2);
             }
-        }
-
-        public IDisposable SubscribeToStreamFrom(
-                                                         string stream,
-                                                         int? lastCheckpoint,
-                                                         bool resolveLinkTos,
-                                                         Action<Message> eventAppeared,
-                                                         Action liveProcessingStarted = null,
-                                                         Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                                         UserCredentials userCredentials = null,
-                                                         int readBatchSize = 500)
-        {
-
-            var listener = new AdHocHandler<Message>(eventAppeared);
-            _bus.Subscribe<Message>(listener);
-            if (stream.StartsWith(EventStoreClientUtils.CategoryStreamNamePrefix)) //Category Stream
-            {
-                stream = stream.Split('-')[1];
-                foreach (var tupple in _history)
-                {
-                    if (tupple.Item1.StartsWith(stream, StringComparison.Ordinal))
-                        eventAppeared(tupple.Item2);
-                }
-                liveProcessingStarted?.Invoke();
-            }
-            else //standard stream
-            {
-                foreach (var evnt in _store[stream])
-                {
-                    eventAppeared((Message)DeserializeEvent(evnt.Metadata, evnt.Data));
-                }
-                liveProcessingStarted?.Invoke();
-            }
-            return new SubscriptionDisposer(() =>
-            {
-                _bus.Unsubscribe(listener); return Unit.Default;
-            });
-        }
-
-        public bool ValidateStreamName(string streamName)
-        {
-            return _store.ContainsKey(streamName);
         }
     }
 }

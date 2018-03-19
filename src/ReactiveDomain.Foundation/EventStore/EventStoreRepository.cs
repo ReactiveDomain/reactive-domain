@@ -1,16 +1,12 @@
-﻿using System;
+﻿using EventStore.ClientAPI;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
@@ -70,7 +66,7 @@ namespace ReactiveDomain.Foundation.EventStore
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
-            var streamName = _streamNameBuilder.Generate(typeof(TAggregate), id);
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
 
@@ -131,7 +127,7 @@ namespace ReactiveDomain.Foundation.EventStore
             };
             updateHeaders?.Invoke(commitHeaders);
 
-            var streamName = _streamNameBuilder.Generate(aggregate.GetType(), aggregate.Id);
+            var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();
             var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();

@@ -34,7 +34,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="type"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public string Generate(Type type, Guid id)
+        public string GenerateForAggregate(Type type, Guid id)
         {
             string prefix = string.IsNullOrWhiteSpace(_prefix) ? string.Empty : $"{_prefix.ToLowerInvariant()}.";
             return $"{prefix}{type.GetEventStreamNameByAggregatedId(id)}";
@@ -45,9 +45,19 @@ namespace ReactiveDomain.Foundation.EventStore
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public string Generate(Type type)
+        public string GenerateForCategory(Type type)
         {
             return type.GetCategoryEventStreamName();
+        }
+
+        /// <summary>
+        /// Generate a stream name for an event type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public string GenerateForEventType(string type)
+        {
+            return type.GetEventTypeStreamName();
         }
     }
 }

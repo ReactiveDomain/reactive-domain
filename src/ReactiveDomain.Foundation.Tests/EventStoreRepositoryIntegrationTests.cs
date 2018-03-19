@@ -144,7 +144,7 @@ namespace ReactiveDomain.Foundation.Tests
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
-            var streamName = _streamNameBuilder.Generate(typeof(TestWoftamAggregate), aggregateId);
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), aggregateId);
             _connection.DeleteStreamAsync(streamName, 10).Wait();
 
             // Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
