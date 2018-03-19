@@ -22,11 +22,14 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
         private readonly StreamNameBuilder _streamNameBuilder;
 
-        private readonly Dictionary<string, List<EventData>> _store = new Dictionary<string, List<EventData>>();
+        private readonly Dictionary<string, List<EventData>> _store;
 
         private readonly List<Tuple<string, Message>> _history;
 
         private static readonly JsonSerializerSettings SerializerSettings;
+
+        public Dictionary<string, List<EventData>> Store => _store;
+        public List<Tuple<string, Message>> History => _history;
 
         static MockEventStoreRepository()
         {
@@ -40,6 +43,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             _bus = bus ?? new InMemoryBus("Mock Repository Bus");
             _history = new List<Tuple<string, Message>>();
             _streamNameBuilder = streamNameBuilder;
+            _store = new Dictionary<string, List<EventData>>();
         }
 
         public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource

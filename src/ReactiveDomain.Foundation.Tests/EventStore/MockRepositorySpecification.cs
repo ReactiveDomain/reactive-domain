@@ -8,8 +8,9 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
     public abstract class MockRepositorySpecification : CommandBusSpecification
     {
         protected InMemoryBus Bus;
-        protected MockSubscriber MockSubscriber;
         protected MockEventStoreRepository MockRepository;
+        protected ISubscriber MockSubscriber;
+        protected ICatchupStreamSubscriber MockListener;
 
         public IRepository Repository => MockRepository;
         public TestQueue RepositoryQueue;
@@ -20,6 +21,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             Bus = new InMemoryBus("In memory bus");
             MockSubscriber = new MockSubscriber(Bus);
             MockRepository = new MockEventStoreRepository(new StreamNameBuilder("UnitTest"), Bus);
+            MockListener = new MockCatchupStreamSubscriber(Bus, MockRepository.Store, MockRepository.History);
             RepositoryQueue = new TestQueue(MockSubscriber);
         }
 
