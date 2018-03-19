@@ -16,12 +16,12 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public class MockEventStoreRepository : IRepository
     {
-        private readonly IBus _bus;
         private const string EventClrTypeHeader = "EventClrTypeName";
         private const string AggregateClrTypeHeader = "AggregateClrTypeName";
         private const string CommitIdHeader = "CommitId";
 
         private readonly StreamNameBuilder _streamNameBuilder;
+        private readonly IPublisher _postCommitTarget;
 
         private readonly Dictionary<string, List<EventData>> _store;
 
@@ -38,12 +38,13 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         }
 
         public MockEventStoreRepository(
-            StreamNameBuilder streamNameBuilder, 
-            IBus bus = null)
+            StreamNameBuilder streamNameBuilder,
+            IPublisher postCommitTarget)
         {
-            _bus = bus ?? new InMemoryBus("Mock Repository Bus");
             _history = new List<Tuple<string, Message>>();
             _streamNameBuilder = streamNameBuilder;
+            _postCommitTarget = postCommitTarget;
+
             _store = new Dictionary<string, List<EventData>>();
         }
 
@@ -80,18 +81,16 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
-            List<EventData> stream;
-
-            if (!_store.TryGetValue(streamName, out stream))
+            if (!_store.TryGetValue(streamName, out var stream))
                 throw new AggregateNotFoundException(id, typeof(TAggregate));
 
             var events = new List<Object>();
-            foreach (var evnt in stream.Take(version))
-                events.Add(DeserializeEvent(evnt.Metadata, evnt.Data));
+            foreach (var @event in stream.Take(version))
+                events.Add(DeserializeEvent(@event.Metadata, @event.Data));
 
             aggregate.RestoreFromEvents(events);
-            
-            if (version != Int32.MaxValue && aggregate.ExpectedVersion != version -1)
+
+            if (version != Int32.MaxValue && aggregate.ExpectedVersion != version - 1)
                 throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
             return aggregate;
@@ -120,13 +119,11 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
             var categoryStreamName = _streamNameBuilder.GenerateForCategory(aggregate.GetType());
             var newEvents = aggregate.TakeEvents().ToList();
-          
+
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
-            List<EventData> stream;
-            _store.TryGetValue(streamName, out stream);
-            List<EventData> catStream;
-            _store.TryGetValue(categoryStreamName, out catStream);
+            _store.TryGetValue(streamName, out var stream);
+            _store.TryGetValue(categoryStreamName, out var catStream);
 
 
 
@@ -145,7 +142,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 else throw new WrongExpectedVersionException("Stream " + streamName + " does not exist.");
             }
 
-            if (stream.Count != 0 && stream.Count - 1  != aggregate.ExpectedVersion) // a new stream will be @ version 0 
+            if (stream.Count != 0 && stream.Count - 1 != aggregate.ExpectedVersion) // a new stream will be @ version 0 
                 throw new AggregateException(new WrongExpectedVersionException(
                     $"Stream {streamName} at version {stream.Count}, expected version {aggregate.ExpectedVersion}"));
 
@@ -156,8 +153,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             foreach (var evt in eventsToSave)
             {
                 var etName = _streamNameBuilder.GenerateForEventType(evt.Type);
-                List<EventData> etStream;
-                if (!_store.TryGetValue(etName, out etStream))
+                if (!_store.TryGetValue(etName, out var etStream))
                 {
                     etStream = new List<EventData>();
                     _store.Add(etName, etStream);
@@ -167,10 +163,9 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
             foreach (var @event in newEvents.Where(@event => (@event as Message) != null))
             {
-                _bus.Publish(@event as Message);
+                _postCommitTarget?.Publish(@event as Message);
                 _history.Add(new Tuple<string, Message>(streamName, @event as Message));
             }
-           // aggregate.ClearUncommittedEvents();
         }
 
         private static EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers)

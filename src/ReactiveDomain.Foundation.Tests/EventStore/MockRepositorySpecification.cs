@@ -7,22 +7,20 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public abstract class MockRepositorySpecification : CommandBusSpecification
     {
-        protected InMemoryBus Bus;
-        protected MockEventStoreRepository MockRepository;
-        protected ISubscriber MockSubscriber;
+        
+        private MockEventStoreRepository _mockRepository;
         protected ICatchupStreamSubscriber MockListener;
 
-        public IRepository Repository => MockRepository;
+        public IRepository Repository => _mockRepository;
         public TestQueue RepositoryQueue;
         public ConcurrentMessageQueue<DomainEvent> RepositoryEvents => RepositoryQueue.Events;
 
         protected override void Given()
         {
-            Bus = new InMemoryBus("In memory bus");
-            MockSubscriber = new MockSubscriber(Bus);
-            MockRepository = new MockEventStoreRepository(new StreamNameBuilder("UnitTest"), Bus);
-            MockListener = new MockCatchupStreamSubscriber(Bus, MockRepository.Store, MockRepository.History);
-            RepositoryQueue = new TestQueue(MockSubscriber);
+            var bus = new InMemoryBus("Repository out bus");
+            _mockRepository = new MockEventStoreRepository(new StreamNameBuilder("UnitTest"), bus);
+            MockListener = new MockCatchupStreamSubscriber(bus, _mockRepository.Store, _mockRepository.History);
+            RepositoryQueue = new TestQueue(bus);
         }
 
         public virtual void ClearQueues()

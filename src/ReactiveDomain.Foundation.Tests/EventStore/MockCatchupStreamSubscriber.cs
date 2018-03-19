@@ -12,16 +12,16 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public class MockCatchupStreamSubscriber : ICatchupStreamSubscriber
     {
-        private readonly IBus _bus;
+        private readonly ISubscriber _eventSource;
         private readonly ReadOnlyDictionary<string, List<EventData>> _store;
         private readonly ReadOnlyCollection<Tuple<string, Message>> _history;
 
         public MockCatchupStreamSubscriber(
-            IBus bus,
+            ISubscriber eventSource,
             ReadOnlyDictionary<string, List<EventData>> store,
             ReadOnlyCollection<Tuple<string, Message>> history)
         {
-            _bus = bus ?? throw new ArgumentNullException(nameof(bus));
+            _eventSource = eventSource ?? throw new ArgumentNullException(nameof(eventSource));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _history = history ?? throw new ArgumentNullException(nameof(history));
         }
@@ -37,7 +37,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             int readBatchSize = 500)
         {
             var listener = new AdHocHandler<Message>(eventAppeared);
-            _bus.Subscribe<Message>(listener);
+            _eventSource.Subscribe<Message>(listener);
             if (stream.StartsWith(EventStoreClientUtils.CategoryStreamNamePrefix)) //Category Stream
             {
                 stream = stream.Split('-')[1];
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
             return new SubscriptionDisposer(() =>
             {
-                _bus.Unsubscribe(listener); return Unit.Default;
+                _eventSource.Unsubscribe(listener); return Unit.Default;
             });
         }
 
