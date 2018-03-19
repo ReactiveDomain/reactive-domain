@@ -23,7 +23,7 @@ namespace ReactiveDomain.Foundation.Tests
             var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder(prefix);
             var streamName = streamNamebuilder.GenerateForAggregate(typeof(TestAggregate), aggregareId);
 
-            Assert.Equal($"unittest.testAggregate-96370d8277ae4ccab626091775ed01bb", streamName);
+            Assert.Equal("unittest.testAggregate-96370d8277ae4ccab626091775ed01bb", streamName);
         }
 
         [Fact]
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Foundation.Tests
             var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder();
             var streamName = streamNamebuilder.GenerateForCategory(typeof(TestAggregate));
 
-            Assert.Equal($"$ce-testAggregate", streamName);
+            Assert.Equal("$ce-testAggregate", streamName);
         }
 
         [Fact]
@@ -41,7 +41,7 @@ namespace ReactiveDomain.Foundation.Tests
             var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder();
             var streamName = streamNamebuilder.GenerateForEventType("TestEventType");
 
-            Assert.Equal($"$et-testEventType", streamName);
+            Assert.Equal("$et-testEventType", streamName);
         }
     }
 }
