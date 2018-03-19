@@ -7,6 +7,7 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -28,8 +29,8 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
         private static readonly JsonSerializerSettings SerializerSettings;
 
-        public Dictionary<string, List<EventData>> Store => _store;
-        public List<Tuple<string, Message>> History => _history;
+        public ReadOnlyDictionary<string, List<EventData>> Store => new ReadOnlyDictionary<string, List<EventData>>(_store);
+        public ReadOnlyCollection<Tuple<string, Message>> History => _history.AsReadOnly();
 
         static MockEventStoreRepository()
         {

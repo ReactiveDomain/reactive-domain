@@ -6,19 +6,20 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Util;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public class MockCatchupStreamSubscriber : ICatchupStreamSubscriber
     {
         private readonly IBus _bus;
-        private readonly Dictionary<string, List<EventData>> _store;
-        private readonly List<Tuple<string, Message>> _history;
+        private readonly ReadOnlyDictionary<string, List<EventData>> _store;
+        private readonly ReadOnlyCollection<Tuple<string, Message>> _history;
 
         public MockCatchupStreamSubscriber(
-            IBus bus, 
-            Dictionary<string, List<EventData>> store,
-            List<Tuple<string, Message>> history)
+            IBus bus,
+            ReadOnlyDictionary<string, List<EventData>> store,
+            ReadOnlyCollection<Tuple<string, Message>> history)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _store = store ?? throw new ArgumentNullException(nameof(store));
