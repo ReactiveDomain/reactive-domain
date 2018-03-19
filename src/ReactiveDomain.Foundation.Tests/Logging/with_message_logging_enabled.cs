@@ -18,14 +18,18 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected EventStoreRepository Repo;
+        protected StreamNameBuilder StreamNameBuilder;
+        protected EventStoreCatchupStreamSubscriber Subscriber;
         protected override void Given()
         {
-            Repo = new EventStoreRepository(new StreamNameBuilder("UnitTest"),_connection);
+            StreamNameBuilder = new StreamNameBuilder("UnitTest");
+            Repo = new EventStoreRepository(StreamNameBuilder, _connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,
                 StreamName,
                 true);
+            Subscriber = new EventStoreCatchupStreamSubscriber(_connection);
 
             Thread.Sleep(2000); // needs a bit of time to set up the ES
         }

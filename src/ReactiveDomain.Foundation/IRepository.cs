@@ -10,6 +10,5 @@ namespace ReactiveDomain.Foundation
         TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource;
 		TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource;
 		void Save(IEventSource aggregate, Action<IDictionary<string, object>> updateHeaders = null);
-        IListener GetListener(string name, bool sync = false);
 	}
 }

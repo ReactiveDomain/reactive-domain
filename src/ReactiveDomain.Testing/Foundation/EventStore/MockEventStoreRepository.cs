@@ -235,10 +235,6 @@ namespace ReactiveDomain.Foundation.Testing.EventStore
                     bus.Publish(tupple.Item2);
             }
         }
-        public IListener GetListener(string name, bool sync = false)
-        {
-            return new SynchronizableStreamListener(name, this, sync);
-        }
 
         public IDisposable SubscribeToStreamFrom(
                                                          string stream,

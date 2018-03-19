@@ -1,15 +1,15 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
+using System;
 using Xunit;
 using Xunit.Sdk;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
-        // ReSharper disable once InconsistentNaming
+    // ReSharper disable once InconsistentNaming
     [Collection(nameof(EventStoreCollection))]
     public class when_toggling_logging : 
         with_message_logging_enabled,
@@ -37,8 +37,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             _multiFireCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
-            _listener.EventStream.Subscribe<Message>(this);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Subscriber, StreamNameBuilder);
 
             _listener.Start(Logging.FullStreamName);
 

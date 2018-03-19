@@ -15,9 +15,11 @@ namespace ReactiveDomain.Foundation.EventStore
         private InMemoryBus _bus;
         IDisposable _subscription;
         private bool _started;
+        private readonly StreamNameBuilder _streamNameBuilder;
         private readonly object _startlock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
+        
 
         /// <summary>
         /// For listening to generic streams 
@@ -25,11 +27,12 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="listenerName"></param>
         /// <param name="subscriptionTarget">The target to subscribe to</param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
-        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, string busName = null)
+        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, StreamNameBuilder streamNameBuilder, string busName = null)
         {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _subscriptionTarget = subscriptionTarget;
             ListenerName = listenerName;
+            _streamNameBuilder = streamNameBuilder;
         }
         /// <summary>
         /// Category Stream Listener
@@ -40,7 +43,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="blockUntilLive"></param>
         public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(typeof(TAggregate).GetCategoryEventStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.Generate(typeof(TAggregate)), checkpoint, blockUntilLive, millisecondsTimeout);
         }
         /// <summary>
         /// Aggregate Stream listener
@@ -52,7 +55,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="blockUntilLive"></param>
         public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(typeof(TAggregate).GetEventStreamNameByAggregatedId(id), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.Generate(typeof(TAggregate), id), checkpoint, blockUntilLive, millisecondsTimeout);
         }
 
         /// <summary>

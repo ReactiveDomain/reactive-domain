@@ -19,14 +19,17 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected EventStoreRepository Repo;
+        protected StreamNameBuilder StreamNameBuilder;
+        protected EventStoreCatchupStreamSubscriber Subscriber;
         protected override void Given()
         {
-
+            StreamNameBuilder = new StreamNameBuilder("UnitTest");
             Repo = new EventStoreRepository(new StreamNameBuilder("UnitTest"),_connection);
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,
                 StreamName);
+            Subscriber = new EventStoreCatchupStreamSubscriber(_connection);
 
             Thread.Sleep(1000);
         }

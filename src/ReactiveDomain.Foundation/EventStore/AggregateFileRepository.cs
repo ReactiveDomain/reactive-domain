@@ -103,10 +103,5 @@ namespace ReactiveDomain.Foundation.EventStore
                 jsonText
                 );
         }
-
-        public IListener GetListener(string name, bool sync = false)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

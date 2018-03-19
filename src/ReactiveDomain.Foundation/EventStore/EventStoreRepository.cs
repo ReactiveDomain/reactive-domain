@@ -15,7 +15,7 @@ using ReactiveDomain.Messaging.Util;
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
 {
-    public class EventStoreRepository : IRepository, ICatchupStreamSubscriber
+    public class EventStoreRepository : IRepository
     {
         public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public const string EventClrTypeHeader = "EventClrTypeName";
@@ -171,43 +171,6 @@ namespace ReactiveDomain.Foundation.EventStore
 
             return new EventData(eventId, typeName, true, data, metadata);
         }
-
-        public IListener GetListener(string name, bool sync = false)
-        {
-            return new SynchronizableStreamListener(name, this, sync);
-        }
-        #region Implementation of ICatchupSteamSubscriber
-
-        public IDisposable SubscribeToStreamFrom(
-            string stream,
-            int? lastCheckpoint,
-            bool resolveLinkTos,
-            Action<Message> eventAppeared,
-            Action liveProcessingStarted = null,
-            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
-            int readBatchSize = 500)
-        {
-
-            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false, true);
-            var sub = _eventStoreConnection.SubscribeToStreamFrom(
-                stream,
-                lastCheckpoint,
-                settings,
-                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
-                _ => liveProcessingStarted?.Invoke(),
-                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
-                userCredentials);
-
-            return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
-        }
-
-        public bool ValidateStreamName(string streamName)
-        {
-            return _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, 0, 1, false).Result != null;
-        }
-
-        #endregion
     }
     public class ContractResolver : DefaultContractResolver
     {
