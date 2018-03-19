@@ -15,7 +15,7 @@ namespace ReactiveDomain.Foundation.EventStore
         private InMemoryBus _bus;
         IDisposable _subscription;
         private bool _started;
-        private readonly StreamNameBuilder _streamNameBuilder;
+        private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly object _startlock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
@@ -27,7 +27,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="listenerName"></param>
         /// <param name="subscriptionTarget">The target to subscribe to</param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
-        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, StreamNameBuilder streamNameBuilder, string busName = null)
+        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, IStreamNameBuilder streamNameBuilder, string busName = null)
         {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _subscriptionTarget = subscriptionTarget;

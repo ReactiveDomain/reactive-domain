@@ -20,7 +20,7 @@ namespace ReactiveDomain.Foundation.EventStore
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
 
-        private readonly StreamNameBuilder _streamNameBuilder;
+        private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly IEventStoreConnection _eventStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
@@ -30,7 +30,7 @@ namespace ReactiveDomain.Foundation.EventStore
         }
 
         public EventStoreRepository(
-            StreamNameBuilder streamNameBuilder,
+            IStreamNameBuilder streamNameBuilder,
             IEventStoreConnection eventStoreConnection)
         {
             _streamNameBuilder = streamNameBuilder;

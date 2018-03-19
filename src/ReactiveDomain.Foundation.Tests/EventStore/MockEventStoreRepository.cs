@@ -20,7 +20,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         private const string AggregateClrTypeHeader = "AggregateClrTypeName";
         private const string CommitIdHeader = "CommitId";
 
-        private readonly StreamNameBuilder _streamNameBuilder;
+        private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly IPublisher _postCommitTarget;
 
         private readonly Dictionary<string, List<EventData>> _store;
@@ -38,7 +38,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         }
 
         public MockEventStoreRepository(
-            StreamNameBuilder streamNameBuilder,
+            IStreamNameBuilder streamNameBuilder,
             IPublisher postCommitTarget)
         {
             _history = new List<Tuple<string, Message>>();
@@ -101,7 +101,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        public static object DeserializeEvent(byte[] metadata, byte[] data)
+        private static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName));

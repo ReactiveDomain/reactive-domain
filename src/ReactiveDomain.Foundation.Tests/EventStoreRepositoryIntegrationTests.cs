@@ -30,12 +30,12 @@ namespace ReactiveDomain.Foundation.Tests
 
         private readonly EventStoreRepository _repo;
         private readonly IEventStoreConnection _connection;
-        private readonly StreamNameBuilder _streamNameBuilder;
+        private readonly PrefixedCamelCaseStreamNameBuilder _streamNameBuilder;
 
         public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
             _connection = fixture.Connection;
-            _streamNameBuilder = new StreamNameBuilder(DomainPrefix);
+            _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
             _repo = new EventStoreRepository(_streamNameBuilder, _connection);
         }
 

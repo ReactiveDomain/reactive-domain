@@ -19,7 +19,7 @@ namespace ReactiveDomain.Foundation.Tests
         public when_using_mock_repository(EmbeddedEventStoreFixture fixture)
         {
             _repos.Add(new MockEventStoreRepository());
-            _repos.Add(new EventStoreRepository(new StreamNameBuilder("UnitTest"), fixture.Connection));
+            _repos.Add(new EventStoreRepository(new PrefixedCamelCaseStreamNameBuilder("UnitTest"), fixture.Connection));
         }
 
         [Fact]

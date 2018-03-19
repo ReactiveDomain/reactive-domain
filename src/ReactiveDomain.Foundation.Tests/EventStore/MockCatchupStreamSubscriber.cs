@@ -1,5 +1,7 @@
 ﻿using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -7,11 +9,13 @@ using ReactiveDomain.Messaging.Util;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace ReactiveDomain.Foundation.Tests.EventStore
 {
     public class MockCatchupStreamSubscriber : ICatchupStreamSubscriber
     {
+        private const string EventClrTypeHeader = "EventClrTypeName";
         private readonly ISubscriber _eventSource;
         private readonly ReadOnlyDictionary<string, List<EventData>> _store;
         private readonly ReadOnlyCollection<Tuple<string, Message>> _history;
@@ -53,7 +57,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
             {
                 foreach (var evnt in _store[stream])
                 {
-                    eventAppeared((Message)MockEventStoreRepository.DeserializeEvent(evnt.Metadata, evnt.Data));
+                    eventAppeared((Message)DeserializeEvent(evnt.Metadata, evnt.Data));
                 }
 
                 liveProcessingStarted?.Invoke();
@@ -68,6 +72,12 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         public bool ValidateStreamName(string streamName)
         {
             return _store.ContainsKey(streamName);
+        }
+
+        private static object DeserializeEvent(byte[] metadata, byte[] data)
+        {
+            var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
+            return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName));
         }
     }
 }

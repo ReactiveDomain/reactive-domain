@@ -13,7 +13,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public SynchronizableStreamListener(
             string name,
             ICatchupStreamSubscriber subscriptionTarget,
-            StreamNameBuilder streamNameBuilder,
+            IStreamNameBuilder streamNameBuilder,
             bool sync = false,
             string busName = null) :
                 base(name, subscriptionTarget, streamNameBuilder, busName)

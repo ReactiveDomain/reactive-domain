@@ -9,7 +9,6 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
     {
         
         private MockEventStoreRepository _mockRepository;
-        protected ICatchupStreamSubscriber MockListener;
 
         public IRepository Repository => _mockRepository;
         public TestQueue RepositoryQueue;
@@ -18,8 +17,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         protected override void Given()
         {
             var bus = new InMemoryBus("Repository out bus");
-            _mockRepository = new MockEventStoreRepository(new StreamNameBuilder("UnitTest"), bus);
-            MockListener = new MockCatchupStreamSubscriber(bus, _mockRepository.Store, _mockRepository.History);
+            _mockRepository = new MockEventStoreRepository(new PrefixedCamelCaseStreamNameBuilder("UnitTest"), bus);
             RepositoryQueue = new TestQueue(bus);
         }
 
