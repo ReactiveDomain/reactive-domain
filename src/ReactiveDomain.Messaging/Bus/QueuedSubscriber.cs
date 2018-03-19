@@ -15,8 +15,7 @@ namespace ReactiveDomain.Messaging.Bus
         public bool Starving => _messageQueue.Starving;
         protected QueuedSubscriber(IGeneralBus bus, bool idempotent = true)
         {
-            if (bus == null) throw new ArgumentNullException(nameof(bus));
-            _generalBus = bus;
+	        _generalBus = bus ?? throw new ArgumentNullException(nameof(bus));
             _internalBus = new CommandBus("SubscriptionBus");
 
             if (idempotent)

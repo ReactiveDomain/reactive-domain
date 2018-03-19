@@ -40,7 +40,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void command_handler_acks_command_message()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotCmd = 0;
 			long gotAck = 0;
 			var hndl =
@@ -58,7 +58,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void command_handler_responds_to_command_message()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotCmd = 0;
 			long gotResponse = 0;
 			long gotAck = 0;
@@ -91,7 +91,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void fire_passing_command_should_pass()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
 			long gotSuccess = 0;
 			long gotFail = 0;
@@ -108,7 +108,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void fire_failing_command_should_fail()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotFail = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => false));
 			bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
@@ -120,7 +120,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void tryfire_passing_command_should_pass()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotSuccess = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
 			bus.Subscribe(new AdHocHandler<Success>(cmd => Interlocked.Exchange(ref gotSuccess, 1)));
@@ -133,7 +133,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void tryfire_failing_command_should_fail()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotFail = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => false));
 			bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
@@ -147,7 +147,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void handlers_that_wrap_exceptions_rethrow_on_fire()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
 			long gotCmd = 0;
 			long gotResponse = 0;
@@ -182,7 +182,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void handlers_that_throw_exceptions_rethrow_on_fire()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
 			long gotCmd = 0;
 			long gotResponse = 0;
@@ -219,7 +219,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void handlers_that_wrap_exceptions_return_on_tryfire()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
 			long gotCmd = 0;
 			long gotResponse = 0;
@@ -264,7 +264,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void handlers_that_throw_exceptions_return_on_tryfire()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
 			long gotCmd = 0;
 			long gotResponse = 0;
@@ -330,7 +330,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void typed_tryfire_passing_command_should_pass()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			const int data = 12356;
 
 			long gotResponse = 0;
@@ -356,7 +356,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void typed_failing_fire_command_should_fail()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			const int data = 12356;
 			const string errText = @"I knew this would happen.";
 			long gotResponse = 0;
@@ -380,7 +380,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void typed_failing_tryfire_command_should_fail()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			const int data = 12356;
 			const string errText = @"I knew this would happen.";
 			long gotResponse = 0;
@@ -410,7 +410,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void multiple_commands_can_register()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotCmd1 = 0;
 			long gotCmd2 = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
@@ -435,7 +435,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void cannot_subscribe_twice_on_same_bus()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
 			Assert.True(bus.HasSubscriberFor<TestCommands.TestCommand>());
 			Assert.Throws<ExistingHandlerException>(
@@ -445,7 +445,7 @@ namespace ReactiveDomain.Messaging.Tests
 		public void commands_should_not_deadlock()
 		{
 
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotCmd1 = 0;
 			long gotCmd2 = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
@@ -472,7 +472,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact(Skip = "Distributed commands are currently disabled")]
 		public void passing_commands_on_connected_busses_should_pass()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			var bus2 = new CommandBus("remote");
 			// ReSharper disable once UnusedVariable
 			var conn = new BusConnector(bus, bus2);
@@ -492,24 +492,19 @@ namespace ReactiveDomain.Messaging.Tests
 
 		}
 
-		private long _publishedMessageCount;
 		[Fact]
 		public void unsubscribed_commands_should_throw_ack_timeout()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
-			bus.Subscribe(new AdHocHandler<Message>(c => Interlocked.Increment(ref _publishedMessageCount)));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			Assert.Throws<CommandNotHandledException>(() =>
 				 bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-
-			Assert.True(Interlocked.Read(ref _publishedMessageCount) == 0, userMessage: "Expected no messages published");
 		}
 
 		[Fact]
 		public void try_fire_unsubscribed_commands_should_return_throw_commandNotHandledException()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
-			CommandResponse response;
-			var passed = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+			var passed = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out var response);
 
 			Assert.False(passed, "Expected false return");
 			Assert.IsType(typeof(Fail), response);
@@ -518,7 +513,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void try_fire_slow_commands_should_return_timeout()
 		{
-			var bus = new CommandBus("local", false, TimeSpan.FromSeconds(0.1), TimeSpan.FromSeconds(0.1));
+			var bus = new CommandBus("local", false, TimeSpan.FromMilliseconds(2000), TimeSpan.FromMilliseconds(20));
 			long gotCmd1 = 0;
 
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
@@ -541,7 +536,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact(Skip = "Connected bus scenarios currently disabled")]
 		public void try_fire_oversubscribed_commands_should_return_false()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			var bus2 = new CommandBus("remote");
 			// ReSharper disable once UnusedVariable
 			var conn = new BusConnector(bus, bus2);
@@ -607,7 +602,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact(Skip = "Connected bus scenarios currently disabled")]
 		public void fire_oversubscribed_commands_should_throw_oversubscribed()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			var bus2 = new CommandBus("remote");
 			// ReSharper disable once UnusedVariable
 			var conn = new BusConnector(bus, bus2);
@@ -644,7 +639,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void try_fire_commands_should_not_call_other_commands()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long gotCmd = 0;
 
 
@@ -674,7 +669,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void unsubscribe_should_remove_handler()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long proccessedCmd = 0;
 			var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
 				 cmd =>
@@ -694,7 +689,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void can_resubscribe_handler()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long proccessedCmd = 0;
 			var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
 				 cmd =>
@@ -722,7 +717,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void unsubscribe_should_not_remove_other_handlers()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2),TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 			long proccessedCmd = 0;
 			var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
 				 cmd =>

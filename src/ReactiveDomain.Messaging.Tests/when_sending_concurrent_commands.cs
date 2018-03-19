@@ -15,7 +15,7 @@ namespace ReactiveDomain.Messaging.Tests
 		IHandleCommand<TestCommands.TestCommand3>
 
 	{
-		private readonly TimeSpan _2Sec = TimeSpan.FromSeconds(2);
+		private readonly TimeSpan _5Sec = TimeSpan.FromSeconds(5);
 		private readonly CommandBus _bus;
 		private long _cmd1Count;
 		private long _cmd2Count;
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Messaging.Tests
 		private int _count;
 		public when_sending_concurrent_commands()
 		{
-			_bus = new CommandBus("Test", false, _2Sec, _2Sec);
+			_bus = new CommandBus("Test", false, _5Sec, _5Sec);
 			_bus.Subscribe<TestCommands.TestCommand>(this);
 			_bus.Subscribe<TestCommands.TestCommand2>(this);
 			_bus.Subscribe<TestCommands.TestCommand3>(this);
