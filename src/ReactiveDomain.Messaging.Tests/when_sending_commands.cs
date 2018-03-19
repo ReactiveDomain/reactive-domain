@@ -395,9 +395,8 @@ namespace ReactiveDomain.Messaging.Tests
 				}
 				));
 
-			CommandResponse response;
-			var command = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
-			var passed = bus.TryFire(command, out response);
+		    var command = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+			var passed = bus.TryFire(command, out var response);
 
 			Assert.False(passed, "Expected false return");
 			Assert.IsType(typeof(TestCommands.TestFailedCommandResponse), response);
@@ -410,7 +409,7 @@ namespace ReactiveDomain.Messaging.Tests
 		[Fact]
 		public void multiple_commands_can_register()
 		{
-			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+			var bus = new CommandBus("temp", false, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(2));
 			long gotCmd1 = 0;
 			long gotCmd2 = 0;
 			bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
@@ -426,9 +425,9 @@ namespace ReactiveDomain.Messaging.Tests
 					   return true;
 				   }));
 			bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out var result);
-			Assert.True(result is Success);
+			Assert.True(result is Success, $"Expected Success command returned {result.GetType().Name}");
 			bus.TryFire(new TestCommands.TestCommand2(Guid.NewGuid(), null), out result);
-			Assert.True(result is Success);
+			Assert.True(result is Success, $"Expected Success command returned {result.GetType().Name}");
 			Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
 			Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd2) == 1, msg: "Expected Cmd2 handled");
 		}
