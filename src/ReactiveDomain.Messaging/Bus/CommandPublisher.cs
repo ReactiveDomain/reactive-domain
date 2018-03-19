@@ -7,26 +7,31 @@ using System.Threading.Tasks;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-	public class CommandPublisher : ICommandPublisher
+	public class CommandPublisher : ICommandPublisher, IDisposable
 	{
 		private readonly IBus _bus;
 		private readonly CommandManager _manager;
 		private readonly TimeSpan? _slowMsgThreshold;
 		private readonly TimeSpan? _slowCmdThreshold;
-
+		private readonly MultiQueuedHandler _publisher;
 		public CommandPublisher(IBus bus, TimeSpan? slowMsgThreshold, TimeSpan? slowCmdThreshold)
 		{
 			_bus = bus;
 			_slowMsgThreshold = slowMsgThreshold;
 			_slowCmdThreshold = slowCmdThreshold;
 			_manager = new CommandManager(bus);
+			_publisher =  new MultiQueuedHandler(
+				3,
+				i => new QueuedHandler( new AdHocHandler<Message>(msg => _bus.Publish(msg))
+				,nameof(CommandPublisher)));
+			_publisher.Start();
 		}
 		public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
 		{
 			var tCmd = command as TokenCancellableCommand;
 			if (tCmd?.IsCanceled ?? false)
 			{
-				_bus.Publish(tCmd.Canceled());
+				_publisher.Publish(tCmd.Canceled());
 				return;
 			}
 
@@ -52,7 +57,7 @@ namespace ReactiveDomain.Messaging.Bus
 				if (tCmd?.IsCanceled ?? false)
 				{
 					response = tCmd.Canceled();
-					_bus.Publish(response);
+					_publisher.Publish(response);
 					return false;
 				}
 				response = Execute(command, responseTimeout, ackTimeout);
@@ -101,7 +106,7 @@ namespace ReactiveDomain.Messaging.Bus
 				{
 					//n.b. if this does not throw result will be set asynchronously 
 					//in the registered handler in the _manager 
-					_bus.Publish(command);
+					_publisher.Publish(command);
 				}
 				catch (Exception ex)
 				{
@@ -142,6 +147,18 @@ namespace ReactiveDomain.Messaging.Bus
 		{
 			//replace with message published from Command handler
 			//We can't know this here
+		}
+
+		protected virtual void Dispose(bool disposing) {
+			if (disposing) {
+				_manager?.Dispose();
+				_publisher?.Stop();//TODO: do we need to flush/empty the queue here?
+			}
+		}
+
+		public void Dispose() {
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 	}
 }
