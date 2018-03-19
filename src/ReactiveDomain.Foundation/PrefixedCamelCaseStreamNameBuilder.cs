@@ -28,17 +28,33 @@ namespace ReactiveDomain.Foundation
         /// </summary>
         public PrefixedCamelCaseStreamNameBuilder() {}
 
+        /// <summary>
+        /// Generate stream name for aggregate [lowercaseprefix].[camelCaseName]-[id]
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public string GenerateForAggregate(Type type, Guid id)
         {
             string prefix = string.IsNullOrWhiteSpace(_prefix) ? string.Empty : $"{_prefix.ToLowerInvariant()}.";
             return $"{prefix}{ToCamelCaseInvariant(type.Name)}-{id:N}";
         }
 
+        /// <summary>
+        /// Generate stream name for a category $ce-[camelCaseCategoryName]
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public string GenerateForCategory(Type type)
         {
             return $"$ce-{ToCamelCaseInvariant(type.Name)}";
         }
 
+        /// <summary>
+        /// Generate stream name for an event type $et-[camelCaseEventTypeName]
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public string GenerateForEventType(string type)
         {
             return $"$et-{ToCamelCaseInvariant(type)}";
