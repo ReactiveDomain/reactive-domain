@@ -19,12 +19,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected EventStoreRepository Repo;
-        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
+        protected IStreamNameBuilder StreamNameBuilder;
         protected EventStoreCatchupStreamSubscriber Subscriber;
         protected override void Given()
         {
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            Repo = new EventStoreRepository(new PrefixedCamelCaseStreamNameBuilder("UnitTest"),_connection);
+            Repo = new EventStoreRepository(StreamNameBuilder, _connection);
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,
                 _connection,
