@@ -11,7 +11,6 @@ namespace ReactiveDomain.Messaging.Tests
 	// ReSharper disable once InconsistentNaming
 	public class precanceled_commands_via_cancellation_token : CommandQueueSpecification
 	{
-		public precanceled_commands_via_cancellation_token() : base(1, 2500, 2500) { }
 		protected override void Given()
 		{
 			Bus.Subscribe(new TokenCancellableCmdHandler());
@@ -66,7 +65,6 @@ namespace ReactiveDomain.Messaging.Tests
 			_bus.TryFire(_cmd1);
 			_bus.TryFire(_cmd2);
 			SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 200);
-			//Assert.True(Interlocked.Read(ref _gotCmd) == 2, "Didn't get both Commands");
 			_tokenSource1.Cancel();
 			Interlocked.Increment(ref _releaseCmd);
 			SpinWait.SpinUntil(() => Interlocked.Read(ref _completed) == 2, 2000);
@@ -95,10 +93,6 @@ namespace ReactiveDomain.Messaging.Tests
 	// ReSharper disable once InconsistentNaming
 	public class can_cancel_commands_via_cancellation_token : CommandQueueSpecification
 	{
-		public can_cancel_commands_via_cancellation_token() : base(1, 2500, 2500)
-		{
-
-		}
 		private TokenCancellableCmdHandler _handler;
 		private TestTokenCancellableCmd _cmd;
 		protected override void Given()

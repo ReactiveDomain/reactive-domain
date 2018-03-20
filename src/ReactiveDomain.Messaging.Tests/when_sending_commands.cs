@@ -47,7 +47,7 @@ namespace ReactiveDomain.Messaging.Tests
 
         public TestCommandBusFixture()
         {
-            StandardTimeout = TimeSpan.FromSeconds(2);
+            StandardTimeout = TimeSpan.FromSeconds(0.1);
             Bus = new CommandBus(nameof(TestCommandBusFixture), false, StandardTimeout, StandardTimeout);
             RemoteBus = new CommandBus(nameof(TestCommandBusFixture), false, StandardTimeout, StandardTimeout);
             //todo: fix connector
