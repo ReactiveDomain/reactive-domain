@@ -19,7 +19,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected EventStoreRepository Repo;
-        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
+        protected IStreamNameBuilder StreamNameBuilder;
         protected EventStoreCatchupStreamSubscriber Subscriber;
         protected override void Given()
         {
