@@ -5,10 +5,10 @@ namespace ReactiveDomain.Messaging.Testing
 {
     //No cancellation support
     public class TestCommandHandler :
-        IHandleCommand<TestCommands.TestCommand3>
+        IHandleCommand<TestCommands.Command3>
     {
    
-        public CommandResponse Handle(TestCommands.TestCommand3 command)
+        public CommandResponse Handle(TestCommands.Command3 command)
         {
             for (int i = 0; i < 5; i++)
             {

@@ -68,7 +68,7 @@ namespace ReactiveDomain.Messaging.Bus
         {
             if (Interlocked.Read(ref _state) == PendingAck)
             {
-                if (_tcs.TrySetException(new CommandNotHandledException(" timed out waiting for handler to start.", _command)))
+                if (_tcs.TrySetException(new CommandNotHandledException(" timed out waiting for a handler to start. Make sure a command handler is subscribed", _command)))
                 {
                     if (Log.LogLevel >= LogLevel.Error)
                         Log.Error(_command.GetType().Name + " command not handled (no handler)");
