@@ -451,14 +451,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotChainedCaller) == 1, msg: "Expected chained Caller to be handled");
         }
 
-        [Fact(Skip = "Distributed commands are currently disabled")]
-        public void passing_commands_on_connected_buses_should_pass()
-        {
-            Interlocked.Exchange(ref _fixture.GotRemoteHandled, 0);
-            _fixture.Bus.Fire(new TestCommands.RemoteHandled(Guid.NewGuid(), null));
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotRemoteHandled) == 1, msg: "Expected RemoteHandled to be handled");
-        }
+        
 
         [Fact]
         public void unsubscribed_commands_should_throw_ack_timeout()
@@ -503,73 +496,13 @@ namespace ReactiveDomain.Messaging.Tests
 
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotLongRunning) == 1, msg: "Expected Long Running to be handled");
         }
-
-        [Fact(Skip = "Connected bus scenarios currently disabled")]
-        public void try_fire_oversubscribed_commands_should_return_false()
+        [Fact(Skip = "Distributed commands are currently disabled")]
+        public void passing_commands_on_connected_buses_should_pass()
         {
-            Assert.True(false);
-            //todo: rewrite this to use the new fixture once the bus connector is fixed
-            //var bus2 = new CommandBus("remote");
-            //// ReSharper disable once UnusedVariable
-            //var conn = new BusConnector(_bus, bus2);
-            //long gotCmd = 0;
-            //long processedCmd = 0;
-            //long cancelPublished = 0;
-            //long cancelReturned = 0;
+            Interlocked.Exchange(ref _fixture.GotRemoteHandled, 0);
+            _fixture.Bus.Fire(new TestCommands.RemoteHandled(Guid.NewGuid(), null));
 
-            //_bus.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(
-            //     cmd =>
-            //     {
-            //         Interlocked.Increment(ref gotCmd);
-            //         Task.Delay(250).Wait();
-            //         Interlocked.Increment(ref processedCmd);
-            //         return true;
-            //     }));
-            //bus2.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(
-            //        cmd =>
-            //        {
-            //            Interlocked.Increment(ref gotCmd);
-            //            Task.Delay(250).Wait();
-            //            Interlocked.Increment(ref processedCmd);
-            //            return true;
-            //        }));
-            //_bus.Subscribe(new AdHocCommandHandler<TestCommands.Command2>(
-            //     cmd =>
-            //     {
-            //         Interlocked.Increment(ref gotCmd);
-            //         Task.Delay(250).Wait();
-            //         Interlocked.Increment(ref processedCmd);
-            //         return true;
-            //     }));
-            //bus2.Subscribe(new AdHocHandler<Canceled>(c => Interlocked.Increment(ref cancelPublished)));
-            //bus2.Subscribe(new AdHocHandler<Fail>(
-            //    c =>
-            //    {
-            //        if (c.Exception is CommandCanceledException)
-            //            Interlocked.Increment(ref cancelReturned);
-            //    }));
-            //var timer = Stopwatch.StartNew();
-            //var passed = _bus.TryFire(
-            //    new TestCommands.Command1(Guid.NewGuid(), null), out var response, TimeSpan.FromMilliseconds(1500));
-            //timer.Stop();
-            //Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) <= 1,
-            //    msg: "Expected command received no more than once, got " + gotCmd);
-            //Assert.True(timer.ElapsedMilliseconds < 1000, "Expected failure before task completion.");
-            //Assert.IsOrBecomesTrue(() => Interlocked.Read(ref processedCmd) == 0,
-            //     msg: "Expected command failed before handled; got " + processedCmd);
-
-            //Assert.False(passed, "Expected false return");
-            //Assert.IsType(typeof(Fail), response);
-            //Assert.IsType(typeof(CommandOversubscribedException), ((Fail)response).Exception);
-            //Assert.IsOrBecomesTrue(() => Interlocked.Read(ref processedCmd) <= 1, 1500, msg: "Expected command handled no more than once, actual" + processedCmd);
-            //Assert.IsOrBecomesTrue(
-            //    () => Interlocked.Read(ref cancelPublished) == 1,
-            //    msg: "Expected cancel published once");
-
-            //Assert.IsOrBecomesTrue(
-            //           () => Interlocked.Read(ref cancelReturned) == 1,
-            //           msg: "Expected cancel returned once, actual " + cancelReturned);
-
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotRemoteHandled) == 1, msg: "Expected RemoteHandled to be handled");
         }
         [Fact(Skip = "Connected bus scenarios currently disabled")]
         public void fire_oversubscribed_commands_should_throw_oversubscribed()
