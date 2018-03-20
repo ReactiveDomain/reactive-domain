@@ -59,6 +59,19 @@ namespace ReactiveDomain.Messaging.Testing
             public override int MsgTypeId => TypeId;
             public RemoteHandled(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
         }
+        //n.b. don't register a handler for this
+        public class Unhandled : Command
+        {
+            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+            public override int MsgTypeId => TypeId;
+            public Unhandled(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+        }
+        public class LongRunning : Command
+        {
+            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+            public override int MsgTypeId => TypeId;
+            public LongRunning(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+        }
         public class TypedResponse : Command
         {
             public readonly bool FailCommand;
