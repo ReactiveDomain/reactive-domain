@@ -1,24 +1,23 @@
-﻿using ReactiveDomain.Foundation.EventStore;
+﻿using ReactiveDomain.Foundation;
+using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Testing;
-using ReactiveDomain.Foundation.Tests.EventStore;
-using ReactiveDomain.Testing;
-using System;
-using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing.EventStore;
+using System;
+using System.Collections.Generic;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests
+namespace ReactiveDomain.Testing
 {
     // ReSharper disable InconsistentNaming
-    [Collection(nameof(EventStoreCollection))]
-    public class when_using_mock_repository
+    public class MockEventStoreRepositoryTests : IClassFixture<EmbeddedEventStoreFixture>
     {
         private readonly List<IRepository> _repos = new List<IRepository>();
         private readonly IBus _bus;
         private readonly IStreamNameBuilder _streamNameBuilder;
 
-        public when_using_mock_repository(EmbeddedEventStoreFixture fixture)
+        public MockEventStoreRepositoryTests(EmbeddedEventStoreFixture fixture)
         {
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
             _bus = new InMemoryBus("Mock Event Store Post Commit Target");
@@ -43,7 +42,6 @@ namespace ReactiveDomain.Foundation.Tests
         [Fact]
         public void can_update_and_save_aggregate()
         {
-
             foreach (var repo in _repos)
             {
                 var id = Guid.NewGuid();
@@ -63,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests
         }
 
         [Fact]
-        public void ThrowsOnRequestingSpecificVersionHigherThanExists()
+        public void throws_on_requesting_specific_version_higher_than_exists()
         {
             foreach (var repo in _repos)
             {
@@ -135,8 +133,7 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 var r = repo as MockEventStoreRepository;
                 if (r == null) continue;
-                var q = new TestQueue();
-                _bus.Subscribe(q);
+                var q = new TestQueue(_bus);
 
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -155,8 +152,7 @@ namespace ReactiveDomain.Foundation.Tests
             foreach (var repo in _repos)
             {
                 if (!(repo is MockEventStoreRepository r)) continue;
-                var q = new TestQueue();
-                _bus.Subscribe(q);
+                var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);

@@ -10,8 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+using ReactiveDomain.Foundation;
 
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Testing.EventStore
 {
     public class MockCatchupStreamSubscriber : ICatchupStreamSubscriber
     {
