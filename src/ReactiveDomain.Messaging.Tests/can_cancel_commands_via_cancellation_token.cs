@@ -44,7 +44,7 @@ namespace ReactiveDomain.Messaging.Tests
 		private CancellationTokenSource _tokenSource2;
 		private TestTokenCancellableCmd _cmd1;
 		private TestTokenCancellableCmd _cmd2;
-		private CommandBus _bus = new CommandBus("test", false);
+		private CommandBus _bus = new CommandBus("test", 3, false);
 		private long _releaseCmd;
 		private long _gotCmd;
 		private Guid _canceled;
@@ -161,6 +161,7 @@ namespace ReactiveDomain.Messaging.Tests
 		{
 			_bus = new CommandBus(
 							nameof(can_cancel_nested_commands_via_cancellation_token),
+                            3,
 							false,
 							TimeSpan.FromSeconds(2.5),
 							TimeSpan.FromSeconds(2.5));

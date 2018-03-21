@@ -23,7 +23,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         public int MessageCount { get { return _queue.Count; } }
         public string Name { get { return _queueStats.Name; } }
-
+        public bool Idle => _starving;
         private readonly IHandle<Message> _consumer;
 
         private readonly bool _watchSlowMsg;

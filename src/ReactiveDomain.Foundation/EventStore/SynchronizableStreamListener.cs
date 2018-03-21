@@ -43,7 +43,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 SyncQueue.Start();
             base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
             if (waitUntilLive)
-                SpinWait.SpinUntil(() => SyncQueue.Starving, millisecondsTimeout);
+                SpinWait.SpinUntil(() => SyncQueue.Idle, millisecondsTimeout);
         }
 
         private bool _disposed;

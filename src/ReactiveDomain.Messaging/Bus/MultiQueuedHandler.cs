@@ -12,7 +12,16 @@ namespace ReactiveDomain.Messaging.Bus
 {
     public class MultiQueuedHandler : IHandle<Message>, IPublisher, IThreadSafePublisher
     {
-        
+        private readonly int _queueCount;
+
+        public bool Idle {
+            get {
+                for (var i = 0; i < _queueCount; i++) {
+                    if (!Queues[i].Idle) return false;
+                }
+                return true;
+            }
+        }
         public readonly IQueuedHandler[] Queues;
 
         private readonly Func<Message, int> _queueHash;
@@ -22,6 +31,7 @@ namespace ReactiveDomain.Messaging.Bus
                                   Func<int, IQueuedHandler> queueFactory,
                                   Func<Message, int> queueHash = null)
         {
+            _queueCount = queueCount;
             Ensure.Positive(queueCount, "queueCount");
             Ensure.NotNull(queueFactory, "queueFactory");
 

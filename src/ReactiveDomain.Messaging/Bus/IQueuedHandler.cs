@@ -36,6 +36,7 @@ namespace ReactiveDomain.Messaging.Bus
         void Start();
         void Stop();
         void RequestStop();
+        bool Idle { get; }
         //void Publish(Message message);
         //QueueStats GetStatistics();
     }

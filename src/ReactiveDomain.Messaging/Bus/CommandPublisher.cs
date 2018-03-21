@@ -10,18 +10,21 @@ namespace ReactiveDomain.Messaging.Bus
     public class CommandPublisher : ICommandPublisher, IDisposable
     {
         private readonly IBus _bus;
+        private readonly int _concurrency;
         private readonly CommandManager _manager;
         private readonly TimeSpan? _slowMsgThreshold;
         private readonly TimeSpan? _slowCmdThreshold;
         private readonly MultiQueuedHandler _publisher;
-        public CommandPublisher(IBus bus, TimeSpan? slowMsgThreshold, TimeSpan? slowCmdThreshold)
+        public bool Idle => _publisher.Idle;
+        public CommandPublisher(IBus bus, int concurrency, TimeSpan? slowMsgThreshold, TimeSpan? slowCmdThreshold)
         {
             _bus = bus;
+            _concurrency = concurrency;
             _slowMsgThreshold = slowMsgThreshold;
             _slowCmdThreshold = slowCmdThreshold;
             _manager = new CommandManager(bus);
             _publisher = new MultiQueuedHandler(
-                3,
+                _concurrency,
                 i => new QueuedHandler(new AdHocHandler<Message>(msg => _bus.Publish(msg))
                 , nameof(CommandPublisher)));
             _publisher.Start();

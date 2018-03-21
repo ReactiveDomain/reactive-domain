@@ -14,8 +14,8 @@ namespace ReactiveDomain.Messaging.Testing
 
         protected CommandBusSpecification(IGeneralBus bus = null)
         {
-            Bus = bus ?? new CommandBus("Fixture Bus",false, TimeSpan.FromMilliseconds(5000),TimeSpan.FromMilliseconds(5000));
-            LocalBus = new CommandBus("Fixture LocalBus",false, TimeSpan.FromMilliseconds(5000),TimeSpan.FromMilliseconds(5000));
+            Bus = bus ?? new CommandBus("Fixture Bus", 3, false, TimeSpan.FromMilliseconds(5000), TimeSpan.FromMilliseconds(5000));
+            LocalBus = new CommandBus("Fixture LocalBus", 3, false, TimeSpan.FromMilliseconds(5000), TimeSpan.FromMilliseconds(5000));
             TestQueue = new TestQueue(Bus);
             try
             {
@@ -30,6 +30,6 @@ namespace ReactiveDomain.Messaging.Testing
         protected abstract void Given();
         protected abstract void When();
 
-        
+
     }
 }

@@ -15,7 +15,7 @@ namespace ReactiveDomain.Messaging.Bus
     public class NullableBus : IGeneralBus, IDisposable
     {
         private IGeneralBus _target;
-
+        public bool Idle => _target.Idle;
 
         public NullableBus(IGeneralBus target, bool directToNull = true, string name = null)
         {

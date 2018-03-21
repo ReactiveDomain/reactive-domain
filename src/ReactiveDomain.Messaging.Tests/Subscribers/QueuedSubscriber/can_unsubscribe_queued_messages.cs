@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
@@ -12,19 +11,17 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 	public class can_unsubscribe_queued_messages
 	{
 		private readonly CountedMessageSubscriber _sub;
-		private readonly IGeneralBus _bus = new CommandBus("test", false);
+		private readonly IGeneralBus _bus = new CommandBus("test", 3,false);
 		private int _msgCount = 20;
-		private List<Message> _messages = new List<Message>();
+		private readonly List<Message> _messages = new List<Message>();
 	
-		public can_unsubscribe_queued_messages():base() {
-		
+		public can_unsubscribe_queued_messages() {
 			_sub = new CountedMessageSubscriber(_bus);
 			for (var i = 0; i < _msgCount; i++)
 			{
 				_messages.Add(new CountedTestMessage(i));
 				_messages.Add(new CountedEvent(i, Guid.NewGuid(), Guid.NewGuid()));
 			}
-			
 		}
 
 		[Fact]
