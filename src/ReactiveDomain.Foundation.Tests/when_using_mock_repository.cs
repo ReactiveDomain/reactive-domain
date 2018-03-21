@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using ReactiveDomain.Foundation.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Testing;
-using ReactiveDomain.Foundation.Testing.EventStore;
+using ReactiveDomain.Foundation.Tests.EventStore;
+using ReactiveDomain.Testing;
+using System;
+using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
-using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests
@@ -15,11 +15,15 @@ namespace ReactiveDomain.Foundation.Tests
     public class when_using_mock_repository
     {
         private readonly List<IRepository> _repos = new List<IRepository>();
+        private readonly IBus _bus;
+        private readonly IStreamNameBuilder _streamNameBuilder;
 
         public when_using_mock_repository(EmbeddedEventStoreFixture fixture)
         {
-            _repos.Add(new MockEventStoreRepository());
-            _repos.Add(new EventStoreRepository(new PrefixedCamelCaseStreamNameBuilder("UnitTest"), fixture.Connection));
+            _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+            _bus = new InMemoryBus("Mock Event Store Post Commit Target");
+            _repos.Add(new MockEventStoreRepository(_streamNameBuilder, _bus));
+            _repos.Add(new EventStoreRepository(_streamNameBuilder, fixture.Connection));
         }
 
         [Fact]
@@ -35,6 +39,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Assert.Equal(tAgg.Id, rAgg.Id);
             }
         }
+
         [Fact]
         public void can_update_and_save_aggregate()
         {
@@ -72,6 +77,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Assert.Throws<AggregateVersionException>(() => repo.GetById<TestAggregate>(id, 50));
             }
         }
+
         [Fact]
         public void can_get_aggregate_at_version()
         {
@@ -94,6 +100,7 @@ namespace ReactiveDomain.Foundation.Tests
 
             }
         }
+
         [Fact]
         public void will_throw_concurrency_exception()
         {
@@ -119,6 +126,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Assert.Throws<AggregateException>(() => r.Save(tAgg));
             }
         }
+
         [Fact]
         public void can_subscribe_to_all()
         {
@@ -128,7 +136,7 @@ namespace ReactiveDomain.Foundation.Tests
                 var r = repo as MockEventStoreRepository;
                 if (r == null) continue;
                 var q = new TestQueue();
-                r.Subscribe(q);
+                _bus.Subscribe(q);
 
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -138,9 +146,9 @@ namespace ReactiveDomain.Foundation.Tests
                 repo.Save(tAgg, h => { });
 
                 Assert.Equal(4, q.Messages.Count);
-
             }
         }
+
         [Fact]
         public void can_replay_all()
         {
@@ -148,7 +156,7 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 if (!(repo is MockEventStoreRepository r)) continue;
                 var q = new TestQueue();
-                r.Subscribe(q);
+                _bus.Subscribe(q);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -195,8 +203,7 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 var r = repo as MockEventStoreRepository;
                 if (r == null) continue;
-                var q = new TestQueue();
-                r.Subscribe(q);
+                var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -215,7 +222,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Assert.Equal(8, q.Messages.Count);
                 var bus = new InMemoryBus("all");
                 var q2 = new TestQueue(bus);
-                r.ReplayStreamOnto(bus, $"testAggregate-{id1.ToString("N")}");
+                r.ReplayStreamOnto(bus, _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id1));
                 q2.Messages
                     .AssertNext<TestAggregateMessages.NewAggregate>(
                         correlationId: id1)
@@ -226,7 +233,7 @@ namespace ReactiveDomain.Foundation.Tests
                     .AssertNext<TestAggregateMessages.Increment>(
                         m => m.Amount == 3, "Event mismatch wrong amount");
 
-                r.ReplayStreamOnto(bus, $"testAggregate-{id2.ToString("N")}");
+                r.ReplayStreamOnto(bus, _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id2));
                 q2.Messages
                     .AssertNext<TestAggregateMessages.NewAggregate>(
                         correlationId: id2)
@@ -246,8 +253,7 @@ namespace ReactiveDomain.Foundation.Tests
             {
                 var r = repo as MockEventStoreRepository;
                 if (r == null) continue;
-                var q = new TestQueue();
-                r.Subscribe(q);
+                var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -267,8 +273,6 @@ namespace ReactiveDomain.Foundation.Tests
                 tAgg2.RaiseBy(5);
                 tAgg2.RaiseBy(6);
                 repo.Save(tAgg2);
-
-
 
                 Assert.Equal(12, q.Messages.Count);
                 var bus = new InMemoryBus("all");
