@@ -39,11 +39,11 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
 
         public MockEventStoreRepository(
             IStreamNameBuilder streamNameBuilder,
-            IPublisher postCommitTarget)
+            IPublisher postCommitTarget = null)
         {
             _history = new List<Tuple<string, Message>>();
             _streamNameBuilder = streamNameBuilder;
-            _postCommitTarget = postCommitTarget;
+            _postCommitTarget = postCommitTarget ?? new InMemoryBus("Post Commit Target");
 
             _store = new Dictionary<string, List<EventData>>();
         }
@@ -114,6 +114,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                 {CommitIdHeader, Guid.NewGuid() /*commitId*/},
                 {AggregateClrTypeHeader, aggregate.GetType().AssemblyQualifiedName}
             };
+
             updateHeaders?.Invoke(commitHeaders);
 
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
@@ -158,6 +159,7 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
                     etStream = new List<EventData>();
                     _store.Add(etName, etStream);
                 }
+
                 etStream.Add(evt);
             }
 
@@ -193,9 +195,11 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         }
         public void ReplayStreamOnto(IBus bus, string streamName)
         {
-            foreach (var evnt in _store[streamName])
+            if (!_store.TryGetValue(streamName, out var events))
+                return;
+            foreach (var evnt in events)
             {
-                bus.Publish((Message)DeserializeEvent(evnt.Metadata, evnt.Data));
+                bus?.Publish((Message)DeserializeEvent(evnt.Metadata, evnt.Data));
             }
         }
 
@@ -203,8 +207,8 @@ namespace ReactiveDomain.Foundation.Tests.EventStore
         {
             foreach (var tupple in _history)
             {
-                if (tupple.Item1.StartsWith(categoryName, StringComparison.Ordinal))
-                    bus.Publish(tupple.Item2);
+                if (tupple.Item1.Contains($"{categoryName}-")) // todo: not happy with this 'cause this depends on the stream name builder
+                    bus?.Publish(tupple.Item2);
             }
         }
     }
