@@ -10,9 +10,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using ReactiveDomain.Foundation;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Foundation.Tests.EventStore
+namespace ReactiveDomain.Testing.EventStore
 {
     public class MockEventStoreRepository : IRepository
     {
