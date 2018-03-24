@@ -5,7 +5,6 @@ namespace ReactiveDomain.Foundation
 {
     public interface IListener : IDisposable
     {
-        //todo: convert to use async and sync start methods
         ISubscriber EventStream { get; }
 
         /// <summary>

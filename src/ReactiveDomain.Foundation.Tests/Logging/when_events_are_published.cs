@@ -31,7 +31,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         protected override void When()
         {
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Subscriber, StreamNameBuilder);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<DomainEvent>(this);
 
             _listener.Start(Logging.FullStreamName);

@@ -151,32 +151,5 @@ namespace ReactiveDomain.Foundation.Tests
             //Looks like an api change
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
         }
-
-        [Fact]
-        public void SavesCommitHeadersOnEachEvent()
-        {
-            var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
-            aggregateToSave.ProduceEvents(20);
-            _repo.Save(aggregateToSave, d =>
-            {
-                d.Add("CustomHeader1", "CustomValue1");
-                d.Add("CustomHeader2", "CustomValue2");
-            });
-
-            var read = _connection.ReadStreamEventsForwardAsync($"aggregate-{aggregateToSave.Id}", 1, 20, false).Result;
-            foreach (var serializedEvent in read.Events)
-            {
-                var parsedMetadata = JObject.Parse(Encoding.UTF8.GetString(serializedEvent.OriginalEvent.Metadata));
-
-                var deserializedCommitId = parsedMetadata.Property("CommitId").Value.ToObject<Guid>();
-                Assert.NotNull(deserializedCommitId);
-
-                var deserializedCustomHeader1 = parsedMetadata.Property("CustomHeader1").Value.ToObject<string>();
-                Assert.Equal("CustomValue1", deserializedCustomHeader1);
-
-                var deserializedCustomHeader2 = parsedMetadata.Property("CustomHeader2").Value.ToObject<string>();
-                Assert.Equal("CustomValue2", deserializedCustomHeader2);
-            }
-        }
     }
 }

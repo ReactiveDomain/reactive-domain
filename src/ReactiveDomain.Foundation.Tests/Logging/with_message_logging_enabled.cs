@@ -9,27 +9,25 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     // ReSharper disable once InconsistentNaming
     public abstract class with_message_logging_enabled :CommandBusSpecification
     {
-        private readonly IEventStoreConnection _connection;
+        protected readonly IEventStoreConnection Connection;
 
         protected with_message_logging_enabled(IEventStoreConnection connection)
         {
-            _connection = connection;
+            Connection = connection;
         }
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected EventStoreRepository Repo;
         protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
-        protected EventStoreCatchupStreamSubscriber Subscriber;
         protected override void Given()
         {
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            Repo = new EventStoreRepository(StreamNameBuilder, _connection);
+            Repo = new EventStoreRepository(StreamNameBuilder, Connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
-                _connection,
+                Connection,
                 StreamName,
                 true);
-            Subscriber = new EventStoreCatchupStreamSubscriber(_connection);
 
             Thread.Sleep(2000); // needs a bit of time to set up the ES
         }

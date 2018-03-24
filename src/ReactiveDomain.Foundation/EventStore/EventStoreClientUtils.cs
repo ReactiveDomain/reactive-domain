@@ -15,6 +15,7 @@ namespace ReactiveDomain.Foundation.EventStore
     /// WARNING: DO NOT use this to generate any normalized stream name. See StreamNameBuilder to create standard stream name instead.
     /// RD-33 will address this and will move some of the relevant methods to StreamNameBuilder.
     /// </summary>
+    [Obsolete]
     public static class EventStoreClientUtils
     {
         // TODO: Move these to GreylockOptions.

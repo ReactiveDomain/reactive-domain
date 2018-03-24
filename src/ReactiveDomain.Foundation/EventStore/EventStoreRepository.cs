@@ -16,6 +16,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
+        public const string AggregateClrTypeNameHeader = "AggregateClrTypeNameHeader";
         public const string CommitIdHeader = "CommitId";
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
@@ -118,14 +119,14 @@ namespace ReactiveDomain.Foundation.EventStore
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
-        public void Save(IEventSource aggregate, Action<IDictionary<string, object>> updateHeaders = null)
+        public void Save(IEventSource aggregate)
         {
             var commitHeaders = new Dictionary<string, object>
             {
                 {CommitIdHeader, Guid.NewGuid() /*commitId*/},
-                {AggregateClrTypeHeader, aggregate.GetType().AssemblyQualifiedName}
+                {AggregateClrTypeNameHeader, aggregate.GetType().AssemblyQualifiedName},
+                {AggregateClrTypeHeader, aggregate.GetType().Name}
             };
-            updateHeaders?.Invoke(commitHeaders);
 
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();

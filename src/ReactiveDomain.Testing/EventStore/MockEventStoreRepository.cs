@@ -108,16 +108,14 @@ namespace ReactiveDomain.Testing.EventStore
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName));
         }
 
-        public void Save(IEventSource aggregate, Action<IDictionary<string, object>> updateHeaders = null)
+        public void Save(IEventSource aggregate)
         {
             var commitHeaders = new Dictionary<string, object>
             {
                 {CommitIdHeader, Guid.NewGuid() /*commitId*/},
                 {AggregateClrTypeHeader, aggregate.GetType().AssemblyQualifiedName}
             };
-
-            updateHeaders?.Invoke(commitHeaders);
-
+            
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
             var categoryStreamName = _streamNameBuilder.GenerateForCategory(aggregate.GetType());
             var newEvents = aggregate.TakeEvents().ToList();

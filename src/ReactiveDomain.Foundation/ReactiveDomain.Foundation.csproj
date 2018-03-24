@@ -5,6 +5,11 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Testing\**" />
+    <EmbeddedResource Remove="Testing\**" />
+    <None Remove="Testing\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="Diagnostics\MonitoredCommandBus.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -25,7 +30,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Diagnostics\" />
-    <Folder Include="Testing\" />
   </ItemGroup>
   <ItemGroup Condition="">
     <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net462'" />

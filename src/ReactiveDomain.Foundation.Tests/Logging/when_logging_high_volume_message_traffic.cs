@@ -47,7 +47,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
              _numberOfItemsLogged = 0;
              _catchupSubscriptionMsgs = 0;
 
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Subscriber, StreamNameBuilder);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);

@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Threading;
 using EventStore.ClientAPI;
+using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Util;
 
 namespace ReactiveDomain.Foundation.EventStore
 {
     public class StreamListener : IListener
     {
         protected readonly string ListenerName;
-        private readonly ICatchupStreamSubscriber _subscriptionTarget;
-
-
         private InMemoryBus _bus;
         IDisposable _subscription;
         private bool _started;
@@ -19,18 +18,24 @@ namespace ReactiveDomain.Foundation.EventStore
         private readonly object _startlock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
-        
+        private readonly IEventStoreConnection _eventStoreConnection;
 
         /// <summary>
         /// For listening to generic streams 
         /// </summary>
         /// <param name="listenerName"></param>
-        /// <param name="subscriptionTarget">The target to subscribe to</param>
+        /// <param name="eventStoreConnection">The event store to subscribe to</param>
+        /// <param name="streamNameBuilder">The source for correct stream names based on aggregates and events</param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
-        public StreamListener(string listenerName, ICatchupStreamSubscriber subscriptionTarget, IStreamNameBuilder streamNameBuilder, string busName = null)
+        public StreamListener(
+                string listenerName, 
+                IEventStoreConnection eventStoreConnection, 
+                IStreamNameBuilder streamNameBuilder, 
+                string busName = null)
         {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
-            _subscriptionTarget = subscriptionTarget;
+            _eventStoreConnection = eventStoreConnection ?? throw new ArgumentNullException(nameof(eventStoreConnection));
+
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
         }
@@ -72,11 +77,11 @@ namespace ReactiveDomain.Foundation.EventStore
             {
                 if (_started)
                     throw new InvalidOperationException("Listener already started.");
-                if (!_subscriptionTarget.ValidateStreamName(streamName))
+                if (!ValidateStreamName(streamName))
                     throw new ArgumentException("Stream not found.", streamName);
 
                 _subscription =
-                    _subscriptionTarget.SubscribeToStreamFrom(
+                    SubscribeToStreamFrom(
                         streamName,
                         checkpoint ?? StreamCheckpoint.StreamStart,
                         true,
@@ -90,6 +95,33 @@ namespace ReactiveDomain.Foundation.EventStore
             }
             if (blockUntilLive)
                 _liveLock.Wait(millisecondsTimeout);
+        }
+        public IDisposable SubscribeToStreamFrom(
+            string stream,
+            int? lastCheckpoint,
+            bool resolveLinkTos,
+            Action<Message> eventAppeared,
+            Action liveProcessingStarted = null,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null,
+            int readBatchSize = 500)
+        {
+            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false, true);
+            var sub = _eventStoreConnection.SubscribeToStreamFrom(
+                stream,
+                lastCheckpoint,
+                settings,
+                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
+                _ => liveProcessingStarted?.Invoke(),
+                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
+                userCredentials);
+
+            return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
+        }
+
+        public bool ValidateStreamName(string streamName)
+        {
+            return _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, 0, 1, false).Result != null;
         }
         protected virtual void GotEvent(Message @event)
         {

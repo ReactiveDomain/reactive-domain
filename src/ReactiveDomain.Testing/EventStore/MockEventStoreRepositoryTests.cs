@@ -140,7 +140,7 @@ namespace ReactiveDomain.Testing
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(1);
-                repo.Save(tAgg, h => { });
+                repo.Save(tAgg);
 
                 Assert.Equal(4, q.Messages.Count);
             }
