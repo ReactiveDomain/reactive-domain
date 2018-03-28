@@ -20,20 +20,22 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             var msg = new TestDomainEvent(TestCorrelationId, Guid.Empty);
             TestMessageId = msg.MsgId;
             Bus.Publish(msg);
+            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 1,msg:"Setup Failure: TestDomainEvent");
 
             var msg2 = new ParentTestDomainEvent(TestCorrelationId,TestMessageId);
             ParentMsgId = msg2.MsgId;
             Bus.Publish(msg2);
-            Assert.Equal(BusMessages.Count, 2);
+            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 2,msg:"Setup Failure: ParentTestDomainEvent");
 
             var msg3 = new ChildTestDomainEvent(TestCorrelationId,ParentMsgId);
             ChildMsgId = msg3.MsgId;
             Bus.Publish(msg3);
-            Assert.Equal(BusMessages.Count, 3);
+            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 3,msg:"Setup Failure: ChildTestDomainEvent");
 
             var msg4 = new GrandChildTestDomainEvent(TestCorrelationId, ChildMsgId);
             Bus.Publish(msg4);
-            Assert.Equal(BusMessages.Count, 4);
+            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 4,msg:"Setup Failure: GrandChildTestDomainEvent");
+
             //used in multiple_message_handle_invocations_are_correct test 
         }
 
