@@ -15,9 +15,9 @@ namespace ReactiveDomain.Messaging.Bus
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
-        public int MessageCount { get { return _queue.Count; } }
-        public string Name { get { return _queueStats.Name; } }
-
+        public int MessageCount => _queue.Count;
+        public string Name => _queueStats.Name;
+        public bool Idle => _starving;
         private readonly IHandle<Message> _consumer;
 
         private readonly bool _watchSlowMsg;
@@ -33,7 +33,8 @@ namespace ReactiveDomain.Messaging.Bus
         // monitoring
         private readonly QueueMonitor _queueMonitor;
         private readonly QueueStatsCollector _queueStats;
-        
+        private volatile bool _starving;
+
         public QueuedHandlerSleep(IHandle<Message> consumer,
                                   string name,
                                   bool watchSlowMsg = true,
@@ -71,7 +72,7 @@ namespace ReactiveDomain.Messaging.Bus
         {
             _stop = true;
             if (!_stopped.Wait(_threadStopWaitTimeout))
-                throw new TimeoutException(string.Format("Unable to stop thread '{0}'.", Name));
+                throw new TimeoutException($"Unable to stop thread '{Name}'.");
         }
 
         public void RequestStop()
@@ -93,6 +94,7 @@ namespace ReactiveDomain.Messaging.Bus
                 {
                     if (!_queue.TryDequeue(out msg))
                     {
+                        _starving = true;
                         _queueStats.EnterIdle();
 
                         iterationsCount += 1;
@@ -107,6 +109,7 @@ namespace ReactiveDomain.Messaging.Bus
                     }
                     else
                     {
+                        _starving = false;
                         _queueStats.EnterBusy();
 
                         var cnt = _queue.Count;
@@ -138,7 +141,7 @@ namespace ReactiveDomain.Messaging.Bus
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex,String.Format("Error while processing message {0} in queued handler '{1}'.", msg, Name), ex);
+                    Log.ErrorException(ex, $"Error while processing message {msg} in queued handler '{Name}'.", ex);
                 }
             }
             _queueStats.Stop();

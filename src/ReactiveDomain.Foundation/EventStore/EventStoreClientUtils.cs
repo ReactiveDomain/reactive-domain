@@ -11,12 +11,18 @@ using ILogger = ReactiveDomain.Messaging.Logging.ILogger;
 
 namespace ReactiveDomain.Foundation.EventStore
 {
+    /// <summary>
+    /// WARNING: DO NOT use this to generate any normalized stream name. See StreamNameBuilder to create standard stream name instead.
+    /// RD-33 will address this and will move some of the relevant methods to StreamNameBuilder.
+    /// </summary>
+    [Obsolete]
     public static class EventStoreClientUtils
     {
         // TODO: Move these to GreylockOptions.
         public const string EventStoreInstallationFolder = "EventStoreInstallationFolder";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string CategoryStreamNamePrefix = @"$ce";
+        public const string EventTypeStreamNamePrefix = @"$et";
         public const string LocalhostIp = "127.0.0.1";
         public const string EventStoreLogin = "admin";
         public const string DefaultEventStorePassword = "changeit";
@@ -47,19 +53,24 @@ namespace ReactiveDomain.Foundation.EventStore
             return new UserCredentials(EventStoreLogin, password);
         }
 
-        public static string ToCamelCase(this string str)
+        public static string ToCamelCaseInvariant(this string str)
         {
-            return Char.ToLower(str[0]) + str.Substring(1);
+            return Char.ToLowerInvariant(str[0]) + str.Substring(1);
         }
 
         public static string GetEventStreamNameByAggregatedId(this Type domainType, Guid aggregateId)
         {
-            return $"{domainType.Name.ToCamelCase()}-{aggregateId.ToString("N")}";
+            return $"{domainType.Name.ToCamelCaseInvariant()}-{aggregateId.ToString("N")}";
         }
 
         public static string GetCategoryEventStreamName(this Type typeofAggregateDomainObject)
         {
-            return $"{CategoryStreamNamePrefix}-{typeofAggregateDomainObject.Name.ToCamelCase()}";
+            return $"{CategoryStreamNamePrefix}-{typeofAggregateDomainObject.Name.ToCamelCaseInvariant()}";
+        }
+
+        public static string GetEventTypeStreamName(this string typeOfEvent)
+        {
+            return $"{CategoryStreamNamePrefix}-{typeOfEvent.ToCamelCaseInvariant()}";
         }
 
         public static DomainEvent DeserializedDomainEvent(this ResolvedEvent @event)

@@ -21,7 +21,7 @@ namespace ReactiveDomain.Messaging.Testing
         public long LastEventHandled;
 
         public List<int> MsgOrder;
-        public  List<int> EventOrder;
+        public List<int> EventOrder;
         private readonly Object _lockThis = new Object();
 
         public CountedMessageSubscriber(IGeneralBus bus) : base(bus)

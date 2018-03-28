@@ -6,21 +6,20 @@ using Newtonsoft.Json;
 
 namespace ReactiveDomain.Foundation.EventStore
 {
+    [Obsolete]
     public class AggregateFileRepository : IRepository
     {
         private readonly DirectoryInfo _folder;
         private readonly Func<Type, Guid, string> _aggregateIdToFileName;
         private readonly Func<Type, Guid, string> _fileFullName;
         private static readonly JsonSerializerSettings SerializerSettings;
-
-
-
+        
         static AggregateFileRepository()
         {
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
         public AggregateFileRepository(DirectoryInfo repository)
-            : this(repository, (t, g) => $"{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g.ToString("N")}.agg")
+            : this(repository, (t, g) => $"{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}.agg")
         {
         }
 
@@ -95,18 +94,13 @@ namespace ReactiveDomain.Foundation.EventStore
 
         }
 
-        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate)
         {
             var jsonText = JsonConvert.SerializeObject(aggregate, SerializerSettings);
             File.WriteAllText(
                 _fileFullName(aggregate.GetType(), aggregate.Id),
                 jsonText
                 );
-        }
-
-        public IListener GetListener(string name, bool sync = false)
-        {
-            throw new NotImplementedException();
         }
     }
 }

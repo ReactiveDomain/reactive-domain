@@ -1,9 +1,9 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
+using System;
 using Xunit;
 using Xunit.Sdk;
 
@@ -42,12 +42,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         protected override void When()
         {
-
-            _listener = Repo.GetListener(Logging.FullStreamName);
-            _listener.EventStream.Subscribe<Message>(this);
-
-            _listener.Start(Logging.FullStreamName);
-
             _countedEventCount = 0;
             _testDomainEventCount = 0;
 
@@ -56,7 +50,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -70,7 +64,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
 
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -83,7 +77,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
             }
 
-            var tstCmd = new TestCommands.TestCommand3(
+            var tstCmd = new TestCommands.Command3(
                         Guid.NewGuid(),
                         null);
 
@@ -98,7 +92,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void mixed_messages_are_not_logged()
         {
             // all events published, commands fired
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
 
             // Wait  for last CountedEvent to be "heard" from logger/repo - times out because events not logged
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -136,8 +130,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
-            if (msg is TestCommands.TestCommand3) _testCommandCount++;
+            if (msg is TestCommands.Command2) _multiFireCount++;
+            if (msg is TestCommands.Command3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
             if (msg is TestDomainEvent) _testDomainEventCount++;
         }

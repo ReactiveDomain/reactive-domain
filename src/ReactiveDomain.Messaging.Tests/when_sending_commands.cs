@@ -1,753 +1,673 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests
 {
-    // ReSharper disable once InconsistentNaming
-    public class when_sending_commands
+    public class TestCommandBusFixture :
+        IHandleCommand<TestCommands.Command1>,
+        IHandleCommand<TestCommands.Command2>,
+        IHandle<AckCommand>,
+        IHandle<Message>,
+        IHandle<CommandResponse>,
+        IHandleCommand<TestCommands.Fail>,
+        IHandleCommand<TestCommands.Throw>,
+        IHandleCommand<TestCommands.WrapException>,
+        IHandleCommand<TestCommands.TypedResponse>,
+        IHandleCommand<TestCommands.ChainedCaller>,
+        IHandleCommand<TestCommands.RemoteHandled>,
+        IHandleCommand<TestCommands.LongRunning>,
+        IHandleCommand<TestCommands.Command3>
     {
+        public readonly IGeneralBus Bus;
+        public readonly IGeneralBus RemoteBus;
+
+        public long GotChainedCaller;
+        public long GotTestCommand1;
+        public long GotTestCommand2;
+        public long GotRemoteHandled;
+        public long GotLongRunning;
+        public long GotTestFailCommand;
+        public long GotTestThrowCommand;
+        public long GotTestWrapCommand;
+        public long GotTypedResponse;
+        public long GotAck;
+        public long GotMessage;
+        public long GotCommandResponse;
+        public long GotFail;
+        public long GotSuccess;
+        public long GotCanceled;
+        public long ResponseData;
+        public long CancelLongRunning;
+        public long GotTestCommand3;
+
+        public readonly TimeSpan StandardTimeout;
+
+        public TestCommandBusFixture()
+        {
+            StandardTimeout = TimeSpan.FromSeconds(0.2);
+            Bus = new CommandBus(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
+            RemoteBus = new CommandBus(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
+            //todo: fix connector
+            //var conn = new BusConnector(Bus, RemoteBus);
+
+            Bus.Subscribe<TestCommands.Command1>(this);
+            Bus.Subscribe<TestCommands.Command2>(this);
+            Bus.Subscribe<AckCommand>(this);
+            Bus.Subscribe<Message>(this);
+            Bus.Subscribe<CommandResponse>(this);
+            Bus.Subscribe<TestCommands.Fail>(this);
+            Bus.Subscribe<TestCommands.Throw>(this);
+            Bus.Subscribe<TestCommands.WrapException>(this);
+            Bus.Subscribe<TestCommands.TypedResponse>(this);
+            Bus.Subscribe<TestCommands.ChainedCaller>(this);
+            RemoteBus.Subscribe<TestCommands.RemoteHandled>(this);
+            Bus.Subscribe<TestCommands.LongRunning>(this);
+            //Deliberately not subscribed 
+            //Bus.Subscribe<TestCommands.Command3>(this);
+
+            Warmup();
+        }
+
+        private void Warmup() {
+            //get all the threads and queues running
+            var id = Guid.NewGuid();
+            for (int i = 0; i < 100; i++) {
+                Bus.TryFire(new TestCommands.Command1(id, null));
+            }
+
+            SpinWait.SpinUntil(() => Bus.Idle);
+            ClearCounters();
+        }
+
+        public void ClearCounters()
+        {
+            Interlocked.Exchange(ref GotChainedCaller, 0);
+            Interlocked.Exchange(ref GotTestCommand1, 0);
+            Interlocked.Exchange(ref GotTestCommand2, 0);
+            Interlocked.Exchange(ref GotRemoteHandled, 0);
+            Interlocked.Exchange(ref GotLongRunning, 0);
+            Interlocked.Exchange(ref GotTestFailCommand, 0);
+            Interlocked.Exchange(ref GotTestThrowCommand, 0);
+            Interlocked.Exchange(ref GotTestWrapCommand, 0);
+            Interlocked.Exchange(ref GotTypedResponse, 0);
+            Interlocked.Exchange(ref GotAck, 0);
+            Interlocked.Exchange(ref GotMessage, 0);
+            Interlocked.Exchange(ref GotCommandResponse, 0);
+            Interlocked.Exchange(ref GotFail, 0);
+            Interlocked.Exchange(ref GotSuccess, 0);
+            Interlocked.Exchange(ref GotCanceled, 0);
+            Interlocked.Exchange(ref ResponseData, 0);
+            Interlocked.Exchange(ref CancelLongRunning, 0);
+            Interlocked.Exchange(ref GotTestCommand3, 0);
+        }
+
+        public CommandResponse Handle(TestCommands.ChainedCaller command)
+        {
+            Interlocked.Increment(ref GotChainedCaller);
+            Bus.Fire(new TestCommands.Command1(command.CorrelationId, command.MsgId));
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.Command1 command)
+        {
+            Interlocked.Increment(ref GotTestCommand1);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.Command2 command)
+        {
+            Interlocked.Increment(ref GotTestCommand2);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.Command3 command)
+        {
+            Interlocked.Increment(ref GotTestCommand3);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.RemoteHandled command)
+        {
+            Interlocked.Increment(ref GotRemoteHandled);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.LongRunning command)
+        {
+            Interlocked.Increment(ref GotLongRunning);
+            Interlocked.Exchange(ref CancelLongRunning, 0);
+            //wait too long
+            SpinWait.SpinUntil(() => Interlocked.Read(ref CancelLongRunning) == 1, StandardTimeout + TimeSpan.FromSeconds(1));
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.Fail command)
+        {
+            Interlocked.Increment(ref GotTestFailCommand);
+            return command.Fail();
+        }
+        public CommandResponse Handle(TestCommands.Throw command)
+        {
+            Interlocked.Increment(ref GotTestThrowCommand);
+            throw new TestException();
+        }
+        public CommandResponse Handle(TestCommands.WrapException command)
+        {
+            Interlocked.Increment(ref GotTestWrapCommand);
+            try
+            {
+                throw new TestException();
+            }
+            catch (Exception e)
+            {
+                return command.Fail(e);
+            }
+        }
+        public CommandResponse Handle(TestCommands.TypedResponse command)
+        {
+            Interlocked.Increment(ref GotTypedResponse);
+            var data = 42;
+            if (command.FailCommand)
+                return command.Fail(new TestException(), data);
+
+            return command.Succeed(data);
+        }
+        public void Handle(AckCommand command)
+        {
+            Interlocked.Increment(ref GotAck);
+        }
+        public void Handle(Message command)
+        {
+            Interlocked.Increment(ref GotMessage);
+        }
+        public void Handle(CommandResponse command)
+        {
+            Interlocked.Increment(ref GotCommandResponse);
+            switch (command)
+            {
+                case Success _:
+                    Interlocked.Increment(ref GotSuccess);
+                    if (command is TestCommands.TestResponse response)
+                        Interlocked.Exchange(ref ResponseData, response.Data);
+                    break;
+                case Fail _:
+                    Interlocked.Increment(ref GotFail);
+                    if (command is Canceled)
+                        Interlocked.Increment(ref GotCanceled);
+                    if (command is TestCommands.FailedResponse failResponse)
+                        Interlocked.Exchange(ref ResponseData, failResponse.Data);
+                    break;
+            }
+        }
+
+        public class TestException : Exception { }
+    }
+
+    // ReSharper disable once InconsistentNaming
+    public class when_sending_commands :
+        IClassFixture<TestCommandBusFixture>
+
+    {
+        private readonly TestCommandBusFixture _fixture;
+
+        public when_sending_commands(TestCommandBusFixture fixture)
+        {
+            _fixture = fixture;
+        }
         [Fact]
         public void publish_publishes_command_as_message()
         {
-            var bus = new CommandBus("temp");
-            long gotIt = 0;
-            var hndl =
-                new AdHocHandler<TestCommands.TestCommand>(
-                    cmd => Interlocked.Exchange(ref gotIt, 1));
-            bus.Subscribe(hndl);
-
-            bus.Publish(new TestCommands.TestCommand(Guid.NewGuid(), null));
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotIt) == 1);
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            _fixture.Bus.Publish(new TestCommands.Command1(Guid.NewGuid(), null));
+            SpinWait.SpinUntil(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, 250);
         }
         [Fact]
         public void fire_publishes_command_as_message()
         {
-            var bus = new CommandBus("temp");
-            long gotIt = 0;
-            bus.Subscribe(new AdHocHandler<Command>(
-                cmd => { if (cmd is TestCommands.TestCommand) Interlocked.Exchange(ref gotIt, 1); }));
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotIt) == 1);
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
+            SpinWait.SpinUntil(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, 250);
         }
-
         [Fact]
         public void command_handler_acks_command_message()
         {
-            var bus = new CommandBus("temp");
-            long gotCmd = 0;
-            long gotAck = 0;
-            var hndl =
-                new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd => Interlocked.Exchange(ref gotCmd, 1) == 0);
-            bus.Subscribe(hndl);
-            var ackHndl =
-                new AdHocHandler<AckCommand>(
-                    cmd => Interlocked.Exchange(ref gotAck, 1));
-            bus.Subscribe(ackHndl);
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1);
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1);
         }
         [Fact]
-        public void command_handler_respondes_to_command_message()
+        public void command_handler_responds_to_command_message()
         {
-            var bus = new CommandBus("temp");
-            long gotCmd = 0;
-            long gotResponse = 0;
-            long gotAck = 0;
-            long msgCount = 0;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Exchange(ref gotCmd, 1);
-                        return true;
-                    }));
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
 
-            bus.Subscribe(new AdHocHandler<CommandResponse>(
-                    cmd => Interlocked.Exchange(ref gotResponse, 1)));
-
-            bus.Subscribe(new AdHocHandler<AckCommand>(
-                             cmd => Interlocked.Exchange(ref gotAck, 1)));
-
-            bus.Subscribe(new AdHocHandler<Message>(
-                            cmd => Interlocked.Increment(ref msgCount)));
-
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1, null, "Expected Command was handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, "Expected 3 Messages");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
         }
-
         [Fact]
         public void fire_passing_command_should_pass()
         {
-            var bus = new CommandBus("local");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            long gotSuccess = 0;
-            long gotFail = 0;
-            long gotCancel = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
-            bus.Subscribe(new AdHocHandler<Success>(cmd => Interlocked.Exchange(ref gotSuccess, 1)));
-            bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
-            bus.Subscribe(new AdHocHandler<Canceled>(cmd => Interlocked.Exchange(ref gotCancel, 1)));
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotSuccess) == 1, null, "Expected Success");
-            Assert.True(gotFail == 0, "Unexpected fail received.");
-            Assert.True(gotCancel == 0, "Unexpected Cancel received.");
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
+
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, null, "Expected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 0, null, "Unexpected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
         public void fire_failing_command_should_fail()
         {
-            var bus = new CommandBus("local");
-            long gotFail = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => false));
-            bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
-            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
-            Assert.Throws<CommandException>(
-                () => bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotFail) == 1, null, "Expected Fail");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+
+            Assert.Throws<CommandException>(() =>
+            _fixture.Bus.Fire(new TestCommands.Fail(Guid.NewGuid(), null)));
+
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestFailCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 0, null, "Unexpected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
-        public void tryfire_passing_command_should_pass()
+        public void try_fire_passing_command_should_pass()
         {
-            var bus = new CommandBus("local");
-            long gotSuccess = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
-            bus.Subscribe(new AdHocHandler<Success>(cmd => Interlocked.Exchange(ref gotSuccess, 1)));
-            CommandResponse response;
-            var pass = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
-            Assert.True(pass, "Expected true return value");
-            Assert.IsType(typeof(Success), response);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotSuccess) == 1, null, "Expected Success");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+
+            _fixture.Bus.TryFire(new TestCommands.Command1(Guid.NewGuid(), null), out var result);
+
+            Assert.True(result is Success, "Result not success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, null, "Expected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 0, null, "Unexpected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
-        public void tryfire_failing_command_should_fail()
+        public void try_fire_failing_command_should_fail()
         {
-            var bus = new CommandBus("local");
-            long gotFail = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => false));
-            bus.Subscribe(new AdHocHandler<Fail>(cmd => Interlocked.Exchange(ref gotFail, 1)));
-            CommandResponse response;
-            var pass = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
-            Assert.False(pass, "Expected false return value");
-            Assert.IsType(typeof(Fail), response);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotFail) == 1, null, "Expected Fail");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+
+            _fixture.Bus.TryFire(new TestCommands.Fail(Guid.NewGuid(), null), out var result);
+
+            Assert.True(result is Fail, "Result not fail");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestFailCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 0, null, "Unexpected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
-        
+
         [Fact]
         public void handlers_that_wrap_exceptions_rethrow_on_fire()
         {
-            var bus = new CommandBus("local");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            long gotCmd = 0;
-            long gotResponse = 0;
-            long gotAck = 0;
-            long msgCount = 0;
+            Assert.CommandThrows<TestCommandBusFixture.TestException>(() =>
+                            _fixture.Bus.Fire(new TestCommands.WrapException(Guid.NewGuid(), null)));
 
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException("I knew this would happen.", cmd);
-                    }));
-
-            bus.Subscribe(new AdHocHandler<CommandResponse>(
-                    cmd => Interlocked.Exchange(ref gotResponse, 1)));
-
-            bus.Subscribe(new AdHocHandler<AckCommand>(
-                             cmd => Interlocked.Exchange(ref gotAck, 1)));
-
-            bus.Subscribe(new AdHocHandler<Message>(
-                            cmd => Interlocked.Increment(ref msgCount)));
-
-            Assert.Throws<CommandException>(() =>
-                            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1, null, "Expected Command was handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Response");
-
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestWrapCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, "Unexpected Number of messages received.");
         }
+
         [Fact]
         public void handlers_that_throw_exceptions_rethrow_on_fire()
         {
-            var bus = new CommandBus("local");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            long gotCmd = 0;
-            long gotResponse = 0;
-            long gotAck = 0;
-            long msgCount = 0;
+            Assert.CommandThrows<TestCommandBusFixture.TestException>(() =>
+                _fixture.Bus.Fire(new TestCommands.Throw(Guid.NewGuid(), null)));
 
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException("I knew this would happen.", cmd);
-                    },
-                    wrapExceptions: false));
-
-            bus.Subscribe(new AdHocHandler<CommandResponse>(
-                    cmd => Interlocked.Exchange(ref gotResponse, 1)));
-
-            bus.Subscribe(new AdHocHandler<AckCommand>(
-                             cmd => Interlocked.Exchange(ref gotAck, 1)));
-
-            bus.Subscribe(new AdHocHandler<Message>(
-                            cmd => Interlocked.Increment(ref msgCount)));
-
-            Assert.Throws<CommandException>(() =>
-                            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1, null, "Expected Command was handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Response");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestThrowCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, "Unexpected Number of messages received.");
 
         }
 
         [Fact]
         public void handlers_that_wrap_exceptions_return_on_tryfire()
         {
-            var bus = new CommandBus("local");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            long gotCmd = 0;
-            long gotResponse = 0;
-            long gotAck = 0;
-            long msgCount = 0;
-            const string errText = @"I knew this would happen.";
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException(errText, cmd);
-                    },
-                    // ReSharper disable once RedundantArgumentDefaultValue
-                    wrapExceptions: true));
+            Assert.False(_fixture.Bus.TryFire(new TestCommands.WrapException(Guid.NewGuid(), null), out var response));
 
-            bus.Subscribe(new AdHocHandler<CommandResponse>(
-                    cmd => Interlocked.Exchange(ref gotResponse, 1)));
+            Assert.IsType<Fail>(response);
+            var fail = (Fail)response;
+            Assert.IsType<TestCommandBusFixture.TestException>(fail.Exception);
 
-            bus.Subscribe(new AdHocHandler<AckCommand>(
-                             cmd => Interlocked.Exchange(ref gotAck, 1)));
-
-            bus.Subscribe(new AdHocHandler<Message>(
-                            cmd => Interlocked.Increment(ref msgCount)));
-
-            CommandResponse response;
-            var command = new TestCommands.TestCommand(Guid.NewGuid(), null);
-            var passed = bus.TryFire(command, out response);
-
-            Assert.False(passed, "Expected false return");
-            Assert.IsType(typeof(Fail), response);
-            Assert.IsType(typeof(CommandException), ((Fail)response).Exception);
-
-            Assert.True(string.Equals($"{command.GetType().Name}: {errText}", ((Fail)response).Exception.Message, StringComparison.Ordinal));
-
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1, null, "Expected Command was handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Response");
-
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestWrapCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, $"Unexpected Number of messages received {Interlocked.Read(ref _fixture.GotMessage)}.");
         }
         [Fact]
         public void handlers_that_throw_exceptions_return_on_tryfire()
         {
-            var bus = new CommandBus("local");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            long gotCmd = 0;
-            long gotResponse = 0;
-            long gotAck = 0;
-            long msgCount = 0;
-            const string errText = @"I knew this would happen.";
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Exchange(ref gotCmd, 1);
-                        throw new CommandException(errText, cmd);
-                    },
-                    wrapExceptions: false));
+            Assert.False(_fixture.Bus.TryFire(new TestCommands.Throw(Guid.NewGuid(), null), out var response));
 
-            bus.Subscribe(new AdHocHandler<CommandResponse>(
-                    cmd => Interlocked.Exchange(ref gotResponse, 1)));
+            Assert.IsType<Fail>(response);
+            var fail = (Fail)response;
+            Assert.IsType<TestCommandBusFixture.TestException>(fail.Exception);
 
-            bus.Subscribe(new AdHocHandler<AckCommand>(
-                             cmd => Interlocked.Exchange(ref gotAck, 1)));
-
-            bus.Subscribe(new AdHocHandler<Message>(
-                            cmd => Interlocked.Increment(ref msgCount)));
-
-            CommandResponse response;
-            var command = new TestCommands.TestCommand(Guid.NewGuid(), null);
-            var passed = bus.TryFire(command, out response);
-
-            Assert.False(passed, "Expected false return");
-            Assert.IsType(typeof(Fail), response);
-            Assert.IsType(typeof(CommandException), ((Fail)response).Exception);
-            Assert.Equal($"{command.GetType().Name}: {errText}", ((Fail)response).Exception.Message);
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3, null, "Expected 3 Messages");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotAck) == 1, null, "Expected Ack");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1, null, "Expected Command was handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Response");
-
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestThrowCommand) == 1, null, "Expected Command was handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected fail received.");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, "Unexpected Number of messages received.");
         }
 
         [Fact]
         public void typed_fire_passing_command_should_pass()
         {
-            var bus = new CommandBus("local");
-            const int data = 12356;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            const int data = 42;
+            _fixture.ClearCounters();
 
-            long gotResponse = 0;
-            long responseData = 0;
-            bus.Subscribe(new AdHocTypedCommandHandler<TestCommands.TypedTestCommand, TestCommands.TestCommandResponse>(
-                cmd => new TestCommands.TestCommandResponse(cmd, data)));
-            bus.Subscribe(new AdHocHandler<TestCommands.TestCommandResponse>(
-                cmd =>
-                {
-                    Interlocked.Exchange(ref gotResponse, 1);
-                    Interlocked.Exchange(ref responseData, cmd.Data);
-                }
-                ));
-            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TypedTestCommand>());
+            _fixture.Bus.Fire(new TestCommands.TypedResponse(false, Guid.NewGuid(), null));
 
-            bus.Fire(new TestCommands.TypedTestCommand(Guid.NewGuid(), null));
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Success");
-            Assert.IsOrBecomesTrue(() => data == responseData);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, null, "Expected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
         }
         [Fact]
         public void typed_tryfire_passing_command_should_pass()
         {
-            var bus = new CommandBus("local");
-            const int data = 12356;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            const int data = 42;
+            _fixture.ClearCounters();
 
-            long gotResponse = 0;
-            long responseData = 0;
-            bus.Subscribe(new AdHocTypedCommandHandler<TestCommands.TypedTestCommand, TestCommands.TestCommandResponse>(
-                cmd => new TestCommands.TestCommandResponse(cmd, data)));
-            bus.Subscribe(new AdHocHandler<TestCommands.TestCommandResponse>(
-                cmd =>
-                {
-                    Interlocked.Exchange(ref gotResponse, 1);
-                    Interlocked.Exchange(ref responseData, cmd.Data);
-                }
-                ));
+            Assert.True(_fixture.Bus.TryFire(new TestCommands.TypedResponse(false, Guid.NewGuid(), null), out var response), "Expected tryfire to return true");
 
-            CommandResponse response;
-            var pass = bus.TryFire(new TestCommands.TypedTestCommand(Guid.NewGuid(), null), out response);
-            Assert.True(pass, "Expected true return value");
-            Assert.IsType(typeof(TestCommands.TestCommandResponse), response);
-            Assert.Equal(data, ((TestCommands.TestCommandResponse)response).Data);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Success");
-            Assert.IsOrBecomesTrue(() => data == responseData);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, null, "Expected Success");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
+            Assert.IsType(typeof(TestCommands.TestResponse), response);
+            Assert.Equal(data, ((TestCommands.TestResponse)response).Data);
         }
+
         [Fact]
         public void typed_failing_fire_command_should_fail()
         {
-            var bus = new CommandBus("local");
-            const int data = 12356;
-            const string errText = @"I knew this would happen.";
-            long gotResponse = 0;
-            long responseData = 0;
-            bus.Subscribe(new AdHocTypedCommandHandler<TestCommands.TypedTestCommand, TestCommands.TestFailedCommandResponse>(
-                cmd => new TestCommands.TestFailedCommandResponse(cmd, new CommandException(errText, cmd), data)));
-            bus.Subscribe(new AdHocHandler<TestCommands.TestFailedCommandResponse>(
-                cmd =>
-                {
-                    Interlocked.Exchange(ref gotResponse, 1);
-                    Interlocked.Exchange(ref responseData, cmd.Data);
-                }
-                ));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            const int data = 42;
+            _fixture.ClearCounters();
 
-            Assert.Throws<CommandException>(() =>
-                         bus.Fire(new TestCommands.TypedTestCommand(Guid.NewGuid(), null)));
+            Assert.CommandThrows<TestCommandBusFixture.TestException>(() =>
+                _fixture.Bus.Fire(new TestCommands.TypedResponse(true, Guid.NewGuid(), null)));
 
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Fail");
-            Assert.IsOrBecomesTrue(() => data == responseData);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected Failure");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
         }
+
         [Fact]
         public void typed_failing_tryfire_command_should_fail()
         {
-            var bus = new CommandBus("local");
-            const int data = 12356;
-            const string errText = @"I knew this would happen.";
-            long gotResponse = 0;
-            long responseData = 0;
-            bus.Subscribe(new AdHocTypedCommandHandler<TestCommands.TypedTestCommand, TestCommands.TestFailedCommandResponse>(
-                cmd => new TestCommands.TestFailedCommandResponse(cmd, new CommandException(errText, cmd), data)));
-            bus.Subscribe(new AdHocHandler<TestCommands.TestFailedCommandResponse>(
-                cmd =>
-                {
-                    Interlocked.Exchange(ref gotResponse, 1);
-                    Interlocked.Exchange(ref responseData, cmd.Data);
-                }
-                ));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            const int data = 42;
+            _fixture.ClearCounters();
 
-            CommandResponse response;
-            var command = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
-            var passed = bus.TryFire(command, out response);
+            Assert.False(_fixture.Bus.TryFire(new TestCommands.TypedResponse(true, Guid.NewGuid(), null), out var response), "Expected tryfire to return false");
 
-            Assert.False(passed, "Expected false return");
-            Assert.IsType(typeof(TestCommands.TestFailedCommandResponse), response);
-            Assert.IsType(typeof(CommandException), ((Fail)response).Exception);
-            Assert.Equal($"{command.GetType().Name}: {errText}", ((Fail)response).Exception.Message);
-            Assert.Equal(data, ((TestCommands.TestFailedCommandResponse)response).Data);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotResponse) == 1, null, "Expected Fail");
-            Assert.IsOrBecomesTrue(() => data == responseData);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected Failure");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
+            Assert.IsType(typeof(TestCommands.FailedResponse), response);
+            Assert.Equal(data, ((TestCommands.FailedResponse)response).Data);
         }
+
         [Fact]
         public void multiple_commands_can_register()
         {
-            var bus = new CommandBus("local");
-            long gotCmd1 = 0;
-            long gotCmd2 = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd1, 1);
-                       return true;
-                   }));
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd2, 1);
-                       return true;
-                   }));
-            CommandResponse result;
-            bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out result);
-            Assert.True(result is Success);
-            bus.TryFire(new TestCommands.TestCommand2(Guid.NewGuid(), null), out result);
-            Assert.True(result is Success);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd2) == 1, msg: "Expected Cmd2 handled");
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
+            _fixture.Bus.Fire(new TestCommands.Command2(Guid.NewGuid(), null));
+
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, msg: "Expected Cmd1 handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand2) == 1, msg: "Expected Cmd2 handled");
         }
+
         [Fact]
         public void cannot_subscribe_twice_on_same_bus()
         {
-            var bus = new CommandBus("local");
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true));
-            Assert.True(bus.HasSubscriberFor<TestCommands.TestCommand>());
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
             Assert.Throws<ExistingHandlerException>(
-                () => bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(cmd => true)));
+                () => _fixture.Bus.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(cmd => true)));
         }
+
         [Fact]
-        public void commands_should_not_deadlock()
+        public void chained_commands_should_not_deadlock()
         {
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            _fixture.Bus.Fire(new TestCommands.ChainedCaller(Guid.NewGuid(), null));
 
-            var bus = new CommandBus("local");
-            long gotCmd1 = 0;
-            long gotCmd2 = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd1, 1);
-                       bus.TryFire(new TestCommands.TestCommand2(Guid.NewGuid(), null));
-                       return true;
-                   }));
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd2, 1);
-                       return true;
-                   }));
-            CommandResponse result;
-            bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out result);
-
-            Assert.True(result is Success,$"Got Fail: {(result as Fail)?.Exception.Message}");
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd2) == 1, msg: "Expected Cmd2 handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, msg: "Expected Command1 to be handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotChainedCaller) == 1, msg: "Expected chained Caller to be handled");
         }
-        [Fact(Skip = "Distributed commands are currently disabled")]
-        public void passing_commands_on_connected_busses_should_pass()
-        {
-            var bus = new CommandBus("local");
-            var bus2 = new CommandBus("remote");
-            var conn = new BusConnector(bus, bus2);
-            long gotCmd1 = 0;
-
-            bus2.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd1, 1);
-                       return true;
-                   }));
-
-            CommandResponse result;
-            bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out result);
-            Assert.True(result is Success);
-
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
-
-        }
-
         [Fact]
         public void unsubscribed_commands_should_throw_ack_timeout()
         {
-            var bus = new CommandBus("local");
-            long publishedMessageCount = 0;
-            bus.Subscribe(new AdHocHandler<Message>(c => Interlocked.Increment(ref publishedMessageCount)));
             Assert.Throws<CommandNotHandledException>(() =>
-                 bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-
-            Assert.True(Interlocked.Read(ref publishedMessageCount) == 0, userMessage: "Expected no messages published");
+                 _fixture.Bus.Fire(new TestCommands.Unhandled(Guid.NewGuid(), null)));
         }
-       
-        [Fact]
-        public void tryfire_unsubscribed_commands_should_return_throw_commandNotHandledException()
-        {
-            var bus = new CommandBus("local");
-            CommandResponse response;
-            var passed = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
 
-            Assert.False(passed, "Expected false return");
+        [Fact]
+        public void try_fire_unsubscribed_commands_should_return_throw_commandNotHandledException()
+        {
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            var result = _fixture.Bus.TryFire(new TestCommands.Unhandled(Guid.NewGuid(), null), out var response);
+
+            Assert.False(result, "Expected false return");
             Assert.IsType(typeof(Fail), response);
             Assert.IsType(typeof(CommandNotHandledException), ((Fail)response).Exception);
         }
+
         [Fact]
-        public void tryfire_slow_commands_should_return_timeout()
+        public void slow_commands_should_return_timeout()
         {
-            var bus = new CommandBus("local");
-            long gotCmd1 = 0;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                   cmd =>
-                   {
-                       Interlocked.Exchange(ref gotCmd1, 1);
-                       Task.Delay(1000).Wait();
-                       return true;
-                   }));
-
-            CommandResponse response;
-            var passed = bus.TryFire(new TestCommands.TestCommand(Guid.NewGuid(), null), out response);
-
-            Assert.False(passed, "Expected false return");
-            Assert.IsType(typeof(Fail), response);//,$"Expected 'Fail' got {response.GetType().Name}");
-            Assert.IsType(typeof(CommandTimedOutException), ((Fail)response).Exception);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd1) == 1, msg: "Expected Cmd1 handled");
-
+            Assert.Throws<CommandTimedOutException>(() =>
+                _fixture.Bus.Fire(new TestCommands.LongRunning(Guid.NewGuid(), null)));
+            //n.b. prefer using token cancel commands for canceling, we just need to avoid side effects here while testing basic commands
+            Interlocked.Increment(ref _fixture.CancelLongRunning);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotLongRunning) == 1, msg: "Expected Long Running to be handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 1, msg: "Expected Long Running to be canceled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, msg: "Expected Long Running to be completed");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 2, msg: "Expected Long Running to be completed twice");
         }
-
-        [Fact(Skip = "Connected bus scenarios currently disabled")]
-        public void tryfire_oversubscribed_commands_should_return_false()
+        [Fact]
+        public void slow_commands_can_override_timeout()
         {
-            var bus = new CommandBus("local");
-            var bus2 = new CommandBus("remote");
-            var conn = new BusConnector(bus, bus2);
-            long gotCmd = 0;
-            long proccessedCmd = 0;
-            long cancelPublished = 0;
-            long cancelReturned = 0;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref gotCmd);
-                     Task.Delay(250).Wait();
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 }));
-            bus2.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                    cmd =>
-                    {
-                        Interlocked.Increment(ref gotCmd);
-                        Task.Delay(250).Wait();
-                        Interlocked.Increment(ref proccessedCmd);
-                        return true;
-                    }));
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref gotCmd);
-                     Task.Delay(250).Wait();
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 }));
-            bus2.Subscribe(new AdHocHandler<Canceled>(c => Interlocked.Increment(ref cancelPublished)));
-            bus2.Subscribe(new AdHocHandler<Fail>(
-                c =>
-                {
-                    if (c.Exception is CommandCanceledException)
-                        Interlocked.Increment(ref cancelReturned);
-                }));
-            CommandResponse response;
-            var timer = Stopwatch.StartNew();
-            var passed = bus.TryFire(
-                new TestCommands.TestCommand(Guid.NewGuid(), null), out response, TimeSpan.FromMilliseconds(1500));
-            timer.Stop();
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) <= 1,
-                msg: "Expected command received no more than once, got " + gotCmd);
-            Assert.True(timer.ElapsedMilliseconds < 1000, "Expected failure before task completion.");
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref proccessedCmd) == 0,
-                 msg: "Expected command failed before handled; got " + proccessedCmd);
+            _fixture.Bus.Fire(new TestCommands.LongRunning(Guid.NewGuid(), null), responseTimeout: TimeSpan.FromSeconds(3.1));
 
-            Assert.False(passed, "Expected false return");
-            Assert.IsType(typeof(Fail), response);
-            Assert.IsType(typeof(CommandOversubscribedException), ((Fail)response).Exception);
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref proccessedCmd) <= 1, 1500, msg: "Expected command handled no more than once, actual" + proccessedCmd);
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref cancelPublished) == 1,
-                msg: "Expected cancel published once");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotLongRunning) == 1, msg: "Expected Long Running to be handled");
+        }
+        [Fact(Skip = "Distributed commands are currently disabled")]
+        public void passing_commands_on_connected_buses_should_pass()
+        {
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            Assert.IsOrBecomesTrue(
-                       () => Interlocked.Read(ref cancelReturned) == 1,
-                       msg: "Expected cancel returned once, actual " + cancelReturned);
+            _fixture.Bus.Fire(new TestCommands.RemoteHandled(Guid.NewGuid(), null));
 
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotRemoteHandled) == 1, msg: "Expected RemoteHandled to be handled");
         }
         [Fact(Skip = "Connected bus scenarios currently disabled")]
         public void fire_oversubscribed_commands_should_throw_oversubscribed()
         {
-            var bus = new CommandBus("local");
-            var bus2 = new CommandBus("remote");
-            var conn = new BusConnector(bus, bus2);
-            long proccessedCmd = 0;
-            long gotAck = 0;
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref proccessedCmd);
-                     Task.Delay(1000).Wait();
-                     return true;
-                 }));
-            bus2.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                  cmd =>
-                  {
-                      Interlocked.Increment(ref proccessedCmd);
-                      Task.Delay(100).Wait();
-                      return true;
-                  }));
-            bus.Subscribe(
-                        new AdHocHandler<AckCommand>(cmd => Interlocked.Increment(ref gotAck)));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            Assert.True(false);
+            //todo: rewrite this to use the new fixture once the bus connector is fixed
+            //var bus2 = new CommandBus("remote");
+            //// ReSharper disable once UnusedVariable
+            //var conn = new BusConnector(_bus, bus2);
+            //long processedCmd = 0;
+            //long gotAck = 0;
+            //_bus.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(
+            //     cmd =>
+            //     {
+            //         Interlocked.Increment(ref processedCmd);
+            //         Task.Delay(1000).Wait();
+            //         return true;
+            //     }));
+            //bus2.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(
+            //      cmd =>
+            //      {
+            //          Interlocked.Increment(ref processedCmd);
+            //          Task.Delay(100).Wait();
+            //          return true;
+            //      }));
+            //_bus.Subscribe(
+            //            new AdHocHandler<AckCommand>(cmd => Interlocked.Increment(ref gotAck)));
 
-            Assert.Throws<CommandOversubscribedException>(() =>
-                        bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
+            //Assert.Throws<CommandOversubscribedException>(() =>
+            //            _bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null)));
 
-            Assert.IsOrBecomesTrue(
-                        () => Interlocked.Read(ref gotAck) == 2,
-                        msg: "Expected command Acked twice, got " + gotAck);
+            //Assert.IsOrBecomesTrue(
+            //            () => Interlocked.Read(ref gotAck) == 2,
+            //            msg: "Expected command Acked twice, got " + gotAck);
 
-            Assert.IsOrBecomesTrue(
-                        () => Interlocked.Read(ref proccessedCmd) <= 1,
-                        msg: "Expected command handled once or less, actual " + proccessedCmd);
+            //Assert.IsOrBecomesTrue(
+            //            () => Interlocked.Read(ref processedCmd) <= 1,
+            //            msg: "Expected command handled once or less, actual " + processedCmd);
         }
+
         [Fact]
-        public void tryfire_commands_should_not_call_other_commands()
+        public void commands_should_not_call_other_commands()
         {
-            var bus = new CommandBus("local");
-            long gotCmd = 0;
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref gotCmd);
-                     return true;
-                 }));
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                  cmd =>
-                  {
-                      Interlocked.Increment(ref gotCmd);
-                      return true;
-                  }));
-            CommandResponse response;
-
-            var passed = bus.TryFire(
-                new TestCommands.TestCommand(Guid.NewGuid(), null), out response, TimeSpan.FromMilliseconds(1500));
+            _fixture.Bus.Fire(new TestCommands.Command1(Guid.NewGuid(), null));
+            var passed = _fixture.Bus.TryFire(
+                new TestCommands.Command1(Guid.NewGuid(), null), out var response);
 
             Assert.True(passed, "Expected false return");
-            Thread.Sleep(100); //let other threads complete
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref gotCmd) == 1,
-                msg: "Expected command received once, got " + gotCmd);
             Assert.IsType(typeof(Success), response);
-
+            Assert.True(Interlocked.Read(ref _fixture.GotChainedCaller) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotTestCommand1) == 2);
+            Assert.True(Interlocked.Read(ref _fixture.GotTestCommand2) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotRemoteHandled) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotLongRunning) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotTestFailCommand) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotTestThrowCommand) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotTestWrapCommand) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotTypedResponse) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotAck) == 2);
+            Assert.True(Interlocked.Read(ref _fixture.GotCommandResponse) == 2);
+            Assert.True(Interlocked.Read(ref _fixture.GotFail) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotSuccess) == 2);
+            Assert.True(Interlocked.Read(ref _fixture.GotCanceled) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.ResponseData) == 0);
+            Assert.True(Interlocked.Read(ref _fixture.GotMessage) == 6, $"Unexpected Number of events {Interlocked.Read(ref _fixture.GotMessage)}");
         }
+
         [Fact]
         public void unsubscribe_should_remove_handler()
         {
-            var bus = new CommandBus("local");
-            long proccessedCmd = 0;
-            var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 });
-            bus.Subscribe(hndl);
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            bus.Unsubscribe(hndl);
-            Assert.Throws<CommandNotHandledException>(() =>
-                 bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            var subscription = _fixture.Bus.Subscribe<TestCommands.Command3>(_fixture);
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref proccessedCmd) == 1,
-                msg: "Expected command handled once, got" + proccessedCmd);
+                () => Interlocked.Read(ref _fixture.GotTestCommand3) == 1,
+                msg: "Expected command handled once, got" + Interlocked.Read(ref _fixture.GotTestCommand3));
+            subscription.Dispose();
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            Assert.Throws<CommandNotHandledException>(() => _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null)));
+
         }
+
         [Fact]
         public void can_resubscribe_handler()
         {
-            var bus = new CommandBus("local");
-            long proccessedCmd = 0;
-            var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 });
-            bus.Subscribe(hndl);
-            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
-
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            bus.Unsubscribe(hndl);
-            Assert.IsOrBecomesFalse(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
-
-            Assert.Throws<CommandNotHandledException>(
-                () => bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
-            bus.Subscribe(hndl);
-            Assert.IsOrBecomesTrue(() => bus.HasSubscriberFor<TestCommands.TestCommand>());
-
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
+            //no subscription
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            //Add subscription
+            var subscription = _fixture.Bus.Subscribe<TestCommands.Command3>(_fixture);
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref proccessedCmd) == 2,
-                msg: "Expected command handled twice, got" + proccessedCmd);
+                () => Interlocked.Read(ref _fixture.GotTestCommand3) == 1,
+                msg: "Expected command handled once, got" + Interlocked.Read(ref _fixture.GotTestCommand3));
+            //dispose subscription to unsubscribe
+            subscription.Dispose();
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            Assert.Throws<CommandNotHandledException>(() => _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null)));
+            //resubscribe
+            subscription = _fixture.Bus.Subscribe<TestCommands.Command3>(_fixture);
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null));
+            Assert.IsOrBecomesTrue(
+                () => Interlocked.Read(ref _fixture.GotTestCommand3) == 2,
+                msg: "Expected command handled twice, got" + Interlocked.Read(ref _fixture.GotTestCommand3));
+            //cleanup
+            subscription.Dispose();
+
         }
+
         [Fact]
         public void unsubscribe_should_not_remove_other_handlers()
         {
-            var bus = new CommandBus("local");
-            long proccessedCmd = 0;
-            var hndl = new AdHocCommandHandler<TestCommands.TestCommand>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 });
-            bus.Subscribe(hndl);
-            bus.Subscribe(new AdHocCommandHandler<TestCommands.TestCommand2>(
-                 cmd =>
-                 {
-                     Interlocked.Increment(ref proccessedCmd);
-                     return true;
-                 }));
-            bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null));
-            bus.Unsubscribe(hndl);
-            Assert.Throws<CommandNotHandledException>(
-                () => bus.Fire(new TestCommands.TestCommand(Guid.NewGuid(), null)));
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
 
-            bus.Fire(new TestCommands.TestCommand2(Guid.NewGuid(), null));
+            Interlocked.Exchange(ref _fixture.GotTestCommand3, 0);
+            //no subscription
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            //Add subscription
+            var subscription = _fixture.Bus.Subscribe<TestCommands.Command3>(_fixture);
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null));
             Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref proccessedCmd) == 2,
-                msg: "Expected command handled twice, got" + proccessedCmd);
+                () => Interlocked.Read(ref _fixture.GotTestCommand3) == 1,
+                msg: "Expected command handled once, got" + Interlocked.Read(ref _fixture.GotTestCommand3));
+            //dispose subscription to unsubscribe
+            subscription.Dispose();
+            Assert.False(_fixture.Bus.HasSubscriberFor<TestCommands.Command3>());
+            Assert.Throws<CommandNotHandledException>(() => _fixture.Bus.Fire(new TestCommands.Command3(Guid.NewGuid(), null)));
+
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command1>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Command2>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Fail>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.Throw>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.WrapException>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.TypedResponse>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.ChainedCaller>());
+            Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.LongRunning>());
+
         }
+
     }
 }

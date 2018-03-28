@@ -1,10 +1,9 @@
-﻿using System;
-using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
+using System;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -48,7 +47,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
              _numberOfItemsLogged = 0;
              _catchupSubscriptionMsgs = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -62,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
 
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -73,7 +72,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             }
 
-            var tstCmd = new TestCommands.TestCommand3(
+            var tstCmd = new TestCommands.Command3(
                         _correlationId,
                         null);
 
@@ -87,7 +86,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void all_messages_are_logged()
         {
             // Wait for last command to be queued
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(10));
+            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(10));
 
             // Wait  for last command to be "heard" from logger/repo
             Assert.IsOrBecomesTrue(() => 
@@ -138,9 +137,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2)
+            if (msg is TestCommands.Command2)
                 _commandFireCount++;
-            else if (msg is TestCommands.TestCommand3)
+            else if (msg is TestCommands.Command3)
                 _lastCommandCount++;
             else if(msg is CountedEvent)
                 _countedEventCount++;

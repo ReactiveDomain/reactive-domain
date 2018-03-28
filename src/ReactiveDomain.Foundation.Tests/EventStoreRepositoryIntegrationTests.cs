@@ -14,26 +14,29 @@ namespace ReactiveDomain.Foundation.Tests
     /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
     [Collection(nameof(EventStoreCollection))]
-    public class EventStoreRepositoryIntegrationTests 
+    public class EventStoreRepositoryIntegrationTests
     {
         private const string DomainPrefix = "UnitTest";
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
-       
+
+
         private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents)
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(numberOfEvents);
-            repository.Save(aggregateToSave, Guid.NewGuid(), d => { });
+            repository.Save(aggregateToSave);
             return aggregateToSave.Id;
         }
-        
+
         private readonly EventStoreRepository _repo;
         private readonly IEventStoreConnection _connection;
+        private readonly IStreamNameBuilder _streamNameBuilder;
 
         public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
         {
             _connection = fixture.Connection;
-            _repo = new EventStoreRepository(DomainPrefix, _connection);
+            _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
+            _repo = new EventStoreRepository(_streamNameBuilder, _connection);
         }
 
         [Fact]
@@ -42,7 +45,7 @@ namespace ReactiveDomain.Foundation.Tests
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
 
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId);
-            
+
             Assert.Equal(3000, retrieved.AppliedEventCount);
         }
 
@@ -85,7 +88,7 @@ namespace ReactiveDomain.Foundation.Tests
 
             var firstSaved = _repo.GetById<TestWoftamAggregate>(savedId);
             firstSaved.ProduceEvents(50);
-            _repo.Save(firstSaved, Guid.NewGuid(), d => { });
+            _repo.Save(firstSaved);
 
             var secondSaved = _repo.GetById<TestWoftamAggregate>(savedId);
             Assert.Equal(150, secondSaved.AppliedEventCount);
@@ -105,7 +108,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
             aggregateToSave.ProduceEvents(10);
-            _repo.Save(aggregateToSave, Guid.NewGuid(), d => { });
+            _repo.Save(aggregateToSave);
 
             Assert.Equal(0, ((IEventSource)aggregateToSave).TakeEvents().Count());
         }
@@ -141,40 +144,12 @@ namespace ReactiveDomain.Foundation.Tests
         public void ThrowsOnGetDeletedAggregate()
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
-            Func<Type, Guid, string> streamNameFormatter = (t, g) => string.Format($"{DomainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}");
-            var streamName = streamNameFormatter(typeof(TestWoftamAggregate), aggregateId);
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), aggregateId);
             _connection.DeleteStreamAsync(streamName, 10).Wait();
 
             // Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
             //Looks like an api change
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
-        }
-
-        [Fact]
-        public void SavesCommitHeadersOnEachEvent()
-        {
-            var commitId = Guid.NewGuid();
-            var aggregateToSave = new TestWoftamAggregate(Guid.NewGuid());
-            aggregateToSave.ProduceEvents(20);
-            _repo.Save(aggregateToSave, commitId, d =>
-            {
-                d.Add("CustomHeader1", "CustomValue1");
-                d.Add("CustomHeader2", "CustomValue2");
-            });
-
-            var read = _connection.ReadStreamEventsForwardAsync($"aggregate-{aggregateToSave.Id}", 1, 20, false).Result;
-            foreach (var serializedEvent in read.Events)
-            {
-                var parsedMetadata = JObject.Parse(Encoding.UTF8.GetString(serializedEvent.OriginalEvent.Metadata));
-                var deserializedCommitId = parsedMetadata.Property("CommitId").Value.ToObject<Guid>();
-                Assert.Equal(commitId, deserializedCommitId);
-
-                var deserializedCustomHeader1 = parsedMetadata.Property("CustomHeader1").Value.ToObject<string>();
-                Assert.Equal("CustomValue1", deserializedCustomHeader1);
-
-                var deserializedCustomHeader2 = parsedMetadata.Property("CustomHeader2").Value.ToObject<string>();
-                Assert.Equal("CustomValue2", deserializedCustomHeader2);
-            }
         }
     }
 }

@@ -183,12 +183,13 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             var cmdHandler = new TestCommandSubscriber(Bus);
 
             // this is just an example command - choice to fire this one was random
-            var cmd = new TestCommands.TestCommand2(
+            var cmd = new TestCommands.Command2(
                 Guid.NewGuid(),
                 null);
 
             Bus.Fire(cmd,
                 "exception message",
+                TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(

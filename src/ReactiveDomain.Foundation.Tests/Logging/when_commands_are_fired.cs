@@ -1,9 +1,9 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
+using System;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -44,7 +44,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -53,7 +53,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < MaxCountedCommands; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                     TimeSpan.FromSeconds(2));
 
             }
-            var tstCmd = new TestCommands.TestCommand3(
+            var tstCmd = new TestCommands.Command3(
                         Guid.NewGuid(),
                         null);
 
@@ -75,7 +75,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void all_commands_are_logged()
         {
             // Wait  for last command to be queued
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000);
             Assert.True(_multiFireCount == MaxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
@@ -87,8 +87,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
-            if (msg is TestCommands.TestCommand3) _testCommandCount++;
+            if (msg is TestCommands.Command2) _multiFireCount++;
+            if (msg is TestCommands.Command3) _testCommandCount++;
         }
     }
 }

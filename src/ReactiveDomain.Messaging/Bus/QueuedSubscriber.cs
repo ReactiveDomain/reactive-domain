@@ -12,11 +12,10 @@ namespace ReactiveDomain.Messaging.Bus
         private readonly IGeneralBus _generalBus;
         private readonly IGeneralBus _internalBus;
         protected object Last = null;
-        public bool Starving => _messageQueue.Starving;
+        public bool Starving => _messageQueue.Idle;
         protected QueuedSubscriber(IGeneralBus bus, bool idempotent = true)
         {
-            if (bus == null) throw new ArgumentNullException(nameof(bus));
-            _generalBus = bus;
+	        _generalBus = bus ?? throw new ArgumentNullException(nameof(bus));
             _internalBus = new CommandBus("SubscriptionBus");
 
             if (idempotent)

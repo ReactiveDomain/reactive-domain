@@ -1,9 +1,9 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
+using System;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -31,8 +31,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         protected override void When()
         {
-
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<DomainEvent>(this);
 
             _listener.Start(Logging.FullStreamName);

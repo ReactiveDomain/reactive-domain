@@ -4,8 +4,8 @@ using ReactiveDomain.Messaging.Bus;
 namespace ReactiveDomain.Messaging.Testing
 {
     public class TestCommandSubscriber :
-                IHandleCommand<TestCommands.TestCommand2>,
-                IHandleCommand<TestCommands.TestCommand3>
+                IHandleCommand<TestCommands.Command2>,
+                IHandleCommand<TestCommands.Command3>
     {
         public long TestCommand2Handled;
         public long TestCommand3Handled;
@@ -16,18 +16,18 @@ namespace ReactiveDomain.Messaging.Testing
         {
             _bus = bus;
             TestCommand2Handled = 0;
-            _bus.Subscribe<TestCommands.TestCommand2> (this);
-            _bus.Subscribe<TestCommands.TestCommand3>(this);
+            _bus.Subscribe<TestCommands.Command2> (this);
+            _bus.Subscribe<TestCommands.Command3>(this);
         }
               
 
-        public CommandResponse Handle(TestCommands.TestCommand2 command)
+        public CommandResponse Handle(TestCommands.Command2 command)
         {
             Interlocked.Increment(ref TestCommand2Handled);
             return command.Succeed();
         }
 
-        public CommandResponse Handle(TestCommands.TestCommand3 command)
+        public CommandResponse Handle(TestCommands.Command3 command)
         {
             Interlocked.Increment(ref TestCommand3Handled);
             return command.Succeed();

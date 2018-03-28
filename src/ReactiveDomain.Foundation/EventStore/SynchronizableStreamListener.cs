@@ -1,4 +1,5 @@
 using System.Threading;
+using EventStore.ClientAPI;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -12,10 +13,11 @@ namespace ReactiveDomain.Foundation.EventStore
 
         public SynchronizableStreamListener(
             string name,
-            ICatchupStreamSubscriber subscriptionTarget,
+            IEventStoreConnection connection,
+            IStreamNameBuilder streamNameBuilder,
             bool sync = false,
             string busName = null) :
-                base(name, subscriptionTarget, busName)
+                base(name, connection, streamNameBuilder, busName)
         {
 
             Sync = sync;
@@ -42,7 +44,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 SyncQueue.Start();
             base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
             if (waitUntilLive)
-                SpinWait.SpinUntil(() => SyncQueue.Starving, millisecondsTimeout);
+                SpinWait.SpinUntil(() => SyncQueue.Idle, millisecondsTimeout);
         }
 
         private bool _disposed;

@@ -9,7 +9,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
     // ReSharper disable once InconsistentNaming
     public class can_deal_with_unhandled_messages : when_using_counted_message_subscriber
     {
-        private int FirstTaskMax = 2000;
+        private int FirstTaskMax = 20;
         private int TimeoutInMs = 5000;
 
         private Task _t1;

@@ -12,10 +12,10 @@ namespace ReactiveDomain.Messaging.Testing
         public ConcurrentMessageQueue<DomainEvent> BusEvents => TestQueue.Events;
         public ConcurrentMessageQueue<Command> BusCommands => TestQueue.Commands;
 
-        protected CommandBusSpecification()
+        protected CommandBusSpecification(IGeneralBus bus = null)
         {
-            Bus = new CommandBus("Fixture Bus",slowMsgThreshold: TimeSpan.FromMilliseconds(500));
-            LocalBus = new CommandBus("Fixture LocalBus");
+            Bus = bus ?? new CommandBus("Fixture Bus", 3, false, TimeSpan.FromMilliseconds(5000), TimeSpan.FromMilliseconds(5000));
+            LocalBus = new CommandBus("Fixture LocalBus", 3, false, TimeSpan.FromMilliseconds(5000), TimeSpan.FromMilliseconds(5000));
             TestQueue = new TestQueue(Bus);
             try
             {
@@ -30,6 +30,6 @@ namespace ReactiveDomain.Messaging.Testing
         protected abstract void Given();
         protected abstract void When();
 
-        
+
     }
 }

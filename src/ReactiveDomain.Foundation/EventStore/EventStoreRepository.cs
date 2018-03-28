@@ -1,30 +1,27 @@
-﻿using System;
+﻿using EventStore.ClientAPI;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Foundation.EventStore
 {
-    public class EventStoreRepository : IRepository, ICatchupStreamSubscriber
+    public class EventStoreRepository : IRepository
     {
+        public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
+        public const string AggregateClrTypeNameHeader = "AggregateClrTypeNameHeader";
         public const string CommitIdHeader = "CommitId";
         private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
 
-        private readonly Func<Type, Guid, string> _aggregateIdToStreamName;
-
+        private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly IEventStoreConnection _eventStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
@@ -34,18 +31,11 @@ namespace ReactiveDomain.Foundation.EventStore
         }
 
         public EventStoreRepository(
-	        string domainPrefix,
-	        IEventStoreConnection eventStoreConnection)
-            : this(eventStoreConnection, (t, g) => string.Format($"{domainPrefix}.{char.ToLower(t.Name[0]) + t.Name.Substring(1)}-{g:N}"))
+            IStreamNameBuilder streamNameBuilder,
+            IEventStoreConnection eventStoreConnection)
         {
-        }
-
-        public EventStoreRepository(
-	        IEventStoreConnection eventStoreConnection,
-	        Func<Type, Guid, string> aggregateIdToStreamName)
-        {
+            _streamNameBuilder = streamNameBuilder;
             _eventStoreConnection = eventStoreConnection;
-            _aggregateIdToStreamName = aggregateIdToStreamName;
         }
 
         public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
@@ -77,7 +67,7 @@ namespace ReactiveDomain.Foundation.EventStore
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
-            var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
 
@@ -125,20 +115,20 @@ namespace ReactiveDomain.Foundation.EventStore
         public static object DeserializeEvent(byte[] metadata, byte[] data)
         {
             var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver() };
-            var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrTypeHeader).Value;
+            var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrQualifiedTypeHeader).Value; // todo: fallback to using type name optionnaly
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
-        public void Save(IEventSource aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
+        public void Save(IEventSource aggregate)
         {
             var commitHeaders = new Dictionary<string, object>
             {
-                {CommitIdHeader, commitId},
-                {AggregateClrTypeHeader, aggregate.GetType().AssemblyQualifiedName}
+                {CommitIdHeader, Guid.NewGuid() /*commitId*/},
+                {AggregateClrTypeNameHeader, aggregate.GetType().AssemblyQualifiedName},
+                {AggregateClrTypeHeader, aggregate.GetType().Name}
             };
-            updateHeaders(commitHeaders);
 
-            var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
+            var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.TakeEvents().ToList();
             var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
@@ -170,52 +160,14 @@ namespace ReactiveDomain.Foundation.EventStore
 
             var eventHeaders = new Dictionary<string, object>(headers)
             {
-                {
-                    EventClrTypeHeader, evnt.GetType().AssemblyQualifiedName
-                }
+                {EventClrTypeHeader, evnt.GetType().Name},
+                {EventClrQualifiedTypeHeader, evnt.GetType().AssemblyQualifiedName}
             };
             var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders, SerializerSettings));
             var typeName = evnt.GetType().Name;
 
             return new EventData(eventId, typeName, true, data, metadata);
         }
-
-        public IListener GetListener(string name, bool sync = false)
-        {
-            return new SynchronizableStreamListener(name, this, sync);
-        }
-        #region Implementation of ICatchupSteamSubscriber
-
-        public IDisposable SubscribeToStreamFrom(
-            string stream,
-            int? lastCheckpoint,
-            bool resolveLinkTos,
-            Action<Message> eventAppeared,
-            Action liveProcessingStarted = null,
-            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
-            int readBatchSize = 500)
-        {
-            
-            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false, true);
-            var sub = _eventStoreConnection.SubscribeToStreamFrom(
-                stream,
-                lastCheckpoint,
-                settings,
-                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
-                _ => liveProcessingStarted?.Invoke(),
-                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
-                userCredentials);
-
-            return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
-        }
-
-        public bool ValidateStreamName(string streamName)
-        {
-            return _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, 0, 1, false).Result != null;
-        }
-
-        #endregion
     }
     public class ContractResolver : DefaultContractResolver
     {
