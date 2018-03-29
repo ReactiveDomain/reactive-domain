@@ -1,16 +1,14 @@
-﻿using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Util;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+//using ReactiveDomain.EventStore;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Testing.EventStore
 {
@@ -43,7 +41,8 @@ namespace ReactiveDomain.Testing.EventStore
         {
             var listener = new AdHocHandler<Message>(eventAppeared);
             _eventSource.Subscribe<Message>(listener);
-            if (stream.StartsWith(EventStoreClientUtils.CategoryStreamNamePrefix)) //Category Stream
+            //HACK !!!
+            if (stream.StartsWith(@"$ce")) //Category Stream
             {
                 stream = stream.Split('-')[1];
                 foreach (var tupple in _history)

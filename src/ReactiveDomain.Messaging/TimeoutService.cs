@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
 {

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
-using EventStore.ClientAPI;
-using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Foundation.Testing;
 using ReactiveDomain.Testing;
@@ -29,7 +26,7 @@ namespace ReactiveDomain.Foundation.Tests
         }
 
         private readonly EventStoreRepository _repo;
-        private readonly IEventStoreConnection _connection;
+        private readonly IStreamStoreConnection _connection;
         private readonly IStreamNameBuilder _streamNameBuilder;
 
         public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
@@ -145,7 +142,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), aggregateId);
-            _connection.DeleteStreamAsync(streamName, 10).Wait();
+            _connection.DeleteStreamAsync(new StreamName(streamName), 10).Wait();
 
             // Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
             //Looks like an api change

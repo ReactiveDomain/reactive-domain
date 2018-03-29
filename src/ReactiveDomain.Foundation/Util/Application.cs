@@ -1,11 +1,9 @@
-﻿
-// ReSharper disable MemberCanBePrivate.Global
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
+using ReactiveDomain.Logging;
+
 
 namespace ReactiveDomain.Foundation.Util
 {
@@ -14,7 +12,7 @@ namespace ReactiveDomain.Foundation.Util
         Success = 0,
         Error = 1
     }
-
+    // ReSharper disable MemberCanBePrivate.Global
     public class Application
     {
         public const string AdditionalCommitChecks = "ADDITIONAL_COMMIT_CHECKS";

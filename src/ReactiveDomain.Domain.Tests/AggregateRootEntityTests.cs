@@ -1,5 +1,4 @@
 ﻿using System;
-using EventStore.ClientAPI;
 using Xunit;
 
 namespace ReactiveDomain.Domain.Tests

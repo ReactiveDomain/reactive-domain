@@ -12,8 +12,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using EventStore.ClientAPI;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging.Testing;
 
@@ -9,9 +8,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     // ReSharper disable once InconsistentNaming
     public abstract class with_message_logging_enabled :CommandBusSpecification
     {
-        protected readonly IEventStoreConnection Connection;
+        protected readonly IStreamStoreConnection Connection;
 
-        protected with_message_logging_enabled(IEventStoreConnection connection)
+        protected with_message_logging_enabled(IStreamStoreConnection connection)
         {
             Connection = connection;
         }

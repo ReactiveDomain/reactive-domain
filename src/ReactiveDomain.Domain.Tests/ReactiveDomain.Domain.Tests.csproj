@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports"/>
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
     <AssemblyName>ReactiveDomain.Domain.Tests</AssemblyName>
@@ -8,6 +8,20 @@
     <Authors>Yves Reynhout;Christopher Condron</Authors>
     <Description>This package contains the tests for the core types to use when building an event sourced model in C#.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Example\**" />
+    <EmbeddedResource Remove="Example\**" />
+    <None Remove="Example\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="CommandEnvelopeTests.cs" />
+    <Compile Remove="CommandHandlerBuilderTests.cs" />
+    <Compile Remove="CommandHandlerModuleTests.cs" />
+    <Compile Remove="CommandHandlerTests.cs" />
+    <Compile Remove="Testing\ScenarioAssertions.cs" />
+    <Compile Remove="Testing\ScenarioRunner.cs" />
+    <Compile Remove="TypedCommandEnvelopeTests.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture.Idioms" Version="4.0.0-rc1" />
     <PackageReference Include="CompareNetObjects" Version="3.9.0" />
@@ -25,5 +39,8 @@
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Testing\" />
   </ItemGroup>
 </Project>

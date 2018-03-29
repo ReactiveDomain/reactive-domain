@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Foundation.EventStore
 {
@@ -18,7 +16,7 @@ namespace ReactiveDomain.Foundation.EventStore
         private readonly object _startlock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
-        private readonly IEventStoreConnection _eventStoreConnection;
+        private readonly IStreamStoreConnection _eventStoreConnection;
 
         /// <summary>
         /// For listening to generic streams 
@@ -29,7 +27,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
         public StreamListener(
                 string listenerName, 
-                IEventStoreConnection eventStoreConnection, 
+                IStreamStoreConnection eventStoreConnection, 
                 IStreamNameBuilder streamNameBuilder, 
                 string busName = null)
         {
@@ -83,7 +81,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 _subscription =
                     SubscribeToStreamFrom(
                         streamName,
-                        checkpoint ?? StreamCheckpoint.StreamStart,
+                        checkpoint ?? 0,// StreamCheckpoint.StreamStart,
                         true,
                         eventAppeared: GotEvent,
                         liveProcessingStarted: () =>
@@ -111,7 +109,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 stream,
                 lastCheckpoint,
                 settings,
-                (subscription, resolvedEvent) => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
+                (subscription, resolvedEvent) =>  eventAppeared(resolvedEvent.DeserializeEvent() as Message),
                 _ => liveProcessingStarted?.Invoke(),
                 (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
                 userCredentials);

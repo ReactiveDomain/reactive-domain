@@ -1,6 +1,4 @@
-﻿using EventStore.ClientAPI;
-using EventStore.ClientAPI.Exceptions;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;

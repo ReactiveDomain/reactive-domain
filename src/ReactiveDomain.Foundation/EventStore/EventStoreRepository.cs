@@ -1,5 +1,4 @@
-﻿using EventStore.ClientAPI;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -22,7 +21,7 @@ namespace ReactiveDomain.Foundation.EventStore
         private const int ReadPageSize = 500;
 
         private readonly IStreamNameBuilder _streamNameBuilder;
-        private readonly IEventStoreConnection _eventStoreConnection;
+        private readonly IStreamStoreConnection _eventStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
         static EventStoreRepository()
@@ -32,7 +31,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
         public EventStoreRepository(
             IStreamNameBuilder streamNameBuilder,
-            IEventStoreConnection eventStoreConnection)
+            IStreamStoreConnection eventStoreConnection)
         {
             _streamNameBuilder = streamNameBuilder;
             _eventStoreConnection = eventStoreConnection;
@@ -135,7 +134,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
             if (eventsToSave.Count < WritePageSize)
             {
-                _eventStoreConnection.AppendToStreamAsync(streamName, expectedVersion, eventsToSave).Wait();
+                _eventStoreConnection.AppendToStreamAsync(streamName, expectedVersion, eventsToSave.ToArray()).Wait();
             }
             else
             {

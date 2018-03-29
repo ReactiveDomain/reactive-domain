@@ -12,12 +12,13 @@
     <PackageReference Include="Docker.DotNet" Version="3.125.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
     <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0.23" Condition="'$(TargetFramework)'=='netstandard2.0'" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="WindowsBase" />

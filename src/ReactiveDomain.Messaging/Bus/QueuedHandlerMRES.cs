@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
-using ReactiveDomain.Messaging.Concurrent;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {

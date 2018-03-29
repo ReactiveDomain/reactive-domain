@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using EventStore.ClientAPI;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -184,7 +183,7 @@ namespace ReactiveDomain.Domain.Tests
         private Task DeleteStream(string stream)
         {
             return _fixture.Connection.DeleteStreamAsync(
-                stream,
+                new StreamName(stream),
                 ExpectedVersion.Any);
         }
 

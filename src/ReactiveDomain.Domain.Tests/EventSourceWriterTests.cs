@@ -2,8 +2,6 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -483,7 +481,7 @@ namespace ReactiveDomain.Domain.Tests
         private Task<DeleteResult> DeleteStream(string stream)
         {
             return _fixture.Connection.DeleteStreamAsync(
-                stream,
+                new StreamName(stream),
                 ExpectedVersion.Any);
         }
 

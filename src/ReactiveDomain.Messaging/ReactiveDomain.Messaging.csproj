@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports"/>
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.5.0-preview1-25914-04" Condition="'$(TargetFramework)'=='netstandard2.0'"/>
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.5.0-preview1-25914-04" Condition="'$(TargetFramework)'=='netstandard2.0'" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
   </ItemGroup>
 </Project>
