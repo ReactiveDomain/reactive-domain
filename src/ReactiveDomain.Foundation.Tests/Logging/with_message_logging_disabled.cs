@@ -17,12 +17,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         //protected member Logging class that inherits from QueuedSubscriber
         protected EventStoreMessageLogger Logging;
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-        protected EventStoreRepository Repo;
+        protected StreamStoreRepository Repo;
         protected IStreamNameBuilder StreamNameBuilder;
         protected override void Given()
         {
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            Repo = new EventStoreRepository(StreamNameBuilder, Connection);
+            Repo = new StreamStoreRepository(StreamNameBuilder, Connection);
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,
                 Connection,

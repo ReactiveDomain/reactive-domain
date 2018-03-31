@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ReactiveDomain
 {
     /// <summary>Represents a previously written event</summary>
@@ -30,25 +25,31 @@ namespace ReactiveDomain
         /// <summary>
         /// A datetime representing when this event was created in the system
         /// </summary>
-        public DateTime Created;
+        public readonly DateTime Created;
         /// <summary>
         /// A long representing the milliseconds since the epoch when the was created in the system
         /// </summary>
-        public long CreatedEpoch;
+        public readonly long CreatedEpoch;
 
-        //internal RecordedEvent(EventRecord systemRecord)
-        //{
-        //    this.EventStreamId = systemRecord.EventStreamId;
-        //    this.EventId = new Guid(systemRecord.EventId);
-        //    this.EventNumber = systemRecord.EventNumber;
-        //    this.EventType = systemRecord.EventType;
-        //    if (systemRecord.Created.HasValue)
-        //        this.Created = DateTime.FromBinary(systemRecord.Created.Value);
-        //    if (systemRecord.CreatedEpoch.HasValue)
-        //        this.CreatedEpoch = systemRecord.CreatedEpoch.Value;
-        //    this.Data = systemRecord.Data ?? EventStore.ClientAPI.Internal.Empty.ByteArray;
-        //    this.Metadata = systemRecord.Metadata ?? EventStore.ClientAPI.Internal.Empty.ByteArray;
-        //    this.IsJson = systemRecord.DataContentType == 1;
-        //}
+        public RecordedEvent(
+                    string eventStreamId, 
+                    Guid eventId, 
+                    long eventNumber, 
+                    string eventType, 
+                    byte[] data, 
+                    byte[] metadata, 
+                    bool isJson, 
+                    DateTime created, 
+                    long createdEpoch) {
+            EventStreamId = eventStreamId;
+            EventId = eventId;
+            EventNumber = eventNumber;
+            EventType = eventType;
+            Data = data;
+            Metadata = metadata;
+            IsJson = isJson;
+            Created = created;
+            CreatedEpoch = createdEpoch;
+        }
     }
 }

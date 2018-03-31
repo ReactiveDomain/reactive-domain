@@ -6,7 +6,7 @@ using ReactiveDomain.Messaging.Messages;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable NotAccessedField.Global
-namespace ReactiveDomain.Foundation.Testing
+namespace ReactiveDomain.Testing
 {
     public class TestAggregateMessages
     {

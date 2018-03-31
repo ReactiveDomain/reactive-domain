@@ -9,12 +9,12 @@ using Xunit;
 
 namespace ReactiveDomain.Domain.Tests
 {
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class EventSourceReaderTests
     {
-        private readonly EmbeddedEventStoreFixture _fixture;
+        private readonly StreamStoreConnectionFixture _fixture;
 
-        public EventSourceReaderTests(EmbeddedEventStoreFixture fixture)
+        public EventSourceReaderTests(StreamStoreConnectionFixture fixture)
         {
             _fixture = fixture;
         }

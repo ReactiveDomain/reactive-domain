@@ -37,28 +37,32 @@ namespace ReactiveDomain.Foundation.EventStore
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
         }
+
         /// <summary>
         /// Category Stream Listener
         /// i.e. $ce-[AggregateType]
         /// </summary>
-        /// <typeparam name="TAggregate"></typeparam>
+        /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
+        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(_streamNameBuilder.GenerateForCategory(typeof(TAggregate)), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.GenerateForCategory(typeof(TAggregate)), checkpoint, blockUntilLive, timeout);
         }
+
         /// <summary>
         /// Aggregate Stream listener
         /// i.e. [AggregateType]-[id]
         /// </summary>
-        /// <typeparam name="TAggregate"></typeparam>
+        /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
         /// <param name="id"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource
+        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource
         {
-            Start(_streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), checkpoint, blockUntilLive, millisecondsTimeout);
+            Start(_streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), checkpoint, blockUntilLive, timeout);
         }
 
         /// <summary>
@@ -68,7 +72,8 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="streamName"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000)
+        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000)
         {
             _liveLock.Reset();
             lock (_startlock)
@@ -92,7 +97,7 @@ namespace ReactiveDomain.Foundation.EventStore
                 _started = true;
             }
             if (blockUntilLive)
-                _liveLock.Wait(millisecondsTimeout);
+                _liveLock.Wait(timeout);
         }
         public IDisposable SubscribeToStreamFrom(
             string stream,
@@ -104,7 +109,7 @@ namespace ReactiveDomain.Foundation.EventStore
             UserCredentials userCredentials = null,
             int readBatchSize = 500)
         {
-            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false, true);
+            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false);
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
@@ -114,12 +119,12 @@ namespace ReactiveDomain.Foundation.EventStore
                 (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
                 userCredentials);
 
-            return new SubscriptionDisposer(() => { sub.Stop(); return Unit.Default; });
+            return new Disposer(() => { sub.Stop(); return Unit.Default; });
         }
 
         public bool ValidateStreamName(string streamName)
         {
-            return _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, 0, 1, false).Result != null;
+            return _eventStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
         }
         protected virtual void GotEvent(Message @event)
         {
@@ -127,7 +132,7 @@ namespace ReactiveDomain.Foundation.EventStore
         }
         #region Implementation of IDisposable
 
-        private bool _disposed = false;
+        private bool _disposed;
         public void Dispose()
         {
             Dispose(true);

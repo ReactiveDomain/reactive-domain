@@ -3,7 +3,7 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Messages;
 
-namespace ReactiveDomain.Foundation.Testing
+namespace ReactiveDomain.Testing
 {
     public class TestWoftamAggregateCreated: Message, ICorrelatedMessage
     {

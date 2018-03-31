@@ -68,7 +68,7 @@ namespace ReactiveDomain.Messaging.Bus
             var handleWrapper = new CommandHandler<T>(this, handler);
             _handleWrappers.Add(typeof(T), handleWrapper);
             Subscribe(handleWrapper);
-            return new SubscriptionDisposer(() => { Unsubscribe(handler); return Unit.Default; });
+            return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
         }
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command
         {

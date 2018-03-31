@@ -1,11 +1,9 @@
 ﻿using System;
+using System.Threading;
 
 namespace ReactiveDomain {
     public class StreamEventsSlice {
-        /// <summary>
-        /// The <see cref="T:EventStore.ClientAPI.SliceReadStatus" /> representing the status of this read attempt.
-        /// </summary>
-        public readonly SliceReadStatus Status;
+       
         /// <summary>The name of the stream to read.</summary>
         public readonly string Stream;
         /// <summary>
@@ -17,7 +15,7 @@ namespace ReactiveDomain {
         /// <summary>
         /// The events read represented as <see cref="T:EventStore.ClientAPI.ResolvedEvent" />.
         /// </summary>
-        public readonly ResolvedEvent[] Events;
+        public readonly RecordedEvent[] Events;
         /// <summary>The next event number that can be read.</summary>
         public readonly long NextEventNumber;
         /// <summary>The last event number in the stream.</summary>
@@ -26,13 +24,12 @@ namespace ReactiveDomain {
         /// A boolean representing whether or not this is the end of the stream.
         /// </summary>
         public readonly bool IsEndOfStream;
-
+        
         internal StreamEventsSlice(
-                    SliceReadStatus status, 
                     string stream, 
                     long fromEventNumber, 
                     ReadDirection readDirection, 
-                    ResolvedEvent[] events, 
+                    RecordedEvent[] events, 
                     long nextEventNumber, 
                     long lastEventNumber, 
                     bool isEndOfStream) {
@@ -40,16 +37,26 @@ namespace ReactiveDomain {
             if (string.IsNullOrWhiteSpace(stream)) {
                 throw new ArgumentNullException(nameof(stream), "Stream cannot be null, empty or whitespace");
             }
-
-            Status = status;
             Stream = stream;
             FromEventNumber = fromEventNumber;
             ReadDirection = readDirection;
-            Events = events ??  new ResolvedEvent[0];
-            
+            Events = events ??  new RecordedEvent[0];
             NextEventNumber = nextEventNumber;
             LastEventNumber = lastEventNumber;
             IsEndOfStream = isEndOfStream;
+        }
+    }
+
+    public class StreamNotFoundSlice : StreamEventsSlice
+    {
+        public StreamNotFoundSlice(string stream) 
+                    :base(stream, 0, 0, null, 0, 0, true){
+        }
+    }
+    public class StreamDeletedSlice : StreamEventsSlice
+    {
+        public StreamDeletedSlice(string stream) 
+            :base(stream, 0, 0, null, 0, 0, true){
         }
     }
 }

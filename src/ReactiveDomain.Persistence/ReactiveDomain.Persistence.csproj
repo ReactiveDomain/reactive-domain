@@ -4,14 +4,12 @@
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net452|x64'">
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
-  </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net452'">
-    <Compile Remove="EventStore\*.cs" />
-  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
+    <PackageReference Include="EventStore.Client" Version="3.9.5" Condition="'$(TargetFramework)'=='net452'" />
+    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
+    <PackageReference Include="EventStore.Client.Embedded" Version="3.9.5" Condition="'$(TargetFramework)'=='net452'" />
     <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0.23" Condition="'$(TargetFramework)'=='netstandard2.0'" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />

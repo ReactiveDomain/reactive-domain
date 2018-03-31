@@ -25,7 +25,7 @@ namespace ReactiveDomain.Foundation.EventStore
             Enabled = enableLogging;
             _streamPrefix = logStreamPrefix;
             if (Enabled)
-                _eventStore?.ConnectAsync();
+                _eventStore?.Connect();
 
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<Message>(this);
@@ -58,13 +58,14 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
 
-            var ed = EventStoreRepository.ToEventData(message.MsgId, message, metadata);
+            var ed = StreamStoreRepository.ToEventData(message.MsgId, message, metadata);
             var data = new List<EventData> {ed};
 
            // int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
-            _eventStore.AppendToStreamAsync(
+            _eventStore.AppendToStream(
                 FullStreamName,
                 ExpectedVersion.Any,
+                null,
                 data.ToArray());
         }
 

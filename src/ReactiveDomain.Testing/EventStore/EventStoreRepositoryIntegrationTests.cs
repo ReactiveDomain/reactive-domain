@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Linq;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Foundation.Testing;
-using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests
+namespace ReactiveDomain.Testing
 {
     /// <summary>
     /// Integration tests for the GetEventStoreRepository. 
     /// </summary>
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class EventStoreRepositoryIntegrationTests
     {
         private const string DomainPrefix = "UnitTest";
@@ -25,15 +24,15 @@ namespace ReactiveDomain.Foundation.Tests
             return aggregateToSave.Id;
         }
 
-        private readonly EventStoreRepository _repo;
+        private readonly StreamStoreRepository _repo;
         private readonly IStreamStoreConnection _connection;
         private readonly IStreamNameBuilder _streamNameBuilder;
 
-        public EventStoreRepositoryIntegrationTests(EmbeddedEventStoreFixture fixture)
+        public EventStoreRepositoryIntegrationTests(StreamStoreConnectionFixture fixture)
         {
             _connection = fixture.Connection;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
-            _repo = new EventStoreRepository(_streamNameBuilder, _connection);
+            _repo = new StreamStoreRepository(_streamNameBuilder, _connection);
         }
 
         [Fact]
@@ -142,7 +141,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), aggregateId);
-            _connection.DeleteStreamAsync(new StreamName(streamName), 10).Wait();
+            _connection.DeleteStream(new StreamName(streamName), 10);
 
             // Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
             //Looks like an api change

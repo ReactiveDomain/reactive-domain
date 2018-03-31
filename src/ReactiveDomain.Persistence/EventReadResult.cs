@@ -3,12 +3,12 @@
 namespace ReactiveDomain
 {
     /// <summary>
-    /// A event read result is the result of a single event read operation to Event Store.
+    /// A event read result is the result of a single event read operation to The Stream Store.
     /// </summary>
     public class EventReadResult
     {
         /// <summary>
-        /// The <see cref="T:EventStore.ClientAPI.EventReadStatus" /> representing the status of this read attempt.
+        /// The <see cref="T:ReactiveDomain.EventReadStatus" /> representing the status of this read attempt.
         /// </summary>
         public readonly EventReadStatus Status;
         /// <summary>The name of the stream read.</summary>
@@ -18,17 +18,36 @@ namespace ReactiveDomain
         /// <summary>
         /// The event read represented as <see cref="T:EventStore.ClientAPI.ResolvedEvent" />.
         /// </summary>
-        public readonly ResolvedEvent? Event;
+        public readonly RecordedEvent Event;
 
-        internal EventReadResult(EventReadStatus status, string stream, long eventNumber, ResolvedEvent @event)
+        public EventReadResult( RecordedEvent @event)
         {
-            Ensure.NotNullOrEmpty(stream, nameof (stream));
+            Ensure.NotNull(@event, nameof(@event));
+            Status = EventReadStatus.Success;
+            Stream = @event.EventStreamId;
+            EventNumber = @event.EventNumber;
+            Event = @event;
+        }
+
+        public EventReadResult(EventReadStatus status) {
             Status = status;
-            Stream = stream;
-            EventNumber = eventNumber;
-            Event = status == EventReadStatus.Success ? @event : new ResolvedEvent?();
         }
     }
+
+    public class EventNotFoundResult : EventReadResult{
+        public EventNotFoundResult():base(EventReadStatus.NotFound) {
+        }
+    }
+    public class EventNoStreamResult : EventReadResult{
+        public EventNoStreamResult():base(EventReadStatus.NoStream) {
+        }
+    }
+    public class EventStreamDeletedResult : EventReadResult{
+        public EventStreamDeletedResult():base(EventReadStatus.StreamDeleted) {
+        }
+    }
+    
+
     /// <summary>
     /// Enumeration representing the status of a single event read operation.
     /// </summary>

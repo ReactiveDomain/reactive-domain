@@ -9,7 +9,7 @@ namespace ReactiveDomain
   public class CatchUpSubscriptionSettings
   {
     /// <summary>Returns default settings.</summary>
-    public static readonly CatchUpSubscriptionSettings Default = new CatchUpSubscriptionSettings(10000, 500, false, true, string.Empty);
+    public static readonly CatchUpSubscriptionSettings Default = new CatchUpSubscriptionSettings(10000, 500, false, string.Empty);
     /// <summary>
     /// The maximum amount of events to cache when processing from a live subscription. Going above this value will drop the subscription.
     /// </summary>
@@ -20,8 +20,6 @@ namespace ReactiveDomain
     public readonly int ReadBatchSize;
     /// <summary>Enables verbose logging on the subscription.</summary>
     public readonly bool VerboseLogging;
-    /// <summary>Whether to resolve link events.</summary>
-    public readonly bool ResolveLinkTos;
     /// <summary>The name of the subscription.</summary>
     public readonly string SubscriptionName;
 
@@ -31,9 +29,8 @@ namespace ReactiveDomain
     /// <param name="maxLiveQueueSize">The maximum amount of events to buffer when processing from a live subscription. Going above this amount will drop the subscription.</param>
     /// <param name="readBatchSize">The number of events to read per batch when reading through history.</param>
     /// <param name="verboseLogging">Enables verbose logging on the subscription.</param>
-    /// <param name="resolveLinkTos">Whether to resolve link events.</param>
     /// <param name="subscriptionName">The name of the subscription.</param>
-    public CatchUpSubscriptionSettings(int maxLiveQueueSize, int readBatchSize, bool verboseLogging, bool resolveLinkTos, string subscriptionName = "")
+    public CatchUpSubscriptionSettings(int maxLiveQueueSize, int readBatchSize, bool verboseLogging, string subscriptionName = "")
     {
       Ensure.Positive(readBatchSize, nameof (readBatchSize));
       Ensure.Positive(maxLiveQueueSize, nameof (maxLiveQueueSize));
@@ -43,7 +40,6 @@ namespace ReactiveDomain
       MaxLiveQueueSize = maxLiveQueueSize;
       ReadBatchSize = readBatchSize;
       VerboseLogging = verboseLogging;
-      ResolveLinkTos = resolveLinkTos;
       SubscriptionName = subscriptionName;
     }
   }

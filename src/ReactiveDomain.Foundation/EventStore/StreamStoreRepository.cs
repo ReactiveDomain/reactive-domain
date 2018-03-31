@@ -8,61 +8,50 @@ using System.Reflection;
 using System.Text;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Foundation.EventStore
-{
-    public class EventStoreRepository : IRepository
-    {
+namespace ReactiveDomain.Foundation.EventStore {
+    public class StreamStoreRepository : IRepository {
         public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public const string EventClrTypeHeader = "EventClrTypeName";
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
         public const string AggregateClrTypeNameHeader = "AggregateClrTypeNameHeader";
         public const string CommitIdHeader = "CommitId";
-        private const int WritePageSize = 500;
         private const int ReadPageSize = 500;
 
         private readonly IStreamNameBuilder _streamNameBuilder;
-        private readonly IStreamStoreConnection _eventStoreConnection;
+        private readonly IStreamStoreConnection _streamStoreConnection;
         private static readonly JsonSerializerSettings SerializerSettings;
 
-        static EventStoreRepository()
-        {
+        static StreamStoreRepository() {
             SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         }
 
-        public EventStoreRepository(
+        public StreamStoreRepository(
             IStreamNameBuilder streamNameBuilder,
-            IStreamStoreConnection eventStoreConnection)
-        {
+            IStreamStoreConnection eventStoreConnection) {
             _streamNameBuilder = streamNameBuilder;
-            _eventStoreConnection = eventStoreConnection;
+            _streamStoreConnection = eventStoreConnection;
         }
 
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
-        {
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
             return TryGetById(id, int.MaxValue, out aggregate);
         }
 
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
-        {
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
             return GetById<TAggregate>(id, int.MaxValue);
         }
 
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource
-        {
-            try
-            {
+        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource {
+            try {
                 aggregate = GetById<TAggregate>(id, version);
                 return true;
             }
-            catch (Exception)
-            {
+            catch (Exception) {
                 aggregate = null;
                 return false;
             }
         }
 
-        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
-        {
+        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource {
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
@@ -73,26 +62,24 @@ namespace ReactiveDomain.Foundation.EventStore
             long sliceStart = 0;
             StreamEventsSlice currentSlice;
             var appliedEventCount = 0;
-            do
-            {
+            do {
                 long sliceCount = sliceStart + ReadPageSize <= version
                                     ? ReadPageSize
                                     : version - sliceStart;
-                //todo: why does this need an int with v 4.0 of eventstore?
-                currentSlice = _eventStoreConnection.ReadStreamEventsForwardAsync(streamName, sliceStart, (int)sliceCount, false).Result;
 
-                if (currentSlice.Status == SliceReadStatus.StreamNotFound)
+                currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, (int)sliceCount);
+
+                if (currentSlice is StreamNotFoundSlice)
                     throw new AggregateNotFoundException(id, typeof(TAggregate));
 
-                if (currentSlice.Status == SliceReadStatus.StreamDeleted)
+                if (currentSlice is StreamDeletedSlice)
                     throw new AggregateDeletedException(id, typeof(TAggregate));
 
                 sliceStart = currentSlice.NextEventNumber;
 
-                foreach (var evnt in currentSlice.Events)
-                {
+                foreach (var @event in currentSlice.Events) {
                     appliedEventCount++;
-                    aggregate.RestoreFromEvent(DeserializeEvent(evnt.OriginalEvent.Metadata, evnt.OriginalEvent.Data));
+                    aggregate.RestoreFromEvent(DeserializeEvent(@event.Metadata, @event.Data));
                 }
 
             } while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
@@ -106,20 +93,17 @@ namespace ReactiveDomain.Foundation.EventStore
 
         }
 
-        private static TAggregate ConstructAggregate<TAggregate>()
-        {
+        private static TAggregate ConstructAggregate<TAggregate>() {
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        public static object DeserializeEvent(byte[] metadata, byte[] data)
-        {
+        public static object DeserializeEvent(byte[] metadata, byte[] data) {
             var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver() };
             var eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property(EventClrQualifiedTypeHeader).Value; // todo: fallback to using type name optionnaly
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), Type.GetType((string)eventClrTypeName), settings);
         }
 
-        public void Save(IEventSource aggregate)
-        {
+        public void Save(IEventSource aggregate) {
             var commitHeaders = new Dictionary<string, object>
             {
                 {CommitIdHeader, Guid.NewGuid() /*commitId*/},
@@ -132,29 +116,13 @@ namespace ReactiveDomain.Foundation.EventStore
             var expectedVersion = aggregate.ExpectedVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
-            if (eventsToSave.Count < WritePageSize)
-            {
-                _eventStoreConnection.AppendToStreamAsync(streamName, expectedVersion, eventsToSave.ToArray()).Wait();
-            }
-            else
-            {
-                var transaction = _eventStoreConnection.StartTransactionAsync(streamName, expectedVersion).Result;
+            //n.b. write batching moved into Connection wrapper for eventstore
+            _streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave.ToArray());
 
-                var position = 0;
-                while (position < eventsToSave.Count)
-                {
-                    var pageEvents = eventsToSave.Skip(position).Take(WritePageSize);
-                    transaction.WriteAsync(pageEvents).Wait();
-                    position += WritePageSize;
-                }
-
-                transaction.CommitAsync().Wait();
-            }
             //aggregate.ClearUncommittedEvents();
         }
 
-        public static EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers)
-        {
+        public static EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers) {
             var data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(evnt, SerializerSettings));
 
             var eventHeaders = new Dictionary<string, object>(headers)
@@ -168,19 +136,15 @@ namespace ReactiveDomain.Foundation.EventStore
             return new EventData(eventId, typeName, true, data, metadata);
         }
     }
-    public class ContractResolver : DefaultContractResolver
-    {
-        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-        {
+    public class ContractResolver : DefaultContractResolver {
+        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization) {
             var property = base.CreateProperty(member, memberSerialization);
             property.Writable = CanSetMemberValue(member, true);
             return property;
         }
 
-        public static bool CanSetMemberValue(MemberInfo member, bool nonPublic)
-        {
-            switch (member.MemberType)
-            {
+        public static bool CanSetMemberValue(MemberInfo member, bool nonPublic) {
+            switch (member.MemberType) {
                 case MemberTypes.Field:
                     var fieldInfo = (FieldInfo)member;
 

@@ -94,9 +94,9 @@ namespace ReactiveDomain
                 }
             });
         }
-        public static object DeserializeEvent(this ResolvedEvent @event)
+        public static object DeserializeEvent(this RecordedEvent @event)
         {
-            return @event.Event.Metadata.DeserializeEvent(@event.Event.Data);
+            return @event.Metadata.DeserializeEvent(@event.Data);
         }
 
         //TODO: needs a real home and to link up with the deserializer

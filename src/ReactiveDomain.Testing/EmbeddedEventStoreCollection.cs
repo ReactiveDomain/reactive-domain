@@ -1,4 +1,0 @@
-namespace ReactiveDomain.Testing
-{
-    
-}

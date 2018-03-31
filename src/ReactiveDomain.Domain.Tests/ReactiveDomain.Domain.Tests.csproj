@@ -18,6 +18,14 @@
     <Compile Remove="CommandHandlerBuilderTests.cs" />
     <Compile Remove="CommandHandlerModuleTests.cs" />
     <Compile Remove="CommandHandlerTests.cs" />
+    <Compile Remove="EventSourceChangesetTranslator.cs" />
+    <Compile Remove="EventSourceReaderConfigurationTests.cs" />
+    <Compile Remove="EventSourceReaderTests.cs" />
+    <Compile Remove="EventSourceReaderWriterTests.cs" />
+    <Compile Remove="EventSourceWriterTests.cs" />
+    <Compile Remove="ReadResultTests.cs" />
+    <Compile Remove="SliceSizeTests.cs" />
+    <Compile Remove="StreamEventsSliceTranslator.cs" />
     <Compile Remove="Testing\ScenarioAssertions.cs" />
     <Compile Remove="Testing\ScenarioRunner.cs" />
     <Compile Remove="TypedCommandEnvelopeTests.cs" />
@@ -29,7 +37,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
     <PackageReference Include="PublicAPIGenerator" Version="6.5.0" />
-    <PackageReference Include="Docker.DotNet" Version="3.125.0" Condition="'$(TargetFramework)'=='netcoreapp2.0'" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />

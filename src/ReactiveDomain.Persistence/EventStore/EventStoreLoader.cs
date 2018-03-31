@@ -107,19 +107,19 @@ namespace ReactiveDomain.EventStore {
                 //.EnableVerboseLogging()
                 .Build();
 
-            Connection = new ESConnection(EventStoreConnection.Create(settings, tcpEndpoint, "Default Connection"));
+            Connection = new EventStoreConnectionWrapper(EventStoreConnection.Create(settings, tcpEndpoint, "Default Connection"));
 
             if (Connection == null) {
                 _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
                 TeardownEventStore(false);
                 return;
             }
-            Connection.ConnectAsync().Wait();
+            Connection.Connect();
             int retry = 8;
             int count = 0;
             do {
                 try {
-                    var r = Connection.ReadStreamEventsForwardAsync("by_event_type", 0, 1, false).Result;
+                    Connection.ReadStreamForward("by_event_type", 0, 1);
                     return;
                 }
                 catch {

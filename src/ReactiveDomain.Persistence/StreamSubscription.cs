@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ReactiveDomain
 {
-    public abstract class EventStoreSubscription : IDisposable
+    public abstract class StreamSubscription : IDisposable
     {
         /// <summary>
         /// The last commit position seen on the subscription (if this is
@@ -20,36 +16,30 @@ namespace ReactiveDomain
         public readonly long? LastEventNumber;
 
         /// <summary>True if this subscription is to all streams.</summary>
-        public bool IsSubscribedToAll
-        {
-            get
-            {
-                return this.StreamId == string.Empty;
-            }
-        }
+        public bool IsSubscribedToAll => StreamId == string.Empty;
 
         /// <summary>
         /// The name of the stream to which the subscription is subscribed.
         /// </summary>
         public string StreamId { get; }
 
-        internal EventStoreSubscription(string streamId, long lastCommitPosition, long? lastEventNumber)
+        internal StreamSubscription(string streamId, long lastCommitPosition, long? lastEventNumber)
         {
-            this.StreamId = streamId;
-            this.LastCommitPosition = lastCommitPosition;
-            this.LastEventNumber = lastEventNumber;
+            StreamId = streamId;
+            LastCommitPosition = lastCommitPosition;
+            LastEventNumber = lastEventNumber;
         }
 
         /// <summary>Unsubscribes from the stream.</summary>
         public void Dispose()
         {
-            this.Unsubscribe();
+            Unsubscribe();
         }
 
         /// <summary>Unsubscribes from the stream.</summary>
         public void Close()
         {
-            this.Unsubscribe();
+            Unsubscribe();
         }
 
         /// <summary>Unsubscribes from the stream</summary>
