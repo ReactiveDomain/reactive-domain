@@ -3,12 +3,7 @@ using ReactiveUI;
 
 namespace ReactiveDomain.UI.Tests.Helpers
 {
-#if XUNIT_VISIBILITY_INTERNAL
-    internal
-#else
-    public
-#endif
-    partial class Assert
+    public class Assert
     {
         /// <summary>
         /// Verifies that a ReactiveCommand can be executed.
