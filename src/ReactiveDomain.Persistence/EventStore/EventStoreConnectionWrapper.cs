@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using ReactiveDomain.Util;
 using ES = EventStore.ClientAPI;
 
@@ -91,40 +92,48 @@ namespace ReactiveDomain.EventStore {
                     throw new ArgumentOutOfRangeException(nameof(slice.Status), "Unknown read status returned from IEventStoreConnection ReadStreamEventsBackwardAsync");
             }
         }
-
-
-
-        public StreamSubscription SubscribeToStream(
+        
+        public IDisposable SubscribeToStream(
                                     string stream,
-                                    Action<StreamSubscription, RecordedEvent> eventAppeared,
-                                    Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                    Action<RecordedEvent> eventAppeared,
+                                    Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                     UserCredentials userCredentials = null) {
-            throw new NotImplementedException();
+            var sub = _conn.SubscribeToStreamAsync(
+                                stream,
+                                true,
+                                async (_,evt) => eventAppeared(evt.Event.ToRecordedEvent()),
+                                (_, reason,ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason,ex),
+                                userCredentials?.ToESCredentials()).Result;
+            return new Disposer(() => {
+                sub?.Unsubscribe();
+                sub?.Dispose();
+                return Unit.Default;
+            });
         }
 
-        public StreamCatchUpSubscription SubscribeToStreamFrom(
+        public IDisposable SubscribeToStreamFrom(
                                             string stream,
                                             long? lastCheckpoint,
                                             CatchUpSubscriptionSettings settings,
-                                            Action<CatchUpSubscription, RecordedEvent> eventAppeared,
-                                            Action<CatchUpSubscription> liveProcessingStarted = null,
-                                            Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                            Action< RecordedEvent> eventAppeared,
+                                            Action<Unit> liveProcessingStarted = null,
+                                            Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                             UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
 
-        public StreamSubscription SubscribeToAll(
-                                    Action<StreamSubscription, RecordedEvent> eventAppeared,
-                                    Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        public IDisposable SubscribeToAll(
+                                    Action< RecordedEvent> eventAppeared,
+                                    Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                     UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
-        public StreamSubscription SubscribeToAllFrom(
+        public IDisposable SubscribeToAllFrom(
                                     long? lastCheckpoint,
                                     CatchUpSubscriptionSettings settings,
-                                    Action<CatchUpSubscription, RecordedEvent> eventAppeared,
-                                    Action<CatchUpSubscription> liveProcessingStarted = null,
-                                    Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                    Action<RecordedEvent> eventAppeared,
+                                    Action<Unit> liveProcessingStarted = null,
+                                    Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                     UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
@@ -190,6 +199,7 @@ namespace ReactiveDomain.EventStore {
                 recordedEvent.Created,
                 recordedEvent.CreatedEpoch);
         }
+       
         public static ES.EventData[] ToESEventData(this EventData[] events) {
             Ensure.NotNull(events, nameof(events));
             var result = new ES.EventData[events.Length];

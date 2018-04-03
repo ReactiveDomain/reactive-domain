@@ -4,6 +4,11 @@
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="EventStoreCatchUpSubscription.cs" />
+    <Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
+    <Compile Remove="StreamSubscription.cs" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />

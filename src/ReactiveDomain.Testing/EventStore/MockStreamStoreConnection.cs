@@ -111,25 +111,25 @@ namespace ReactiveDomain.Testing.EventStore {
             throw new NotImplementedException();
         }
 
-        public StreamSubscription SubscribeToStream(string stream, Action<StreamSubscription, ReactiveDomain.RecordedEvent> eventAppeared, Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        public IDisposable SubscribeToStream(string stream, Action< ReactiveDomain.RecordedEvent> eventAppeared, Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                     UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
 
-        public StreamCatchUpSubscription SubscribeToStreamFrom(string stream, long? lastCheckpoint,
-                                                               CatchUpSubscriptionSettings settings, Action<CatchUpSubscription, ReactiveDomain.RecordedEvent> eventAppeared,
-                                                               Action<CatchUpSubscription> liveProcessingStarted = null, Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        public IDisposable SubscribeToStreamFrom(string stream, long? lastCheckpoint,
+                                                               CatchUpSubscriptionSettings settings, Action< ReactiveDomain.RecordedEvent> eventAppeared,
+                                                               Action<Unit> liveProcessingStarted = null, Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                                UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
 
-        public StreamSubscription SubscribeToAll(Action<StreamSubscription, ReactiveDomain.RecordedEvent> eventAppeared, Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        public IDisposable SubscribeToAll(Action< ReactiveDomain.RecordedEvent> eventAppeared, Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                  UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
 
-        public StreamSubscription SubscribeToAllFrom(long? lastCheckpoint, CatchUpSubscriptionSettings settings, Action<CatchUpSubscription, ReactiveDomain.RecordedEvent> eventAppeared,
-                                                     Action<CatchUpSubscription> liveProcessingStarted = null, Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        public IDisposable SubscribeToAllFrom(long? lastCheckpoint, CatchUpSubscriptionSettings settings, Action< ReactiveDomain.RecordedEvent> eventAppeared,
+                                                     Action<Unit> liveProcessingStarted = null, Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                      UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }

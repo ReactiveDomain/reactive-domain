@@ -1,4 +1,5 @@
 ﻿using System;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain {
     public interface IStreamStoreConnection : IDisposable {
@@ -72,10 +73,10 @@ namespace ReactiveDomain {
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
         /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> representing the subscription.</returns>
-        StreamSubscription SubscribeToStream(
+        IDisposable SubscribeToStream(
             string stream,
-            Action<StreamSubscription, RecordedEvent> eventAppeared,
-            Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+            Action<RecordedEvent> eventAppeared,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null);
 
         /// <summary>
@@ -108,13 +109,13 @@ namespace ReactiveDomain {
         /// <param name="userCredentials">User credentials to use for the operation.</param>
         /// <param name="settings">The <see cref="T:ReactiveDomain.CatchUpSubscriptionSettings" /> for the subscription.</param>
         /// <returns>An <see cref="T:ReactiveDomain.EventStoreStreamCatchUpSubscription" /> representing the subscription.</returns>
-        StreamCatchUpSubscription SubscribeToStreamFrom(
+        IDisposable SubscribeToStreamFrom(
                  string stream,
                  long? lastCheckpoint,
                  CatchUpSubscriptionSettings settings,
-                 Action<CatchUpSubscription, RecordedEvent> eventAppeared,
-                 Action<CatchUpSubscription> liveProcessingStarted = null,
-                 Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                 Action< RecordedEvent> eventAppeared,
+                 Action<Unit> liveProcessingStarted = null,
+                 Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                  UserCredentials userCredentials = null);
 
         /// <summary>
@@ -126,17 +127,17 @@ namespace ReactiveDomain {
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
         /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> representing the subscription.</returns>
-        StreamSubscription SubscribeToAll(
-            Action<StreamSubscription, RecordedEvent> eventAppeared,
-            Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+        IDisposable SubscribeToAll(
+            Action< RecordedEvent> eventAppeared,
+            Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null);
 
-        StreamSubscription SubscribeToAllFrom(
+        IDisposable SubscribeToAllFrom(
             long? lastCheckpoint,
             CatchUpSubscriptionSettings settings,
-            Action<CatchUpSubscription, RecordedEvent> eventAppeared,
-            Action<CatchUpSubscription> liveProcessingStarted = null,
-            Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+            Action< RecordedEvent> eventAppeared,
+            Action<Unit> liveProcessingStarted = null,
+            Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null);
 
         void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null);

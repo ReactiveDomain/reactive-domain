@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using EventStore.ClientAPI;
-
+using ReactiveDomain.Util;
 
 
 namespace ReactiveDomain.EventStore {
@@ -76,11 +76,11 @@ namespace ReactiveDomain.EventStore {
                                                       : typeofDomainObject.GetEventStreamNameByAggregatedId(aggregateId);
         }
 
-        public static StreamSubscription GetLiveOnlyEventStoreSubscription(
+        public static IDisposable GetLiveOnlyEventStoreSubscription(
                                                     this IStreamStoreConnection eventStoreConnection,
                                                     Type typeofDomainObject,
-                                                    Action<StreamSubscription, RecordedEvent> eventAppeared,
-                                                    Action<StreamSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                                    Action< RecordedEvent> eventAppeared,
+                                                    Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                     UserCredentials userCredentials = null,
                                                     bool resolveLinkTos = true,
                                                     Guid aggregateId = default(Guid)) {
@@ -96,13 +96,13 @@ namespace ReactiveDomain.EventStore {
                                             userCredentials);
         }
 
-        public static StreamCatchUpSubscription GetEventStoreStreamCatchUpSubscription(
+        public static IDisposable GetEventStoreStreamCatchUpSubscription(
                                                                   this IStreamStoreConnection eventStoreConnection,
                                                                   Type typeofDomainObject,
                                                                   long? fromEventNumberExclusive,
-                                                                  Action<CatchUpSubscription, RecordedEvent> eventAppeared,
-                                                                  Action<CatchUpSubscription> liveProcessingStarted = null,
-                                                                  Action<CatchUpSubscription, SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                                                  Action< RecordedEvent> eventAppeared,
+                                                                  Action<Unit> liveProcessingStarted = null,
+                                                                  Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
                                                                   UserCredentials userCredentials = null,
                                                                   bool resolveLinkTos = true,
                                                                   Guid aggregateId = default(Guid)) {

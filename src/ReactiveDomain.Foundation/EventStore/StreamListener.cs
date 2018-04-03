@@ -4,10 +4,8 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Foundation.EventStore
-{
-    public class StreamListener : IListener
-    {
+namespace ReactiveDomain.Foundation.EventStore {
+    public class StreamListener : IListener {
         protected readonly string ListenerName;
         private InMemoryBus _bus;
         IDisposable _subscription;
@@ -26,11 +24,10 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="streamNameBuilder">The source for correct stream names based on aggregates and events</param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
         public StreamListener(
-                string listenerName, 
-                IStreamStoreConnection eventStoreConnection, 
-                IStreamNameBuilder streamNameBuilder, 
-                string busName = null)
-        {
+                string listenerName,
+                IStreamStoreConnection eventStoreConnection,
+                IStreamNameBuilder streamNameBuilder,
+                string busName = null) {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _eventStoreConnection = eventStoreConnection ?? throw new ArgumentNullException(nameof(eventStoreConnection));
 
@@ -46,8 +43,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource
-        {
+        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource {
             Start(_streamNameBuilder.GenerateForCategory(typeof(TAggregate)), checkpoint, blockUntilLive, timeout);
         }
 
@@ -60,8 +56,7 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource
-        {
+        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource {
             Start(_streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), checkpoint, blockUntilLive, timeout);
         }
 
@@ -73,11 +68,9 @@ namespace ReactiveDomain.Foundation.EventStore
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000)
-        {
+        public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) {
             _liveLock.Reset();
-            lock (_startlock)
-            {
+            lock (_startlock) {
                 if (_started)
                     throw new InvalidOperationException("Listener already started.");
                 if (!ValidateStreamName(streamName))
@@ -89,8 +82,7 @@ namespace ReactiveDomain.Foundation.EventStore
                         checkpoint ?? 0,// StreamCheckpoint.StreamStart,
                         true,
                         eventAppeared: GotEvent,
-                        liveProcessingStarted: () =>
-                        {
+                        liveProcessingStarted: () => {
                             _bus.Publish(new EventStoreMsg.CatchupSubscriptionBecameLive());
                             _liveLock.Set();
                         });
@@ -107,40 +99,35 @@ namespace ReactiveDomain.Foundation.EventStore
             Action liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null,
-            int readBatchSize = 500)
-        {
+            int readBatchSize = 500) {
             var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false);
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
                 settings,
-                (subscription, resolvedEvent) =>  eventAppeared(resolvedEvent.DeserializeEvent() as Message),
+                resolvedEvent => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
                 _ => liveProcessingStarted?.Invoke(),
-                (subscription, reason, exception) => subscriptionDropped?.Invoke(reason, exception),
+                (reason, exception) => subscriptionDropped?.Invoke(reason, exception),
                 userCredentials);
 
-            return new Disposer(() => { sub.Stop(); return Unit.Default; });
+            return new Disposer(() => { sub.Dispose(); return Unit.Default; });
         }
 
-        public bool ValidateStreamName(string streamName)
-        {
+        public bool ValidateStreamName(string streamName) {
             return _eventStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
         }
-        protected virtual void GotEvent(Message @event)
-        {
+        protected virtual void GotEvent(Message @event) {
             if (@event != null) _bus.Publish(@event);
         }
         #region Implementation of IDisposable
 
         private bool _disposed;
-        public void Dispose()
-        {
+        public void Dispose() {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
+        protected virtual void Dispose(bool disposing) {
             if (_disposed)
                 return;
 
