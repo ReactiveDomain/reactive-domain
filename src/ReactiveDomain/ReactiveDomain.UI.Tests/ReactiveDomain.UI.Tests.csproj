@@ -9,7 +9,7 @@
     <PackageReference Include="NLog" Version="4.4.12" />
     <PackageReference Include="reactiveui" Version="7.4.0" />
     <PackageReference Include="Splat" Version="1.6.2" />
-    <PackageReference Include="xunit.assert.source" Version="2.3.1" />
+    <PackageReference Include="xunit.assert" Version="2.3.1" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
     <PackageReference Include="xunit.runner.console" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />

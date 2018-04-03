@@ -1,8 +1,7 @@
 ﻿using System;
 using ReactiveUI;
 
-// ReSharper disable once CheckNamespace - this is where it is supposed to be
-namespace Xunit
+namespace ReactiveDomain.UI.Tests.Helpers
 {
 #if XUNIT_VISIBILITY_INTERNAL
     internal
@@ -19,7 +18,7 @@ namespace Xunit
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Subscribe(True)) { }
+            using (cmd.CanExecute.Subscribe(Xunit.Assert.True)) { }
         }
 
         /// <summary>
@@ -30,7 +29,7 @@ namespace Xunit
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Subscribe(False)) { }
+            using (cmd.CanExecute.Subscribe(Xunit.Assert.False)) { }
         }
     }
 }
