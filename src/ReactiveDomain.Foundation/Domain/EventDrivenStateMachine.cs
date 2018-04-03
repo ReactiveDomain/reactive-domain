@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace ReactiveDomain {
     /// <summary>
-    /// The base class each aggregate's root entity should derive from.
+    /// The base class each process manager or aggregate's root entity should derive from.
     /// </summary>
-    public abstract class AggregateRootEntity : IEventSource
+    public abstract class EventDrivenStateMachine : IEventSource
     {
         private readonly EventRecorder _recorder;
         private readonly EventRouter _router;
@@ -24,7 +24,7 @@ namespace ReactiveDomain {
         /// <summary>
         /// Initializes an event source's routing and recording behavior.
         /// </summary>
-        protected AggregateRootEntity() {
+        protected EventDrivenStateMachine() {
             _recorder = new EventRecorder();
             _router = new EventRouter();
 

@@ -21,7 +21,7 @@ namespace ReactiveDomain.Testing {
         public StreamStoreConnectionFixture() {
 #if NETCOREAPP2_0 || NETSTANDARD2_0
 
-            Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection();
+            Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
 #else
             var node = EmbeddedVNodeBuilder
                         .AsSingleNode()

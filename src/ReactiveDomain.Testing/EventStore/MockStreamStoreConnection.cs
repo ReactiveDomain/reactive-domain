@@ -7,26 +7,41 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Testing.EventStore {
     public class MockStreamStoreConnection : IStreamStoreConnection {
 
-
-        private readonly Dictionary<string, List<EventData>> _store;
-        private readonly List<EventData> _all;
-        public ReadOnlyDictionary<string, List<EventData>> Store => new ReadOnlyDictionary<string, List<EventData>>(_store);
-        public ReadOnlyCollection<EventData> All => _all.AsReadOnly();
+        public const string CategoryStreamNamePrefix = @"$ce";
+        public const string EventTypeStreamNamePrefix = @"$et";
+        public const string AllStreamName = @"All";
+        private readonly Dictionary<string, List<RecordedEvent>> _store;
+        private readonly List<RecordedEvent> _all;
+        private readonly QueuedHandler _inboundEventHandler;
+        private readonly IBus _inboundEventBus;
         private bool _connected;
         private bool _disposed;
 
+        public MockStreamStoreConnection(string name) {
+            _all = new List<RecordedEvent>();
+            _store = new Dictionary<string, List<RecordedEvent>>();
+            _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
+            _inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteCategoryStream));
+            _inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteEventStream));
+            _inboundEventBus.Subscribe(new AdHocHandler<ProjectedEventWritten>(PublishToSubscriptions));
 
-        public MockStreamStoreConnection() {
-            _all = new List<EventData>();
-            _store = new Dictionary<string, List<EventData>>();
+            _inboundEventHandler = new QueuedHandler(
+                    new AdHocHandler<Message>(_inboundEventBus.Publish),
+                    nameof(_inboundEventHandler),
+                    false);
+            _inboundEventHandler.Start();
+            ConnectionName = name;
         }
 
 
@@ -39,13 +54,55 @@ namespace ReactiveDomain.Testing.EventStore {
             _connected = false;
         }
 
-        public event EventHandler<ClientConnectionEventArgs> Connected = (p1,p2)=> { };
+        public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
 
-        public WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null,
-                                          params EventData[] events) {
-            throw new NotImplementedException();
+        public WriteResult AppendToStream(
+                            string stream,
+                            long expectedVersion,
+                            UserCredentials credentials = null,
+                            params EventData[] events) {
+            if (!_connected || _disposed)
+                throw new Exception();
+            if (string.IsNullOrWhiteSpace(stream))
+                throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
+
+            var streamExists = _store.TryGetValue(stream, out var eventStream);
+            if (streamExists && expectedVersion == ExpectedVersion.NoStream)
+                throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
+            if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists || expectedVersion == ExpectedVersion.EmptyStream))
+                throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
+
+            if (!streamExists) {
+                eventStream = new List<RecordedEvent>();
+                _store.Add(stream, eventStream);
+            }
+            var startingPosition = eventStream.Count;
+            if (expectedVersion != startingPosition)
+                throw new WrongExpectedVersionException($"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
+            var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            for (var i = 0; i < events.Length; i++) {
+                var created = DateTime.UtcNow;
+                var epochTime = (long)(created - epochStart).TotalSeconds;
+                var recordedEvent = new RecordedEvent(
+                                            stream,
+                                            events[i].EventId,
+                                            eventStream.Count + 1,
+                                            events[i].Type,
+                                            events[i].Data,
+                                            events[i].Metadata,
+                                            events[i].IsJson,
+                                            created,
+                                            epochTime);
+                eventStream.Add(recordedEvent);
+                _all.Add(recordedEvent);
+                _inboundEventHandler.Handle(new EventWritten(recordedEvent));
+                //_inboundEventHandler.Handle(new ProjectedEventWritten(AllStreamName,recordedEvent));
+                //_inboundEventHandler.Handle(new ProjectedEventWritten(stream,recordedEvent));
+            }
+            return new WriteResult(eventStream.Count);
         }
 
+       
         public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null) {
             throw new NotImplementedException();
         }
@@ -80,9 +137,18 @@ namespace ReactiveDomain.Testing.EventStore {
         public void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null) {
             throw new NotImplementedException();
         }
+        private void WriteCategoryStream(EventWritten @event) {
 
+        }
+        private void WriteEventStream(EventWritten @event) {
+
+        }
+        private void PublishToSubscriptions(ProjectedEventWritten @event) {
+
+        }
         public void Dispose() {
             Close();
+            _inboundEventHandler?.Stop();
             _disposed = true;
         }
         //public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource
@@ -172,13 +238,29 @@ namespace ReactiveDomain.Testing.EventStore {
         //}
 
 
+        public class EventWritten : Message
+        {
+            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+            public override int MsgTypeId => TypeId;
+            public readonly RecordedEvent Event;
+            public EventWritten(
+                RecordedEvent @event) {
+                Event = @event;
+            }
+        }
+        public class ProjectedEventWritten : Message
+        {
+            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+            public override int MsgTypeId => TypeId;
+            public readonly ProjectedEvent Event;
+            public ProjectedEventWritten(
+                ProjectedEvent @event) {
+                Event = @event;
+            }
+        }
 
 
 
 
-        #region StreamStoreConnection
-
-       
-        #endregion
     }
 }

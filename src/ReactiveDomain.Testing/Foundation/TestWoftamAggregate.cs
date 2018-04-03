@@ -2,7 +2,7 @@ using System;
 
 namespace ReactiveDomain.Testing
 {
-    public class TestWoftamAggregate : AggregateRootEntity
+    public class TestWoftamAggregate : EventDrivenStateMachine
     {
         public TestWoftamAggregate(Guid aggregateId) : this()
         {

@@ -17,43 +17,14 @@ namespace ReactiveDomain {
         /// <summary>
         /// Closes this <see cref="T:ReactiveDomain.IStreamStoreConnection" />.
         /// </summary>
-        
-        void Close();
 
+        void Close();
+        //todo: do we need this?
         /// <summary>
         /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> connects to an Event Store server.
         /// </summary>
         event EventHandler<ClientConnectionEventArgs> Connected;
-        /*
-         //todo: do we need these?
-        /// <summary>
-        /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> is disconnected from an Event Store server
-        /// by some means other than by calling the <see cref="M:EventStore.ClientAPI.IEventStoreConnection.Close" /> method.
-        /// </summary>
-        event EventHandler<ClientConnectionEventArgs> Disconnected;
 
-        /// <summary>
-        /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> is attempting to reconnect to an Event Store
-        /// server following a disconnection.
-        /// </summary>
-        event EventHandler<ClientReconnectingEventArgs> Reconnecting;
-
-        /// <summary>
-        /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> is closed either using the <see cref="M:EventStore.ClientAPI.IEventStoreConnection.Close" />
-        /// method, or when reconnection limits are reached without a successful connection being established.
-        /// </summary>
-        event EventHandler<ClientClosedEventArgs> Closed;
-
-        /// <summary>
-        /// Fired when an error is thrown on an <see cref="T:ReactiveDomain.IStreamStoreConnection" />.
-        /// </summary>
-        event EventHandler<ClientErrorEventArgs> ErrorOccurred;
-
-        /// <summary>
-        /// Fired when a client fails to authenticate to an Event Store server.
-        /// </summary>
-        event EventHandler<ClientAuthenticationFailedEventArgs> AuthenticationFailed;
-        */
         /// <summary>Appends events asynchronously to a stream.</summary>
         /// <remarks>
         /// When appending events to a stream the <see cref="T:ReactiveDomain.ExpectedVersion" /> choice can
@@ -69,7 +40,7 @@ namespace ReactiveDomain {
         /// /// <param name="credentials">The user credentials</param>
         /// <param name="events">The events to append to the stream.</param>
         /// <returns>A WriteResult containing the results of the write operation.</returns>
-        WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null,  params EventData[] events);
+        WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null, params EventData[] events);
 
         /// <summary>
         /// Reads count events from an event stream forwards (e.g. oldest to newest) starting from position start.
@@ -90,7 +61,7 @@ namespace ReactiveDomain {
         /// <param name="credentials">The user credentials</param>
         /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> containing the results of the read operation.</returns>
         StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null);
-        
+
         /// <summary>
         /// Asynchronously subscribes to a single event stream. New events
         /// written to the stream while the subscription is active will be

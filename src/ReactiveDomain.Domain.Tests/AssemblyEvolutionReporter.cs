@@ -13,7 +13,7 @@ namespace ReactiveDomain.Domain.Tests
         [Fact(Skip = "Microsoft Sucks" )]
         public void WriteLatestVersion()
         {
-            var assembly = typeof(AggregateRootEntity).Assembly;
+            var assembly = typeof(EventDrivenStateMachine).Assembly;
             var report = ApiGenerator.GeneratePublicApi(assembly);
             var path = 
                 ".." + Path.DirectorySeparatorChar + 

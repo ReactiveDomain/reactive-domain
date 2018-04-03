@@ -18,8 +18,7 @@ namespace ReactiveDomain.Testing {
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
             _bus = new InMemoryBus("Mock Event Store Post Commit Target");
             //todo: reconnect bus to the all stream subscription
-            //todo: re-add mock connection
-            //_repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection()));
+            _repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
             _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection));
         }
         //TODO: Add Subscription Tests
@@ -293,6 +292,20 @@ namespace ReactiveDomain.Testing {
                 //   .AssertNext<WoftamEvent>(
                 //        correlationId: Guid.Empty)
                 //   .AssertEmpty();
+            }
+            
+        }
+
+        [Fact]
+        public void SubscriptionsReturnSavedEvents() {
+            foreach (var repo in _repos) {
+                var id1 = Guid.NewGuid();
+                var tAgg = new TestAggregate(id1);
+                tAgg.RaiseBy(1);
+                tAgg.RaiseBy(2);
+                tAgg.RaiseBy(3);
+                repo.Save(tAgg);
+               //todo: implement the rest of subscriptions
             }
         }
     }

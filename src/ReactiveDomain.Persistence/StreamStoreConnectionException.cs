@@ -17,6 +17,17 @@ namespace ReactiveDomain {
         protected StreamStoreConnectionException(SerializationInfo info, StreamingContext context)
             : base(info, context){}
     }
+    public class StreamStoreNotAvailableException : Exception
+    {
+        public StreamStoreNotAvailableException(){}
+        
+        public StreamStoreNotAvailableException(string message)
+            : base(message){}
+        public StreamStoreNotAvailableException(string message, Exception innerException)
+            : base(message, innerException){}
+        protected StreamStoreNotAvailableException(SerializationInfo info, StreamingContext context)
+            : base(info, context){}
+    }
     /// <summary>
     /// Exception thrown if the expected version specified on an operation
     /// does not match the version of the stream when the operation was attempted.

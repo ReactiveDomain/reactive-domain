@@ -32,7 +32,11 @@ namespace ReactiveDomain.EventStore {
         }
 
         
-        public WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null, params EventData[] events) {
+        public WriteResult AppendToStream(
+                            string stream, 
+                            long expectedVersion, 
+                            UserCredentials credentials = null, 
+                            params EventData[] events) {
             if (events.Length < WriteBatchSize) {
                 return _conn.AppendToStreamAsync(stream, (int)expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
             }

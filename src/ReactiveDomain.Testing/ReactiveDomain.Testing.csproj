@@ -5,6 +5,11 @@
     <IsPackable>True</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Domain\**" />
+    <EmbeddedResource Remove="Domain\**" />
+    <None Remove="Domain\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="EventStore\MockCatchupStreamSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -14,7 +19,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />

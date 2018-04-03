@@ -15,7 +15,6 @@
     <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net462'" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>

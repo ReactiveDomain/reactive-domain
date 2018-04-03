@@ -1,4 +1,5 @@
 ﻿using System;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain
 {
@@ -32,8 +33,10 @@ namespace ReactiveDomain
         /// <param name="isJson">Flag indicating whether the data and metadata are JSON.</param>
         /// <param name="data">The raw bytes of the event data.</param>
         /// <param name="metadata">The raw bytes of the event metadata.</param>
-        public EventData(Guid eventId, string type, bool isJson, byte[] data, byte[] metadata)
-        {
+        public EventData(Guid eventId, string type, bool isJson, byte[] data, byte[] metadata) {
+            if (string.IsNullOrWhiteSpace(type))
+                throw new ArgumentNullException(nameof(type), "Type cannot be null, empty or whitespace");
+            Ensure.NotEmptyGuid(eventId, nameof(eventId));
             EventId = eventId;
             Type = type;
             IsJson = isJson;

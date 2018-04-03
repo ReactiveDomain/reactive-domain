@@ -21,10 +21,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger.Tests", "ReactiveDomain.PrivateLedger.Tests\ReactiveDomain.PrivateLedger.Tests.csproj", "{C39A595E-7D1A-44B4-B341-3BC7300544E7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Domain", "ReactiveDomain.Domain\ReactiveDomain.Domain.csproj", "{7B2C56C4-14EF-4DA5-939F-4433E847F74D}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Domain.Tests", "ReactiveDomain.Domain.Tests\ReactiveDomain.Domain.Tests.csproj", "{228828F5-17FC-42EC-854E-1F005D9634EA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation.Tests", "ReactiveDomain.Foundation.Tests\ReactiveDomain.Foundation.Tests.csproj", "{7BC72991-F211-4487-8BF4-364A12CF4CC2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation", "ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj", "{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}"
@@ -75,14 +71,6 @@ Global
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|x64.Build.0 = Debug|x64
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|x64.ActiveCfg = Release|x64
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|x64.Build.0 = Release|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Debug|x64.ActiveCfg = Debug|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Debug|x64.Build.0 = Debug|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Release|x64.ActiveCfg = Release|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Release|x64.Build.0 = Release|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Debug|x64.ActiveCfg = Debug|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Debug|x64.Build.0 = Debug|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Release|x64.ActiveCfg = Release|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Release|x64.Build.0 = Release|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|x64.ActiveCfg = Debug|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|x64.Build.0 = Debug|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Release|x64.ActiveCfg = Release|x64
