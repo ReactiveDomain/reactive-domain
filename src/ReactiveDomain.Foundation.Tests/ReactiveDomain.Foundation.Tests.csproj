@@ -5,6 +5,10 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Domain\MetadataTests.cs" />
+    <Compile Remove="Domain\MetadatumTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
     <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
     <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
