@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using ReactiveDomain.Bus;
 using ReactiveDomain.Tests.Helpers;
-using ReactiveUI;
 using Xunit.Sdk;
 
 // ReSharper disable once CheckNamespace - this is where it is supposed to be
@@ -135,28 +134,6 @@ namespace Xunit
 
             if (comparer.Equals(expected, actual))
                 throw new NotEqualExceptionEx(ArgumentFormatter.Format(expected), ArgumentFormatter.Format(actual), userMessage);
-        }
-
-        /// <summary>
-        /// Verifies that a ReactiveCommand can be executed.
-        /// </summary>
-        /// <typeparam name="TIn">The command's input type</typeparam>
-        /// <typeparam name="TOut">The command's output type</typeparam>
-        /// <param name="cmd">The command whose CanExecute is to be compared</param>
-        public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
-        {
-            using (cmd.CanExecute.Subscribe(True)) { }
-        }
-
-        /// <summary>
-        /// Verifies that a ReactiveCommand cannot be executed.
-        /// </summary>
-        /// <typeparam name="TIn">The command's input type</typeparam>
-        /// <typeparam name="TOut">The command's output type</typeparam>
-        /// <param name="cmd">The command whose CanExecute is to be compared</param>
-        public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
-        {
-            using (cmd.CanExecute.Subscribe(False)) { }
         }
     }
 }

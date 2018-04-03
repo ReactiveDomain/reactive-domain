@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using ReactiveDomain.Bus;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Tests.Messaging;
 
 namespace ReactiveDomain.Tests.Helpers
 {
