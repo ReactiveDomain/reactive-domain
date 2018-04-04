@@ -1,8 +1,10 @@
 ﻿using System;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain {
-    public interface IStreamStoreConnection : IDisposable {
+namespace ReactiveDomain
+{
+    public interface IStreamStoreConnection : IDisposable
+    {
 
         /// <summary>
         /// Gets the name of this connection. A connection name is useful for dT:ReactiveDomain.IStreamStoreConnectionisambiguation
@@ -113,9 +115,9 @@ namespace ReactiveDomain {
                  string stream,
                  long? lastCheckpoint,
                  CatchUpSubscriptionSettings settings,
-                 Action< RecordedEvent> eventAppeared,
+                 Action<RecordedEvent> eventAppeared,
                  Action<Unit> liveProcessingStarted = null,
-                 Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
+                 Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                  UserCredentials userCredentials = null);
 
         /// <summary>
@@ -128,16 +130,8 @@ namespace ReactiveDomain {
         /// <param name="userCredentials">User credentials to use for the operation.</param>
         /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> representing the subscription.</returns>
         IDisposable SubscribeToAll(
-            Action< RecordedEvent> eventAppeared,
-            Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null);
-
-        IDisposable SubscribeToAllFrom(
-            long? lastCheckpoint,
-            CatchUpSubscriptionSettings settings,
-            Action< RecordedEvent> eventAppeared,
-            Action<Unit> liveProcessingStarted = null,
-            Action< SubscriptionDropReason, Exception> subscriptionDropped = null,
+            Action<RecordedEvent> eventAppeared,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null);
 
         void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null);
