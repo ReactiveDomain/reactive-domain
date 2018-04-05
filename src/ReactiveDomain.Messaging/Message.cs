@@ -18,7 +18,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 
 // ReSharper disable  MemberCanBePrivate.Global

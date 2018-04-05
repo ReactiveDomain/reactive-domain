@@ -9,7 +9,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_logging_high_volume_message_traffic :
         with_message_logging_enabled,
         IHandle<Message>
@@ -17,7 +17,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
-        public when_logging_high_volume_message_traffic(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        public when_logging_high_volume_message_traffic(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             
         }

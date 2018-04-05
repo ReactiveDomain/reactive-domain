@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Messaging", "ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj", "{3BAF7404-334D-4FD3-97A5-4D15F3049334}"
 EndProject
@@ -21,13 +21,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger.Tests", "ReactiveDomain.PrivateLedger.Tests\ReactiveDomain.PrivateLedger.Tests.csproj", "{C39A595E-7D1A-44B4-B341-3BC7300544E7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Domain", "ReactiveDomain.Domain\ReactiveDomain.Domain.csproj", "{7B2C56C4-14EF-4DA5-939F-4433E847F74D}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Domain.Tests", "ReactiveDomain.Domain.Tests\ReactiveDomain.Domain.Tests.csproj", "{228828F5-17FC-42EC-854E-1F005D9634EA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation.Tests", "ReactiveDomain.Foundation.Tests\ReactiveDomain.Foundation.Tests.csproj", "{7BC72991-F211-4487-8BF4-364A12CF4CC2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation", "ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj", "{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Persistence", "ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj", "{5FCD93A7-20A7-4815-83E6-A06978DC589A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Core", "ReactiveDomain.Core\ReactiveDomain.Core.csproj", "{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,14 +71,6 @@ Global
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|x64.Build.0 = Debug|x64
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|x64.ActiveCfg = Release|x64
 		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|x64.Build.0 = Release|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Debug|x64.ActiveCfg = Debug|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Debug|x64.Build.0 = Debug|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Release|x64.ActiveCfg = Release|x64
-		{7B2C56C4-14EF-4DA5-939F-4433E847F74D}.Release|x64.Build.0 = Release|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Debug|x64.ActiveCfg = Debug|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Debug|x64.Build.0 = Debug|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Release|x64.ActiveCfg = Release|x64
-		{228828F5-17FC-42EC-854E-1F005D9634EA}.Release|x64.Build.0 = Release|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|x64.ActiveCfg = Debug|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|x64.Build.0 = Debug|x64
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Release|x64.ActiveCfg = Release|x64
@@ -87,6 +79,14 @@ Global
 		{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}.Debug|x64.Build.0 = Debug|x64
 		{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}.Release|x64.ActiveCfg = Release|x64
 		{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}.Release|x64.Build.0 = Release|x64
+		{5FCD93A7-20A7-4815-83E6-A06978DC589A}.Debug|x64.ActiveCfg = Debug|x64
+		{5FCD93A7-20A7-4815-83E6-A06978DC589A}.Debug|x64.Build.0 = Debug|x64
+		{5FCD93A7-20A7-4815-83E6-A06978DC589A}.Release|x64.ActiveCfg = Release|x64
+		{5FCD93A7-20A7-4815-83E6-A06978DC589A}.Release|x64.Build.0 = Release|x64
+		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Debug|x64.ActiveCfg = Debug|x64
+		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Debug|x64.Build.0 = Debug|x64
+		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|x64.ActiveCfg = Release|x64
+		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,7 +10,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_commands_are_fired :
         with_message_logging_enabled,
         IHandle<Message>
@@ -31,7 +31,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Messaging.BootStrap.Load();
         }
 
-        public when_commands_are_fired(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        public when_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
         }
         protected override void When()

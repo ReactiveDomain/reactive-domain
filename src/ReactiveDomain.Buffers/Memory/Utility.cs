@@ -104,7 +104,8 @@ namespace ReactiveDomain.Buffers.Memory
 
         }
         #region External
-#if NET462
+       
+#if NET462 || NET452
         [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
         public static extern void CopyMemory(IntPtr destination, IntPtr source, uint length);
 

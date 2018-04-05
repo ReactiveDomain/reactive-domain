@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using EventStore.ClientAPI;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -10,13 +9,13 @@ namespace ReactiveDomain.Foundation.EventStore
         QueuedSubscriber,
         IHandle<Message>
     {
-        private readonly IEventStoreConnection _eventStore;
+        private readonly IStreamStoreConnection _eventStore;
         private readonly string _streamPrefix;
         private readonly IGeneralBus _bus;
 
         public EventStoreMessageLogger(
             IGeneralBus bus,
-            IEventStoreConnection es,
+            IStreamStoreConnection es,
             string logStreamPrefix = "",
             bool enableLogging = false,
             bool idempotent = true) : base(bus, idempotent)
@@ -26,8 +25,9 @@ namespace ReactiveDomain.Foundation.EventStore
             Enabled = enableLogging;
             _streamPrefix = logStreamPrefix;
             if (Enabled)
-                _eventStore?.ConnectAsync();
+                _eventStore?.Connect();
 
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<Message>(this);
         }
 
@@ -58,14 +58,15 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
 
-            var ed = EventStoreRepository.ToEventData(message.MsgId, message, metadata);
+            var ed = StreamStoreRepository.ToEventData(message.MsgId, message, metadata);
             var data = new List<EventData> {ed};
 
-            int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
-            _eventStore.AppendToStreamAsync(
+           // int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
+            _eventStore.AppendToStream(
                 FullStreamName,
                 ExpectedVersion.Any,
-                data);
+                null,
+                data.ToArray());
         }
 
     }

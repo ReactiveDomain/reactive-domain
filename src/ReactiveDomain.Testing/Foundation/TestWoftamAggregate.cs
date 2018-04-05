@@ -1,8 +1,8 @@
 using System;
 
-namespace ReactiveDomain.Foundation.Testing
+namespace ReactiveDomain.Testing
 {
-    public class TestWoftamAggregate : AggregateRootEntity
+    public class TestWoftamAggregate : EventDrivenStateMachine
     {
         public TestWoftamAggregate(Guid aggregateId) : this()
         {

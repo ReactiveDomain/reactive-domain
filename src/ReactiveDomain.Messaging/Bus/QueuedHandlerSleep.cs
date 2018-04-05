@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
-using ReactiveDomain.Messaging.Concurrent;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
+
 {
     /// <summary>
     /// Lightweight in-memory queue with a separate thread in which it passes messages

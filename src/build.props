@@ -17,9 +17,9 @@
     </PropertyGroup>
     <PropertyGroup>
         <Platforms>x64</Platforms>
-        <Authors>PerkinElmer</Authors>
-        <Company>PerkinElmer</Company>
-        <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
+        <Authors>PerkinElmer,Linedata</Authors>
+        <Company>PerkinElmer,Linedata</Company>
+        <Copyright>Copyright © 2014-2018 PerkinElmer, Inc.</Copyright>
         <Description />
         <AssemblyVersion>0.8.2.0</AssemblyVersion>
         <FileVersion>0.8.2.0</FileVersion>
@@ -50,8 +50,8 @@
         </When>
     </Choose>
     <PropertyGroup Condition="$(OS) == 'WINDOWS_NT'">
-        <LibTargetFrameworks>net462;netstandard2.0</LibTargetFrameworks>
-        <TestTargetFrameworks>net462;netcoreapp2.0</TestTargetFrameworks>
+        <LibTargetFrameworks>net462;net452;netstandard2.0</LibTargetFrameworks>
+        <TestTargetFrameworks>net462;net452;netcoreapp2.0</TestTargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition=" $(OS) != 'WINDOWS_NT'">
         <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks>

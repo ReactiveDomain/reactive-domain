@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports"/>
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
@@ -9,7 +9,6 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="4.1.0" Condition="'$(TargetFramework)'=='net462'" />
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
+    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
   </ItemGroup>
 </Project>

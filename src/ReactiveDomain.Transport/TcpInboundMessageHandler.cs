@@ -1,7 +1,7 @@
 ﻿using System;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Transport
 {

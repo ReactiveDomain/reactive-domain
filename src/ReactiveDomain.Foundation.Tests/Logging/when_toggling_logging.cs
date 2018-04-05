@@ -10,12 +10,12 @@ using Xunit.Sdk;
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_toggling_logging : 
         with_message_logging_enabled,
         IHandle<Message>
     {
-        public when_toggling_logging(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        public when_toggling_logging(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             
         }

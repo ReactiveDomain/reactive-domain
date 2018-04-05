@@ -11,7 +11,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_logging_disabled_and_events_are_published :
         with_message_logging_disabled,
         IHandle<DomainEvent>
@@ -21,7 +21,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
-        public when_logging_disabled_and_events_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
+        public when_logging_disabled_and_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             
         }

@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
 
 namespace ReactiveDomain.Messaging.Monitoring.Utils

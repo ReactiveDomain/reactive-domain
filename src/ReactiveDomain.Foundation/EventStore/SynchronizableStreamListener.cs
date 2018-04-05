@@ -1,5 +1,4 @@
 using System.Threading;
-using EventStore.ClientAPI;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -13,7 +12,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
         public SynchronizableStreamListener(
             string name,
-            IEventStoreConnection connection,
+            IStreamStoreConnection connection,
             IStreamNameBuilder streamNameBuilder,
             bool sync = false,
             string busName = null) :

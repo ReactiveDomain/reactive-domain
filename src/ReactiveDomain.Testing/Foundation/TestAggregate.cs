@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace ReactiveDomain.Foundation.Testing
+namespace ReactiveDomain.Testing
 {
-    public class TestAggregate : AggregateRootEntity
+    public class TestAggregate : EventDrivenStateMachine
     {
         private uint _amount;
 

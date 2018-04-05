@@ -12,8 +12,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
@@ -121,7 +121,7 @@ namespace ReactiveDomain.Messaging.Bus
                         handlers.Add(new MessageHandler<T>(handler, handler.GetType().Name,
                             MessageHierarchy.GetMsgTypeId(typeof(T))));
                 }
-                return new SubscriptionDisposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+                return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
             }
         }
 

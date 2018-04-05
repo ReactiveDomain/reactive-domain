@@ -1,10 +1,11 @@
-﻿using ReactiveDomain.Foundation.Testing;
+﻿
 using System;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests
 {
-    [Collection(nameof(EventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class PrefixedCamelCaseStreamNameBuilderTests
     {
         [Fact]
