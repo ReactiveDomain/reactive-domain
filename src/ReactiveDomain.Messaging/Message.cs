@@ -1,13 +1,13 @@
 
 // Based on InMemoryBus from EventStore LLP
-// Added support for updating registered types and handlers from dynamicly loaded assemblies
+// Added support for updating registered types and handlers from dynamically loaded assemblies
 // Registered an event handler for the AssemblyLoad event.
 // New assemblies are restricted to sub folders of the working directory to avoid loading system assemblies and throwing errors on reflection
-// Added cross lookups for type by typeId 
+// Added cross look-ups for type by typeId 
 // Added Types Updated event 
 // See also changes in InMemoryBus.cs 
 // Key test cases include when a assembly containing types derived from Message is loaded after the InMemoryBus is created and  top level handler (i.e. for type Message) was previously added
-// A simple example is a test fixture that sets up the bus and a top level listener in a contructor prior to executing a test cases based on types in a related project (see domain and domain.tests)
+// A simple example is a test fixture that sets up the bus and a top level listener in a constructor prior to executing a test cases based on types in a related project (see domain and domain.tests)
 // Chris Condron 3-4-2014
 
 
@@ -53,6 +53,7 @@ namespace ReactiveDomain.Messaging
         public static Dictionary<Type, int[]> DescendantsByType;
         private static readonly Dictionary<Type, int> MsgTypeIdByType;
         private static readonly Dictionary<int, Type> MsgTypeByTypeId;
+        private static readonly Dictionary<string, Type> MsgTypeByFullName;
 
         public static int MaxMsgTypeId;
         private static object _typeLoaderLock = new object();
@@ -60,6 +61,7 @@ namespace ReactiveDomain.Messaging
         {
             MsgTypeIdByType = new Dictionary<Type, int>();
             MsgTypeByTypeId = new Dictionary<int, Type>();
+            MsgTypeByFullName = new Dictionary<string, Type>();
             Setup();
             AppDomain.CurrentDomain.AssemblyLoad += CurrentDomain_AssemblyLoad;
         }
@@ -84,7 +86,7 @@ namespace ReactiveDomain.Messaging
             }
         }
 
-        private static readonly HashSet<string> _knownAssemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> KnownAssemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private static void Setup()
         {
             lock (_typeLoaderLock)
@@ -102,9 +104,9 @@ namespace ReactiveDomain.Messaging
                 {
                     try
                     {
-                        if (_knownAssemblies.Contains(assembly.FullName))
+                        if (KnownAssemblies.Contains(assembly.FullName))
                             continue;
-                        _knownAssemblies.Add(assembly.FullName);
+                        KnownAssemblies.Add(assembly.FullName);
                         if (assembly.FullName.StartsWith("Telerik", StringComparison.OrdinalIgnoreCase))
                             continue;
                         foreach (var msgType in assembly.GetLoadableTypes().Where(rootMsgType.IsAssignableFrom))
@@ -123,6 +125,7 @@ namespace ReactiveDomain.Messaging
                             {
                                 MsgTypeIdByType.Add(msgType, msgTypeId);
                                 MsgTypeByTypeId.Add(msgTypeId, msgType);
+                                MsgTypeByFullName.Add(msgType.FullName, msgType);
                                 typesAdded = true; //mark it so we can fire the event once per loaded assembly
                             }
                             parents.Add(msgTypeId, new List<int>());
@@ -284,11 +287,17 @@ namespace ReactiveDomain.Messaging
             if (MsgTypeByTypeId.TryGetValue(id, out type)) return type;
             throw new UnregisteredMessageException($"No message registered for TypeId {id}.");
         }
+        public static Type GetMsgType(string fullname)
+        {
+            Type type;
+            if (MsgTypeByFullName.TryGetValue(fullname, out type)) return type;
+            throw new UnregisteredMessageException($"No message registered for type name {fullname}.");
+        }
     }
 
     public class MessagingException : Exception
     {
-        public MessagingException() : base() { }
+        public MessagingException() { }
         public MessagingException(string message) : base(message) { }
         public MessagingException(string message, Exception innerException) : base(message, innerException) { }
     }
