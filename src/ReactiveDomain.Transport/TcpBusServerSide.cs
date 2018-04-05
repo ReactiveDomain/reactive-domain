@@ -15,26 +15,21 @@ namespace ReactiveDomain.Transport
             int commandPort,
             IGeneralBus messageBus)
             : base(hostIp, commandPort, messageBus)
-        {           
-            _commandPortListener = ConfigureTcpListener(CommandEndpoint, TcpMessageArrived);
-        }       
-
-        private TcpServerListener ConfigureTcpListener(IPEndPoint hostEndPoint, Action<ArraySegment<byte>> handler)
         {
-            Log.Info("ConfigureTcpListener(" + hostEndPoint.AddressFamily + ", " + hostEndPoint.Port + ") entered.");
-          
-            LengthPrefixMessageFramer framer = new LengthPrefixMessageFramer();
-            framer.RegisterMessageArrivedCallback(handler);
-
-            var listener = new TcpServerListener(hostEndPoint);
+           
+            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint.Port + ") entered.");
+            
+            var listener = new TcpServerListener(CommandEndpoint);
 
             listener.StartListening((endPoint, socket) =>
             {
-                TcpConnection = Transport.TcpConnection.CreateAcceptedTcpConnection(Guid.NewGuid(), endPoint, socket, verbose: true);
+               var conn = Transport.TcpConnection.CreateAcceptedTcpConnection(Guid.NewGuid(), endPoint, socket, verbose: true);
 
                 Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
                 callback = (x, data) =>
                 {
+                    LengthPrefixMessageFramer framer = new LengthPrefixMessageFramer();
+                    framer.RegisterMessageArrivedCallback(TcpMessageArrived);
                     try
                     {
                         framer.UnFrameData(data);
@@ -45,13 +40,13 @@ namespace ReactiveDomain.Transport
                         // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                         return;
                     }
-                    TcpConnection.ReceiveAsync(callback);
+                    conn.ReceiveAsync(callback);
                 };
-                TcpConnection.ReceiveAsync(callback);
+                conn.ReceiveAsync(callback);
+                TcpConnection.Add(conn);
             }, "Standard");
-            Log.Info("ConfigureTcpListener(" + hostEndPoint.AddressFamily + ", " + hostEndPoint.Port + ") successfully constructed TcpServerListener.");
-            return listener;
+            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint.Port + ") successfully constructed TcpServerListener.");
+            _commandPortListener = listener;
         }
-
     }
 }

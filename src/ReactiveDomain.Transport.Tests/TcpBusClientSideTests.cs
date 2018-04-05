@@ -2,7 +2,7 @@
 using System.Net;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Transport.Tests.Transport
+namespace ReactiveDomain.Transport.Tests
 {
     public class TcpBusClientSideTests
     {

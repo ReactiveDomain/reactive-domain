@@ -3,81 +3,72 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
+using Settings = ReactiveDomain.Messaging.Json;
 
 namespace ReactiveDomain.Transport.CommandSocket
 {
     public struct TcpMessage
     {
-        public const int MsgIdOffset = 0;
-
-        public readonly int MessageId;
+        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         public readonly Type MessageType;
         public readonly ArraySegment<byte> Data;
         public readonly Message WrappedMessage;
 
+        /// <summary>
+        /// Builds a tcp messages from a wrapped data array
+        /// used by the tcp processing system to deserialize recieved data
+        /// </summary>
+        /// <param name="data">The wrapped memory array.</param>
+        /// <returns>a new tcp message built from the array segment</returns>
+        /// <exception cref="UnregisteredMessageException"> If the message type is not found this will throw UnregisteredMessageException</exception>
         public static TcpMessage FromArraySegment(ArraySegment<byte> data)
         {
-            var d = data.Array;
-            if (data.Count < sizeof(int))
-                throw new ArgumentException(string.Format("ArraySegment too short, length: {0}", data.Count), "data");
-            var msgId = 0;
-            for (var i = 0; i < 4; i++)
-            {
-                msgId |= (d[i] << (i * 8)); // little-endian order
-            }
-            //TODO: CLC Replace this with more robust lookup, Different version of system can have different ids for messages and this will not survive persistance
-            var msgType = MessageHierarchy.GetMsgType(msgId);
+            if (data.Array == null || data.Count < sizeof(int))
+                throw new ArgumentException($"ArraySegment null or too short, length: {data.Count}", nameof(data));
 
-            var messageBuffer = new byte[d.Length - sizeof(int)];
-            Buffer.BlockCopy(data.Array, data.Offset + sizeof(int), messageBuffer, 0, messageBuffer.Length);
-            var ms = new MemoryStream(messageBuffer);
             Message msg;
-            using (var reader = new BsonDataReader(ms))
+            using (var reader = new BsonDataReader(new MemoryStream(data.Array)))
             {
-                var serializer = new JsonSerializer();
-                msg = (Message)serializer.Deserialize(reader, msgType);
+                reader.Read(); //object
+                reader.Read(); //property name
+
+                var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
+                reader.Read(); //property value
+                msg = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Settings.JsonSettings);
             }
-            return new TcpMessage(msg);
+            Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgTypeId=" + msg.MsgTypeId);
+            return new TcpMessage(msg, data);
+        }
+        //used by FromArraySegment to set the values and return the struct
+        private TcpMessage(Message message, ArraySegment<byte> data)
+        {
+            MessageType = message.GetType();
+            Data = data;
+            WrappedMessage = message;
         }
 
+        /// <summary>
+        /// Creates a tcp message for use in the tcp processor for sending messgaes over tcp
+        /// </summary>
+        /// <param name="message">the message to wrap</param>
         public TcpMessage(Message message)
         {
-            //Debug.WriteLine("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.MsgTypeId + " to be wrapped.");
-            MessageId = message.MsgTypeId;
+            Ensure.NotNull(message, nameof(message));
             MessageType = message.GetType();
+            Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.MsgTypeId + " to be wrapped.");
+
             var ms = new MemoryStream();
             using (var writer = new BsonDataWriter(ms))
             {
-                var serializer = new JsonSerializer();
-                serializer.Serialize(writer, message, MessageType);
+                writer.WriteStartObject();
+                writer.WritePropertyName(MessageType.FullName);
+                writer.WriteValue(JsonConvert.SerializeObject(message, Settings.JsonSettings));
+                writer.WriteEnd();
             }
             Data = new ArraySegment<byte>(ms.ToArray());
             WrappedMessage = message;
-
-            //var ms2 = new MemoryStream(Data.Array);
-            //Message msg;
-            //using (var reader = new BsonReader(ms2))
-            //{
-            //    var serializer = new JsonSerializer();
-            //    msg = (Message)serializer.Deserialize(reader, MessageType);
-            //}
-            //Debug.WriteLine("Deserialized Message MsgId=" + msg.MsgId + " MsgTypeId=" + msg.MsgTypeId);
-        }
-
-        public byte[] AsByteArray()
-        {
-            var res = new byte[sizeof(int) + Data.Count];
-            res[MsgIdOffset] = (byte)MessageId;
-            res[MsgIdOffset + 1] = (byte)(MessageId >> 8);
-            res[MsgIdOffset + 2] = (byte)(MessageId >> 16);
-            res[MsgIdOffset + 3] = (byte)(MessageId >> 24);
-            Buffer.BlockCopy(Data.Array, Data.Offset, res, res.Length - Data.Count, Data.Count);
-            return res;
-        }
-
-        public ArraySegment<byte> AsArraySegment()
-        {
-            return new ArraySegment<byte>(AsByteArray());
         }
     }
 

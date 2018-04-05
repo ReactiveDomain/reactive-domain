@@ -18,7 +18,8 @@ namespace ReactiveDomain.Testing {
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
             _bus = new InMemoryBus("Mock Event Store Post Commit Target");
             //todo: reconnect bus to the all stream subscription
-            _repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
+            //todo: re-add MockStreamStoreConnection
+            //_repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
             _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection));
         }
         //TODO: Add Subscription Tests
