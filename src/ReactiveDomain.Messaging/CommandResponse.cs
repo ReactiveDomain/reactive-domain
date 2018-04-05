@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
@@ -34,5 +35,12 @@ namespace ReactiveDomain.Messaging
         {
             Exception = exception;
         }
+    }
+
+    public class Canceled : Fail
+    {
+        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId => TypeId;
+        public Canceled(Command sourceCommand) : base(sourceCommand, new CommandCanceledException(sourceCommand)) { }
     }
 }

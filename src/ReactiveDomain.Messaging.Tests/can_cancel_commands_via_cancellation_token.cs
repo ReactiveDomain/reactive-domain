@@ -224,9 +224,9 @@ namespace ReactiveDomain.Messaging.Tests
 
             Interlocked.Increment(ref _gotCmd);
             var nestedCommand = new NestedTestTokenCancellableCmd(
-                Guid.NewGuid(),
-                command.MsgId,
-                command.CancellationToken);
+                                        Guid.NewGuid(),
+                                        command.MsgId,
+                                        command.CancellationToken);
             if (_cancelFirst)
             {
                 TokenSource.Cancel(); //global cancel
@@ -280,7 +280,7 @@ namespace ReactiveDomain.Messaging.Tests
             return command.Fail(new TimeoutException());
         }
     }
-    public class TestTokenCancellableCmd : TokenCancellableCommand
+    public class TestTokenCancellableCmd : Command
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
@@ -297,7 +297,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
     }
-    public class TestTokenCancellableLongRunningCmd : TokenCancellableCommand
+    public class TestTokenCancellableLongRunningCmd : Command
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
@@ -314,7 +314,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
     }
-    public class NestedTestTokenCancellableCmd : TokenCancellableCommand
+    public class NestedTestTokenCancellableCmd : Command
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
@@ -322,7 +322,7 @@ namespace ReactiveDomain.Messaging.Tests
         public NestedTestTokenCancellableCmd(
             Guid correlationId,
             Guid? sourceId,
-            CancellationToken cancellationToken) :
+            CancellationToken? cancellationToken) :
             base(correlationId, sourceId, cancellationToken)
         {
         }
