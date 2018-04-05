@@ -167,7 +167,7 @@ namespace ReactiveDomain.EventStore
             });
         }
 
-        public void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null)
+        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
                         => _conn.DeleteStreamAsync(stream, expectedVersion, credentials.ToESCredentials()).Wait();
         public void Dispose()
         {

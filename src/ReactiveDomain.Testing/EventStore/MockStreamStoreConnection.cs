@@ -146,7 +146,7 @@ namespace ReactiveDomain.Testing.EventStore
             throw new NotImplementedException();
         }
 
-        public void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null)
+        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
         {
             throw new NotImplementedException();
         }

@@ -134,6 +134,6 @@ namespace ReactiveDomain
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials userCredentials = null);
 
-        void DeleteStream(StreamName stream, int expectedVersion, UserCredentials credentials = null);
+        void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null);
     }
 }
