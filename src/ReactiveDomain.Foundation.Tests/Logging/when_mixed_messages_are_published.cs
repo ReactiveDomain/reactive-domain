@@ -64,7 +64,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+                Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
             }
 
             var tstCmd = new TestCommands.Command3(
@@ -82,7 +82,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void commands_are_logged()
         {
 
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
             TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
 
             // Wait  for last event to be queued
@@ -112,7 +112,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             if (msg is TestCommands.Command2) _multiFireCount++;
             if (msg is TestCommands.Command3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
-            if (msg is TestDomainEvent) _testDomainEventCount++;
+            if (msg is TestEvent) _testDomainEventCount++;
         }
     }
 }

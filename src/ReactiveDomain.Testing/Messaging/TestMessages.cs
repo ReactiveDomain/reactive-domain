@@ -56,7 +56,7 @@ namespace ReactiveDomain.Messaging.Testing
         }
     }
 
-    public class CountedEvent : DomainEvent
+    public class CountedEvent : Event
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;

@@ -5,10 +5,10 @@ namespace ReactiveDomain.Messaging.Testing
 {
     public class TestInheritedMessageSubscriber :
         Messaging.Bus.QueuedSubscriber,
-        IHandle<TestDomainEvent>,
-        IHandle<ParentTestDomainEvent>,
-        IHandle<ChildTestDomainEvent>,
-        IHandle<GrandChildTestDomainEvent>,
+        IHandle<TestEvent>,
+        IHandle<ParentTestEvent>,
+        IHandle<ChildTestEvent>,
+        IHandle<GrandChildTestEvent>,
         IHandle<Message>
     {
         public long TestDomainEventHandleCount;
@@ -21,10 +21,10 @@ namespace ReactiveDomain.Messaging.Testing
         {
             Reset();
 
-            Subscribe<TestDomainEvent>(this);
-            Subscribe<ParentTestDomainEvent>(this);
-            Subscribe<ChildTestDomainEvent>(this);
-            Subscribe<GrandChildTestDomainEvent>(this);
+            Subscribe<TestEvent>(this);
+            Subscribe<ParentTestEvent>(this);
+            Subscribe<ChildTestEvent>(this);
+            Subscribe<GrandChildTestEvent>(this);
         }
 
         public void Reset()
@@ -36,21 +36,21 @@ namespace ReactiveDomain.Messaging.Testing
             MessageHandleCount = 0;
         }
 
-        public void Handle(TestDomainEvent message)
+        public void Handle(TestEvent message)
         {
             Interlocked.Increment(ref TestDomainEventHandleCount);
         }
-        public void Handle(ParentTestDomainEvent message)
+        public void Handle(ParentTestEvent message)
         {
             Interlocked.Increment(ref ParentTestDomainEventHandleCount);
         }
 
-        public void Handle(ChildTestDomainEvent message)
+        public void Handle(ChildTestEvent message)
         {
             Interlocked.Increment(ref ChildTestDomainEventHandleCount);
         }
 
-        public void Handle(GrandChildTestDomainEvent message)
+        public void Handle(GrandChildTestEvent message)
         {
             Interlocked.Increment(ref GrandChildTestDomainEventHandleCount);
         }

@@ -13,7 +13,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_events_are_published : 
         with_message_logging_enabled,
-        IHandle<DomainEvent>
+        IHandle<Event>
     {
         static when_events_are_published()
         {
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected override void When()
         {
             _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
-            _listener.EventStream.Subscribe<DomainEvent>(this);
+            _listener.EventStream.Subscribe<Event>(this);
 
             _listener.Start(Logging.FullStreamName);
 
@@ -48,14 +48,14 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
             }
 
-            Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
 
 
         
         public void all_events_are_logged()
         {
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
 
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 9000);
@@ -65,10 +65,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Assert.True(_testDomainEventCount == 1, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
         }
 
-        public void Handle(DomainEvent message)
+        public void Handle(Event message)
         {
             if (message is CountedEvent) _countedEventCount++;
-            if (message is TestDomainEvent) _testDomainEventCount++;
+            if (message is TestEvent) _testDomainEventCount++;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_logging_disabled_and_events_are_published :
         with_message_logging_disabled,
-        IHandle<DomainEvent>
+        IHandle<Event>
     {
         static when_logging_disabled_and_events_are_published()
         {
@@ -36,7 +36,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         {
 
             _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
-            _listener.EventStream.Subscribe<DomainEvent>(this);
+            _listener.EventStream.Subscribe<Event>(this);
 
             _listener.Start(Logging.FullStreamName);
 
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
             }
 
-            Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
 
 
@@ -60,7 +60,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void events_are_not_logged()
         {
             // wait for all events to be queued
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
 
             //// Need the "is or becomes" here because if the handler (see below) is executed, it takes time. 
             // see the enabled test
@@ -79,10 +79,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Assert.True(_testDomainEventCount == 0, $"Last event count {_testDomainEventCount} is not 0");
         }
 
-        public void Handle(DomainEvent message)
+        public void Handle(Event message)
         {
             if (message is CountedEvent) _countedEventCount++;
-            if (message is TestDomainEvent) _testDomainEventCount++;
+            if (message is TestEvent) _testDomainEventCount++;
         }
     }
 }

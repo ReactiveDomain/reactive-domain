@@ -9,7 +9,7 @@ namespace ReactiveDomain.Messaging.Testing
         protected readonly IGeneralBus Bus;
         public readonly TestQueue TestQueue;
         public ConcurrentMessageQueue<Message> BusMessages => TestQueue.Messages;
-        public ConcurrentMessageQueue<DomainEvent> BusEvents => TestQueue.Events;
+        public ConcurrentMessageQueue<Event> BusEvents => TestQueue.Events;
         public ConcurrentMessageQueue<Command> BusCommands => TestQueue.Commands;
 
         protected CommandQueueSpecification(

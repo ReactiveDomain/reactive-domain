@@ -6,7 +6,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
 {
-    public class TimeoutMessage : DomainEvent
+    public class TimeoutMessage : Event
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;

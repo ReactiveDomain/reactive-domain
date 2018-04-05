@@ -5,7 +5,7 @@ using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.PrivateLedger
 {
-    public class ChainedEvent : DomainEvent, IChainedMessage
+    public class ChainedEvent : Event, IChainedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
 

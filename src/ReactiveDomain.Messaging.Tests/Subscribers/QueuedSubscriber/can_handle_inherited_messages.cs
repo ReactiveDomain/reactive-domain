@@ -17,22 +17,22 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         {
        
             TestCorrelationId = Guid.NewGuid();
-            var msg = new TestDomainEvent(TestCorrelationId, Guid.Empty);
+            var msg = new TestEvent(TestCorrelationId, Guid.Empty);
             TestMessageId = msg.MsgId;
             Bus.Publish(msg);
             Assert.IsOrBecomesTrue(()=>BusMessages.Count == 1,msg:"Setup Failure: TestDomainEvent");
 
-            var msg2 = new ParentTestDomainEvent(TestCorrelationId,TestMessageId);
+            var msg2 = new ParentTestEvent(TestCorrelationId,TestMessageId);
             ParentMsgId = msg2.MsgId;
             Bus.Publish(msg2);
             Assert.IsOrBecomesTrue(()=>BusMessages.Count == 2,msg:"Setup Failure: ParentTestDomainEvent");
 
-            var msg3 = new ChildTestDomainEvent(TestCorrelationId,ParentMsgId);
+            var msg3 = new ChildTestEvent(TestCorrelationId,ParentMsgId);
             ChildMsgId = msg3.MsgId;
             Bus.Publish(msg3);
             Assert.IsOrBecomesTrue(()=>BusMessages.Count == 3,msg:"Setup Failure: ChildTestDomainEvent");
 
-            var msg4 = new GrandChildTestDomainEvent(TestCorrelationId, ChildMsgId);
+            var msg4 = new GrandChildTestEvent(TestCorrelationId, ChildMsgId);
             Bus.Publish(msg4);
             Assert.IsOrBecomesTrue(()=>BusMessages.Count == 4,msg:"Setup Failure: GrandChildTestDomainEvent");
 
@@ -46,10 +46,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             {
                 var subscriber = sub;
                 TestQueue.Clear();
-                Bus.Publish(new GrandChildTestDomainEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new GrandChildTestEvent(TestCorrelationId, ChildMsgId));
 
                 BusMessages
-                    .AssertNext<GrandChildTestDomainEvent>(TestCorrelationId)
+                    .AssertNext<GrandChildTestEvent>(TestCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscriber.Starving, 3000);
@@ -83,10 +83,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             {
                 var subscription = sub;
                 TestQueue.Clear();
-                Bus.Publish(new ChildTestDomainEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new ChildTestEvent(TestCorrelationId, ChildMsgId));
 
                 BusMessages
-                    .AssertNext<ChildTestDomainEvent>(TestCorrelationId)
+                    .AssertNext<ChildTestEvent>(TestCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscription.Starving, 3000);
@@ -121,10 +121,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                 var subscriber = sub;
                 TestQueue.Clear();
 
-                Bus.Publish(new ParentTestDomainEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new ParentTestEvent(TestCorrelationId, ChildMsgId));
 
                 BusMessages
-                    .AssertNext<ParentTestDomainEvent>(TestCorrelationId)
+                    .AssertNext<ParentTestEvent>(TestCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscriber.Starving, 3000);
@@ -154,10 +154,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         public void multiple_message_handle_invocations_are_correct()
         {
             BusMessages
-                 .AssertNext<TestDomainEvent>(TestCorrelationId)
-                 .AssertNext<ParentTestDomainEvent>(TestCorrelationId)
-                 .AssertNext<ChildTestDomainEvent>(TestCorrelationId)
-                 .AssertNext<GrandChildTestDomainEvent>(TestCorrelationId)
+                 .AssertNext<TestEvent>(TestCorrelationId)
+                 .AssertNext<ParentTestEvent>(TestCorrelationId)
+                 .AssertNext<ChildTestEvent>(TestCorrelationId)
+                 .AssertNext<GrandChildTestEvent>(TestCorrelationId)
                  .AssertEmpty();
 
             Assert.IsOrBecomesTrue(

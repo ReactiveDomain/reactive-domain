@@ -13,7 +13,7 @@ namespace ReactiveDomain.Messaging.Testing
         private readonly HashSet<Message> _messageSet;
         public ConcurrentMessageQueue<Command> Commands { get; }
         public ConcurrentMessageQueue<CommandResponse> Responses { get; }
-        public ConcurrentMessageQueue<DomainEvent> Events { get; }
+        public ConcurrentMessageQueue<Event> Events { get; }
         private ConcurrentMessageQueue<Message> _waitQueue { get; }
 
         public TestQueue(ISubscriber bus = null)
@@ -22,7 +22,7 @@ namespace ReactiveDomain.Messaging.Testing
             _messageSet = new HashSet<Message>();
             Commands = new ConcurrentMessageQueue<Command>("Commands");
             Responses = new ConcurrentMessageQueue<CommandResponse>("Responses");
-            Events = new ConcurrentMessageQueue<DomainEvent>("Events");
+            Events = new ConcurrentMessageQueue<Event>("Events");
             _waitQueue = new ConcurrentMessageQueue<Message>("Wait Queue");
 
             bus?.Subscribe(this);
@@ -35,8 +35,8 @@ namespace ReactiveDomain.Messaging.Testing
             Messages.Enqueue(message);
             lock (_messageSet)
                 _messageSet.Add(message);
-            if (message is DomainEvent)
-                Events.Enqueue(message as DomainEvent);
+            if (message is Event)
+                Events.Enqueue(message as Event);
             else if (message is Command)
                 Commands.Enqueue(message as Command);
             else if (message is CommandResponse)
@@ -59,7 +59,7 @@ namespace ReactiveDomain.Messaging.Testing
                 Command cmd;
                 while (!Commands.IsEmpty)
                     Commands.TryDequeue(out cmd);
-                DomainEvent evt;
+                Event evt;
                 while (!Events.IsEmpty)
                     Events.TryDequeue(out evt);
                 CommandResponse resp;
