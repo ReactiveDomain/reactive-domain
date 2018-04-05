@@ -14,10 +14,10 @@ namespace ReactiveDomain.Messaging
         public override int MsgTypeId => TypeId;
 
         /// <inheritdoc cref="ICorrelatedMessage"/>
-        public Guid? SourceId { get; }
+        public SourceId SourceId { get; }
 
         /// <inheritdoc cref="ICorrelatedMessage"/>
-        public Guid CorrelationId { get; }
+        public CorrelationId CorrelationId { get; }
 
         public bool TimeoutTcpWait = true;
 
@@ -43,8 +43,8 @@ namespace ReactiveDomain.Messaging
         /// <param name="sourceId">The unique ID of the antecedent message.</param>
         /// <param name="cancellationToken">An optional token for canceling the command. Defaults to null</param>
         public Command(
-            Guid correlationId,
-            Guid? sourceId,
+            CorrelationId correlationId,
+            SourceId sourceId,
             CancellationToken? cancellationToken = null)
         {
             CorrelationId = correlationId;
@@ -78,19 +78,36 @@ namespace ReactiveDomain.Messaging
     }
 
     /// <summary>
-    /// Indicates receipt of a command message
-    /// Does not indicate success or failure of command processing
+    /// Indicates receipt of a command message.
+    /// Does not indicate success or failure of command processing.
     /// </summary>
+    /// <inheritdoc cref="Message"/>
     public class AckCommand : Message, ICorrelatedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
+        /// <inheritdoc cref="ICorrelatedMessage"/>
+        public SourceId SourceId => new SourceId(SourceCommand);
+        /// <inheritdoc cref="ICorrelatedMessage"/>
+        public CorrelationId CorrelationId => SourceCommand.CorrelationId;
+
+        /// <summary>
+        /// The Command whose receipt is being acknowledged.
+        /// </summary>
         public Command SourceCommand { get; }
-        public Guid? SourceId => SourceCommand.MsgId;
-        public Guid CorrelationId => SourceCommand.CorrelationId;
+        /// <summary>
+        /// The unique ID of the Command whose receipt is being acknowledged.
+        /// </summary>
         public Guid CommandId => SourceCommand.MsgId;
+        /// <summary>
+        /// The Type of the Command whose receipt is being acknowledged.
+        /// </summary>
         public Type CommandType => SourceCommand.GetType();
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="sourceCommand">The Command whose receipt is being acknowledged.</param>
         public AckCommand(Command sourceCommand)
         {
             SourceCommand = sourceCommand;

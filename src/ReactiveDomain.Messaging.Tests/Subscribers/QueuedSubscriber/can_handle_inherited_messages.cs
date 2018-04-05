@@ -7,34 +7,28 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     public class can_handle_inherited_messages : when_using_inherited_queued_subscriber
     {
-       
-        protected Guid TestMessageId;
-        protected Guid TestCorrelationId;
-        protected Guid ParentMsgId;
-        protected Guid ChildMsgId;
+        private CorrelationId _testCorrelationId;
+        private TestEvent _testEvent;
+        private ParentTestEvent _parentTestEvent;
+        private ChildTestEvent _childTestEvent;
 
         protected override void When()
         {
-       
-            TestCorrelationId = Guid.NewGuid();
-            var msg = new TestEvent(TestCorrelationId, Guid.Empty);
-            TestMessageId = msg.MsgId;
-            Bus.Publish(msg);
-            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 1,msg:"Setup Failure: TestDomainEvent");
+            _testCorrelationId = CorrelationId.NewId();
+            _testEvent = new TestEvent(_testCorrelationId, SourceId.NullSourceId());
+            Bus.Publish(_testEvent);
 
-            var msg2 = new ParentTestEvent(TestCorrelationId,TestMessageId);
-            ParentMsgId = msg2.MsgId;
-            Bus.Publish(msg2);
-            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 2,msg:"Setup Failure: ParentTestDomainEvent");
+            _parentTestEvent = new ParentTestEvent(_testCorrelationId, new SourceId(_testEvent));
+            Bus.Publish(_parentTestEvent);
+            Assert.Equal(BusMessages.Count, 2);
 
-            var msg3 = new ChildTestEvent(TestCorrelationId,ParentMsgId);
-            ChildMsgId = msg3.MsgId;
-            Bus.Publish(msg3);
-            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 3,msg:"Setup Failure: ChildTestDomainEvent");
+            _childTestEvent = new ChildTestEvent(_testCorrelationId, new SourceId(_parentTestEvent));
+            Bus.Publish(_childTestEvent);
+            Assert.Equal(BusMessages.Count, 3);
 
-            var msg4 = new GrandChildTestEvent(TestCorrelationId, ChildMsgId);
+            var msg4 = new GrandChildTestEvent(_testCorrelationId, new SourceId(_childTestEvent));
             Bus.Publish(msg4);
-            Assert.IsOrBecomesTrue(()=>BusMessages.Count == 4,msg:"Setup Failure: GrandChildTestDomainEvent");
+            Assert.Equal(BusMessages.Count, 4);
 
             //used in multiple_message_handle_invocations_are_correct test 
         }
@@ -46,10 +40,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             {
                 var subscriber = sub;
                 TestQueue.Clear();
-                Bus.Publish(new GrandChildTestEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new GrandChildTestEvent(_testCorrelationId, new SourceId(_childTestEvent)));
 
                 BusMessages
-                    .AssertNext<GrandChildTestEvent>(TestCorrelationId)
+                    .AssertNext<GrandChildTestEvent>(_testCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscriber.Starving, 3000);
@@ -83,10 +77,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             {
                 var subscription = sub;
                 TestQueue.Clear();
-                Bus.Publish(new ChildTestEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new ChildTestEvent(_testCorrelationId, new SourceId(_childTestEvent)));
 
                 BusMessages
-                    .AssertNext<ChildTestEvent>(TestCorrelationId)
+                    .AssertNext<ChildTestEvent>(_testCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscription.Starving, 3000);
@@ -121,10 +115,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                 var subscriber = sub;
                 TestQueue.Clear();
 
-                Bus.Publish(new ParentTestEvent(TestCorrelationId, ChildMsgId));
+                Bus.Publish(new ParentTestEvent(_testCorrelationId, new SourceId(_childTestEvent)));
 
                 BusMessages
-                    .AssertNext<ParentTestEvent>(TestCorrelationId)
+                    .AssertNext<ParentTestEvent>(_testCorrelationId)
                     .AssertEmpty();
 
                 Assert.IsOrBecomesTrue(() => subscriber.Starving, 3000);
@@ -154,10 +148,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         public void multiple_message_handle_invocations_are_correct()
         {
             BusMessages
-                 .AssertNext<TestEvent>(TestCorrelationId)
-                 .AssertNext<ParentTestEvent>(TestCorrelationId)
-                 .AssertNext<ChildTestEvent>(TestCorrelationId)
-                 .AssertNext<GrandChildTestEvent>(TestCorrelationId)
+                 .AssertNext<TestEvent>(_testCorrelationId)
+                 .AssertNext<ParentTestEvent>(_testCorrelationId)
+                 .AssertNext<ChildTestEvent>(_testCorrelationId)
+                 .AssertNext<GrandChildTestEvent>(_testCorrelationId)
                  .AssertEmpty();
 
             Assert.IsOrBecomesTrue(

@@ -23,7 +23,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                     for (int i = 0; i < FirstTaskMax; i++)
                     {
                         Bus.Publish(new CountedTestMessage(i));
-                        Bus.Publish(new CountedEvent(i, Guid.NewGuid(), Guid.Empty));
+                        Bus.Publish(new CountedEvent(i, CorrelationId.NewId(), SourceId.NullSourceId()));
                         Bus.Publish(new TestMessage());
                     }
                 });
@@ -34,7 +34,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                     for (int i = 0; i < FirstTaskMax; i++)
                     {
                         Bus.Publish(new CountedTestMessage(i));
-                        Bus.Publish(new CountedEvent(i, Guid.NewGuid(), Guid.Empty));
+                        Bus.Publish(new CountedEvent(i, CorrelationId.NewId(), SourceId.NullSourceId()));
                         Bus.Publish(new TestMessage());
                     }
                 });

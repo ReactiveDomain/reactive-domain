@@ -54,16 +54,16 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(), 
+                                        SourceId.NullSourceId());
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
 
             }
             var tstCmd = new TestCommands.Command3(
-                        Guid.NewGuid(),
-                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",

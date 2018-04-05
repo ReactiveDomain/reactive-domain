@@ -22,7 +22,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public when_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
         }
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -45,10 +45,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
             }
 
-            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, SourceId.NullSourceId()));
         }
 
 

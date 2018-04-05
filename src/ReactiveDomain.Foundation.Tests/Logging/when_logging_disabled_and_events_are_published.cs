@@ -25,7 +25,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         {
             
         }
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -47,12 +47,13 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedEvents; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            SourceId.NullSourceId()));
             }
 
-            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, SourceId.NullSourceId()));
         }
 
 

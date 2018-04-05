@@ -14,7 +14,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         with_message_logging_enabled,
         IHandle<Message>
     {
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         public when_logging_high_volume_message_traffic(StreamStoreConnectionFixture fixture):base(fixture.Connection)
@@ -56,25 +56,26 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        Guid.NewGuid(),
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            CorrelationId.NewId(), 
+                            SourceId.NullSourceId()));
 
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
 
-                Bus.Publish(new TestEvent(Guid.NewGuid(), Guid.NewGuid()));
+                Bus.Publish(new TestEvent(CorrelationId.NewId(), SourceId.NullSourceId()));
 
             }
 
             var tstCmd = new TestCommands.Command3(
-                        _correlationId,
-                        null);
+                                        _correlationId,
+                                        SourceId.NullSourceId());
 
             Bus.Fire(tstCmd,
                 "TestCommand3 failed",

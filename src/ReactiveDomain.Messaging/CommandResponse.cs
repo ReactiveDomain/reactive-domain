@@ -11,8 +11,8 @@ namespace ReactiveDomain.Messaging
         public Command SourceCommand { get; }
         public Type CommandType => SourceCommand.GetType();
         public Guid CommandId => SourceCommand.MsgId;
-        public Guid? SourceId => SourceCommand.MsgId;
-        public Guid CorrelationId => SourceCommand.CorrelationId;
+        public SourceId SourceId => new SourceId(SourceCommand);
+        public CorrelationId CorrelationId => SourceCommand.CorrelationId;
 
         protected CommandResponse(Command sourceCommand)
         {
@@ -26,6 +26,7 @@ namespace ReactiveDomain.Messaging
         public override int MsgTypeId => TypeId;
         public Success(Command sourceCommand) : base(sourceCommand) {}
     }
+
     public class Fail : CommandResponse
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);

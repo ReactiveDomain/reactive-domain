@@ -9,68 +9,68 @@ namespace ReactiveDomain.Messaging.Testing
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public TimeoutTestCommand(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public TimeoutTestCommand(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class Fail : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Fail(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Fail(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class Throw : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Throw(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Throw(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class WrapException : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public WrapException(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public WrapException(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class ChainedCaller : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public ChainedCaller(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public ChainedCaller(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class Command1 : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Command1(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Command1(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class Command2 : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Command2(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Command2(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class Command3 : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Command3(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Command3(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class RemoteHandled : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public RemoteHandled(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public RemoteHandled(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         //n.b. don't register a handler for this
         public class Unhandled : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public Unhandled(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public Unhandled(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class LongRunning : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public LongRunning(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public LongRunning(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class TypedResponse : Command
         {
@@ -79,8 +79,8 @@ namespace ReactiveDomain.Messaging.Testing
             public override int MsgTypeId => TypeId;
             public TypedResponse(
                 bool failCommand,
-                Guid correlationId, 
-                Guid? sourceId) : base(correlationId, sourceId) {
+                CorrelationId correlationId, 
+                SourceId sourceId) : base(correlationId, sourceId) {
                 FailCommand = failCommand;
             }
 
@@ -102,13 +102,13 @@ namespace ReactiveDomain.Messaging.Testing
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public DisjunctCommand(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public DisjunctCommand(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
         public class UnsubscribedCommand : Command
         {
             private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
             public override int MsgTypeId => TypeId;
-            public UnsubscribedCommand(Guid correlationId, Guid? sourceId) : base(correlationId, sourceId) { }
+            public UnsubscribedCommand(CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) { }
         }
 
         public class TestResponse : Success

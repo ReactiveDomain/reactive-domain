@@ -20,7 +20,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 			for (var i = 0; i < _msgCount; i++)
 			{
 				_messages.Add(new CountedTestMessage(i));
-				_messages.Add(new CountedEvent(i, Guid.NewGuid(), Guid.NewGuid()));
+				_messages.Add(new CountedEvent(i, CorrelationId.NewId(), SourceId.NullSourceId()));
 			}
 		}
 

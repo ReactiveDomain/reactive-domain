@@ -12,11 +12,11 @@ namespace ReactiveDomain.Messaging
 
         public override int MsgTypeId => TypeId;
 
-        public Guid CorrelationId { get; }
+        public CorrelationId CorrelationId { get; }
      
-        public Guid? SourceId { get; }
+        public SourceId SourceId { get; }
 
-        protected Event(Guid correlationId, Guid sourceId)
+        protected Event(CorrelationId correlationId, SourceId sourceId)
         {
             CorrelationId = correlationId;
             SourceId = sourceId;

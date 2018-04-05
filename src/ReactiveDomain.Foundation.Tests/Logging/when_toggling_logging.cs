@@ -19,7 +19,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         {
             
         }
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
@@ -50,8 +50,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -70,8 +70,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
@@ -89,16 +89,16 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
             }
 
             var tstCmd = new TestCommands.Command3(
-                Guid.NewGuid(),
-                null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",
@@ -125,9 +125,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedEvents; i++)
             {
                 Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                    new CountedEvent(
+                            i,
+                            _correlationId,
+                            SourceId.NullSourceId()));
             }
 
             Assert.IsOrBecomesTrue(
@@ -144,7 +145,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -161,7 +162,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
             }
 
             Assert.IsOrBecomesTrue(
@@ -180,11 +181,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
 
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
 
                 Bus.Fire(cmd,
                     $"exception message{i}",
@@ -211,11 +212,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
 
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
 
                 Bus.Fire(cmd,
                     $"exception message{i}",
@@ -244,11 +245,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(
                     new CountedEvent(i,
                         _correlationId,
-                        Guid.NewGuid()));
+                        SourceId.NullSourceId()));
 
                 var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                                        CorrelationId.NewId(),
+                                        SourceId.NullSourceId());
 
                 Bus.Fire(cmd,
                     $"exception message{i}",

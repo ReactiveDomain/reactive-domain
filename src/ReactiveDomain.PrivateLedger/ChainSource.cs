@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.PrivateLedger
@@ -14,8 +15,8 @@ namespace ReactiveDomain.PrivateLedger
     public class ChainSource : IChainedMessage
     {
         public Guid MsgId { get; }
-        public Guid? SourceId { get; }
-        public Guid CorrelationId { get; }
+        public SourceId SourceId { get; }
+        public CorrelationId CorrelationId { get; }
         public Guid PrincipalId { get; }
 
         public ChainSource(IChainedMessage source)
@@ -25,8 +26,8 @@ namespace ReactiveDomain.PrivateLedger
         [JsonConstructor]
         public ChainSource(
             Guid msgId,
-            Guid? sourceId,
-            Guid correlationId,
+            SourceId sourceId,
+            CorrelationId correlationId,
             Guid principalId)
         {
             MsgId = msgId;

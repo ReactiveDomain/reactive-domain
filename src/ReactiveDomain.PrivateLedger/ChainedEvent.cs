@@ -15,12 +15,12 @@ namespace ReactiveDomain.PrivateLedger
         public readonly ChainSource Source;
 
         protected ChainedEvent(IChainedMessage source) :
-            base(source.CorrelationId, source.MsgId)
+            base(source.CorrelationId, new SourceId(source))
         {
             PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
-        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid principalId) :
+        protected ChainedEvent(CorrelationId correlationId, SourceId sourceId, Guid principalId) :
             base(correlationId, sourceId)
         {
             PrincipalId = principalId;

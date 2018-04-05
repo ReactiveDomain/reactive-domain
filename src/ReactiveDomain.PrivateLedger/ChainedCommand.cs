@@ -12,13 +12,13 @@ namespace ReactiveDomain.PrivateLedger
         public Guid PrincipalId { get; }
         public readonly ChainSource Source;
         public ChainedCommand(IChainedMessage source) :
-            base(source.CorrelationId, source.MsgId)
+            base(source.CorrelationId, new SourceId(source))
         {
             PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
 
-        public ChainedCommand(Guid correlationId, Guid? sourceId, Guid principalId) :
+        public ChainedCommand(CorrelationId correlationId, SourceId sourceId, Guid principalId) :
             base(correlationId, sourceId)
         {
             PrincipalId = principalId;

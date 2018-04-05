@@ -63,8 +63,8 @@ namespace ReactiveDomain.Messaging.Testing
         public int MessageNumber;
 
         public CountedEvent(int msgNumber,
-                Guid correlationId,
-                Guid sourceId)
+                CorrelationId correlationId,
+                SourceId sourceId)
                 : base(correlationId, sourceId)
         {
             MessageNumber = msgNumber;

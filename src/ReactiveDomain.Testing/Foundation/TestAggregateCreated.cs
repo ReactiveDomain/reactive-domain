@@ -18,8 +18,8 @@ namespace ReactiveDomain.Testing
 
         #region Implementation of ICorrelatedMessage
 
-        public Guid? SourceId => null;
-        public Guid CorrelationId => AggregateId;
+        public SourceId SourceId => SourceId.NullSourceId();
+        public CorrelationId CorrelationId => new CorrelationId(AggregateId);
 
         #endregion
     }

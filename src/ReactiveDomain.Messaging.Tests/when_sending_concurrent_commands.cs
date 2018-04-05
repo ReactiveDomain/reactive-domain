@@ -32,9 +32,9 @@ namespace ReactiveDomain.Messaging.Tests
             _count = 5;
             for (int i = 0; i < _count; i++)
             {
-                _commands.Add(new TestCommands.Command1(Guid.NewGuid(), null));
-                _commands.Add(new TestCommands.Command2(Guid.NewGuid(), null));
-                _commands.Add(new TestCommands.Command3(Guid.NewGuid(), null));
+                _commands.Add(new TestCommands.Command1(CorrelationId.NewId(), SourceId.NullSourceId()));
+                _commands.Add(new TestCommands.Command2(CorrelationId.NewId(), SourceId.NullSourceId()));
+                _commands.Add(new TestCommands.Command3(CorrelationId.NewId(), SourceId.NullSourceId()));
             }
         }
 
