@@ -76,7 +76,7 @@ namespace ReactiveDomain.Transport.Tests
             reader.Read();
             var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
             reader.Read(); //read json value
-            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType);
+            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
             Assert.IsType<WoftamEvent>(msg2);
             Assert.Equal(Prop1,((WoftamEvent)msg2).Property1);
         }
@@ -94,7 +94,7 @@ namespace ReactiveDomain.Transport.Tests
             reader.Read();
             var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
             reader.Read(); //read json value
-            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType);
+            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
             Assert.IsType<WoftamEvent>(msg2);
             Assert.Equal(Prop1,((WoftamEvent)msg2).Property1);
         }
