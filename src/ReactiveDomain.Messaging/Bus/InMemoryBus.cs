@@ -57,12 +57,6 @@ namespace ReactiveDomain.Messaging.Bus
                 _slowMsgThreshold = slowMsgThreshold ?? DefaultSlowMessageThreshold;
 
                 MessageHierarchy.MessageTypesAdded += MessageHierarchy_MessageTypesAdded;
-
-                //_handlers = new List<IMessageHandler>[MessageHierarchy.MaxMsgTypeId + 1];
-                //for (int i = 0; i < _handlers.Length; ++i)
-                //{
-                //    _handlers[i] = new List<IMessageHandler>();
-                //}
             }
             catch (Exception ex)
             {
@@ -84,10 +78,6 @@ namespace ReactiveDomain.Messaging.Bus
                 }
 
                 _handlers = new Dictionary<Type, List<IMessageHandler>>();
-                //for (int i = 0; i < _handlers.Length; ++i) //Initialize the new array
-                //{
-                //    _handlers[i] = new List<IMessageHandler>();
-                //}
 
                 foreach (var registeredHandler in registeredHandlers)
                 {
