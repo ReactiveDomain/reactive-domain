@@ -15,12 +15,12 @@ namespace ReactiveDomain.Domain.Tests.Testing
     public class ScenarioRunner
     {
         private readonly CommandHandlerInvoker _invoker;
-        private readonly IEventStoreConnection _connection;
+        private readonly IStreamStoreConnection _connection;
         private readonly JsonSerializerSettings _settings;
         private readonly string _prefix;
         private readonly StreamNameConverter _converter;
 
-        public ScenarioRunner(CommandHandlerInvoker invoker, IEventStoreConnection connection, JsonSerializerSettings settings, string prefix)
+        public ScenarioRunner(CommandHandlerInvoker invoker, IStreamStoreConnection connection, JsonSerializerSettings settings, string prefix)
         {
             _invoker = invoker ?? throw new ArgumentNullException(nameof(invoker));
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));

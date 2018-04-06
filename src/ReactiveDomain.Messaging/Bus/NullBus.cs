@@ -5,10 +5,11 @@ namespace ReactiveDomain.Messaging.Bus
     /// <summary>
     /// A General bus that is always null
     /// </summary>
-    public class NullBus: IGeneralBus
+    public class NullBus: IDispatcher
     {
         public NullBus(string name = "NullBus"){Name = name;}
         public void Publish(Message message){/*null bus, just drop it*/}
+        public bool Idle => true; //always idle
         public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
         {
             throw new InvalidOperationException("Cannot subscribe to a null bus");
@@ -41,7 +42,15 @@ namespace ReactiveDomain.Messaging.Bus
             throw new InvalidOperationException("Cannot subscribe to a null bus");
         }
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command{/*null bus, just drop it*/}
-
+        public void Dispose(){  
+            Dispose(true);  
+            GC.SuppressFinalize(this);  
+        }  
+        protected virtual void  Dispose(bool disposing) {
+            if (disposing) {
+               //null bus,just drop ignore it
+            }
+        }
        
     }
 }

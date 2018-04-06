@@ -2,39 +2,33 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
+using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Domain.Tests
-{
-    [Collection(nameof(EmbeddedEventStoreCollection))]
-    public class EventSourceWriterTests
-    {
-        private readonly EmbeddedEventStoreFixture _fixture;
+namespace ReactiveDomain.Domain.Tests {
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
+    public class EventSourceWriterTests {
+        private readonly StreamStoreConnectionFixture _fixture;
 
-        public EventSourceWriterTests(EmbeddedEventStoreFixture fixture)
-        {
+        public EventSourceWriterTests(StreamStoreConnectionFixture fixture) {
             _fixture = fixture;
         }
 
         // Null related tests
 
         [Fact]
-        public void ConnectionCanNotBeNull()
-        {
+        public void ConnectionCanNotBeNull() {
             Assert.Throws<ArgumentNullException>(() =>
                 new EventSourceWriter(
                     null,
-                    new EventSourceWriterConfiguration(StreamNameConversions.PassThru, 
+                    new EventSourceWriterConfiguration(StreamNameConversions.PassThru,
                         new EventSourceChangesetTranslator(type => type.Name, new JsonSerializerSettings()))
                 ));
         }
 
         [Fact]
-        public void ConfigurationCanNotBeNull()
-        {
+        public void ConfigurationCanNotBeNull() {
             Assert.Throws<ArgumentNullException>(() =>
                 new EventSourceWriter(
                     _fixture.Connection,
@@ -43,12 +37,11 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public Task WriteStreamAsyncSourceCanNotBeNull()
-        {
+        public Task WriteStreamAsyncSourceCanNotBeNull() {
             var sut =
                 new EventSourceWriter(
                     _fixture.Connection,
-                    new EventSourceWriterConfiguration(StreamNameConversions.PassThru, 
+                    new EventSourceWriterConfiguration(StreamNameConversions.PassThru,
                         new EventSourceChangesetTranslator(type => type.Name, new JsonSerializerSettings()))
                 );
 
@@ -62,13 +55,12 @@ namespace ReactiveDomain.Domain.Tests
         // No stream cases
 
         [Fact]
-        public async Task WhenNoStreamAndNoChangesReturnsExpectedResult()
-        {
+        public async Task WhenNoStreamAndNoChangesReturnsExpectedResult() {
             var stream = _fixture.NextStreamName();
             var eventSource = new Entity();
 
             var sut = CreateSut();
-            
+
             var result = await sut.WriteStreamAsync(stream, eventSource, Guid.NewGuid(), Guid.NewGuid());
 
             Assert.Equal(ExpectedVersion.NoStream, result.NextExpectedVersion);
@@ -76,8 +68,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenNoStreamAndChangesReturnsExpectedResult()
-        {
+        public async Task WhenNoStreamAndChangesReturnsExpectedResult() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var changes = new object[]
@@ -94,12 +85,11 @@ namespace ReactiveDomain.Domain.Tests
 
             Assert.Equal(1, result.NextExpectedVersion);
             Assert.Equal(1, eventSource.RevealExpectedVersion);
-            
+
         }
 
         [Fact]
-        public async Task WhenNoStreamAndChangesMismatchOnCommandIdThenThrows()
-        {
+        public async Task WhenNoStreamAndChangesMismatchOnCommandIdThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var sut = CreateSut();
@@ -121,8 +111,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenNoStreamAndChangesMismatchOnEventTypeThenThrows()
-        {
+        public async Task WhenNoStreamAndChangesMismatchOnEventTypeThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var sut = CreateSut();
@@ -148,8 +137,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenNoStreamAndChangesMismatchOnEventTypeOrderThenThrows()
-        {
+        public async Task WhenNoStreamAndChangesMismatchOnEventTypeOrderThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var sut = CreateSut();
@@ -175,8 +163,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenNoStreamAndChangesMismatchOnNumberOfEventsThenThrows()
-        {
+        public async Task WhenNoStreamAndChangesMismatchOnNumberOfEventsThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var sut = CreateSut();
@@ -205,8 +192,7 @@ namespace ReactiveDomain.Domain.Tests
         // Existing stream cases
 
         [Fact]
-        public async Task WhenStreamPresentAndNoChangesReturnsExpectedResult()
-        {
+        public async Task WhenStreamPresentAndNoChangesReturnsExpectedResult() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -221,8 +207,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesReturnsExpectedResult()
-        {
+        public async Task WhenStreamPresentAndChangesReturnsExpectedResult() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -242,8 +227,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesMismatchOnCommandIdThenThrows()
-        {
+        public async Task WhenStreamPresentAndChangesMismatchOnCommandIdThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -266,8 +250,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesMismatchOnEventTypeThenThrows()
-        {
+        public async Task WhenStreamPresentAndChangesMismatchOnEventTypeThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -294,8 +277,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesMismatchOnEventTypeOrderThenThrows()
-        {
+        public async Task WhenStreamPresentAndChangesMismatchOnEventTypeOrderThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -323,8 +305,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesMismatchOnNumberOfEventsThenThrows()
-        {
+        public async Task WhenStreamPresentAndChangesMismatchOnNumberOfEventsThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -352,8 +333,7 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenStreamPresentAndChangesMismatchExpectedVersionThenThrows()
-        {
+        public async Task WhenStreamPresentAndChangesMismatchExpectedVersionThenThrows() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -382,8 +362,7 @@ namespace ReactiveDomain.Domain.Tests
         // Deleted stream cases
 
         [Fact] //Not sure what to expect
-        public async Task WhenStreamDeletedAndNoChangesReturnsExpectedResult()
-        {
+        public async Task WhenStreamDeletedAndNoChangesReturnsExpectedResult() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -395,12 +374,11 @@ namespace ReactiveDomain.Domain.Tests
             var result = await sut.WriteStreamAsync(stream, eventSource, Guid.NewGuid(), Guid.NewGuid());
 
             Assert.Equal(initial.NextExpectedVersion, result.NextExpectedVersion);
-            Assert.Equal(initial.NextExpectedVersion, eventSource.RevealExpectedVersion);            
+            Assert.Equal(initial.NextExpectedVersion, eventSource.RevealExpectedVersion);
         }
 
         [Fact] // Expected a deleted stream not to be writable.
-        public async Task WhenStreamDeletedAndChangesReturnsExpectedResult()
-        {
+        public async Task WhenStreamDeletedAndChangesReturnsExpectedResult() {
             //Arrange
             var stream = _fixture.NextStreamName();
             var initial = await CreateStream(stream, CreateEventData());
@@ -423,8 +401,7 @@ namespace ReactiveDomain.Domain.Tests
         // Cancellation
 
         [Fact]
-        public async Task WhenCancelledBeforeWriteThrowsExpectedException()
-        {
+        public async Task WhenCancelledBeforeWriteThrowsExpectedException() {
             var stream = _fixture.NextStreamName();
             await CreateStream(stream, CreateEventData());
 
@@ -439,14 +416,12 @@ namespace ReactiveDomain.Domain.Tests
         }
 
         [Fact]
-        public async Task WhenCancelledMidWriteThrowsExpectedException()
-        {
+        public async Task WhenCancelledMidWriteThrowsExpectedException() {
             var stream = _fixture.NextStreamName();
             await CreateStream(stream, CreateEventData());
 
             var source = new CancellationTokenSource();
-            var eventSource = new Entity(() =>
-            {
+            var eventSource = new Entity(() => {
                 source.Cancel(); //mimics mid write, poorly
             }, new Event1 { Value = 1 });
             var sut = CreateSut();
@@ -455,66 +430,52 @@ namespace ReactiveDomain.Domain.Tests
                 sut.WriteStreamAsync(stream, eventSource, Guid.NewGuid(), Guid.NewGuid(), null, source.Token));
         }
 
-        class Event1
-        {
+        class Event1 {
             public int Value { get; set; }
         }
 
-        class Event2
-        {
+        class Event2 {
             public int Value { get; set; }
         }
 
-        private EventSourceWriter CreateSut()
-        {
+        private EventSourceWriter CreateSut() {
             return new EventSourceWriter(
                 _fixture.Connection,
-                new EventSourceWriterConfiguration(StreamNameConversions.PassThru, 
+                new EventSourceWriterConfiguration(StreamNameConversions.PassThru,
                     new EventSourceChangesetTranslator(type => type.FullName, new JsonSerializerSettings()))
             );
         }
 
-        private Task<WriteResult> CreateStream(string stream, params EventData[] events)
-        {
-            return _fixture.Connection.AppendToStreamAsync(stream, ExpectedVersion.NoStream, events);
+        private WriteResult CreateStream(string stream, params EventData[] events) {
+            return _fixture.Connection.AppendToStream(stream, ExpectedVersion.NoStream, null, events);
         }
 
-        private Task<DeleteResult> DeleteStream(string stream)
-        {
-            return _fixture.Connection.DeleteStreamAsync(
-                stream,
-                ExpectedVersion.Any);
+        private void DeleteStream(string stream) {
+            _fixture.Connection.DeleteStream(new StreamName(stream), ExpectedVersion.Any);
         }
 
-        private static EventData CreateEventData()
-        {
+        private static EventData CreateEventData() {
             return new EventData(Guid.NewGuid(), "-", true, Encoding.UTF8.GetBytes("{}"), Encoding.UTF8.GetBytes("{}"));
         }
 
-        class Entity : AggregateRootEntity
-        {
-            public Entity(params object[] changes)
-            {
-                foreach(var change in changes)
+        class Entity : AggregateRootEntity {
+            public Entity(params object[] changes) {
+                foreach (var change in changes)
                     Raise(change);
             }
 
-            public Entity(long expectedVersion, params object[] changes)
-            {
+            public Entity(long expectedVersion, params object[] changes) {
                 foreach (var change in changes)
                     Raise(change);
 
                 ((IEventSource)this).ExpectedVersion = expectedVersion;
             }
 
-            public Entity(Action onEvent, params object[] changes)
-            {
-                Register<Event1>(_ =>
-                {
+            public Entity(Action onEvent, params object[] changes) {
+                Register<Event1>(_ => {
                     onEvent();
                 });
-                Register<Event2>(_ =>
-                {
+                Register<Event2>(_ => {
                     onEvent();
                 });
 

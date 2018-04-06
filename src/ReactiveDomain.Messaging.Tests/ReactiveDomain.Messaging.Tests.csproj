@@ -1,35 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Version>0.8.6.0</Version>
-    <Authors>PerkinElmer</Authors>
-    <Company>PerkinElmer</Company>
-    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
-    <Description />
-    <AssemblyVersion>0.8.6.0</AssemblyVersion>
-    <FileVersion>0.8.6.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
-
 </Project>

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -14,7 +13,7 @@ namespace ReactiveDomain.Transport
     {
 
         public TcpBusClientSide(
-            IGeneralBus messageBus,
+            IDispatcher messageBus,
             IPAddress hostIP,
             int commandPort,
             ITcpConnection tcpConnection = null)
@@ -45,7 +44,7 @@ namespace ReactiveDomain.Transport
 
             return clientTcpConnection;
         }
-
+        
         private void HandleError(ITcpConnection conn, SocketError err)
         {
             // assume that any connection error means that the Host isn't running, yet.  Just wait

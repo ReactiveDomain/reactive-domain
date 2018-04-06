@@ -6,14 +6,14 @@ using ReactiveDomain.Transport.CommandSocket;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Transport
 {
     public abstract class TcpBusSide : IHandle<Message>
     {
         protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        protected readonly IGeneralBus MessageBus;
+        protected readonly IDispatcher MessageBus;
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Transport
         protected TcpBusSide(
             IPAddress hostIp,
             int commandPort,
-            IGeneralBus messageBus)
+            IDispatcher messageBus)
         {
             _hostIp = hostIp;
             _commandPort = commandPort;
@@ -145,9 +145,6 @@ namespace ReactiveDomain.Transport
                     Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
                 }
             }
-
-
-
         }
     }
 

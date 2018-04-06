@@ -20,10 +20,10 @@ namespace ReactiveDomain.PrivateLedger
             PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
-        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid PrincipalId) :
+        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid principalId) :
             base(correlationId, sourceId)
         {
-            PrincipalId = PrincipalId;
+            PrincipalId = principalId;
         }
     }
 

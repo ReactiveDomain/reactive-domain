@@ -13,7 +13,7 @@ namespace ReactiveDomain.Transport
         public TcpBusServerSide(
             IPAddress hostIp,
             int commandPort,
-            IGeneralBus messageBus)
+            IDispatcher messageBus)
             : base(hostIp, commandPort, messageBus)
         {
            
@@ -48,6 +48,5 @@ namespace ReactiveDomain.Transport
             Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint.Port + ") successfully constructed TcpServerListener.");
             _commandPortListener = listener;
         }
-
     }
 }

@@ -25,7 +25,7 @@ namespace ReactiveDomain.Domain.Tests.Example
             });
         }
 
-        public GroupIdentifier Id => _groupId;
+        public new GroupIdentifier Id => _groupId;
 
         public static Group Start(GroupIdentifier groupId, GroupName name, GroupAdministratorIdentifier startedBy)
         {

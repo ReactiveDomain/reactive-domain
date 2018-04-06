@@ -1,6 +1,6 @@
 ﻿using System;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Foundation.EventStore
 {

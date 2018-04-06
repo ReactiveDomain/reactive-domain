@@ -6,224 +6,252 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests
-{
-
+namespace ReactiveDomain.Messaging.Tests {
     // ReSharper disable once InconsistentNaming
-    public class precanceled_commands_via_cancellation_token : CommandQueueSpecification
-    {
-        public precanceled_commands_via_cancellation_token() : base(1, 2500, 2500) { }
-        protected override void Given()
-        {
-            Bus.Subscribe(new TokenCancellableCmdHandler());
-        }
-
+    public class precanceled_commands_via_cancellation_token : IHandle<TestTokenCancellableCmd>, IDisposable {
+        private IDispatcher _dispatcher;
+        private readonly IHandleCommand<TestTokenCancellableCmd> _handler;
         protected CancellationTokenSource TokenSource;
+        private long _commandReceivedCount;
 
-        protected override void When()
-        {
-            TokenSource = new CancellationTokenSource();
-            TokenSource.Cancel();
-            Queue.Handle(new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
-        }
-        [Fact]
-        public void canceled_commands_will_not_fire()
-        {
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(_ => true)
-                        .AssertEmpty();
-        }
-    }
-
-    // ReSharper disable once InconsistentNaming
-    public class can_cancel_concurrent_commands : CommandQueueSpecification
-    {
-        public can_cancel_concurrent_commands() : base(2, 2500, 2500)
-        {
-
-        }
-        protected override void Given()
-        {
-            Handler = new TokenCancellableCmdHandler();
-            Bus.Subscribe(Handler);
-        }
-        protected TokenCancellableCmdHandler Handler;
-        protected CancellationTokenSource TokenSource1;
-        protected CancellationTokenSource TokenSource2;
-        protected TestTokenCancellableCmd Cmd1;
-        protected TestTokenCancellableCmd Cmd2;
-        protected override void When()
-        {
-            TokenSource1 = new CancellationTokenSource();
-            TokenSource2 = new CancellationTokenSource();
-            Cmd1 = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource1.Token);
-            Cmd2 = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource2.Token);
-
-            Queue.Handle(Cmd1);
-            Queue.Handle(Cmd2);
-        }
-
-        [Fact]
-        public void will_not_cross_cancel()
-        {
-
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
-            TokenSource1.Cancel();
-            Handler.ParkedMessages[Cmd1.MsgId].Set();
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            Handler.ParkedMessages[Cmd2.MsgId].Set();
-            TestQueue.WaitFor<Success>(TimeSpan.FromSeconds(3));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(msg => msg.SourceCommand.MsgId == Cmd1.MsgId)
-                        .AssertNext<Success>(msg => msg.SourceCommand.MsgId == Cmd2.MsgId)
-                        .AssertEmpty();
-        }
-
-    }
-
-    // ReSharper disable once InconsistentNaming
-    public class can_cancel_commands_via_cancellation_token : CommandQueueSpecification
-    {
-        public can_cancel_commands_via_cancellation_token() : base(1, 2500, 2500)
-        {
-
-        }
-        private TokenCancellableCmdHandler _handler;
-        private TestTokenCancellableCmd _cmd;
-        protected override void Given()
-        {
+        public precanceled_commands_via_cancellation_token() {
+            _dispatcher = new Dispatcher(nameof(precanceled_commands_via_cancellation_token));
             _handler = new TokenCancellableCmdHandler();
-            Bus.Subscribe(_handler);
-        }
+            _dispatcher.Subscribe<TestTokenCancellableCmd>(_handler);
 
-        protected CancellationTokenSource TokenSource;
-        protected override void When()
-        {
+            
+
+        }
+        [Fact]
+        public void canceled_commands_will_not_fire() {
             TokenSource = new CancellationTokenSource();
-            _cmd = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token);
-            Queue.Handle(_cmd);
-        }
-        [Fact]
-        public void will_succeed_if_not_canceled()
-        {
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
-            _handler?.ParkedMessages[_cmd.MsgId].Set();
-            TestQueue.WaitFor<Success>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Success>(_ => true)
-                        .AssertEmpty();
-        }
-        [Fact]
-        public void can_cancel_immediately()
-        {
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
             TokenSource.Cancel();
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(_ => true)
-                        .AssertEmpty();
-        }
-        [Fact]
-        public void can_cancel_after_delay()
-        {
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
-            Thread.Sleep(500);
-            TokenSource.Cancel();
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(_ => true)
-                        .AssertEmpty();
+            Assert.Throws<CommandCanceledException>(() =>
+                _dispatcher.Fire(new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token)));
+            Assert.False(
+                _dispatcher.TryFire(new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token),out var response));
+            Assert.IsType<Canceled>(response);
 
+            Assert.IsOrBecomesTrue(() => _dispatcher.Idle);
+            Assert.Equal(_commandReceivedCount, 0);
+        }
+        public void Dispose(){  
+            Dispose(true);  
+            GC.SuppressFinalize(this);  
+        }  
+        protected virtual void  Dispose(bool disposing) {
+            if (disposing) {
+                TokenSource?.Dispose();
+                _dispatcher?.Dispose();
+            }
+        }
+
+        public void Handle(TestTokenCancellableCmd message) {
+            Interlocked.Increment(ref _commandReceivedCount);
         }
     }
-
     // ReSharper disable once InconsistentNaming
-    public class can_cancel_nested_commands_via_cancellation_token : CommandQueueSpecification
-    {
-        public can_cancel_nested_commands_via_cancellation_token() : base(1, 2500, 2500)
-        {
+    public class can_cancel_concurrent_commands :
+        IHandleCommand<TestTokenCancellableCmd> {
+        private CancellationTokenSource _tokenSource1;
+        private CancellationTokenSource _tokenSource2;
+        private TestTokenCancellableCmd _cmd1;
+        private TestTokenCancellableCmd _cmd2;
+        private Dispatcher _bus = new Dispatcher("test", 3, false);
+        private long _releaseCmd;
+        private long _gotCmd;
+        private Guid _canceled;
+        private Guid _succeeded;
+        private long _completed;
+        public can_cancel_concurrent_commands() {
+            _bus.Subscribe(this);
         }
-        protected override void Given()
-        {
-            var hndl = new NestedTokenCancellableCmdHandler(Bus);
-            Bus.Subscribe<TestTokenCancellableCmd>(hndl);
-            Bus.Subscribe<NestedTestTokenCancellableCmd>(hndl);
+
+        [Fact]
+        public void will_not_cross_cancel() {
+            _tokenSource1 = new CancellationTokenSource();
+            _tokenSource2 = new CancellationTokenSource();
+            _cmd1 = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, _tokenSource1.Token);
+            _cmd2 = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, _tokenSource2.Token);
+            _bus.TryFire(_cmd1);
+            _bus.TryFire(_cmd2);
+            SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 200);
+            _tokenSource1.Cancel();
+            Interlocked.Increment(ref _releaseCmd);
+            SpinWait.SpinUntil(() => Interlocked.Read(ref _completed) == 2, 2000);
+            Assert.True(_cmd1.MsgId == _canceled, "Canceled Command not canceled");
+            Assert.True(_cmd2.MsgId == _succeeded, "Wrong Command canceled");
+
+        }
+        public CommandResponse Handle(TestTokenCancellableCmd cmd) {
+            Interlocked.Increment(ref _gotCmd);
+            SpinWait.SpinUntil(() => Interlocked.Read(ref _releaseCmd) == 1, 5000);
+
+
+            if (cmd.IsCanceled) {
+                _canceled = cmd.MsgId;
+            }
+            else {
+                _succeeded = cmd.MsgId;
+            }
+            Interlocked.Increment(ref _completed);
+            return cmd.IsCanceled ? cmd.Canceled() : cmd.Succeed();
+        }
+    }
+    // ReSharper disable once InconsistentNaming
+    public class can_cancel_commands_via_cancellation_token :
+        IHandleCommand<TestTokenCancellableCmd>,
+        IHandleCommand<TestTokenCancellableLongRunningCmd> {
+        private readonly IDispatcher _bus;
+        private long _canceled;
+        private long _success;
+        private long _gotCmd;
+        CancellationTokenSource _tokenSource;
+        public can_cancel_commands_via_cancellation_token() {
+            _bus = new Dispatcher(
+                nameof(can_cancel_nested_commands_via_cancellation_token),
+                3,
+                false,
+                TimeSpan.FromSeconds(2.5),
+                TimeSpan.FromSeconds(2.5));
+
+        }
+        [Fact]
+        public void will_succeed_if_not_canceled() {
+
+            _bus.Subscribe<TestTokenCancellableCmd>(this);
+
+            _tokenSource = new CancellationTokenSource();
+            var cmd = new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, _tokenSource.Token);
+            _bus.Fire(cmd);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _success) == 1, msg: "Success not triggered");
+        }
+
+        [Fact]
+        public void can_cancel_while_processing() {
+            _bus.Subscribe<TestTokenCancellableLongRunningCmd>(this);
+            _tokenSource = new CancellationTokenSource();
+            var cmd = new TestTokenCancellableLongRunningCmd(false, Guid.NewGuid(), Guid.Empty, _tokenSource.Token);
+
+            _bus.TryFire(cmd);
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _gotCmd) == 1, msg: "Command not handled");
+            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _canceled) == 1, msg: "Command not canceled");
+        }
+
+        public CommandResponse Handle(TestTokenCancellableCmd command) {
+
+            if (command.IsCanceled)
+                return command.Fail();
+            else {
+                Interlocked.Exchange(ref _success, 1);
+                return command.Succeed();
+            }
+        }
+        public CommandResponse Handle(TestTokenCancellableLongRunningCmd command) {
+            Interlocked.Exchange(ref _gotCmd, 1);
+            _tokenSource.Cancel();
+            SpinWait.SpinUntil(() => command.IsCanceled, 500);
+
+
+            if (command.IsCanceled) {
+                Interlocked.Exchange(ref _canceled, 1);
+                return command.Fail();
+            }
+            else {
+                Interlocked.Exchange(ref _success, 1);
+                return command.Succeed();
+            }
+        }
+    }
+    // ReSharper disable once InconsistentNaming
+    public class can_cancel_nested_commands_via_cancellation_token :
+        IHandleCommand<TestTokenCancellableCmd>,
+        IHandleCommand<NestedTestTokenCancellableCmd> {
+        private readonly Dispatcher _bus;
+        public can_cancel_nested_commands_via_cancellation_token() {
+            _bus = new Dispatcher(
+                            nameof(can_cancel_nested_commands_via_cancellation_token),
+                            3,
+                            false,
+                            TimeSpan.FromSeconds(2.5),
+                            TimeSpan.FromSeconds(2.5));
+            Given();
+        }
+
+        protected void Given() {
+            _bus.Subscribe<TestTokenCancellableCmd>(this);
+            _bus.Subscribe<NestedTestTokenCancellableCmd>(this);
         }
 
         protected CancellationTokenSource TokenSource;
-
-        protected override void When()
-        {
+        private bool _cancelFirst;
+        [Fact]
+        public void cancel_will_short_circuit_nested_commands() {
+            _cancelFirst = true;
             TokenSource = new CancellationTokenSource();
-            Queue.Handle(new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
+            Assert.CommandThrows<CommandCanceledException>(() => {
+                _bus.Fire(
+                    new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
+            });
+            Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
+            Assert.True(Interlocked.Read(ref _gotNestedCmd) == 0, "Nested Command Fired");
+
         }
         [Fact]
-        public void can_cancel_nested_commands_immediately()
-        {
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
-            TokenSource.Cancel();
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertNext<NestedTestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(_ => true)
-                        .AssertNext<Fail>(_ => true)
-                        .AssertEmpty();
-        }
-        [Fact]
-        public void can_cancel_nested_commands_after_delay()
-        {
-            TestQueue.WaitFor<TestTokenCancellableCmd>(TimeSpan.FromSeconds(2));
-            Thread.Sleep(500);
-            TokenSource.Cancel();
-            TestQueue.WaitFor<Canceled>(TimeSpan.FromSeconds(2));
-            TestQueue.Commands
-                        .AssertNext<TestTokenCancellableCmd>(_ => true)
-                        .AssertNext<NestedTestTokenCancellableCmd>(_ => true)
-                        .AssertEmpty();
-            TestQueue.Responses
-                        .AssertNext<Canceled>(_ => true)
-                        .AssertNext<Fail>(_ => true)
-                        .AssertEmpty();
+        public void cancel_will_cancel_nested_commands() {
+            TokenSource = new CancellationTokenSource();
+            Assert.CommandThrows<CommandCanceledException>(() => {
+                _bus.Fire(
+                    new TestTokenCancellableCmd(false, Guid.NewGuid(), Guid.Empty, TokenSource.Token));
+            });
+            Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
+            Assert.True(Interlocked.Read(ref _gotNestedCmd) == 1, "Nested Command received");
+
         }
 
+
+        private long _gotCmd;
+
+        public CommandResponse Handle(TestTokenCancellableCmd command) {
+
+            Interlocked.Increment(ref _gotCmd);
+            var nestedCommand = new NestedTestTokenCancellableCmd(
+                Guid.NewGuid(),
+                command.MsgId,
+                command.CancellationToken);
+            if (_cancelFirst) {
+                TokenSource.Cancel(); //global cancel
+                _bus.Fire(nestedCommand); // a pre canceled command will just return
+            }
+            else {
+                Assert.CommandThrows<CommandCanceledException>(
+                    () => {
+                        _bus.Fire(nestedCommand);
+                    });
+            }
+            return command.IsCanceled ? command.Canceled() : command.Succeed();
+        }
+
+        private long _gotNestedCmd;
+        public CommandResponse Handle(NestedTestTokenCancellableCmd command) {
+            Interlocked.Increment(ref _gotNestedCmd);
+            TokenSource.Cancel();
+            return command.IsCanceled ? command.Canceled() : command.Succeed();
+        }
     }
-
-    public class TokenCancellableCmdHandler : IHandleCommand<TestTokenCancellableCmd>
-    {
+    public class TokenCancellableCmdHandler : IHandleCommand<TestTokenCancellableCmd> {
         private readonly TimeSpan _maxTimeout;
-        public TokenCancellableCmdHandler(int maxTimeoutMs = 5000)
-        {
+        public TokenCancellableCmdHandler(int maxTimeoutMs = 5000) {
             _maxTimeout = TimeSpan.FromMilliseconds(maxTimeoutMs);
         }
         public ReadOnlyDictionary<Guid, ManualResetEventSlim> ParkedMessages => new ReadOnlyDictionary<Guid, ManualResetEventSlim>(_parkedMessages);
-        private Dictionary<Guid, ManualResetEventSlim> _parkedMessages = new Dictionary<Guid, ManualResetEventSlim>();
-        public CommandResponse Handle(TestTokenCancellableCmd command)
-        {
+        private readonly Dictionary<Guid, ManualResetEventSlim> _parkedMessages = new Dictionary<Guid, ManualResetEventSlim>();
+        public CommandResponse Handle(TestTokenCancellableCmd command) {
             var start = DateTime.Now;
             var release = new ManualResetEventSlim();
             _parkedMessages.Add(command.MsgId, release);
 
-            while ((DateTime.Now - start) < _maxTimeout)
-            {
+            while ((DateTime.Now - start) < _maxTimeout) {
                 release.Wait(10);
                 if (command.IsCanceled)
                     return command.Canceled();
@@ -236,42 +264,7 @@ namespace ReactiveDomain.Messaging.Tests
             return command.Fail(new TimeoutException());
         }
     }
-
-    public class NestedTokenCancellableCmdHandler :
-        IHandleCommand<TestTokenCancellableCmd>,
-        IHandleCommand<NestedTestTokenCancellableCmd>
-    {
-        private readonly IGeneralBus _bus;
-
-        public NestedTokenCancellableCmdHandler(IGeneralBus bus)
-        {
-            _bus = bus;
-        }
-
-        public CommandResponse Handle(TestTokenCancellableCmd command)
-        {
-            _bus.Fire(new NestedTestTokenCancellableCmd(Guid.NewGuid(), command.MsgId, command.CancellationToken));
-            if (command.IsCanceled)
-                return command.Canceled();
-            else
-                return command.Succeed();
-        }
-
-        public CommandResponse Handle(NestedTestTokenCancellableCmd command)
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                if (command.IsCanceled)
-                    return command.Canceled();
-                Thread.Sleep(200);
-            }
-            return command.Succeed();
-        }
-
-    }
-
-    public class TestTokenCancellableCmd : TokenCancellableCommand
-    {
+    public class TestTokenCancellableCmd : TokenCancellableCommand {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
 
@@ -281,14 +274,27 @@ namespace ReactiveDomain.Messaging.Tests
             Guid correlationId,
             Guid? sourceId,
             CancellationToken cancellationToken) :
-            base(correlationId, sourceId, cancellationToken)
-        {
+            base(correlationId, sourceId, cancellationToken) {
             RequestFail = requestFail;
         }
 
     }
-    public class NestedTestTokenCancellableCmd : TokenCancellableCommand
-    {
+    public class TestTokenCancellableLongRunningCmd : TokenCancellableCommand {
+        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId => TypeId;
+
+        public readonly bool RequestFail;
+        public TestTokenCancellableLongRunningCmd(
+            bool requestFail,
+            Guid correlationId,
+            Guid? sourceId,
+            CancellationToken cancellationToken) :
+            base(correlationId, sourceId, cancellationToken) {
+            RequestFail = requestFail;
+        }
+
+    }
+    public class NestedTestTokenCancellableCmd : TokenCancellableCommand {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
 
@@ -296,8 +302,7 @@ namespace ReactiveDomain.Messaging.Tests
             Guid correlationId,
             Guid? sourceId,
             CancellationToken cancellationToken) :
-            base(correlationId, sourceId, cancellationToken)
-        {
+            base(correlationId, sourceId, cancellationToken) {
         }
 
     }

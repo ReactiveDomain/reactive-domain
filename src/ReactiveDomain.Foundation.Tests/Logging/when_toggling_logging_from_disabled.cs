@@ -1,23 +1,21 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
+using System;
 using Xunit;
 using Xunit.Sdk;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_toggling_logging_from_disabled :
         with_message_logging_disabled,
         IHandle<Message>
     {
-        public when_toggling_logging_from_disabled(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+       
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
@@ -29,14 +27,16 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private TestCommandSubscriber _cmdHandler; // "never used" is a red herring. It handles the command
 
 
-        protected override void When()
+        public when_toggling_logging_from_disabled(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
+          
+        
             // command must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
 
             _multiFireCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -73,7 +73,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -93,7 +93,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -174,7 +174,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
             }
@@ -201,7 +201,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                     Guid.NewGuid(),
                     null);
 
@@ -233,7 +233,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
 
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                     Guid.NewGuid(),
                     null);
 
@@ -258,7 +258,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2)
+            if (msg is TestCommands.Command2)
                 _multiFireCount++;
 
             if (msg is CountedEvent)

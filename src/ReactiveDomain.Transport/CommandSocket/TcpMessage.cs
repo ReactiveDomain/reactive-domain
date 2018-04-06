@@ -3,9 +3,9 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
-using Settings = ReactiveDomain.Messaging.Util.Json;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Util;
+using Settings = ReactiveDomain.Messaging.Json;
 
 namespace ReactiveDomain.Transport.CommandSocket
 {

@@ -1,6 +1,4 @@
 ﻿using System;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.SystemData;
 using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Foundation

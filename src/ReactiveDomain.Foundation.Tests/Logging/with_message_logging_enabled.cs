@@ -1,33 +1,44 @@
 ﻿using System;
 using System.Threading;
-using EventStore.ClientAPI;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    public abstract class with_message_logging_enabled :CommandBusSpecification
+    public abstract class with_message_logging_enabled :IDisposable
     {
-        private readonly IEventStoreConnection _connection;
-
-        protected with_message_logging_enabled(IEventStoreConnection connection)
+        protected readonly IStreamStoreConnection Connection;
+        protected IDispatcher Bus;
+        protected with_message_logging_enabled(IStreamStoreConnection connection)
         {
-            _connection = connection;
-        }
-        protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-        protected GetEventStoreRepository Repo;
-        protected override void Given()
-        {
-            Repo = new GetEventStoreRepository("UnitTest",_connection);
+            Connection = connection;
+            Bus = new Dispatcher(nameof(with_message_logging_enabled));
+            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+            Repo = new StreamStoreRepository(StreamNameBuilder, Connection);
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
-                _connection,
+                Connection,
                 StreamName,
                 true);
 
             Thread.Sleep(2000); // needs a bit of time to set up the ES
+        }
+        protected EventStoreMessageLogger Logging;
+        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
+        protected StreamStoreRepository Repo;
+        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
+
+      
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (!disposing) return;
+           
+            Bus?.Dispose();
         }
     }
 }

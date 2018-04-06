@@ -11,7 +11,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public readonly Type Type;
 
         public AggregateDeletedException(Guid id, Type type) 
-            : base(string.Format("Aggregate '{0}' (type {1}) was deleted.", id, type.Name))
+            : base($"Aggregate '{id}' (type {type.Name}) was deleted.")
         {
             Id = id;
             Type = type;

@@ -10,7 +10,7 @@ namespace ReactiveDomain.Domain.Tests.Example
         private readonly EventSourceReader _reader;
         private readonly EventSourceWriter _writer;
 
-        public GroupRepository(IEventStoreConnection connection, EventSourceReaderConfiguration readerConfiguration, EventSourceWriterConfiguration writerConfiguration)
+        public GroupRepository(IStreamStoreConnection connection, EventSourceReaderConfiguration readerConfiguration, EventSourceWriterConfiguration writerConfiguration)
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));

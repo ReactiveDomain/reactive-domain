@@ -1,14 +1,16 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
+using System;
+using System.Threading;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_mixed_messages_are_published :
         with_message_logging_enabled,
         IHandle<Message>
@@ -16,10 +18,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
-        public when_mixed_messages_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+       
         private readonly int _maxCountedMessages = 25;
         private int _multiFireCount;
         private int _testCommandCount;
@@ -27,10 +26,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
         private int _testDomainEventCount;
-
+        private long _gotEvt;
 
         private TestCommandSubscriber _cmdHandler;
-        protected override void When()
+        public when_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             // commands must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
@@ -38,7 +37,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -47,7 +46,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
+                var cmd = new TestCommands.Command2(
                                         Guid.NewGuid(),
                                         null);
                 Bus.Fire(cmd,
@@ -60,13 +59,13 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
 
             }
-
+            Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+                Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
             }
 
-            var tstCmd = new TestCommands.TestCommand3(
+            var tstCmd = new TestCommands.Command3(
                         Guid.NewGuid(),
                         null);
 
@@ -80,10 +79,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         
         public void commands_are_logged()
         {
-
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
-
+            Assert.IsOrBecomesTrue(()=> _gotEvt >0);
+           
+           
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(() => _countedEventCount == _maxCountedMessages, 2000);
             Assert.True(_countedEventCount == _maxCountedMessages, $"Message {_countedEventCount} doesn't match expected index {_maxCountedMessages}");
@@ -108,10 +107,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
-            if (msg is TestCommands.TestCommand3) _testCommandCount++;
+            if (msg is TestCommands.Command2) _multiFireCount++;
+            if (msg is TestCommands.Command3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
-            if (msg is TestDomainEvent) _testDomainEventCount++;
+            if (msg is TestEvent) _testDomainEventCount++;
         }
     }
 }

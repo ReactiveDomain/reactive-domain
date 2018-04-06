@@ -17,11 +17,11 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, Guid.NewGuid(), null);
             var nearSide = cmd.Succeed(15);
-            TestCommands.TestCommandResponse farSide;
+            TestCommands.TestResponse farSide;
             var ms = new MemoryStream();
-            using (var writer = new BsonWriter(ms))
+            using (var writer = new BsonDataWriter(ms))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(writer, nearSide);
@@ -39,10 +39,10 @@ namespace ReactiveDomain.Messaging.Tests
 
             var ms2 = new MemoryStream(array);
 
-            using (var reader = new BsonReader(ms2))
+            using (var reader = new BsonDataReader(ms2))
             {
                 var serializer = new JsonSerializer();
-                farSide = serializer.Deserialize<TestCommands.TestCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.TestResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
@@ -57,9 +57,9 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, Guid.NewGuid(), null);
             var nearSide = cmd.Succeed(15);
-            TestCommands.TestCommandResponse farSide;
+            TestCommands.TestResponse farSide;
 
 
             StringBuilder sb = new StringBuilder();
@@ -76,9 +76,9 @@ namespace ReactiveDomain.Messaging.Tests
             using (var reader = new JsonTextReader(new StringReader(foo)))
             {
                 var serializer = new JsonSerializer();
-                serializer.Binder = new TestDeserializer();
+                serializer.SerializationBinder = new TestDeserializer();
                 serializer.ContractResolver = new TestContractResolver();
-                farSide = serializer.Deserialize<TestCommands.TestCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.TestResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
@@ -94,11 +94,11 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, Guid.NewGuid(), null);
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
-            TestCommands.TestFailedCommandResponse farSide;
+            TestCommands.FailedResponse farSide;
             var ms = new MemoryStream();
-            using (var writer = new BsonWriter(ms))
+            using (var writer = new BsonDataWriter(ms))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(writer, nearSide);
@@ -116,10 +116,10 @@ namespace ReactiveDomain.Messaging.Tests
 
             var ms2 = new MemoryStream(array);
 
-            using (var reader = new BsonReader(ms2))
+            using (var reader = new BsonDataReader(ms2))
             {
                 var serializer = new JsonSerializer();
-                farSide = serializer.Deserialize<TestCommands.TestFailedCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.FailedResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
@@ -135,9 +135,9 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
-            var nearSide = cmd.Fail(new CommandException("O_Ops",cmd), 15);
-            TestCommands.TestFailedCommandResponse farSide;
+            var cmd = new TestCommands.TypedResponse(false, Guid.NewGuid(), null);
+            var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
+            TestCommands.FailedResponse farSide;
 
 
             StringBuilder sb = new StringBuilder();
@@ -154,9 +154,9 @@ namespace ReactiveDomain.Messaging.Tests
             using (var reader = new JsonTextReader(new StringReader(foo)))
             {
                 var serializer = new JsonSerializer();
-                serializer.Binder = new TestDeserializer();
+                serializer.SerializationBinder = new TestDeserializer();
                 serializer.ContractResolver = new TestContractResolver();
-                farSide = serializer.Deserialize<TestCommands.TestFailedCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.FailedResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
