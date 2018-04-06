@@ -18,7 +18,9 @@ namespace ReactiveDomain.Testing {
         private int _prefix;
         private readonly IDisposable _node;
 
-        public StreamStoreConnectionFixture() {
+        public StreamStoreConnectionFixture()
+        {
+            AdminCredentials = new UserCredentials("admin", "changeit");
 #if NETCOREAPP2_0 || NETSTANDARD2_0
 
             Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
@@ -32,6 +34,7 @@ namespace ReactiveDomain.Testing {
                         //.DisableScavengeMerging()
                         .DoNotVerifyDbHashes()
                         .Build();
+
             node.StartAndWaitUntilReady().Wait();
             Connection = new EventStoreConnectionWrapper(EmbeddedEventStoreConnection.Create(node));
 
@@ -46,6 +49,8 @@ namespace ReactiveDomain.Testing {
         }
 
         public IStreamStoreConnection Connection { get; }
+
+        public UserCredentials AdminCredentials { get; }
 
         public StreamName NextStreamName() {
             return new StreamName($"stream-{Interlocked.Increment(ref _suffix)}");
