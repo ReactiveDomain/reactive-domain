@@ -1,6 +1,5 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 using System;
 using System.Collections.Generic;
