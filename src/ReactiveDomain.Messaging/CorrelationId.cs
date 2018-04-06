@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel.Design.Serialization;
+using Newtonsoft.Json;
 using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
@@ -10,7 +12,7 @@ namespace ReactiveDomain.Messaging
     public struct CorrelationId
     {
         /// <summary>
-        /// The unique correlation ID
+        /// The unique correlation ID.
         /// </summary>
         public readonly Guid Id;
 
@@ -23,10 +25,7 @@ namespace ReactiveDomain.Messaging
             Id = source.CorrelationId;
         }
 
-        /// <summary>
-        /// Constructor for deserialization. This should NOT be used directly.
-        /// </summary>
-        public CorrelationId(Guid id)
+        private CorrelationId(Guid id)
         {
             Id = id;
         }
@@ -57,5 +56,28 @@ namespace ReactiveDomain.Messaging
         {
             return Id.GetHashCode();
         }
-    }
+
+        public class CorrelationIdGuidConverter : JsonConverter
+        {
+            public override void WriteJson(JsonWriter writer,
+                                           object value,
+                                           JsonSerializer serializer)
+            {
+                writer.WriteValue((CorrelationId)value);
+            }
+
+            public override object ReadJson(JsonReader reader,
+                                            Type objectType,
+                                            object existingValue,
+                                            JsonSerializer serializer)
+            {
+                return new CorrelationId(Guid.Parse(reader.Value.ToString()));
+            }
+
+            public override bool CanConvert(Type objectType)
+            {
+                return objectType == typeof(CorrelationId);
+            }
+        }
+}
 }

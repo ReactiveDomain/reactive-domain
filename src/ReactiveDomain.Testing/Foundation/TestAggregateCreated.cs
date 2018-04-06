@@ -12,6 +12,7 @@ namespace ReactiveDomain.Testing
         public TestWoftamAggregateCreated(Guid aggregateId)
         {
             AggregateId = aggregateId;
+            CorrelationId = CorrelationId.NewId();
         }
 
         public Guid AggregateId { get; private set; }
@@ -19,7 +20,7 @@ namespace ReactiveDomain.Testing
         #region Implementation of ICorrelatedMessage
 
         public SourceId SourceId => SourceId.NullSourceId();
-        public CorrelationId CorrelationId => new CorrelationId(AggregateId);
+        public CorrelationId CorrelationId { get; }
 
         #endregion
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
@@ -10,7 +11,7 @@ namespace ReactiveDomain.Messaging
     public struct SourceId
     {
         /// <summary>
-        /// The unique source ID
+        /// The unique source ID.
         /// </summary>
         public readonly Guid Id;
 
@@ -23,10 +24,7 @@ namespace ReactiveDomain.Messaging
         {
         }
 
-        /// <summary>
-        /// Constructor for deserialization. This should NOT be used directly.
-        /// </summary>
-        public SourceId(Guid id)
+        private SourceId(Guid id)
         {
             Id = id;
         }
@@ -54,5 +52,28 @@ namespace ReactiveDomain.Messaging
         {
             return Id.GetHashCode();
         }
+
+        public class SourceIdGuidConverter : JsonConverter
+        {
+            public override void WriteJson(JsonWriter writer,
+                                           object value,
+                                           JsonSerializer serializer)
+            {
+                writer.WriteValue((SourceId)value);
+            }
+
+            public override object ReadJson(JsonReader reader,
+                                            Type objectType,
+                                            object existingValue,
+                                            JsonSerializer serializer)
+            {
+                return new SourceId(Guid.Parse(reader.Value.ToString()));
+            }
+
+            public override bool CanConvert(Type objectType)
+            {
+                return objectType == typeof(SourceId);
+            }
+        }
     }
-}
+    }

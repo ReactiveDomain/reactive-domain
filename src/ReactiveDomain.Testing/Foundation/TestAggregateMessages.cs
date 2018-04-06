@@ -18,10 +18,11 @@ namespace ReactiveDomain.Testing
             public NewAggregate(Guid aggregateId)
             {
                 AggregateId = aggregateId;
+                CorrelationId = CorrelationId.NewId();
             }
             #region Implementation of ICorrelatedMessage
             public SourceId SourceId => SourceId.NullSourceId();
-            public CorrelationId CorrelationId => new CorrelationId(AggregateId);
+            public CorrelationId CorrelationId { get; }
             #endregion
         }
         public class Increment : Message, ICorrelatedMessage
@@ -34,11 +35,12 @@ namespace ReactiveDomain.Testing
             {
                 AggregateId = aggregateId;
                 Amount = amount;
+                CorrelationId = CorrelationId.NewId();
             }
 
             #region Implementation of ICorrelatedMessage
             public SourceId SourceId => SourceId.NullSourceId();
-            public CorrelationId CorrelationId => new CorrelationId(AggregateId);
+            public CorrelationId CorrelationId { get; }
             #endregion
         }
 

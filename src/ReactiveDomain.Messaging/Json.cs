@@ -21,7 +21,7 @@ namespace ReactiveDomain.Messaging
             DefaultValueHandling = DefaultValueHandling.Ignore,
             MissingMemberHandling = MissingMemberHandling.Ignore,
             TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceIdGuidConverter(), new CorrelationIdGuidConverter() }
+            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
         };
         public static readonly JsonSerializerSettings JsonLoggingSettings = new JsonSerializerSettings
         {
@@ -31,7 +31,7 @@ namespace ReactiveDomain.Messaging
             DefaultValueHandling = DefaultValueHandling.Include,
             MissingMemberHandling = MissingMemberHandling.Ignore,
             TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceIdGuidConverter(), new CorrelationIdGuidConverter() }
+            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
         };
         public static byte[] ToJsonBytes(this object source)
         {
@@ -92,52 +92,6 @@ namespace ReactiveDomain.Messaging
                     WriteArrayAttribute = writeArrayAttribute
                 }
             });
-        }
-    }
-
-    public class SourceIdGuidConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer,
-                                       object value,
-                                       JsonSerializer serializer)
-        {
-            writer.WriteValue((SourceId)value);
-        }
-
-        public override object ReadJson(JsonReader reader,
-                                        Type objectType,
-                                        object existingValue,
-                                        JsonSerializer serializer)
-        {
-            return new SourceId(Guid.Parse(reader.Value.ToString()));
-        }
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(SourceId);
-        }
-    }
-
-    public class CorrelationIdGuidConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer,
-                                       object value,
-                                       JsonSerializer serializer)
-        {
-            writer.WriteValue((CorrelationId)value);
-        }
-
-        public override object ReadJson(JsonReader reader,
-                                        Type objectType,
-                                        object existingValue,
-                                        JsonSerializer serializer)
-        {
-            return new CorrelationId(Guid.Parse(reader.Value.ToString()));
-        }
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(CorrelationId);
         }
     }
 }
