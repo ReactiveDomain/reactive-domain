@@ -1,28 +1,276 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
-using ReactiveDomain.Testing.EventStore;
+using ReactiveDomain.Util;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
-namespace ReactiveDomain.Testing {
+namespace ReactiveDomain.Testing
+{
+    // todo: separate stream connection tests and repo tests
     // ReSharper disable InconsistentNaming
     public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture> {
-        private readonly List<IRepository> _repos = new List<IRepository>();
-        private readonly IBus _bus;
-        private readonly IStreamNameBuilder _streamNameBuilder;
+        private readonly List<IStreamStoreConnection> _streamStoreConnections = new List<IStreamStoreConnection>();
 
-        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture) {
+        private readonly List<IRepository> _repos = new List<IRepository>();
+        private readonly IStreamNameBuilder _streamNameBuilder;
+        private readonly UserCredentials _admin;
+
+        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture)
+        {
+            _admin = fixture.AdminCredentials;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            _bus = new InMemoryBus("Mock Event Store Post Commit Target");
+
+            // todo: uncomment this and make sure all tests pass
+            // _streamStoreConnections.Add(new MockStreamStoreConnection("Test"));
+            _streamStoreConnections.Add(fixture.Connection);
+
             //todo: reconnect bus to the all stream subscription
-            //todo: re-add MockStreamStoreConnection
-            //_repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
+            // _repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
             _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection));
         }
-        //TODO: Add Subscription Tests
+
+        [Fact]
+        public void can_create_then_delete_stream()
+        {
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            foreach (var conn in _streamStoreConnections)
+            {
+                var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { 0 }, new byte[] { 0 });
+                conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
+                var slice = conn.ReadStreamForward(streamName, 0, 1);
+
+                // Ensure stream has been created
+                Assert.IsNotType<StreamNotFoundSlice>(slice);
+                Assert.IsNotType<StreamDeletedSlice>(slice);
+
+                conn.DeleteStream(streamName, ExpectedVersion.Any);
+
+                // Ensure stream has been deleted
+                // We do not support soft delete so StreamNotFoundSlice instead of StreamDeletedSlice
+                Assert.IsType<StreamNotFoundSlice>(conn.ReadStreamForward(streamName, 0, 1));
+            }
+        }
+
+        [Fact]
+        public void can_read_stream_forward()
+        {
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            var numEventsToBeSent = 5; // thoughts: think about randomizing those maybe?
+            long count = 2;
+            long startFrom = numEventsToBeSent - count; // We want to get the <count> last events in the right order (forward)
+
+            foreach (var conn in _streamStoreConnections)
+            {
+                var expectedEvents = new List<EventData>();
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
+                {
+                    var eventMetaData = eventByteData;
+                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
+                    if (eventByteData >= startFrom) expectedEvents.Add(createEvent);
+                }
+                
+                var slice = conn.ReadStreamForward(
+                                            streamName,
+                                            startFrom,
+                                            count);
+
+                Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events forward");
+                for (int i = 0; i < count; i++)
+                {
+                    Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
+                    Assert.Equal(expectedEvents[i].Type, slice.Events[i].EventType);
+                    Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
+                    Assert.Equal(expectedEvents[i].Metadata, slice.Events[i].Metadata);
+                }
+            }
+        }
+
+        [Fact]
+        public void can_read_stream_backward()
+        {
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            var numEventsToBeSent = 5;
+            long count = 4;
+            long startFrom = count - 1; // We want to get the <count> first events in the right order (backward)
+
+            foreach (var conn in _streamStoreConnections)
+            {
+                var expectedEvents = new List<EventData>();
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
+                {
+                    var eventMetaData = eventByteData;
+                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
+                    if (eventByteData <= startFrom) expectedEvents.Add(createEvent);
+                }
+                expectedEvents.Reverse();
+
+                var slice = conn.ReadStreamBackward(
+                                            streamName,
+                                            startFrom,
+                                            count);
+
+                Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events backward");
+                for (int i = 0; i < count; i++)
+                {
+                    Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
+                    Assert.Equal(expectedEvents[i].Type, slice.Events[i].EventType);
+                    Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
+                    Assert.Equal(expectedEvents[i].Metadata, slice.Events[i].Metadata);
+                }
+            }
+        }
+
+        [Fact]
+        public void can_subscribe_to_stream()
+        {
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            var numberOfEvent = 2;
+
+            foreach (var conn in _streamStoreConnections)
+            {
+                var capturedEvents = new List<RecordedEvent>();
+                var dropped = false;
+
+                var sub = conn.SubscribeToStream(
+                                        streamName,
+                                        async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                        (reason, ex) => dropped = true);
+
+                var expectedEvents = new List<EventData>();
+                for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
+                {
+                    var eventMetaData = eventByteData;
+                    var testEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    conn.AppendToStream(streamName, ExpectedVersion.Any, null, testEvent);
+                    expectedEvents.Add(testEvent);
+                }
+
+                Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to capture events. Expected {numberOfEvent} found {capturedEvents.Count}");
+                for (int i = 0; i < numberOfEvent; i++)
+                {
+                    Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
+                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].EventType);
+                    Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
+                    Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
+                }
+
+                sub.Dispose();
+                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+            }
+        }
+
+        [Fact]
+        public void can_subscribe_to_stream_from()
+        {
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            var numEventsToBeSent = 5;
+            var count = 2;
+            var lastCheckpoint = numEventsToBeSent - count - 1;  // we want to capture the <count> last events in the right order
+            var settings = new CatchUpSubscriptionSettings(numEventsToBeSent, 1, true, streamName);
+
+            foreach (var conn in _streamStoreConnections)
+            {
+                var capturedEvents = new List<RecordedEvent>();
+                var dropped = false;
+                var liveProcessingStarted = false;
+
+                var sub = conn.SubscribeToStreamFrom(
+                                            streamName,
+                                            lastCheckpoint,
+                                            settings,
+                                            async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                            _ => liveProcessingStarted = true,
+                                            (reason, ex) => dropped = true);
+
+                Assert.IsOrBecomesTrue(() => liveProcessingStarted, msg: "Failed handle live processing start");
+
+                var expectedEvents = new List<EventData>();
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
+                {
+                    var eventMetaData = eventByteData;
+                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
+                    if (eventByteData >= numEventsToBeSent - count) expectedEvents.Add(createEvent);
+                }
+
+                Assert.IsOrBecomesTrue(() => count == capturedEvents.Count, msg: $"Failed to capture events. Expected {count} found {capturedEvents.Count}");
+                for (int i = 0; i < count; i++)
+                {
+                    Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
+                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].EventType);
+                    Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
+                    Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
+                }
+
+                sub.Dispose();
+                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+            }
+        }
+
+        [Fact]
+        public void can_subscribe_to_all()
+        {
+            var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events in each stream in the right order
+            var streams = new List<string>
+            {
+                _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid()),
+                _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid())
+            };
+
+            foreach (var conn in _streamStoreConnections)
+            {
+                var capturedEvents = new List<RecordedEvent>();
+                var dropped = false;
+
+                var sub = conn.SubscribeToAll(
+                                        async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                        (reason, ex) => dropped = true,
+                                        _admin);
+
+                foreach (var stream in streams)
+                {
+                    var expectedEvents = new List<EventData>();
+                    for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
+                    {
+                        var eventMetaData = eventByteData;
+                        var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                        conn.AppendToStream(stream, ExpectedVersion.Any, null, createEvent);
+                        expectedEvents.Add(createEvent);
+                    }
+
+                    Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on stream {stream}. Expected {numberOfEvent} found {capturedEvents.Count}");
+                    for (int i = 0; i < numberOfEvent; i++)
+                    {
+                        Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
+                        Assert.Equal(expectedEvents[i].Type, capturedEvents[i].EventType);
+                        Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
+                        Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
+                    }
+
+                    capturedEvents.Clear();
+                }
+
+                sub.Dispose();
+                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+            }
+        }
+
+        [Fact]
+        public void can_subscribe_to_category_stream()
+        {
+            // todo: implement this as replacement to old repo tests
+        }
+
+        [Fact]
+        public void can_subscribe_to_event_type_stream()
+        {
+            // todo: implement this as replacement to old repo tests
+        }
+
         [Fact]
         public void can_save_new_aggregate() {
             foreach (var repo in _repos) {
@@ -114,34 +362,16 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void can_subscribe_to_all() {
-
+        public void can_multiple_update_and_save_multiple_aggregates() {
             foreach (var repo in _repos) {
-                
-                var id = Guid.NewGuid();
-                var tAgg = new TestAggregate(id);
-                tAgg.RaiseBy(1);
-                tAgg.RaiseBy(1);
-                tAgg.RaiseBy(1);
-                repo.Save(tAgg);
-                //todo: fix
-              //  Assert.Equal(4, q.Messages.Count);
-            }
-        }
-
-        [Fact]
-        public void can_replay_all() {
-            foreach (var repo in _repos) {
-                //todo: fix
-                if (!(repo is IRepository r)) continue;
-               // var q = new TestQueue(_bus);
-
-                var id1 = Guid.NewGuid();
+               var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(2);
                 tAgg.RaiseBy(3);
                 repo.Save(tAgg);
+                var loadedAgg1 = repo.GetById<TestAggregate>(id1);
+                Assert.True(tAgg.CurrentAmount() == loadedAgg1.CurrentAmount());
 
                 var id2 = Guid.NewGuid();
                 var tAgg2 = new TestAggregate(id2);
@@ -149,160 +379,8 @@ namespace ReactiveDomain.Testing {
                 tAgg2.RaiseBy(5);
                 tAgg2.RaiseBy(6);
                 repo.Save(tAgg2);
-                //todo: fix
-                //Assert.Equal(8, q.Messages.Count);
-                //var bus = new InMemoryBus("all");
-                //var q2 = new TestQueue(bus);
-                //r.ReplayAllOnto(bus);
-                //todo: fix
-                //q2.Messages
-                //     .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id1)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 1, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 2, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 3, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id2)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 4, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 5, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 6, "Event mismatch wrong amount")
-                //    .AssertEmpty();
-            }
-        }
-        [Fact]
-        public void can_get_by_stream() {
-            foreach (var repo in _repos) {
-                var r = repo as IRepository;
-                if (r == null) continue;
-                //var q = new TestQueue(_bus);
-
-                var id1 = Guid.NewGuid();
-                var tAgg = new TestAggregate(id1);
-                tAgg.RaiseBy(1);
-                tAgg.RaiseBy(2);
-                tAgg.RaiseBy(3);
-                repo.Save(tAgg);
-
-                var id2 = Guid.NewGuid();
-                var tAgg2 = new TestAggregate(id2);
-                tAgg2.RaiseBy(4);
-                tAgg2.RaiseBy(5);
-                tAgg2.RaiseBy(6);
-                repo.Save(tAgg2);
-                //todo: fix
-                //Assert.Equal(8, q.Messages.Count);
-                //var bus = new InMemoryBus("all");
-                //var q2 = new TestQueue(bus);
-                //todo: fix
-                //r.ReplayStreamOnto(bus, _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id1));
-                //q2.Messages
-                //    .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id1)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 1, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 2, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 3, "Event mismatch wrong amount");
-                
-                //todo: fix
-                //r.ReplayStreamOnto(bus, _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id2));
-                //q2.Messages
-                //    .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id2)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 4, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 5, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 6, "Event mismatch wrong amount")
-                //    .AssertEmpty();
-            }
-        }
-        [Fact]
-        public void can_get_by_category() {
-            foreach (var repo in _repos) {
-                //todo: fix
-                var r = repo as IRepository;
-                if (r == null) continue;
-               // var q = new TestQueue(_bus);
-
-                var id1 = Guid.NewGuid();
-                var tAgg = new TestAggregate(id1);
-                tAgg.RaiseBy(1);
-                tAgg.RaiseBy(2);
-                tAgg.RaiseBy(3);
-                repo.Save(tAgg);
-
-                var id3 = Guid.NewGuid();
-                var tAgg3 = new TestWoftamAggregate(id3);
-                tAgg3.ProduceEvents(3);
-                repo.Save(tAgg3);
-
-                var id2 = Guid.NewGuid();
-                var tAgg2 = new TestAggregate(id2);
-                tAgg2.RaiseBy(4);
-                tAgg2.RaiseBy(5);
-                tAgg2.RaiseBy(6);
-                repo.Save(tAgg2);
-                //todo:fix
-                //Assert.Equal(12, q.Messages.Count);
-                //var bus = new InMemoryBus("all");
-                //var q2 = new TestQueue(bus);
-                
-                //todo: fix
-                //r.ReplayCategoryOnto(bus, "testAggregate");
-                //q2.Messages
-                //    .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id1)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 1, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 2, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 3, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.NewAggregate>(
-                //        correlationId: id2)
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 4, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 5, "Event mismatch wrong amount")
-                //    .AssertNext<TestAggregateMessages.Increment>(
-                //        m => m.Amount == 6, "Event mismatch wrong amount")
-                //    .AssertEmpty();
-
-                //todo: fix
-                //r.ReplayCategoryOnto(bus, "testWoftamAggregate");
-                //q2.Messages
-                //    .AssertNext<TestWoftamAggregateCreated>(
-                //        correlationId: id3)
-                //    .AssertNext<WoftamEvent>(
-                //        correlationId: Guid.Empty)
-                //    .AssertNext<WoftamEvent>(
-                //        correlationId: Guid.Empty)
-                //   .AssertNext<WoftamEvent>(
-                //        correlationId: Guid.Empty)
-                //   .AssertEmpty();
-            }
-            
-        }
-
-        [Fact]
-        public void SubscriptionsReturnSavedEvents() {
-            foreach (var repo in _repos) {
-                var id1 = Guid.NewGuid();
-                var tAgg = new TestAggregate(id1);
-                tAgg.RaiseBy(1);
-                tAgg.RaiseBy(2);
-                tAgg.RaiseBy(3);
-                repo.Save(tAgg);
-               //todo: implement the rest of subscriptions
+                var loadedAgg2 = repo.GetById<TestAggregate>(id2);
+                Assert.True(tAgg2.CurrentAmount() == loadedAgg2.CurrentAmount());
             }
         }
     }
