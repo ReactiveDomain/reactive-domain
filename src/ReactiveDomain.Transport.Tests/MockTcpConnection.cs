@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ReactiveDomain.Transport.Tests.Transport
+namespace ReactiveDomain.Transport.Tests
 {
     public class MockTcpConnection : ITcpConnection
     {

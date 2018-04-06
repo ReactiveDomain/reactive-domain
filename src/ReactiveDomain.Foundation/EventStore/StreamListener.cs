@@ -3,6 +3,7 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
+using ReactiveDomain.EventStore;
 
 namespace ReactiveDomain.Foundation.EventStore {
     public class StreamListener : IListener {
@@ -34,7 +35,18 @@ namespace ReactiveDomain.Foundation.EventStore {
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
         }
-
+        /// <summary>
+        /// Event Stream Listener
+        /// i.e. $et-[MessageType]
+        /// </summary>
+        /// <param name="tMessage"></param>
+        /// <param name="checkpoint"></param>
+        /// <param name="blockUntilLive"></param>
+        /// <param name="millisecondsTimeout"></param>
+        public void Start(Type tMessage, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) {
+            if (!tMessage.IsSubclassOf(typeof(Event))) throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
+            Start(tMessage.GetEventTypeStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
+        }
         /// <summary>
         /// Category Stream Listener
         /// i.e. $ce-[AggregateType]

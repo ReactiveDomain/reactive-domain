@@ -63,7 +63,10 @@ namespace ReactiveDomain.EventStore {
         //{
         //    return @event.DeserializeEvent() as DomainEvent;
         //}
-
+        public static string GetEventTypeStreamName(this Type typeofAggregateDomainObject)
+        {
+            return $"{EventTypeStreamNamePrefix}-{typeofAggregateDomainObject.Name}";
+        }
 
 
 

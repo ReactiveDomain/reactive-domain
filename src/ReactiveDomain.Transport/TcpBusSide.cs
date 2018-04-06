@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Timers;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.CommandSocket;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Transport
 {
@@ -18,7 +18,7 @@ namespace ReactiveDomain.Transport
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
         protected Timer StatsTimer;
-        protected ITcpConnection TcpConnection;
+        protected List<ITcpConnection> TcpConnection = new List<ITcpConnection>();
         protected LengthPrefixMessageFramer Framer = new LengthPrefixMessageFramer();
 
         protected TcpBusSide(
@@ -133,14 +133,17 @@ namespace ReactiveDomain.Transport
                 return;
             }
 
-            try
+            foreach (var conn in TcpConnection)
             {
-                var framed = Framer.FrameData((new TcpMessage(message).AsArraySegment()));
-                TcpConnection.EnqueueSend(framed);
-            }
-            catch (Exception ex)
-            {
-                Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                try
+                {
+                    var framed = Framer.FrameData(new TcpMessage(message).Data);
+                    conn.EnqueueSend(framed);
+                }
+                catch (Exception ex)
+                {
+                    Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                }
             }
         }
     }
