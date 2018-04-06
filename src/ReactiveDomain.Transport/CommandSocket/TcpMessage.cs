@@ -34,11 +34,11 @@ namespace ReactiveDomain.Transport.CommandSocket
                 reader.Read(); //object
                 reader.Read(); //property name
 
-                var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
+                var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
                 reader.Read(); //property value
                 msg = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Settings.JsonSettings);
             }
-            Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgTypeId=" + msg.MsgTypeId);
+            Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgType" + msg.GetType().Name);
             return new TcpMessage(msg, data);
         }
         //used by FromArraySegment to set the values and return the struct
@@ -57,7 +57,7 @@ namespace ReactiveDomain.Transport.CommandSocket
         {
             Ensure.NotNull(message, nameof(message));
             MessageType = message.GetType();
-            Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.MsgTypeId + " to be wrapped.");
+            Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.GetType().Name + " to be wrapped.");
 
             var ms = new MemoryStream();
             using (var writer = new BsonDataWriter(ms))

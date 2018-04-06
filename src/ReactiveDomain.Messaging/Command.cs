@@ -10,8 +10,6 @@ namespace ReactiveDomain.Messaging {
     /// </summary>
     /// <inheritdoc cref="Message"/>
     public class Command : CorrelatedMessage {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
 
         public bool TimeoutTcpWait = true;
 
@@ -71,10 +69,7 @@ namespace ReactiveDomain.Messaging {
     /// </summary>
     /// <inheritdoc cref="Message"/>
     public class AckCommand : CorrelatedMessage {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
-
-        /// <summary>
+       /// <summary>
         /// The Command whose receipt is being acknowledged.
         /// </summary>
         public Command SourceCommand { get; }

@@ -7,8 +7,6 @@ namespace ReactiveDomain.Testing
 {
     public class WoftamEvent: CorrelatedMessage
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
         public WoftamEvent(string property1, string property2):base(CorrelationId.NewId(), SourceId.NullSourceId())
         {
             Property1 = property1;

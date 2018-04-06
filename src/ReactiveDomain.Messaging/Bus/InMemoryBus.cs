@@ -38,7 +38,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         public string Name { get; private set; }
 
-        private List<IMessageHandler>[] _handlers;
+        private Dictionary<Type, List<IMessageHandler>> _handlers = new Dictionary<Type, List<IMessageHandler>>();
 
         private readonly bool _watchSlowMsg;
         private readonly TimeSpan _slowMsgThreshold;
@@ -58,11 +58,11 @@ namespace ReactiveDomain.Messaging.Bus
 
                 MessageHierarchy.MessageTypesAdded += MessageHierarchy_MessageTypesAdded;
 
-                _handlers = new List<IMessageHandler>[MessageHierarchy.MaxMsgTypeId + 1];
-                for (int i = 0; i < _handlers.Length; ++i)
-                {
-                    _handlers[i] = new List<IMessageHandler>();
-                }
+                //_handlers = new List<IMessageHandler>[MessageHierarchy.MaxMsgTypeId + 1];
+                //for (int i = 0; i < _handlers.Length; ++i)
+                //{
+                //    _handlers[i] = new List<IMessageHandler>();
+                //}
             }
             catch (Exception ex)
             {
@@ -78,16 +78,16 @@ namespace ReactiveDomain.Messaging.Bus
             var registeredHandlers = new HashSet<IMessageHandler>();
             lock (_handlers)
             {
-                foreach (var msgHandler in _handlers.SelectMany(t => t))
+                foreach (var msgHandler in _handlers.Values.SelectMany(h => h))
                 {
                     registeredHandlers.Add(msgHandler);
                 }
 
-                _handlers = new List<IMessageHandler>[MessageHierarchy.MaxMsgTypeId + 1];
-                for (int i = 0; i < _handlers.Length; ++i) //Initialize the new array
-                {
-                    _handlers[i] = new List<IMessageHandler>();
-                }
+                _handlers = new Dictionary<Type, List<IMessageHandler>>();
+                //for (int i = 0; i < _handlers.Length; ++i) //Initialize the new array
+                //{
+                //    _handlers[i] = new List<IMessageHandler>();
+                //}
 
                 foreach (var registeredHandler in registeredHandlers)
                 {
@@ -99,11 +99,17 @@ namespace ReactiveDomain.Messaging.Bus
 
         private void Subscribe(IMessageHandler registeredHandler)
         {
-            int[] descendants = MessageHierarchy.DescendantsByTypeId[registeredHandler.MessageTypeId];
-            for (int i = 0; i < descendants.Length; ++i)
+            // Subscribe to the underlying message type and it's descendants
+            var descendants = MessageHierarchy.DescendantsAndSelf(registeredHandler.MessageType);
+            foreach (var descendant in descendants)
             {
-                var handlers = _handlers[descendants[i]];
-                if (handlers.All(x => x.MessageTypeId != registeredHandler.MessageTypeId))
+                List<IMessageHandler> handlers;
+                if (!_handlers.TryGetValue(descendant, out handlers))
+                {
+                    handlers = new List<IMessageHandler>();
+                    _handlers[descendant] = handlers;
+                }
+                if (handlers.All(x => x.MessageType != registeredHandler.MessageType))
                     handlers.Add(registeredHandler);
             }
         }
@@ -113,13 +119,17 @@ namespace ReactiveDomain.Messaging.Bus
             Ensure.NotNull(handler, "handler");
             lock (_handlers)
             {
-                int[] descendants = MessageHierarchy.DescendantsByType[typeof(T)];
-                for (int i = 0; i < descendants.Length; ++i)
+                var descendants = MessageHierarchy.DescendantsAndSelf(typeof(T));
+                foreach (var descendant in descendants)
                 {
-                    var handlers = _handlers[descendants[i]];
+                    List<IMessageHandler> handlers;
+                    if (!_handlers.TryGetValue(descendant, out handlers))
+                    {
+                        handlers = new List<IMessageHandler>();
+                        _handlers[descendant] = handlers;
+                    }
                     if (!handlers.Any(x => x.IsSame<T>(handler)))
-                        handlers.Add(new MessageHandler<T>(handler, handler.GetType().Name,
-                            MessageHierarchy.GetMsgTypeId(typeof(T))));
+                        handlers.Add(new MessageHandler<T>(handler, handler.GetType().Name));
                 }
                 return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
             }
@@ -130,23 +140,32 @@ namespace ReactiveDomain.Messaging.Bus
             Ensure.NotNull(handler, "handler");
             lock (_handlers)
             {
-                int[] descendants = MessageHierarchy.DescendantsByType[typeof(T)];
-                for (int i = 0; i < descendants.Length; ++i)
+                var descendants = MessageHierarchy.DescendantsAndSelf(typeof(T));
+                foreach (var descendant in descendants)
                 {
-                    var handlers = _handlers[descendants[i]];
+                    List<IMessageHandler> handlers;
+                    if (!_handlers.TryGetValue(descendant, out handlers))
+                    {
+                        handlers = new List<IMessageHandler>();
+                        _handlers[descendant] = handlers;
+                    }
                     var messageHandler = handlers?.FirstOrDefault(x => x.IsSame<T>(handler));
                     if (messageHandler != null)
                         handlers.Remove(messageHandler);
                 }
             }
         }
-        protected bool HasSubscriberFor(int typeId, bool includeDerived = false)
+        protected bool HasSubscriberFor(Type type, bool includeDerived = false)
         {
-            return _handlers[typeId]?.Any(h => includeDerived || h.MessageTypeId == typeId) ?? false;
+            if (_handlers.TryGetValue(type, out List<IMessageHandler> handlers))
+            {
+                return handlers.Any(h => includeDerived || h.MessageType == type);
+            }
+            return false;
         }
         public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message
         {
-            return HasSubscriberFor(MessageHierarchy.GetMsgTypeId(typeof(T)), includeDerived);
+            return HasSubscriberFor(typeof(T), includeDerived);
         }
 
         public void Handle(Message message)
@@ -181,10 +200,8 @@ namespace ReactiveDomain.Messaging.Bus
                 Log.Error("Message was null, publishing aborted");
                 return;
             }
-            var type1 = MessageHierarchy.GetMsgType(message.MsgTypeId);
 
-
-            var handlers = _handlers[message.MsgTypeId];
+            var handlers = _handlers[message.GetType()];
 
 
             for (int i = 0, n = handlers.Count; i < n; ++i)
@@ -200,10 +217,10 @@ namespace ReactiveDomain.Messaging.Bus
                     if (elapsed <= _slowMsgThreshold) continue;
 
                     Log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
-                        Name, type1.Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
+                        Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
                     if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
                         Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
-                            Name, type1.Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
+                            Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
                 }
                 else
                 {
@@ -233,11 +250,7 @@ namespace ReactiveDomain.Messaging.Bus
             {
                 lock (_handlers)
                 {
-                    for (int i = 0; i < _handlers.Length; i++)
-                    {
-                        _handlers[i]?.Clear();
-                        _handlers[i] = null;
-                    }
+                    _handlers.Clear();
                 }
             }
             // Free any unmanaged objects here.

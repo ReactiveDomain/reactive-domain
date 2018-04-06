@@ -35,13 +35,13 @@ namespace ReactiveDomain.Transport
 
         public void Handle(Message message)
         {
-            Type type1 = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type1 = message.GetType();
             dynamic msg = message;
             var type2 = msg.GetType();
             if (!type1.Equals(type2))
             {
                 var error =
-                    $"Message object-type mismatch.  MsgTypeId={message.MsgTypeId}, which MessageHierarchy claims is a {type1.FullName}.  However, .Net Reflection says that the command is a {type2.FullName}";
+                    $"Message object-type mismatch.  MsgType={message.GetType().FullName}, which MessageHierarchy claims is a {type1.FullName}.  However, .Net Reflection says that the command is a {type2.FullName}";
                 Log.Error(error);
                 throw new Exception(error);
             }
@@ -50,7 +50,7 @@ namespace ReactiveDomain.Transport
             MessageReceived(msg, type1, "TcpBusSide");
 
             _tcpOutboundMessageHandler.IgnoreThisMessage(message);
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             _mainBus.Publish(message);
             PostHandleMessage(msg, type1, (DateTime.UtcNow - before));
         }

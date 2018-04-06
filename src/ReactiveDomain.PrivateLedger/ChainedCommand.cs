@@ -7,8 +7,6 @@ namespace ReactiveDomain.PrivateLedger
 {
     public class ChainedCommand : Command, IChainedMessage
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
         public Guid PrincipalId { get; }
         public readonly ChainSource Source;
         public ChainedCommand(IChainedMessage source) :

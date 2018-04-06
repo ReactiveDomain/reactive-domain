@@ -7,10 +7,6 @@ namespace ReactiveDomain.Foundation.EventStore
     {
         public class CatchupSubscriptionBecameLive : Message
         {
-           
-            private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-            public override int MsgTypeId => TypeId;
-
             public CatchupSubscriptionBecameLive()
             {
             }
