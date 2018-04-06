@@ -12,6 +12,8 @@ namespace ReactiveDomain.Foundation.EventStore
         private readonly IStreamStoreConnection _eventStore;
         private readonly string _streamPrefix;
         private readonly IDispatcher _bus;
+        private readonly IStreamNameBuilder _streamNameBuilder;
+        private readonly StreamStoreRepository _streamStoreRepository;
 
         public EventStoreMessageLogger(
             IDispatcher bus,
@@ -26,6 +28,8 @@ namespace ReactiveDomain.Foundation.EventStore
             _streamPrefix = logStreamPrefix;
             if (Enabled)
                 _eventStore?.Connect();
+            _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(logStreamPrefix);
+            _streamStoreRepository = new StreamStoreRepository(_streamNameBuilder, es, new JsonSerializer());
 
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<Message>(this);
@@ -34,7 +38,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public bool Enabled { get; set; }
         //TODO:  eventually, connect on enable, disconnect on disable?
 
-
+        // TODO: use _streamNameBuilder
         public string FullStreamName
         {
             get
@@ -58,7 +62,7 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
 
-            var ed = StreamStoreRepository.ToEventData(message.MsgId, message, metadata);
+            var ed = _streamStoreRepository.ToEventData(message.MsgId, message, metadata);
             var data = new List<EventData> {ed};
 
            // int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;

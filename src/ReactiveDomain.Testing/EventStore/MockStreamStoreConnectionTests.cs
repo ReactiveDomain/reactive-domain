@@ -28,7 +28,7 @@ namespace ReactiveDomain.Testing
 
             //todo: reconnect bus to the all stream subscription
             // _repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test")));
-            _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection));
+            _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection, new JsonSerializer()));
         }
 
         [Fact]

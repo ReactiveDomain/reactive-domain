@@ -32,7 +32,7 @@ namespace ReactiveDomain.Testing
         {
             _connection = fixture.Connection;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
-            _repo = new StreamStoreRepository(_streamNameBuilder, _connection);
+            _repo = new StreamStoreRepository(_streamNameBuilder, _connection, new JsonSerializer());
         }
 
         [Fact]

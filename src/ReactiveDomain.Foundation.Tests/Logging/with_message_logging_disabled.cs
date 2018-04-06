@@ -24,7 +24,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected with_message_logging_disabled()
         {
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            Repo = new StreamStoreRepository(StreamNameBuilder, Connection);
+            Repo = new StreamStoreRepository(StreamNameBuilder, Connection, new JsonSerializer());
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,
                 Connection,
