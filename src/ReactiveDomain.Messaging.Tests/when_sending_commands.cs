@@ -135,7 +135,11 @@ namespace ReactiveDomain.Messaging.Tests
             Interlocked.Increment(ref GotLongRunning);
             Interlocked.Exchange(ref CancelLongRunning, 0);
             //wait too long
-            SpinWait.SpinUntil(() => Interlocked.Read(ref CancelLongRunning) == 1, StandardTimeout + TimeSpan.FromSeconds(1));
+            var timespan = StandardTimeout + TimeSpan.FromSeconds(3);
+            SpinWait.SpinUntil(
+                () => Interlocked.Read(
+                          ref CancelLongRunning) == 1,
+                          timespan);
             return command.Succeed();
         }
         public CommandResponse Handle(TestCommands.Fail command)
