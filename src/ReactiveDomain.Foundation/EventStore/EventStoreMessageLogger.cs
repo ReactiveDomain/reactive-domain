@@ -11,10 +11,10 @@ namespace ReactiveDomain.Foundation.EventStore
     {
         private readonly IStreamStoreConnection _eventStore;
         private readonly string _streamPrefix;
-        private readonly IGeneralBus _bus;
+        private readonly IDispatcher _bus;
 
         public EventStoreMessageLogger(
-            IGeneralBus bus,
+            IDispatcher bus,
             IStreamStoreConnection es,
             string logStreamPrefix = "",
             bool enableLogging = false,

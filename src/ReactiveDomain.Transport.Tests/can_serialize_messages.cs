@@ -132,8 +132,8 @@ namespace ReactiveDomain.Transport.Tests
         public string Property2 { get; private set; }
 
         #region Implementation of ICorrelatedMessage
-        public Guid? SourceId => null;
-        public Guid CorrelationId => Guid.Empty;
+        public SourceId SourceId => SourceId.NullSourceId();
+        public CorrelationId CorrelationId => CorrelationId.NewId();
         #endregion
     }
 }

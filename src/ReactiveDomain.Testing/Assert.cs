@@ -31,14 +31,12 @@ namespace Xunit
 
         public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string msg = null)
         {
-            if (!timeout.HasValue) timeout = 750;
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            // ReSharper disable once LoopVariableIsNeverChangedInsideLoop - Yes it does
-            while (!func())
-            {
-                Thread.Sleep(10);
-                DispatchOtherThings();
-                if (sw.ElapsedMilliseconds > timeout) break;
+            if (!timeout.HasValue) timeout = 1000;
+            var waitLoops = timeout/10;
+            for (int i = 0; i < waitLoops; i++) {
+                SpinWait.SpinUntil(func, 10);
+                if(func()) break;
+                //DispatchOtherThings();
             }
             True(func(), msg ?? "");
         }

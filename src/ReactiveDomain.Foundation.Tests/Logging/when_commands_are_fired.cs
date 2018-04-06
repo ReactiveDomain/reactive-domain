@@ -33,9 +33,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public when_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
-        }
-        protected override void When()
-        {
             _correlationId = Guid.NewGuid();
 
             // command must have a commandHandler
@@ -68,15 +65,15 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Bus.Fire(tstCmd,
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
-
         }
+        
 
-
-        public void all_commands_are_logged()
+        [Fact(Skip = "Mock store not implemented")]
+        private void all_commands_are_logged()
         {
             // Wait  for last command to be queued
-            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
-
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
+            
             Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000);
             Assert.True(_multiFireCount == MaxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
             Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000);

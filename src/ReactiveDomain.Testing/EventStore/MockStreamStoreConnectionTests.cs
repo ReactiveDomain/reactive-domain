@@ -117,11 +117,7 @@ namespace ReactiveDomain.Testing {
         public void can_subscribe_to_all() {
 
             foreach (var repo in _repos) {
-                //todo: fix
-                var r = repo as IRepository;
-                if (r == null) continue;
-                var q = new TestQueue(_bus);
-
+                
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
                 tAgg.RaiseBy(1);
@@ -138,7 +134,7 @@ namespace ReactiveDomain.Testing {
             foreach (var repo in _repos) {
                 //todo: fix
                 if (!(repo is IRepository r)) continue;
-                var q = new TestQueue(_bus);
+               // var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -184,7 +180,7 @@ namespace ReactiveDomain.Testing {
             foreach (var repo in _repos) {
                 var r = repo as IRepository;
                 if (r == null) continue;
-                var q = new TestQueue(_bus);
+                //var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -235,7 +231,7 @@ namespace ReactiveDomain.Testing {
                 //todo: fix
                 var r = repo as IRepository;
                 if (r == null) continue;
-                var q = new TestQueue(_bus);
+               // var q = new TestQueue(_bus);
 
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);

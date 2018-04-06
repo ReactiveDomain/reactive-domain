@@ -12,12 +12,12 @@ namespace ReactiveDomain.Messaging.Bus
     /// Returns success for any TryFire.
     /// 
     /// </summary>
-    public class NullableBus : IGeneralBus, IDisposable
+    public class NullableBus : IDispatcher, IDisposable
     {
-        private IGeneralBus _target;
+        private IDispatcher _target;
         public bool Idle => _target.Idle;
 
-        public NullableBus(IGeneralBus target, bool directToNull = true, string name = null)
+        public NullableBus(IDispatcher target, bool directToNull = true, string name = null)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             _target = target;

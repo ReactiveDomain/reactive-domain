@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Testing
         public long GrandChildTestDomainEventHandleCount;
         public long MessageHandleCount;
 
-        public TestInheritedMessageSubscriber(IGeneralBus bus, bool idempotent = true) : base(bus, idempotent)
+        public TestInheritedMessageSubscriber(IDispatcher bus, bool idempotent = true) : base(bus, idempotent)
         {
             Reset();
 

@@ -6,10 +6,10 @@ namespace ReactiveDomain.Messaging.Testing
 {
     public class TestMessagePublisher
     {
-        private readonly IGeneralBus _bus;
+        private readonly IDispatcher _bus;
         private bool _publish = true;
 
-        public TestMessagePublisher(IGeneralBus bus)
+        public TestMessagePublisher(IDispatcher bus)
         {
             _bus = bus;
         }

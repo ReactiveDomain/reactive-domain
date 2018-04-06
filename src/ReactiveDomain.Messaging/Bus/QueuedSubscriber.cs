@@ -9,14 +9,14 @@ namespace ReactiveDomain.Messaging.Bus
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
 
         private readonly QueuedHandler _messageQueue;
-        private readonly IGeneralBus _generalBus;
-        private readonly IGeneralBus _internalBus;
+        private readonly IBus _generalBus;
+        private readonly IBus _internalBus;
         protected object Last = null;
         public bool Starving => _messageQueue.Idle;
-        protected QueuedSubscriber(IGeneralBus bus, bool idempotent = true)
+        protected QueuedSubscriber(IBus bus, bool idempotent = true)
         {
 	        _generalBus = bus ?? throw new ArgumentNullException(nameof(bus));
-            _internalBus = new CommandBus("SubscriptionBus");
+            _internalBus = new InMemoryBus("SubscriptionBus");
 
             if (idempotent)
                 _messageQueue = new QueuedHandler(

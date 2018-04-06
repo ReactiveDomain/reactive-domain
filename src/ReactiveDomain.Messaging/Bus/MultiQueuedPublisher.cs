@@ -3,34 +3,37 @@ using System.Threading.Tasks;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public class CommandPublisher : ICommandPublisher, IDisposable
+    public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable
     {
-        private readonly IBus _bus;
-        private readonly int _concurrency;
         private readonly CommandManager _manager;
         private readonly TimeSpan? _slowMsgThreshold;
         private readonly TimeSpan? _slowCmdThreshold;
-        private readonly MultiQueuedHandler _publisher;
-        public bool Idle => _publisher.Idle;
-        public CommandPublisher(IBus bus, int concurrency, TimeSpan? slowMsgThreshold, TimeSpan? slowCmdThreshold)
+        private readonly MultiQueuedHandler _publishQueue;
+        public bool Idle => _publishQueue.Idle;
+        public MultiQueuedPublisher(
+                IBus bus, 
+                int queueCount, 
+                TimeSpan? slowMsgThreshold, 
+                TimeSpan? slowCmdThreshold)
         {
-            _bus = bus;
-            _concurrency = concurrency;
             _slowMsgThreshold = slowMsgThreshold;
             _slowCmdThreshold = slowCmdThreshold;
             _manager = new CommandManager(bus);
-            _publisher = new MultiQueuedHandler(
-                _concurrency,
-                i => new QueuedHandler(new AdHocHandler<Message>(msg => _bus.Publish(msg))
-                , nameof(CommandPublisher)));
-            _publisher.Start();
+            _publishQueue = new MultiQueuedHandler(
+                queueCount,
+                i => new QueuedHandler(new AdHocHandler<Message>(bus.Publish)
+                , nameof(MultiQueuedPublisher)));
+            _publishQueue.Start();
+        }
+        public void Publish(Message message) {
+           _publishQueue.Publish(message);
         }
         public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (command.IsCanceled)
             {
-                _publisher.Publish(command.Canceled());
-                return;
+                _publishQueue.Publish(command.Canceled());
+                throw new CommandCanceledException(command);
             }
 
             var rslt = Execute(command, responseTimeout, ackTimeout);
@@ -54,7 +57,7 @@ namespace ReactiveDomain.Messaging.Bus
                 if (command.IsCanceled)
                 {
                     response = command.Canceled();
-                    _publisher.Publish(response);
+                    _publishQueue.Publish(response);
                     return false;
                 }
                 response = Execute(command, responseTimeout, ackTimeout);
@@ -80,7 +83,6 @@ namespace ReactiveDomain.Messaging.Bus
             TaskCompletionSource<CommandResponse> tcs = null;
             try
             {
-                CommandReceived(command, command.GetType(), "");
                 tcs = _manager.RegisterCommandAsync(
                     command,
                     ackTimeout ?? _slowMsgThreshold,
@@ -101,7 +103,7 @@ namespace ReactiveDomain.Messaging.Bus
                 //n.b. if this does not throw result will be set asynchronously 
                 //in the registered handler in the _manager 
                 
-                _publisher.Publish(command);
+                _publishQueue.Publish(command);
             }
             catch (Exception ex)
             {
@@ -122,36 +124,15 @@ namespace ReactiveDomain.Messaging.Bus
                 throw;
             }
         }
-
-
-        public virtual void NoCommandHandler(dynamic cmd, Type type)
-        {
-            //replace with message published on ack timeout
-            //We can't know this here
-        }
-
-        public virtual void PostHandleCommand(dynamic cmd, Type type, string handlerName, dynamic response,
-            TimeSpan handleTimeSpan)
-        {
-            //replace with message published from Command handler
-            //We can't know this here
-        }
-
-        public virtual void CommandReceived(dynamic cmd, Type type, string firedBy)
-        {
-            //replace with message published from Command handler
-            //We can't know this here
-        }
-
+        
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _manager?.Dispose();
-                _publisher?.Stop();//TODO: do we need to flush/empty the queue here?
+                _publishQueue?.Stop();//TODO: do we need to flush/empty the queue here?
             }
         }
-
         public void Dispose()
         {
             Dispose(true);

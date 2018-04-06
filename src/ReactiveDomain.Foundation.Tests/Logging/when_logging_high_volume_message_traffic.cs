@@ -17,10 +17,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
-        public when_logging_high_volume_message_traffic(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+       
         private readonly int _maxCountedMessages = 10000;
 
         private int _commandFireCount;
@@ -33,7 +30,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private int _catchupSubscriptionMsgs;
 
         private TestCommandSubscriber _cmdHandler;
-        protected override void When()
+        public when_logging_high_volume_message_traffic(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             // commands must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
@@ -87,7 +84,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void all_messages_are_logged()
         {
             // Wait for last command to be queued
-            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(10));
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
 
             // Wait  for last command to be "heard" from logger/repo
             Assert.IsOrBecomesTrue(() => 

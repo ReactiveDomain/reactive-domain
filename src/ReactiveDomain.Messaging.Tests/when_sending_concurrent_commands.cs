@@ -16,7 +16,7 @@ namespace ReactiveDomain.Messaging.Tests
 
     {
         private readonly TimeSpan _5Sec = TimeSpan.FromSeconds(5);
-        private readonly CommandBus _bus;
+        private readonly Dispatcher _bus;
         private long _cmd1Count;
         private long _cmd2Count;
         private long _cmd3Count;
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Messaging.Tests
         private int _count;
         public when_sending_concurrent_commands()
         {
-            _bus = new CommandBus("Test", 3, false, _5Sec, _5Sec);
+            _bus = new Dispatcher("Test", 3, false, _5Sec, _5Sec);
             _bus.Subscribe<TestCommands.Command1>(this);
             _bus.Subscribe<TestCommands.Command2>(this);
             _bus.Subscribe<TestCommands.Command3>(this);

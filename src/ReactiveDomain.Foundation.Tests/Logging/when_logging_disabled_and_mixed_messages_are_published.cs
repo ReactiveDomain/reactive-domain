@@ -21,10 +21,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
-        public when_logging_disabled_and_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+        
         private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
@@ -40,8 +37,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private TestCommandSubscriber _cmdHandler;
 
 
-        protected override void When()
+        public when_logging_disabled_and_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
+        
             _countedEventCount = 0;
             _testDomainEventCount = 0;
 
@@ -93,7 +91,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void mixed_messages_are_not_logged()
         {
             // all events published, commands fired
-            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
 
             // Wait  for last CountedEvent to be "heard" from logger/repo - times out because events not logged
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
