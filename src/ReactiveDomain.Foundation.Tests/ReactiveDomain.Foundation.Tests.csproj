@@ -5,11 +5,6 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Logging\**" />
-    <EmbeddedResource Remove="Logging\**" />
-    <None Remove="Logging\**" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Remove="Domain\MetadataTests.cs" />
     <Compile Remove="Domain\MetadatumTests.cs" />
   </ItemGroup>

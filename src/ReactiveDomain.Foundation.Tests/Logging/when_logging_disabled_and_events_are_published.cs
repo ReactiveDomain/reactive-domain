@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using System.Threading;
 using Xunit;
 using Xunit.Sdk;
 
@@ -21,20 +22,17 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
-        public when_logging_disabled_and_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+       
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
         private int _testDomainEventCount;
-
-        protected override void When()
+        private long _gotEvt;
+        public when_logging_disabled_and_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
-
+       
             _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<DomainEvent>(this);
 
@@ -51,7 +49,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         _correlationId,
                         Guid.NewGuid()));
             }
-
+            Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
             Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
 
@@ -60,7 +58,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void events_are_not_logged()
         {
             // wait for all events to be queued
-            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(()=> _gotEvt >0);
 
             //// Need the "is or becomes" here because if the handler (see below) is executed, it takes time. 
             // see the enabled test

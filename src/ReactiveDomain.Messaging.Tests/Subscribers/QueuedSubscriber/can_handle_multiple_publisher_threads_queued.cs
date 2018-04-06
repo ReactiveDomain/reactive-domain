@@ -5,7 +5,7 @@ using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable once InconsistentNaming
-    public class can_handle_multiple_publisher_threads_queued : when_using_counted_message_subscriber {
+    public sealed class can_handle_multiple_publisher_threads_queued : when_using_counted_message_subscriber {
         private int FirstTaskMax = 100000;
         private int SecondTaskMax = 200000;
         private int ThirdTaskMax = 300000;

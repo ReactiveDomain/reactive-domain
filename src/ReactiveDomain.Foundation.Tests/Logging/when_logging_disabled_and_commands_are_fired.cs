@@ -21,10 +21,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
-        public when_logging_disabled_and_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
+        
             
-        }
+        
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
 
@@ -34,7 +33,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         private TestCommandSubscriber _cmdHandler;
 
-        protected override void When()
+        public when_logging_disabled_and_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             // command must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
@@ -71,7 +70,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void commands_are_not_logged()
         {
-            TestQueue.WaitFor<TestCommands.Command3>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
             // Wait  for last command to be queued
 
             //    // Wait  for last event to be queued

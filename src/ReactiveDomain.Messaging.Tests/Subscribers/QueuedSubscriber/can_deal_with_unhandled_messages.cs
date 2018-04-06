@@ -7,25 +7,11 @@ using Xunit;
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public class can_deal_with_unhandled_messages : when_using_counted_message_subscriber, IDisposable
+    public sealed class can_deal_with_unhandled_messages : when_using_counted_message_subscriber
     {
         private int FirstTaskMax = 20;
         private int TimeoutInMs = 5000;
-
        
-        private Task _t2;
-
-        public can_deal_with_unhandled_messages() {
-       
-          
-
-            _t2 = new Task(
-                () =>
-                {
-                   
-                });
-        }
-
         [Fact]
         void can_ignore_messages_not_subscribed()
         {
@@ -65,8 +51,6 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             //Messages and events are published. Don't know how to prove no one handles them.
             Assert.IsOrBecomesTrue(() => MsgCount == FirstTaskMax * 3, 100, $"Expected {FirstTaskMax * 3} Messages, found {MsgCount}");
         }
-        protected override void Dispose(bool disposing) {
-           base.Dispose(disposing);
-        }
+     
     }
 }

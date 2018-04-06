@@ -4,7 +4,7 @@ using Xunit;
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public class can_handle_high_volume_queued_messages : when_using_queued_subscriber
+    public sealed class can_handle_high_volume_queued_messages : when_using_queued_subscriber
     {
         private TestMessagePublisher _pub1;
         private TestMessagePublisher _pub2;

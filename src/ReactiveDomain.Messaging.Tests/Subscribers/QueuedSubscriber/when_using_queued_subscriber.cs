@@ -10,7 +10,8 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         protected Bus.IDispatcher Bus;
         private long _msgCount;
         public long MsgCount => _msgCount;
-        public when_using_queued_subscriber() {
+
+        protected when_using_queued_subscriber() {
             Bus = new Dispatcher(nameof(when_using_queued_subscriber));
             MessageSubscriber = new TestQueuedSubscriber(Bus);
             Bus.Subscribe(this);

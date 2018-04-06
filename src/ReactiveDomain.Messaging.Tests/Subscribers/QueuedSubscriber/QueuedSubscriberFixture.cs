@@ -4,7 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
-    public class QueuedSubscriberFixture : IPublisher {
+    public sealed class QueuedSubscriberFixture : IPublisher {
         private readonly Subscriber _subscriber;
         private readonly IBus _bus;
         public QueuedSubscriberFixture() {
@@ -63,15 +63,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
 
             public void Handle(GrandChildTestEvent message) => Interlocked.Increment(ref GrandChildEventCount);
 
-            protected override void Dispose(bool disposing) {
-                if (_disposed)
-                    return;
-                _disposed = true;
-                if (disposing) {
-
-                }
-                base.Dispose(disposing);
-            }
+           
         }
     }
 }
