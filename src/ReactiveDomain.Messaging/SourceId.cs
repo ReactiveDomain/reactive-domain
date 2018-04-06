@@ -31,6 +31,10 @@ namespace ReactiveDomain.Messaging
             Id = id;
         }
 
+        /// <summary>
+        /// Create a SourceId with no antecedent message.
+        /// </summary>
+        /// <returns>A SourceId with Guid.Empty as its Id.</returns>
         public static SourceId NullSourceId()
         {
             return new SourceId(Guid.Empty);
