@@ -21,8 +21,8 @@ namespace ReactiveDomain.Messaging.Tests
         IHandleCommand<TestCommands.LongRunning>,
         IHandleCommand<TestCommands.Command3>
     {
-        public readonly IGeneralBus Bus;
-        public readonly IGeneralBus RemoteBus;
+        public readonly IDispatcher Bus;
+        public readonly IDispatcher RemoteBus;
 
         public long GotChainedCaller;
         public long GotTestCommand1;
@@ -48,8 +48,8 @@ namespace ReactiveDomain.Messaging.Tests
         public TestCommandBusFixture()
         {
             StandardTimeout = TimeSpan.FromSeconds(0.2);
-            Bus = new CommandBus(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
-            RemoteBus = new CommandBus(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
+            Bus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
+            RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
             //todo: fix connector
             //var conn = new BusConnector(Bus, RemoteBus);
 

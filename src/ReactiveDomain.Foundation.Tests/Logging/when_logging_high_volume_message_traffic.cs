@@ -68,7 +68,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
 
-                Bus.Publish(new TestDomainEvent(Guid.NewGuid(), Guid.NewGuid()));
+                Bus.Publish(new TestEvent(Guid.NewGuid(), Guid.NewGuid()));
 
             }
 
@@ -143,7 +143,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 _lastCommandCount++;
             else if(msg is CountedEvent)
                 _countedEventCount++;
-            else if(msg is TestDomainEvent)
+            else if(msg is TestEvent)
                 _testDomainEventCount++;
             else if(msg is Success)
                 _commandSuccessCount++;

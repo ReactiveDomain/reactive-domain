@@ -3,11 +3,9 @@ using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
-{
+namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable once InconsistentNaming
-    public class can_handle_multiple_publisher_threads_queued : when_using_counted_message_subscriber
-    {
+    public class can_handle_multiple_publisher_threads_queued : when_using_counted_message_subscriber {
         private int FirstTaskMax = 100000;
         private int SecondTaskMax = 200000;
         private int ThirdTaskMax = 300000;
@@ -17,38 +15,29 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         private Task _t2;
         private Task _t3;
         private Task _t4;
-        protected override void When()
-        {
+        public can_handle_multiple_publisher_threads_queued() {
             _t1 = new Task(
-                () =>
-                {
-                    for (int i = 0; i < FirstTaskMax; i++)
-                    {
+                () => {
+                    for (int i = 0; i < FirstTaskMax; i++) {
                         Bus.Publish(new CountedTestMessage(i));
                     }
                 });
 
             _t2 = new Task(
-                () =>
-                {
-                    for (int i = FirstTaskMax; i < SecondTaskMax; i++)
-                    {
+                () => {
+                    for (int i = FirstTaskMax; i < SecondTaskMax; i++) {
                         Bus.Publish(new CountedTestMessage(i));
                     }
                 });
             _t3 = new Task(
-                () =>
-                {
-                    for (int i = SecondTaskMax; i < ThirdTaskMax; i++)
-                    {
+                () => {
+                    for (int i = SecondTaskMax; i < ThirdTaskMax; i++) {
                         Bus.Publish(new CountedTestMessage(i));
                     }
                 });
             _t4 = new Task(
-                () =>
-                {
-                    for (int i = ThirdTaskMax; i < FourthTaskMax; i++)
-                    {
+                () => {
+                    for (int i = ThirdTaskMax; i < FourthTaskMax; i++) {
                         Bus.Publish(new CountedTestMessage(i));
                     }
                 });
@@ -60,18 +49,11 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         }
 
         [Fact]
-        void can_handle_threaded_messages()
-        {
+        void can_handle_threaded_messages() {
             Assert.IsOrBecomesTrue(
-                () => BusMessages.Count == FourthTaskMax,
+                () => MsgCount == FourthTaskMax,
                 FourthTaskMax,
-                $"Expected message count to be {FourthTaskMax} Messages, found {BusMessages.Count }");
-
-            Assert.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _messageSubscriber.MessagesHandled) == FourthTaskMax,
-                FourthTaskMax,
-                $"Expected {FourthTaskMax} Messages, found {_messageSubscriber.MessagesHandled }");
-
+                $"Expected message count to be {FourthTaskMax} Messages, found {MsgCount }");
         }
 
     }

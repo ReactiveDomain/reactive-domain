@@ -11,7 +11,7 @@ namespace ReactiveDomain.Messaging.Bus
     {
         private readonly BusAdapter _left;
         private readonly BusAdapter _right;
-        public BusConnector(IGeneralBus left, IGeneralBus right)
+        public BusConnector(IDispatcher left, IDispatcher right)
         {
             _left = new BusAdapter(left);
             _right = new BusAdapter(right);
@@ -31,12 +31,12 @@ namespace ReactiveDomain.Messaging.Bus
         IHandle<Message>,
         ISubscriber
     {
-        private readonly IGeneralBus _bus;
+        private readonly IDispatcher _bus;
         private MessageIdTracker _idTracker;
         private object _handler;
         private readonly HashSet<Guid> _trackedMessages;
 
-        public BusAdapter(IGeneralBus bus)
+        public BusAdapter(IDispatcher bus)
         {
             _idTracker = null;
             _bus = bus;

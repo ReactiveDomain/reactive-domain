@@ -48,14 +48,14 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
             }
 
-            Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
 
 
         
         public void all_events_are_logged()
         {
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
 
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 9000);
@@ -68,7 +68,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void Handle(DomainEvent message)
         {
             if (message is CountedEvent) _countedEventCount++;
-            if (message is TestDomainEvent) _testDomainEventCount++;
+            if (message is TestEvent) _testDomainEventCount++;
         }
     }
 }

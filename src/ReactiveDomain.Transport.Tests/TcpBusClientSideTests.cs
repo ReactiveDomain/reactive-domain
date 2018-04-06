@@ -7,14 +7,14 @@ namespace ReactiveDomain.Transport.Tests
     public class TcpBusClientSideTests
     {
         private IPAddress _hostAddress;
-        private IGeneralBus _commandBus;
+        private IDispatcher _commandBus;
         private IPAddress _clientAddress;
         private MockTcpConnection _clientTcpConnection;
         private const int CommandPort = 10660;
 
         public TcpBusClientSideTests()
         {
-            _commandBus = new CommandBus("TestBus");
+            _commandBus = new Dispatcher("TestBus");
             _hostAddress = IPAddress.Loopback;
             _clientAddress = IPAddress.Loopback;
             _clientTcpConnection = MockTcpConnection.CreateConnectingTcpConnection(Guid.NewGuid(),

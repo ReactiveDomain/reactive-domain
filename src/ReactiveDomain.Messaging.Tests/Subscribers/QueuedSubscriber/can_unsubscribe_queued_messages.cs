@@ -11,7 +11,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 	public class can_unsubscribe_queued_messages
 	{
 		private readonly CountedMessageSubscriber _sub;
-		private readonly IGeneralBus _bus = new CommandBus("test", 3,false);
+		private readonly IDispatcher _bus = new Dispatcher("test", 3,false);
 		private int _msgCount = 20;
 		private readonly List<Message> _messages = new List<Message>();
 	

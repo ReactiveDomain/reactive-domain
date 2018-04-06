@@ -13,7 +13,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         private int FirstTaskMax = 50000;
         private int TimeoutInMs = 50000;
 
-        protected override void When()
+       public can_handle_high_volume_queued_messages()
         {
             // create multiple publishers
             _pub1 = new TestMessagePublisher(Bus);
@@ -33,9 +33,9 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 
             // When we get to (or beyond) a predetermined number of messages published...
             Assert.IsOrBecomesTrue(
-                () => BusMessages.Count > FirstTaskMax,
+                () => MsgCount > FirstTaskMax,
                 TimeoutInMs,
-                $"Expected message count to be {FirstTaskMax} Messages, found {BusMessages.Count}");
+                $"Expected message count to be {FirstTaskMax} Messages, found {MsgCount}");
 
             // ... stop the publishers
             _pub1.StopPublishing();
@@ -44,9 +44,9 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             _pub4.StopPublishing();
 
             // verify all the messages were handled
-            Assert.IsOrBecomesTrue(() => MessageSubscriber.TimesTestMessageHandled == BusMessages.Count,
+            Assert.IsOrBecomesTrue(() => MessageSubscriber.TimesTestMessageHandled == MsgCount,
                 TimeoutInMs,
-                $"Subscriber handled ParentTest message {MessageSubscriber.ParentTestMessage} times. Bus count = {BusMessages.Count}");
+                $"Subscriber handled ParentTest message {MessageSubscriber.ParentTestMessage} times. Bus count = {MsgCount}");
 
         }
     }

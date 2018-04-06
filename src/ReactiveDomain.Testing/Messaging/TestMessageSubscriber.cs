@@ -14,7 +14,7 @@ namespace ReactiveDomain.Messaging.Testing
         public long TimesTestMessageHandled;
         public long TimesTestMessage2Handled;
 
-        public TestQueuedSubscriber(IGeneralBus bus) : base(bus)
+        public TestQueuedSubscriber(IDispatcher bus) : base(bus)
         {
             TimesTestMessageHandled = 0;
             TimesTestMessage2Handled = 0;

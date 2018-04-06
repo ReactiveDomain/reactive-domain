@@ -52,7 +52,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
             }
 
-            Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
 
 
@@ -60,7 +60,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void events_are_not_logged()
         {
             // wait for all events to be queued
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(5));
 
             //// Need the "is or becomes" here because if the handler (see below) is executed, it takes time. 
             // see the enabled test
@@ -82,7 +82,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void Handle(DomainEvent message)
         {
             if (message is CountedEvent) _countedEventCount++;
-            if (message is TestDomainEvent) _testDomainEventCount++;
+            if (message is TestEvent) _testDomainEventCount++;
         }
     }
 }
