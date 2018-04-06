@@ -15,10 +15,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         with_message_logging_disabled,
         IHandle<Message>
     {
-        public when_toggling_logging_from_disabled(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-            
-        }
+       
         private readonly Guid _correlationId = Guid.NewGuid();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
@@ -30,8 +27,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private TestCommandSubscriber _cmdHandler; // "never used" is a red herring. It handles the command
 
 
-        protected override void When()
+        public when_toggling_logging_from_disabled(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
+          
+        
             // command must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
 

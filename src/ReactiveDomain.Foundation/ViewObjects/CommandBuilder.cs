@@ -82,7 +82,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         }
 
         public static ReactiveCommand BuildFireCommand(
-                                                this IGeneralBus bus,
+                                                this IDispatcher bus,
                                                 IObservable<bool> canExecute,
                                                 Func<Command> commandFunc,
                                                 IScheduler scheduler = null,
@@ -105,7 +105,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         }
 
         public static ReactiveCommand BuildFireCommand(
-                                                this IGeneralBus bus,
+                                                this IDispatcher bus,
                                                 Func<Command> commandFunc,
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null,
@@ -129,7 +129,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
 
 
         public static ReactiveCommand BuildFireCommand(
-                                                this IGeneralBus bus,
+                                                this IDispatcher bus,
                                                 IObservable<bool> canExecute,
                                                 IEnumerable<Func<Command>> commands,
                                                 IScheduler scheduler = null,
@@ -152,7 +152,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         }
 
         public static ReactiveCommand BuildFireCommand(
-                                                this IGeneralBus bus,
+                                                this IDispatcher bus,
                                                 IEnumerable<Func<Command>> commands,
                                                 IScheduler scheduler = null,
                                                 string userErrorMsg = null,
@@ -206,7 +206,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
         public static ReactiveCommand BuildFireCommandEx(
-                                this IGeneralBus bus,
+                                this IDispatcher bus,
                                 IObservable<bool> canExecute,
                                 Func<Object, Command> commandFunc,
                                 IScheduler scheduler = null,
@@ -229,7 +229,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
         public static ReactiveCommand BuildFireCommandEx(
-                                                       this IGeneralBus bus,
+                                                       this IDispatcher bus,
                                                        Func<Object, Command> commandFunc,
                                                        IScheduler scheduler = null,
                                                        string userErrorMsg = null,
@@ -240,7 +240,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
         }
 
         private static ReactiveCommand FireCommandEx(
-            IGeneralBus bus,
+            IDispatcher bus,
             Func<Object, Command> commandFunc,
             IObservable<bool> canExecute = null,
             IScheduler scheduler = null,

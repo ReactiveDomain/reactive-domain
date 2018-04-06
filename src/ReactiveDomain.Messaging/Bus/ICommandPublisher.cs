@@ -7,6 +7,5 @@ namespace ReactiveDomain.Messaging.Bus
         void Fire(Command command, string exceptionMsg =null, TimeSpan? responseTimeout = null,TimeSpan? ackTimeout = null);
         bool TryFire(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,TimeSpan? ackTimeout = null);
         bool TryFire(Command command, TimeSpan? responseTimeout = null,TimeSpan? ackTimeout = null);
-        bool Idle { get; }
     }
 }

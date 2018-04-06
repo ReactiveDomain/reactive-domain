@@ -14,7 +14,7 @@ namespace ReactiveDomain.Foundation
         private readonly ISubscriber _eventSubscriber;
         private readonly ICommandSubscriber _commandSubscriber;
 
-        protected TransientSubscriber(IGeneralBus bus) : this((IBus)bus)
+        protected TransientSubscriber(IDispatcher bus) : this((IBus)bus)
         {
             _commandSubscriber = bus ?? throw new ArgumentNullException(nameof(bus));
         }

@@ -15,9 +15,9 @@ namespace ReactiveDomain.Transport
     public class TcpInboundMessageHandler : IHandle<Message>
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        protected readonly IGeneralBus _mainBus;
+        protected readonly IDispatcher _mainBus;
         private readonly TcpOutboundMessageHandler _tcpOutboundMessageHandler;
-        public TcpInboundMessageHandler(IGeneralBus mainBus, TcpOutboundMessageHandler tcpOutboundMessageHandler)
+        public TcpInboundMessageHandler(IDispatcher mainBus, TcpOutboundMessageHandler tcpOutboundMessageHandler)
         {
             _mainBus = mainBus;
             _tcpOutboundMessageHandler = tcpOutboundMessageHandler;

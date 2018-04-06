@@ -10,9 +10,9 @@ namespace ReactiveDomain.Messaging.Testing
         public long TestCommand2Handled;
         public long TestCommand3Handled;
 
-        private IGeneralBus _bus;
+        private IDispatcher _bus;
 
-        public TestCommandSubscriber(IGeneralBus bus)
+        public TestCommandSubscriber(IDispatcher bus)
         {
             _bus = bus;
             TestCommand2Handled = 0;

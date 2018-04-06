@@ -14,13 +14,13 @@ namespace ReactiveDomain.Messaging.Bus
         private readonly TimeSpan _completionTimeout;
         private readonly Action _completionAction;
         private readonly Action _cancelAction;
-        private bool _disposed = false;
+        private bool _disposed;
 
         private const long PendingAck = 0;
         private const long PendingResponse = 1;
         private const long Complete = 2;
         private long _state;
-        private Timer _ackTimer;
+        private readonly Timer _ackTimer;
         private Timer _completionTimer;
 
         public CommandTracker(
@@ -47,7 +47,7 @@ namespace ReactiveDomain.Messaging.Bus
             if (_tcs.TrySetResult(message)) _completionAction();
         }
 
-        private long _ackCount = 0;
+        private long _ackCount;
         public void Handle(AckCommand message)
         {
             Interlocked.Increment(ref _ackCount);

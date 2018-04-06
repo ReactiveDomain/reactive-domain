@@ -9,14 +9,14 @@ namespace ReactiveDomain.Transport
     public class TcpOutboundMessageHandler : IHandle<Message>
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        private readonly IGeneralBus _messageBus;
+        private readonly IDispatcher _messageBus;
         private readonly QueuedHandler _outboundMessageQueuedHandler;
 
         private readonly ConcurrentDictionary<Guid, Message> _messagesThatCameFromTcp =
             new ConcurrentDictionary<Guid, Message>();
 
         public TcpOutboundMessageHandler(
-            IGeneralBus messageBus,
+            IDispatcher messageBus,
             QueuedHandler outboundMessageQueuedHandler)
         {
             _messageBus = messageBus;

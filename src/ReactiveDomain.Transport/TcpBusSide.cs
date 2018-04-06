@@ -13,7 +13,7 @@ namespace ReactiveDomain.Transport
     public abstract class TcpBusSide : IHandle<Message>
     {
         protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        protected readonly IGeneralBus MessageBus;
+        protected readonly IDispatcher MessageBus;
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Transport
         protected TcpBusSide(
             IPAddress hostIp,
             int commandPort,
-            IGeneralBus messageBus)
+            IDispatcher messageBus)
         {
             _hostIp = hostIp;
             _commandPort = commandPort;

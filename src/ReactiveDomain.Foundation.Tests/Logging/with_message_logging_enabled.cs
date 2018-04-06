@@ -1,25 +1,19 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    public abstract class with_message_logging_enabled :CommandBusSpecification
+    public abstract class with_message_logging_enabled :IDisposable
     {
         protected readonly IStreamStoreConnection Connection;
-
+        protected IDispatcher Bus;
         protected with_message_logging_enabled(IStreamStoreConnection connection)
         {
             Connection = connection;
-        }
-        protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-        protected StreamStoreRepository Repo;
-        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
-        protected override void Given()
-        {
+            Bus = new Dispatcher(nameof(with_message_logging_enabled));
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
             Repo = new StreamStoreRepository(StreamNameBuilder, Connection);
             // instantiate Logger class that inherits from QueuedSubscriber
@@ -29,6 +23,22 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 true);
 
             Thread.Sleep(2000); // needs a bit of time to set up the ES
+        }
+        protected EventStoreMessageLogger Logging;
+        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
+        protected StreamStoreRepository Repo;
+        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
+
+      
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (!disposing) return;
+           
+            Bus?.Dispose();
         }
     }
 }
