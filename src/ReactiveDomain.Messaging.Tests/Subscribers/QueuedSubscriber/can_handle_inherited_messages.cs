@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             var testCorrelationId = Guid.NewGuid();
 
             _fixture.Publish(new TestEvent(testCorrelationId, Guid.Empty));
-            Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1);
+            Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1,msg:$"Expected 1 got {_fixture.TestEventCount}");
 
             _fixture.Publish(new ParentTestEvent(testCorrelationId, Guid.NewGuid()));
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1);

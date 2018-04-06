@@ -507,7 +507,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
-            _fixture.Bus.Fire(new TestCommands.LongRunning(Guid.NewGuid(), null), responseTimeout: TimeSpan.FromSeconds(3.1));
+            _fixture.Bus.Fire(new TestCommands.LongRunning(Guid.NewGuid(), null), responseTimeout: TimeSpan.FromSeconds(5));
 
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotLongRunning) == 1, msg: "Expected Long Running to be handled");
         }
