@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using System.Threading;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -20,16 +21,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
         public when_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-        }
-        private readonly Guid _correlationId = Guid.NewGuid();
-        private IListener _listener;
-
-        private readonly int _maxCountedEvents = 5;
-        private int _countedEventCount;
-        private int _testDomainEventCount;
-
-        protected override void When()
         {
             _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
             _listener.EventStream.Subscribe<DomainEvent>(this);
@@ -48,14 +39,21 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                         Guid.NewGuid()));
             }
 
-            Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
+            Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
+            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
         }
+        private readonly Guid _correlationId = Guid.NewGuid();
+        private IListener _listener;
 
-
+        private readonly int _maxCountedEvents = 5;
+        private int _countedEventCount;
+        private int _testDomainEventCount;
+        private long _gotEvt;
+       
         
         public void all_events_are_logged()
         {
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(()=> _gotEvt >0);
 
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 9000);
@@ -68,7 +66,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void Handle(DomainEvent message)
         {
             if (message is CountedEvent) _countedEventCount++;
-            if (message is TestDomainEvent) _testDomainEventCount++;
+            if (message is TestEvent) _testDomainEventCount++;
         }
     }
 }

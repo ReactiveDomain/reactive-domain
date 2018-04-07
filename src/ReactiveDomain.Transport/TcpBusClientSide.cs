@@ -13,7 +13,7 @@ namespace ReactiveDomain.Transport
     {
 
         public TcpBusClientSide(
-            IGeneralBus messageBus,
+            IDispatcher messageBus,
             IPAddress hostIP,
             int commandPort,
             ITcpConnection tcpConnection = null)
