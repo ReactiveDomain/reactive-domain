@@ -47,8 +47,7 @@ namespace ReactiveDomain.Foundation
         /// <returns></returns>
         public string GenerateForCategory(Type type)
         {
-            string prefix = string.IsNullOrWhiteSpace(_prefix) ? string.Empty : $"{_prefix.ToLowerInvariant()}.";
-            return $"$ce-{prefix}{ToCamelCaseInvariant(type.Name)}";
+            return $"$ce-{ToCamelCaseInvariant(type.Name)}";
         }
 
         /// <summary>
@@ -58,7 +57,7 @@ namespace ReactiveDomain.Foundation
         /// <returns></returns>
         public string GenerateForEventType(string type)
         {
-            return $"$et-{type}";
+            return $"$et-{ToCamelCaseInvariant(type)}";
         }
 
         private string ToCamelCaseInvariant(string name)

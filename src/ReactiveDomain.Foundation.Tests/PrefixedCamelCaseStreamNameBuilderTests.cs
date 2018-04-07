@@ -20,44 +20,29 @@ namespace ReactiveDomain.Foundation.Tests
         public void CanGeneratePrefixedCamelCaseStreamNameForAggregate()
         {
             var aggregareId = Guid.Parse("96370d8277ae4ccab626091775ed01bb");
+            var prefix = "UnitTest";
+            var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder(prefix);
+            var streamName = streamNamebuilder.GenerateForAggregate(typeof(TestAggregate), aggregareId);
 
-            Assert.Equal(
-                "testAggregate-96370d8277ae4ccab626091775ed01bb",
-                new PrefixedCamelCaseStreamNameBuilder()
-                    .GenerateForAggregate(typeof(TestAggregate), aggregareId));
-
-            Assert.Equal(
-                "unittest.testAggregate-96370d8277ae4ccab626091775ed01bb",
-                new PrefixedCamelCaseStreamNameBuilder("UnitTest")
-                    .GenerateForAggregate(typeof(TestAggregate), aggregareId));
+            Assert.Equal("unittest.testAggregate-96370d8277ae4ccab626091775ed01bb", streamName);
         }
 
         [Fact]
         public void CanGenerateStreamNameForCategory()
         {
-            Assert.Equal(
-                "$ce-testAggregate",
-                new PrefixedCamelCaseStreamNameBuilder()
-                    .GenerateForCategory(typeof(TestAggregate)));
+            var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder();
+            var streamName = streamNamebuilder.GenerateForCategory(typeof(TestAggregate));
 
-            Assert.Equal(
-                "$ce-unittest.testAggregate",
-                new PrefixedCamelCaseStreamNameBuilder("UnitTest")
-                    .GenerateForCategory(typeof(TestAggregate)));
+            Assert.Equal("$ce-testAggregate", streamName);
         }
 
         [Fact]
         public void CanGenerateStreamNameForEventType()
         {
-            Assert.Equal(
-                "$et-TestEventType", 
-                new PrefixedCamelCaseStreamNameBuilder("whateverThePrefixIs")
-                    .GenerateForEventType("TestEventType"));
+            var streamNamebuilder = new PrefixedCamelCaseStreamNameBuilder();
+            var streamName = streamNamebuilder.GenerateForEventType("TestEventType");
 
-            Assert.Equal(
-                "$et-TestEventType", 
-                new PrefixedCamelCaseStreamNameBuilder()
-                    .GenerateForEventType("TestEventType"));
+            Assert.Equal("$et-testEventType", streamName);
         }
     }
 }
