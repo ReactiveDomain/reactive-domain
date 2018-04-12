@@ -5,6 +5,7 @@ using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 using Xunit.Sdk;
 
@@ -15,7 +16,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_logging_disabled_and_events_are_published :
         with_message_logging_disabled,
-        IHandle<DomainEvent>
+        IHandle<Event>
     {
         static when_logging_disabled_and_events_are_published()
         {
@@ -23,7 +24,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
 
        
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -34,23 +35,24 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         {
        
             _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
-            _listener.EventStream.Subscribe<DomainEvent>(this);
+            _listener.EventStream.Subscribe<Event>(this);
 
             _listener.Start(Logging.FullStreamName);
 
             _countedEventCount = 0;
             _testDomainEventCount = 0;
 
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
+
             Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
-            Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
+            Bus.Publish(new TestEvent(source));
         }
 
 
@@ -77,7 +79,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Assert.True(_testDomainEventCount == 0, $"Last event count {_testDomainEventCount} is not 0");
         }
 
-        public void Handle(DomainEvent message)
+        public void Handle(Event message)
         {
             if (message is CountedEvent) _countedEventCount++;
             if (message is TestEvent) _testDomainEventCount++;

@@ -21,7 +21,7 @@ namespace ReactiveDomain.Messaging
             DefaultValueHandling = DefaultValueHandling.Ignore,
             MissingMemberHandling = MissingMemberHandling.Ignore,
             TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter() }
+            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
         };
         public static readonly JsonSerializerSettings JsonLoggingSettings = new JsonSerializerSettings
         {
@@ -31,7 +31,7 @@ namespace ReactiveDomain.Messaging
             DefaultValueHandling = DefaultValueHandling.Include,
             MissingMemberHandling = MissingMemberHandling.Ignore,
             TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter() }
+            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
         };
         public static byte[] ToJsonBytes(this object source)
         {

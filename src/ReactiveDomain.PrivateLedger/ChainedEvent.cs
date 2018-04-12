@@ -5,7 +5,7 @@ using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.PrivateLedger
 {
-    public class ChainedEvent : DomainEvent, IChainedMessage
+    public class ChainedEvent : Event, IChainedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
 
@@ -15,13 +15,13 @@ namespace ReactiveDomain.PrivateLedger
         public readonly ChainSource Source;
 
         protected ChainedEvent(IChainedMessage source) :
-            base(source.CorrelationId, source.MsgId)
+            base(source.CorrelationId,source.SourceId)
         {
             PrincipalId = source.PrincipalId;
             Source = source.GetMemento();
         }
-        protected ChainedEvent(Guid correlationId, Guid sourceId, Guid principalId) :
-            base(correlationId, sourceId)
+        protected ChainedEvent(CorrelatedMessage source, Guid principalId) :
+            base(source)
         {
             PrincipalId = principalId;
         }

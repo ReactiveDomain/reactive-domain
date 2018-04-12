@@ -2,27 +2,36 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
+namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
+{
     // ReSharper disable once InconsistentNaming
-    public sealed class can_unsubscribe_queued_messages : IDisposable {
+    public sealed class can_unsubscribe_queued_messages : IDisposable
+    {
         private readonly CountedMessageSubscriber _sub;
         private readonly IDispatcher _bus = new Dispatcher("test", 3, false);
         private int _msgCount = 20;
         private readonly List<Message> _messages = new List<Message>();
 
-        public can_unsubscribe_queued_messages() {
+        public can_unsubscribe_queued_messages()
+        {
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             _sub = new CountedMessageSubscriber(_bus);
-            for (var i = 0; i < _msgCount; i++) {
+            for (var i = 0; i < _msgCount; i++)
+            {
                 _messages.Add(new CountedTestMessage(i));
-                _messages.Add(new CountedEvent(i, Guid.NewGuid(), Guid.NewGuid()));
+                var evt = new CountedEvent(i, source);
+                _messages.Add(evt);
+                source = evt;
             }
         }
 
         [Fact]
-        void can_unsubscribe_messages_and_events_by_disposing() {
+        void can_unsubscribe_messages_and_events_by_disposing()
+        {
             Parallel.ForEach(_messages, msg => _bus.Publish(msg));
 
             Assert.IsOrBecomesTrue(() => _sub.MessagesHandled == _msgCount);
@@ -37,7 +46,8 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         }
 
 
-        public void Dispose() {
+        public void Dispose()
+        {
             _bus?.Dispose();
         }
     }

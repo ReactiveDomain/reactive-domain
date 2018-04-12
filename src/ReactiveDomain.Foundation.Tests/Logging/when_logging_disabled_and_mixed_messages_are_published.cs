@@ -4,6 +4,8 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using System.Diagnostics;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 using Xunit.Sdk;
 
@@ -22,7 +24,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
 
         
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -52,32 +54,29 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(evt);
+
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
+            }
+           
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new TestEvent(source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
-            }
-
-            var tstCmd = new TestCommands.Command3(
-                        Guid.NewGuid(),
-                        null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",

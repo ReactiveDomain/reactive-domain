@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
@@ -14,8 +15,11 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         }
 
         private void Warmup() {
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < 10; i++) {
-                _bus.Publish(new TestEvent(Guid.NewGuid(), Guid.NewGuid()));
+                var evt = new TestEvent(source);
+                _bus.Publish(evt);
+                source = evt;
             }
             SpinWait.SpinUntil(() => _subscriber.Starving);
             Clear();

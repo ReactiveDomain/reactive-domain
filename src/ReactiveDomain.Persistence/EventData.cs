@@ -1,28 +1,47 @@
 ﻿using System;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain
-{
+namespace ReactiveDomain {
     /// <summary>Represents an event to be written. Mapped from EventStore.ClientAPI</summary>
-    public sealed class EventData
-    {
+    public interface IEventData {
         /// <summary>
         /// The ID of the event, used as part of the idempotent write check.
         /// </summary>
-        public readonly Guid EventId;
+        Guid EventId { get; }
         /// <summary>
         /// The name of the event type. It is strongly recommended that these
         /// use lowerCamelCase if projections are to be used.
         /// </summary>
-        public readonly string Type;
+        string Type { get; }
         /// <summary>
         /// Flag indicating whether the data and metadata are JSON.
         /// </summary>
-        public readonly bool IsJson;
+        bool IsJson { get; }
         /// <summary>The raw bytes of the event data.</summary>
-        public readonly byte[] Data;
+        byte[] Data { get; }
         /// <summary>The raw bytes of the event metadata.</summary>
-        public readonly byte[] Metadata;
+        byte[] Metadata { get; }
+    }
+
+    /// <summary>Represents an event to be written. Mapped from EventStore.ClientAPI</summary>
+    public sealed class EventData : IEventData {
+        /// <summary>
+        /// The ID of the event, used as part of the idempotent write check.
+        /// </summary>
+        public Guid EventId { get; }
+        /// <summary>
+        /// The name of the event type. It is strongly recommended that these
+        /// use lowerCamelCase if projections are to be used.
+        /// </summary>
+        public string Type { get; }
+        /// <summary>
+        /// Flag indicating whether the data and metadata are JSON.
+        /// </summary>
+        public bool IsJson { get; }
+        /// <summary>The raw bytes of the event data.</summary>
+        public byte[] Data { get; }
+        /// <summary>The raw bytes of the event metadata.</summary>
+        public byte[] Metadata { get; }
 
         /// <summary>
         /// Constructs a new <see cref="T:EventStore.ClientAPI.EventData" />.
@@ -40,8 +59,8 @@ namespace ReactiveDomain
             EventId = eventId;
             Type = type;
             IsJson = isJson;
-            Data = data ??  new byte[0];
-            Metadata = metadata ??  new byte[0];
+            Data = data ?? new byte[0];
+            Metadata = metadata ?? new byte[0];
         }
     }
 }

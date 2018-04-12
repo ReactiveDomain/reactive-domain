@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
@@ -26,9 +27,11 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             _t2 = new Task(
                 () =>
                 {
-                    for (int i = 0; i < FirstTaskMax; i++)
-                    {
-                        Bus.Publish(new CountedEvent(i, Guid.NewGuid(), Guid.Empty));
+                    CorrelatedMessage source = CorrelatedMessage.NewRoot();
+                    for (int i = 0; i < FirstTaskMax; i++) {
+                        var evt = new CountedEvent(i, source);
+                        Bus.Publish(evt);
+                        source = evt;
                     }
                 });
         }

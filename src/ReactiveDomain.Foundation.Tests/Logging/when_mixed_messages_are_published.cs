@@ -5,6 +5,7 @@ using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -15,10 +16,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         with_message_logging_enabled,
         IHandle<Message>
     {
-        private readonly Guid _correlationId = Guid.NewGuid();
-        private IListener _listener;
-
-       
         private readonly int _maxCountedMessages = 25;
         private int _multiFireCount;
         private int _testCommandCount;
@@ -28,7 +25,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private int _testDomainEventCount;
         private long _gotEvt;
 
-        private TestCommandSubscriber _cmdHandler;
+        private readonly TestCommandSubscriber _cmdHandler;
         public when_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             // commands must have a commandHandler
@@ -37,37 +34,32 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
-            _listener.EventStream.Subscribe<Message>(this);
+            IListener listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
+            listener.EventStream.Subscribe<Message>(this);
 
-            _listener.Start(Logging.FullStreamName);
-
+            listener.Start(Logging.FullStreamName);
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
-
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
+                var evt = new CountedEvent(i,cmd);
+                Bus.Publish(evt);
+                source = evt;
             }
             Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(new TestEvent(_correlationId, Guid.NewGuid()));
+
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new TestEvent(source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
-            var tstCmd = new TestCommands.Command3(
-                        Guid.NewGuid(),
-                        null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",

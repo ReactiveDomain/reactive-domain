@@ -27,16 +27,7 @@ namespace ReactiveDomain
         /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="events"/> is <c>null</c>.</exception>
         /// <exception cref="System.InvalidOperationException">Thrown when this instance has already recorded events.</exception>
         void RestoreFromEvents(IEnumerable<object> events);
-
-        /// <summary>
-        /// Restores this instance from a single event.
-        /// Avoids boxing and unboxing single values.
-        /// </summary>
-        /// <param name="event">The event to restore from.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="@event"/> is <c>null</c>.</exception>
-        /// <exception cref="System.InvalidOperationException">Thrown when this instance has already recorded events.</exception>
-        void RestoreFromEvent(object @event);
-
+        
         /// <summary>
         /// Takes the recorded history of events from this instance (CQS violation, beware).
         /// </summary>

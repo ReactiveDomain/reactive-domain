@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -45,22 +46,19 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a set of commands
             for (int i = 0; i < MaxCountedCommands; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                    Guid.NewGuid(),
-                    null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
 
             }
-            var tstCmd = new TestCommands.Command3(
-                Guid.NewGuid(),
-                null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",

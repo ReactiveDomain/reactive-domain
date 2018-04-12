@@ -2,33 +2,36 @@
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
+namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
+{
     // ReSharper disable once InconsistentNaming
-    public sealed class can_handle_inherited_messages : IClassFixture<QueuedSubscriberFixture> {
+    public sealed class can_handle_inherited_messages : IClassFixture<QueuedSubscriberFixture>
+    {
         private readonly QueuedSubscriberFixture _fixture;
-
-       
-        public can_handle_inherited_messages(QueuedSubscriberFixture fixture) {
+        
+        public can_handle_inherited_messages(QueuedSubscriberFixture fixture)
+        {
             _fixture = fixture;
         }
         [Fact]
-        public void queued_subscriber_honors_subscription_inheritance() {
-
-            var testCorrelationId = Guid.NewGuid();
-
-            _fixture.Publish(new TestEvent(testCorrelationId, Guid.Empty));
+        public void queued_subscriber_honors_subscription_inheritance()
+        {
+            var testEvent = new TestEvent(CorrelatedMessage.NewRoot());
+            _fixture.Publish(testEvent);
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1,msg:$"Expected 1 got {_fixture.TestEventCount}");
 
-            _fixture.Publish(new ParentTestEvent(testCorrelationId, Guid.NewGuid()));
+            var parentTestEvent = new ParentTestEvent(testEvent);
+            _fixture.Publish(parentTestEvent);
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1);
             Assert.IsOrBecomesTrue(() => _fixture.ParentEventCount == 1);
-            
-            _fixture.Publish(new ChildTestEvent(testCorrelationId, Guid.NewGuid()));
+
+            var childTestEvent = new ChildTestEvent(parentTestEvent);
+            _fixture.Publish(childTestEvent);
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1);
             Assert.IsOrBecomesTrue(() => _fixture.ParentEventCount == 2);
             Assert.IsOrBecomesTrue(() => _fixture.ChildEventCount == 1);
 
-            _fixture.Publish(new GrandChildTestEvent(testCorrelationId, Guid.NewGuid()));
+            _fixture.Publish(new GrandChildTestEvent(childTestEvent));
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1);
             Assert.IsOrBecomesTrue(() => _fixture.ParentEventCount == 3);
             Assert.IsOrBecomesTrue(() => _fixture.ChildEventCount == 2);

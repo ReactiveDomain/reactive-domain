@@ -2,26 +2,28 @@
 namespace ReactiveDomain
 {
     /// <summary>Represents a previously written event</summary>
-    public class RecordedEvent
+    public class RecordedEvent:IEventData
     {
         /// <summary>The Event Stream that this event belongs to</summary>
         public readonly string EventStreamId;
+
         /// <summary>The Unique Identifier representing this event</summary>
-        public readonly Guid EventId;
+        public Guid EventId { get; }
+
         /// <summary>The number of this event in the stream</summary>
         public readonly long EventNumber;
         /// <summary>The type of event this is</summary>
-        public readonly string EventType;
+        public string Type { get; }
         /// <summary>A byte array representing the data of this event</summary>
-        public readonly byte[] Data;
+        public byte[] Data { get; }
         /// <summary>
         /// A byte array representing the metadata associated with this event
         /// </summary>
-        public readonly byte[] Metadata;
+        public byte[] Metadata { get; }
         /// <summary>
         /// Indicates whether the content is internally marked as json
         /// </summary>
-        public readonly bool IsJson;
+        public bool IsJson { get; }
         /// <summary>
         /// A datetime representing when this event was created in the system
         /// </summary>
@@ -44,7 +46,7 @@ namespace ReactiveDomain
             EventStreamId = eventStreamId;
             EventId = eventId;
             EventNumber = eventNumber;
-            EventType = eventType;
+            Type = eventType;
             Data = data;
             Metadata = metadata;
             IsJson = isJson;

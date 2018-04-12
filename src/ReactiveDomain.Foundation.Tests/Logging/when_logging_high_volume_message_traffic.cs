@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -14,7 +15,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         with_message_logging_enabled,
         IHandle<Message>
     {
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
        
@@ -48,38 +49,26 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        Guid.NewGuid(),
-                        Guid.NewGuid()));
-
+                var evt = new CountedEvent(i,source);
+                Bus.Publish(evt);
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        Guid.NewGuid(),
-                                        null);
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(2));
-
-                Bus.Publish(new TestEvent(Guid.NewGuid(), Guid.NewGuid()));
-
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(2));
+                var evt2 = new TestEvent(cmd);
+                Bus.Publish(evt2);
+                source = evt2;
             }
-
-            var tstCmd = new TestCommands.Command3(
-                        _correlationId,
-                        null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "TestCommand3 failed",
                 TimeSpan.FromSeconds(2));
-
         }
 
-        
         public void all_messages_are_logged()
         {
             // Wait for last command to be queued

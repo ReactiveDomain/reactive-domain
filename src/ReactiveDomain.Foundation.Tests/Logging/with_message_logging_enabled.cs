@@ -15,7 +15,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Connection = connection;
             Bus = new Dispatcher(nameof(with_message_logging_enabled));
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            Repo = new StreamStoreRepository(StreamNameBuilder, Connection);
+            Repo = new StreamStoreRepository(StreamNameBuilder, Connection, new JsonMessageSerializer());
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
                 Connection,

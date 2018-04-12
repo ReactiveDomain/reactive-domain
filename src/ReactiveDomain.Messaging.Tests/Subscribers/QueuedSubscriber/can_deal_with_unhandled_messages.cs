@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
@@ -15,11 +16,14 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         [Fact]
         void can_ignore_messages_not_subscribed()
         {
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < FirstTaskMax; i++)
             {
                 Bus.Publish(new CountedTestMessage(i));
-                Bus.Publish(new CountedEvent(i, Guid.NewGuid(), Guid.Empty));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
                 Bus.Publish(new TestMessage());
+                source = evt;
             }
 
             // The task publishes a CountedTestMessage, a TestMessage and a CountedEvent each time thru the loop, so expect 3 per iteration
@@ -44,8 +48,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             for (int i = 0; i < FirstTaskMax; i++)
             {
                 Bus.Publish(new CountedTestMessage(i));
-                Bus.Publish(new CountedEvent(i, Guid.NewGuid(), Guid.Empty));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
                 Bus.Publish(new TestMessage());
+                source = evt;
             }  // publish more messages - no subscriber is available
 
             //Messages and events are published. Don't know how to prove no one handles them.

@@ -6,8 +6,7 @@ namespace ReactiveDomain {
     /// <summary>
     /// The base class each process manager or aggregate's root entity should derive from.
     /// </summary>
-    public abstract class EventDrivenStateMachine : IEventSource
-    {
+    public abstract class EventDrivenStateMachine : IEventSource {
         private readonly EventRecorder _recorder;
         private readonly EventRouter _router;
         private long _version;
@@ -38,24 +37,14 @@ namespace ReactiveDomain {
                 throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
 
             foreach (var @event in events) {
-                RestoreFromEvent(@event);
+                if (_version < 0) // new aggregates have a expected version of -1 or -2
+                    _version = 0; // got first event (zero based)
+                else
+                    _version++;
+                _router.Route(@event);
             }
         }
 
-        //Avoid boxing and unboxing single values
-        public void RestoreFromEvent(object @event) {
-            if (@event == null)
-                throw new ArgumentNullException(nameof(@event));
-            if (_recorder.HasRecordedEvents)
-                throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
-
-            if (_version < 0) // new aggregates have a expected version of -1 or -2
-                _version = 0; // got first event (zero based)
-            else
-                _version++;
-
-            _router.Route(@event);
-        }
         public object[] TakeEvents() {
             var records = _recorder.RecordedEvents;
             _recorder.Reset();

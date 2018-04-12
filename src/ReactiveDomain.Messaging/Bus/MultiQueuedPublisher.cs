@@ -30,10 +30,9 @@ namespace ReactiveDomain.Messaging.Bus
         }
         public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
-            var tCmd = command as TokenCancellableCommand;
-            if (tCmd?.IsCanceled ?? false)
+            if (command.IsCanceled)
             {
-                _publishQueue.Publish(tCmd.Canceled());
+                _publishQueue.Publish(command.Canceled());
                 throw new CommandCanceledException(command);
             }
 
@@ -55,10 +54,9 @@ namespace ReactiveDomain.Messaging.Bus
             {
                 //todo: we're not chaining through the fire method here because it doesn't give 
                 //us the command response to return so there are some duplicated checks 
-                var tCmd = command as TokenCancellableCommand;
-                if (tCmd?.IsCanceled ?? false)
+                if (command.IsCanceled)
                 {
-                    response = tCmd.Canceled();
+                    response = command.Canceled();
                     _publishQueue.Publish(response);
                     return false;
                 }
