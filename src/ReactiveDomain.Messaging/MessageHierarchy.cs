@@ -111,12 +111,12 @@ namespace ReactiveDomain.Messaging
         private static HashSet<string> ExcludedAssemblies = new HashSet<string>
         {
             "mscorlib",
-            "System.Core",
             "System",
-            "System.Xml",
-            "System.Configuration",
-            "Microsoft.VisualStudio.Debugger.Runtime",
-            "Telerik"
+            "Microsoft",
+            "Telerik",
+            "DevComponents",
+            "DevExpress",
+            "xunit"
         };
 
         private static readonly HashSet<string> AlreadyProcessedAssemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -125,7 +125,7 @@ namespace ReactiveDomain.Messaging
         {
             // Filter own assemblies that we know won't have usertypes
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => !ExcludedAssemblies.Any(excluded => a.FullName.StartsWith(excluded + ","))))
+                .Where(a => !ExcludedAssemblies.Any(excluded => a.FullName.StartsWith(excluded,StringComparison.OrdinalIgnoreCase))))
             {
                 if (AlreadyProcessedAssemblies.Contains(assembly.FullName))
                 {

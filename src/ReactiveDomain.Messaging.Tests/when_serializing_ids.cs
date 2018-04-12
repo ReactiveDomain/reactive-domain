@@ -39,9 +39,6 @@ namespace ReactiveDomain.Messaging.Tests
 
     public class IdTestEvent : Event
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
-
         public IdTestEvent(CorrelatedMessage source):base(source){}
         [JsonConstructor]
         public IdTestEvent(CorrelationId correlationId, SourceId sourceId):base(correlationId,sourceId){}

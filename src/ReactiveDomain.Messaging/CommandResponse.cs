@@ -10,7 +10,6 @@ namespace ReactiveDomain.Messaging
         public Command SourceCommand { get; }
         public Type CommandType => SourceCommand.GetType();
         public Guid CommandId => SourceCommand.MsgId;
-        
 
         protected CommandResponse(Command sourceCommand):base(sourceCommand.CorrelationId, new SourceId(sourceCommand))   
         {
@@ -34,8 +33,6 @@ namespace ReactiveDomain.Messaging
 
     public class Canceled : Fail
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
         public Canceled(Command sourceCommand) : base(sourceCommand, new CommandCanceledException(sourceCommand)) { }
     }
 }

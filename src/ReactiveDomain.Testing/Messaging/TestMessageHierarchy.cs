@@ -29,7 +29,7 @@ namespace MessageHierarchyTests
             Assert.Equal(typeof(Event), childMessageType);
         }
         [Fact]
-        public void TestMessageAncestorse()
+        public void TestMessageAncestors()
         {
             var sut = typeof(Message);
             var ancestors = MessageHierarchy.AncestorsAndSelf(sut);
@@ -40,7 +40,7 @@ namespace MessageHierarchyTests
             ancestors = MessageHierarchy.AncestorsAndSelf(sut);
             Assert.Equal(4, ancestors.Count());
             Assert.Contains(typeof(ParentTestEvent), ancestors);
-            Assert.Contains(typeof(DomainEvent), ancestors);
+            Assert.Contains(typeof(CorrelatedMessage), ancestors);
             Assert.Contains(typeof(Event), ancestors);
             Assert.Contains(typeof(Message), ancestors);
         }
