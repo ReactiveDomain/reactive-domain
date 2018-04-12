@@ -1,4 +1,4 @@
-﻿using ReactiveDomain.Buffers.FrameFormats;
+﻿using ReactiveDomain.Buffers.Examples;
 
 namespace ReactiveDomain.Buffers.Memory
 {

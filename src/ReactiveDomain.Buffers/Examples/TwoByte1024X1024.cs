@@ -1,12 +1,12 @@
 ﻿using System.Runtime.InteropServices;
 using ReactiveDomain.Logging;
 
-namespace ReactiveDomain.Buffers.FrameFormats
+namespace ReactiveDomain.Buffers.Examples
 {
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct TwoByte1024X1024Frame
     {
-        public VideoFrameHeader FrameHeader;
+        public FrameHeader FrameHeader;
         public fixed byte pixels[2*1024*1024];
     }
 

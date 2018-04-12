@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
+using ReactiveDomain.Buffers.Examples;
 using ReactiveDomain.Buffers.Memory;
 using ReactiveDomain.Logging;
 
@@ -33,6 +34,7 @@ namespace ReactiveDomain.Buffers.FileIO
 
         public BufferWriter()
         {
+            if(!Environment.Is64BitProcess) throw new NotSupportedException("Buffer reading and writing from disk require an x64 process");
             _thread = new Thread(ProcessQueue) { IsBackground = true, Name = "BufferWriter", Priority = ThreadPriority.AboveNormal };
             _thread.Start();
         }

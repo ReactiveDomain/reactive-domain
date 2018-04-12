@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using ReactiveDomain.Buffers.FrameFormats;
+using ReactiveDomain.Buffers.Memory;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Buffers.Memory
+namespace ReactiveDomain.Buffers.Examples
 {
     /// <summary>
     /// FrameBufferHeader structure represents the metadata structure 
