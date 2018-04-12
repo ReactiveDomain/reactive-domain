@@ -9,9 +9,6 @@ namespace ReactiveDomain.Messaging
 {
     public class CorrelatedMessage: Message
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
-
         public CorrelationId CorrelationId { get; }
         public SourceId SourceId { get; }
 

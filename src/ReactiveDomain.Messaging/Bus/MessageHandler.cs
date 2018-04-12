@@ -5,7 +5,7 @@ namespace ReactiveDomain.Messaging.Bus
     public interface IMessageHandler
     {
         string HandlerName { get; }
-        int MessageTypeId { get; }
+        Type MessageType { get; }
         bool TryHandle(Message message);
         bool IsSame<T>(object handler);
     }
@@ -14,17 +14,17 @@ namespace ReactiveDomain.Messaging.Bus
     {
         public string HandlerName { get; private set; }
 
-        public int MessageTypeId { get; private set; }
+        public Type MessageType { get; private set; }
 
         private readonly IHandle<T> _handler;
 
-        internal MessageHandler(IHandle<T> handler, string handlerName, int messageTypeId)
+        internal MessageHandler(IHandle<T> handler, string handlerName)
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
             _handler = handler;
             HandlerName = handlerName ?? string.Empty;
-            MessageTypeId = messageTypeId;
+            MessageType = typeof(T);
         }
 
         public bool TryHandle(Message message)

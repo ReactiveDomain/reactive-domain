@@ -56,7 +56,7 @@ namespace ReactiveDomain.Transport.Tests
             reader.Read();
             // read type name
             reader.Read();
-            var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
+            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
             reader.Read(); //property value
             msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType);
             Assert.IsType<WoftamEvent>(msg2);
@@ -74,7 +74,7 @@ namespace ReactiveDomain.Transport.Tests
             reader.Read();
             // read type name
             reader.Read();
-            var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
+            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
             reader.Read(); //read json value
             var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
             Assert.IsType<WoftamEvent>(msg2);
@@ -92,7 +92,7 @@ namespace ReactiveDomain.Transport.Tests
             reader.Read();
             // read type name
             reader.Read();
-            var messageType = MessageHierarchy.GetMsgType((string)reader.Value);
+            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
             reader.Read(); //read json value
             var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
             Assert.IsType<WoftamEvent>(msg2);
@@ -120,8 +120,7 @@ namespace ReactiveDomain.Transport.Tests
     }
     public class WoftamEvent : CorrelatedMessage
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
+   
         public WoftamEvent(string property1, string property2): base(CorrelationId.NewId(), SourceId.NullSourceId())
         {
             Property1 = property1;

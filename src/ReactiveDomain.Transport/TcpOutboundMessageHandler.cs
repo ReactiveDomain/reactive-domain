@@ -33,7 +33,7 @@ namespace ReactiveDomain.Transport
 
         public void IgnoreThisMessage(Message message)
         {
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             if (message.MsgId == Guid.Empty)
             {
                 Log.Error("Message " + message.MsgId + " (Type " + type.Name + ") - INTERNAL ERROR: there should NEVER be a message with that MsgId value");
@@ -48,7 +48,7 @@ namespace ReactiveDomain.Transport
 
         public void Handle(Message message)
         {
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             Message removedMessage;
             if (_messagesThatCameFromTcp.TryRemove(message.MsgId, out removedMessage))
             {

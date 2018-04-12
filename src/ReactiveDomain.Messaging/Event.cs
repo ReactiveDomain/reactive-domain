@@ -8,16 +8,9 @@ using ReactiveDomain.Messaging.Messages;
 namespace ReactiveDomain.Messaging {
     public class Event : CorrelatedMessage, IEvent  {
         protected ushort Version = 1;
-
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-
-        public override int MsgTypeId => TypeId;
-        
+       
         protected Event(CorrelatedMessage source):base(source.CorrelationId,new SourceId(source)){}
         [JsonConstructor]
         protected Event(CorrelationId correlationId, SourceId sourceId):base(correlationId, sourceId) { }
     }
-  
-
-  
 }
