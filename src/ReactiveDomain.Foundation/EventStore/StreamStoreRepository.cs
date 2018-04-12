@@ -6,8 +6,7 @@ using System.Linq;
 namespace ReactiveDomain.Foundation.EventStore
 {
     public class StreamStoreRepository : IRepository {
-        public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
-        public const string EventClrTypeHeader = "EventClrTypeName";
+       
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
         public const string AggregateClrTypeNameHeader = "AggregateClrTypeNameHeader";
         public const string CommitIdHeader = "CommitId";
@@ -72,12 +71,11 @@ namespace ReactiveDomain.Foundation.EventStore
 
                 sliceStart = currentSlice.NextEventNumber;
 
-                foreach (var @event in currentSlice.Events) {
-                    appliedEventCount++;
-                    aggregate.RestoreFromEvent(DeserializeEvent(@event.Metadata, @event.Data));
-                }
+                appliedEventCount += currentSlice.Events.Length;
+                aggregate.RestoreFromEvents(currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)));
 
             } while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
+
             if (version != Int32.MaxValue && version != appliedEventCount)
                 throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
@@ -92,10 +90,7 @@ namespace ReactiveDomain.Foundation.EventStore
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-        public object DeserializeEvent(byte[] metadata, byte[] data)
-        {
-            return _eventSerializer.Deserialize(metadata, data, EventClrQualifiedTypeHeader);
-        }
+       
 
         public void Save(IEventSource aggregate) {
             var commitHeaders = new Dictionary<string, object>
@@ -106,29 +101,18 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
-            var newEvents = aggregate.TakeEvents().ToList();
+            var newEvents = aggregate.TakeEvents().ToArray();
             var expectedVersion = aggregate.ExpectedVersion;
-            var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
-
-            //n.b. write batching moved into Connection wrapper for eventstore
-            _streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave.ToArray());
-
-            //aggregate.ClearUncommittedEvents();
+            var eventsToSave = new EventData[newEvents.Length];
+            for (int i = 0; i < newEvents.Length; i++) {
+                eventsToSave[i] =
+                    _eventSerializer.Serialize(
+                        newEvents[i], 
+                        new Dictionary<string, object>(commitHeaders));
+            }
+            _streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
         }
 
-        public EventData ToEventData(Guid eventId, object evnt, IDictionary<string, object> headers)
-        {
-            var data = _eventSerializer.Serialize(evnt);
-
-            var eventHeaders = new Dictionary<string, object>(headers)
-            {
-                {EventClrTypeHeader, evnt.GetType().Name},
-                {EventClrQualifiedTypeHeader, evnt.GetType().AssemblyQualifiedName}
-            };
-            var metadata = _eventSerializer.Serialize(eventHeaders);
-            var typeName = evnt.GetType().Name;
-
-            return new EventData(eventId, typeName, true, data, metadata);
-        }
+      
     }
 }

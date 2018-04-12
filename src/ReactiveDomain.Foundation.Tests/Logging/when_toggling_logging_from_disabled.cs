@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 using Xunit.Sdk;
 
@@ -15,8 +16,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         with_message_logging_disabled,
         IHandle<Message>
     {
-       
-        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
@@ -48,16 +47,14 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Assert.False(Logging.Enabled);
 
             _multiFireCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -72,13 +69,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
             Assert.IsOrBecomesTrue(
@@ -91,14 +86,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
 
             for (int i = 0; i < _maxCountedMessages; i++)
-            {
-                // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
+            {   
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -112,15 +105,13 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void events_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // publish again, with logging disabled
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -134,11 +125,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             // create and publish a set of events
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.IsOrBecomesTrue(
@@ -152,11 +141,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             // publish again, with logging disabled
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -168,19 +155,15 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void mixed_messages_logged_only_while_logging_is_enabled()
         {
             _countedEventCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events and commands
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
-
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -200,19 +183,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             // repeat, with logging disabled
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
 
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.IsOrBecomesTrue(
@@ -233,19 +209,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             // repeat, with logging enabled again
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
-
-                var cmd = new TestCommands.Command2(
-                                        CorrelationId.NewId(),
-                                        SourceId.NullSourceId());
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(

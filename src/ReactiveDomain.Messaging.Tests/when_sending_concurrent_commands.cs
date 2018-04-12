@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
@@ -30,11 +31,12 @@ namespace ReactiveDomain.Messaging.Tests
             _bus.Subscribe<TestCommands.Command3>(this);
             _commands = new List<Command>();
             _count = 5;
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < _count; i++)
             {
-                _commands.Add(new TestCommands.Command1(CorrelationId.NewId(), SourceId.NullSourceId()));
-                _commands.Add(new TestCommands.Command2(CorrelationId.NewId(), SourceId.NullSourceId()));
-                _commands.Add(new TestCommands.Command3(CorrelationId.NewId(), SourceId.NullSourceId()));
+                _commands.Add(new TestCommands.Command1(source));
+                _commands.Add(new TestCommands.Command2(source));
+                _commands.Add(new TestCommands.Command3(source));
             }
         }
 

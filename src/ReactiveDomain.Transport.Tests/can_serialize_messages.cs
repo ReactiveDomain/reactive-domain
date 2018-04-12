@@ -118,11 +118,11 @@ namespace ReactiveDomain.Transport.Tests
         private const string Prop2 = "prop2";
         private readonly WoftamEvent _testEvent =  new WoftamEvent(Prop1,Prop2);
     }
-    public class WoftamEvent : Message, ICorrelatedMessage
+    public class WoftamEvent : CorrelatedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public WoftamEvent(string property1, string property2)
+        public WoftamEvent(string property1, string property2): base(CorrelationId.NewId(), SourceId.NullSourceId())
         {
             Property1 = property1;
             Property2 = property2;
@@ -130,10 +130,5 @@ namespace ReactiveDomain.Transport.Tests
 
         public string Property1 { get; private set; }
         public string Property2 { get; private set; }
-
-        #region Implementation of ICorrelatedMessage
-        public SourceId SourceId => SourceId.NullSourceId();
-        public CorrelationId CorrelationId => CorrelationId.NewId();
-        #endregion
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Newtonsoft.Json;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests
@@ -11,8 +12,8 @@ namespace ReactiveDomain.Messaging.Tests
 
         public when_serializing_ids()
         {
-            _testEvent = new IdTestEvent(CorrelationId.NewId(), SourceId.NullSourceId());
-            _childTestEvent = new IdTestEvent(new CorrelationId(_testEvent), new SourceId(_testEvent));
+            _testEvent = new IdTestEvent(CorrelatedMessage.NewRoot());
+            _childTestEvent = new IdTestEvent(_testEvent);
         }
 
         [Fact]
@@ -41,11 +42,8 @@ namespace ReactiveDomain.Messaging.Tests
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
 
-        public IdTestEvent(
-            CorrelationId correlationId,
-            SourceId sourceId)
-            : base(correlationId, sourceId)
-        {
-        }
+        public IdTestEvent(CorrelatedMessage source):base(source){}
+        [JsonConstructor]
+        public IdTestEvent(CorrelationId correlationId, SourceId sourceId):base(correlationId,sourceId){}
     }
 }

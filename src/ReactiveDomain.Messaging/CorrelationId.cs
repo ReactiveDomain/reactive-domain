@@ -20,7 +20,7 @@ namespace ReactiveDomain.Messaging
         /// Constructor.
         /// </summary>
         /// <param name="source">The antecedent message.</param>
-        public CorrelationId(ICorrelatedMessage source)
+        public CorrelationId(CorrelatedMessage source)
         {
             Id = source.CorrelationId;
         }

@@ -5,6 +5,7 @@ using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 using Xunit.Sdk;
 
@@ -41,17 +42,17 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _countedEventCount = 0;
             _testDomainEventCount = 0;
 
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(
-                            i,
-                            _correlationId,
-                            SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
+
             Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
-            Bus.Publish(new TestEvent(_correlationId, SourceId.NullSourceId()));
+            Bus.Publish(new TestEvent(source));
         }
 
 

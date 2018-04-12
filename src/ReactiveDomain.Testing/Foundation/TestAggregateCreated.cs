@@ -5,23 +5,16 @@ using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Testing
 {
-    public class TestWoftamAggregateCreated: Message, ICorrelatedMessage
+    public class TestWoftamAggregateCreated: CorrelatedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public TestWoftamAggregateCreated(Guid aggregateId)
+        public TestWoftamAggregateCreated(Guid aggregateId):base(CorrelationId.NewId(), SourceId.NullSourceId())
         {
             AggregateId = aggregateId;
-            CorrelationId = CorrelationId.NewId();
         }
 
         public Guid AggregateId { get; private set; }
 
-        #region Implementation of ICorrelatedMessage
-
-        public SourceId SourceId => SourceId.NullSourceId();
-        public CorrelationId CorrelationId { get; }
-
-        #endregion
     }
 }

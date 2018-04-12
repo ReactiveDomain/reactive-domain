@@ -5,16 +5,16 @@ using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
 {
-    public abstract class CommandResponse : Message, ICorrelatedMessage
+    public abstract class CommandResponse : CorrelatedMessage
     {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
+        public override int MsgTypeId => TypeId;
         public Command SourceCommand { get; }
         public Type CommandType => SourceCommand.GetType();
         public Guid CommandId => SourceCommand.MsgId;
-        public SourceId SourceId => new SourceId(SourceCommand);
-        public CorrelationId CorrelationId => SourceCommand.CorrelationId;
+        
 
-        protected CommandResponse(Command sourceCommand)
+        protected CommandResponse(Command sourceCommand):base(sourceCommand.CorrelationId, new SourceId(sourceCommand))   
         {
             SourceCommand = sourceCommand;
         }

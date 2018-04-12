@@ -4,6 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System.Threading;
+using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
@@ -28,20 +29,19 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             _countedEventCount = 0;
             _testDomainEventCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events
             for (int i = 0; i < _maxCountedEvents; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
-            Bus.Publish(new TestEvent(_correlationId, SourceId.NullSourceId()));
+            Bus.Publish(new TestEvent(source));
         }
-        private readonly CorrelationId _correlationId = CorrelationId.NewId();
+       
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -49,7 +49,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private int _testDomainEventCount;
         private long _gotEvt;
        
-        
+        [Fact(Skip="To be fixed")]
         public void all_events_are_logged()
         {
             Assert.IsOrBecomesTrue(()=> _gotEvt >0);
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             Assert.True(_testDomainEventCount == 1, $"Last event count {_testDomainEventCount} doesn't match expected value {1}");
         }
-
+       
         public void Handle(Event message)
         {
             if (message is CountedEvent) _countedEventCount++;

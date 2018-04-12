@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
@@ -17,11 +18,14 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 
         public can_unsubscribe_queued_messages()
         {
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             _sub = new CountedMessageSubscriber(_bus);
             for (var i = 0; i < _msgCount; i++)
             {
                 _messages.Add(new CountedTestMessage(i));
-                _messages.Add(new CountedEvent(i, CorrelationId.NewId(), SourceId.NullSourceId()));
+                var evt = new CountedEvent(i, source);
+                _messages.Add(evt);
+                source = evt;
             }
         }
 

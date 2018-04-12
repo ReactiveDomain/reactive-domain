@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelationId.NewId(), SourceId.NullSourceId());
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Succeed(15);
             TestCommands.TestResponse farSide;
             var ms = new MemoryStream();
@@ -56,7 +56,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelationId.NewId(), SourceId.NullSourceId());
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Succeed(15);
             TestCommands.TestResponse farSide;
 
@@ -90,7 +90,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelationId.NewId(), SourceId.NullSourceId());
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
             TestCommands.FailedResponse farSide;
             var ms = new MemoryStream();
@@ -130,7 +130,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelationId.NewId(), SourceId.NullSourceId());
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
             TestCommands.FailedResponse farSide;
 
@@ -163,8 +163,6 @@ namespace ReactiveDomain.Messaging.Tests
     }
     public class TestContractResolver : DefaultContractResolver
     {
-
-
         protected override IList<JsonProperty> CreateConstructorParameters(ConstructorInfo constructor, JsonPropertyCollection memberProperties)
         {
             var rslt = base.CreateConstructorParameters(constructor, memberProperties);

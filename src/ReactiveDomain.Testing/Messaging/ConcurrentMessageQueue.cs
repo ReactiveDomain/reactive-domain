@@ -35,7 +35,7 @@ namespace ReactiveDomain.Messaging.Testing
             }
             return (TMsg)outVal;
         }
-        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg : T, ICorrelatedMessage
+        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg :  CorrelatedMessage, T
         {
             msg = DequeueNext<TMsg>();
             if (msg.CorrelationId != correlationId)
@@ -44,7 +44,7 @@ namespace ReactiveDomain.Messaging.Testing
             }
             return this;
         }
-        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg : T, ICorrelatedMessage
+        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg :  CorrelatedMessage, T
         {
             TMsg ignore;
             AssertNext<TMsg>(correlationId, out ignore);
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Messaging.Testing
         }
         public ConcurrentMessageQueue<T> AssertNext<TMsg>(
                         Func<TMsg, bool> condition, 
-                        string userMessage = null) where TMsg : T, ICorrelatedMessage
+                        string userMessage = null) where TMsg :  CorrelatedMessage, T
         {
             TMsg msg = DequeueNext<TMsg>();
             Assert.True(condition(msg), userMessage);

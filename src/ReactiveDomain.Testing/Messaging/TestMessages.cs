@@ -1,72 +1,61 @@
 ﻿using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Messages;
 
 // ReSharper disable MemberCanBeProtected.Global
-namespace ReactiveDomain.Messaging.Testing
-{
+namespace ReactiveDomain.Messaging.Testing {
 
-    public class TestMessage : Message
-    {
+    public class TestMessage : Message {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
 
-        public TestMessage(){}
+        public TestMessage() { }
     }
-    public class TestMessage2 : Message
-    {
+    public class TestMessage2 : Message {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public TestMessage2(){}
+        public TestMessage2() { }
     }
-    public class TestMessage3 : Message
-    {
+    public class TestMessage3 : Message {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public TestMessage3(){}
+        public TestMessage3() { }
     }
 
-    public class ParentTestMessage : Message
-    {
+    public class ParentTestMessage : Message {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public ParentTestMessage(){}
+        public ParentTestMessage() { }
     }
-    public class ChildTestMessage : ParentTestMessage
-    {
+    public class ChildTestMessage : ParentTestMessage {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public ChildTestMessage(){}
+        public ChildTestMessage() { }
     }
-    public class GrandChildTestMessage : ChildTestMessage
-    {
+    public class GrandChildTestMessage : ChildTestMessage {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
-        public GrandChildTestMessage(){}
+        public GrandChildTestMessage() { }
     }
 
-    public class CountedTestMessage : Message
-    {
+    public class CountedTestMessage : Message {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
         public int MessageNumber;
 
-        public CountedTestMessage(int msgNumber)
-        {
+        public CountedTestMessage(int msgNumber) {
             MessageNumber = msgNumber;
         }
     }
 
-    public class CountedEvent : Event
-    {
+    public class CountedEvent : Event {
         private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
         public override int MsgTypeId => TypeId;
         public int MessageNumber;
 
         public CountedEvent(int msgNumber,
-                CorrelationId correlationId,
-                SourceId sourceId)
-                : base(correlationId, sourceId)
-        {
+                CorrelatedMessage source)
+                : base(source) {
             MessageNumber = msgNumber;
         }
     }
