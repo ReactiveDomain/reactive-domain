@@ -1,14 +1,9 @@
-﻿using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Testing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using ReactiveDomain.Messaging;
 using Xunit;
 
-namespace MessageHierarchyTests
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     public class MessageHierarchyTest
     {
@@ -32,12 +27,12 @@ namespace MessageHierarchyTests
         public void TestMessageAncestors()
         {
             var sut = typeof(Message);
-            var ancestors = MessageHierarchy.AncestorsAndSelf(sut);
+            var ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
             Assert.Single(ancestors);
             Assert.Contains(typeof(Message), ancestors);
 
             sut = typeof(ParentTestEvent);
-            ancestors = MessageHierarchy.AncestorsAndSelf(sut);
+            ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
             Assert.Equal(4, ancestors.Count());
             Assert.Contains(typeof(ParentTestEvent), ancestors);
             Assert.Contains(typeof(CorrelatedMessage), ancestors);
@@ -48,14 +43,14 @@ namespace MessageHierarchyTests
         public void TestMessageDescendents()
         {
             var sut = typeof(ParentTestEvent);
-            var descendants = MessageHierarchy.DescendantsAndSelf(sut);
+            var descendants = MessageHierarchy.DescendantsAndSelf(sut).ToList();
             Assert.Equal(3, descendants.Count());
             Assert.Contains(typeof(ParentTestEvent), descendants);
             Assert.Contains(typeof(ChildTestEvent), descendants);
             Assert.Contains(typeof(GrandChildTestEvent), descendants);
 
             sut = typeof(GrandChildTestEvent);
-            descendants = MessageHierarchy.DescendantsAndSelf(sut);
+            descendants = MessageHierarchy.DescendantsAndSelf(sut).ToList();
             Assert.Single(descendants);
             Assert.Contains(typeof(GrandChildTestEvent), descendants);
         }

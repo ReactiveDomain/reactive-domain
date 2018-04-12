@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Messages;
+﻿using Newtonsoft.Json;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests

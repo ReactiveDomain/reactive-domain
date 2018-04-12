@@ -1,11 +1,10 @@
-﻿using ReactiveDomain.Foundation.EventStore;
+﻿using System;
+using Xunit;
+using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
-using System;
-using ReactiveDomain.Messaging.Messages;
-using Xunit;
+
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
@@ -17,8 +16,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         IHandle<Message>
     {
         private const int MaxCountedCommands = 25;
-
-        private Guid _correlationId;
         private IListener _listener;
 
         private int _multiFireCount;
@@ -34,8 +31,6 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public when_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
-            _correlationId = Guid.NewGuid();
-
             // command must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
 

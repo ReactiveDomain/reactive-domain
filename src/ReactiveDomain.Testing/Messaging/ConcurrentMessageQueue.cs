@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using ReactiveDomain.Messaging.Messages;
+using ReactiveDomain.Messaging;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     public class ConcurrentMessageQueue<T> : ConcurrentQueue<T> where T : Message
     {
@@ -46,8 +47,7 @@ namespace ReactiveDomain.Messaging.Testing
         }
         public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg :  CorrelatedMessage, T
         {
-            TMsg ignore;
-            AssertNext<TMsg>(correlationId, out ignore);
+            AssertNext<TMsg>(correlationId, out var _);
             return this;
         }
         public ConcurrentMessageQueue<T> AssertNext<TMsg>(

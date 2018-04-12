@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable InconsistentNaming
     public abstract class when_using_queued_subscriber :IHandle<Message>, IDisposable {
         protected TestQueuedSubscriber MessageSubscriber;
-        protected Bus.IDispatcher Bus;
+        protected IDispatcher Bus;
         private long _msgCount;
         public long MsgCount => _msgCount;
 

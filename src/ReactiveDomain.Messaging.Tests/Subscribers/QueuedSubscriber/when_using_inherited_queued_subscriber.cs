@@ -1,5 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable InconsistentNaming

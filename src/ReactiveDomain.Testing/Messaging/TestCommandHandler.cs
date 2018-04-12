@@ -1,7 +1,9 @@
 ﻿using System.Threading;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     //No cancellation support
     public class TestCommandHandler :

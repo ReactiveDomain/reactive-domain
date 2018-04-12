@@ -1,8 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Messages;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     public sealed class QueuedSubscriberFixture : IPublisher {

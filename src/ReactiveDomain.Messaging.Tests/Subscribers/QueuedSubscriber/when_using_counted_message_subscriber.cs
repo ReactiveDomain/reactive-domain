@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable InconsistentNaming
@@ -11,7 +11,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         IHandle<CountedTestMessage>,
         IDisposable {
        
-        protected Bus.IDispatcher Bus;
+        protected IDispatcher Bus;
         private long _msgCount;
         private long _eventCount;
         private long _testMsgCount;

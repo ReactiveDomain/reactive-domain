@@ -1,7 +1,9 @@
 ﻿using System.Threading;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     public class TestCommandSubscriber :
                 IHandleCommand<TestCommands.Command2>,
@@ -10,6 +12,7 @@ namespace ReactiveDomain.Messaging.Testing
         public long TestCommand2Handled;
         public long TestCommand3Handled;
 
+        // ReSharper disable once FieldCanBeMadeReadOnly.Local
         private IDispatcher _bus;
 
         public TestCommandSubscriber(IDispatcher bus)

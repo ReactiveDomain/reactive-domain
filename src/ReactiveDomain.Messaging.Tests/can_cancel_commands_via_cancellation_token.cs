@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Messages;
-using ReactiveDomain.Messaging.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests {

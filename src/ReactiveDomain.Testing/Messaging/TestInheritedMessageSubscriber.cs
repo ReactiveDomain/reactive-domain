@@ -1,10 +1,12 @@
 using System.Threading;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     public class TestInheritedMessageSubscriber :
-        Messaging.Bus.QueuedSubscriber,
+        QueuedSubscriber,
         IHandle<TestEvent>,
         IHandle<ParentTestEvent>,
         IHandle<ChildTestEvent>,

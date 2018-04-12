@@ -1,10 +1,11 @@
 ﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests {
 
+    // ReSharper disable once InconsistentNaming
     public class when_serializing_correlated_messages {
         [Fact]
         public void can_use_json_message_serializer() {

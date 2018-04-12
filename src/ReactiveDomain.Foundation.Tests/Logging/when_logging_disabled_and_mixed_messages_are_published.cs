@@ -1,11 +1,8 @@
 ﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
-using System.Diagnostics;
-using ReactiveDomain.Messaging.Messages;
 using Xunit;
 using Xunit.Sdk;
 

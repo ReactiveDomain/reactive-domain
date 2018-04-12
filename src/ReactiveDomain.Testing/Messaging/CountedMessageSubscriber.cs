@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     /// <summary>
     /// Class used for testing QueuedSubscriber 
@@ -10,7 +11,7 @@ namespace ReactiveDomain.Messaging.Testing
     /// that can be used to check message ordering.
     /// </summary>
     public class CountedMessageSubscriber :
-                    Messaging.Bus.QueuedSubscriber,
+                    QueuedSubscriber,
                     IHandle<CountedTestMessage>,
                     IHandle<CountedEvent>
     {

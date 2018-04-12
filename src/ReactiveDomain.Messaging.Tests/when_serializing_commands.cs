@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Serialization;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests

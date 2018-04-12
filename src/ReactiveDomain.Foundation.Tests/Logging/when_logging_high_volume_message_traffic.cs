@@ -1,10 +1,8 @@
 ﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
 using ReactiveDomain.Testing;
 using System;
-using ReactiveDomain.Messaging.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging

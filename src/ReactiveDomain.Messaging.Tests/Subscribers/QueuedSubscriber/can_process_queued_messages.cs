@@ -1,6 +1,5 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging.Testing;
+﻿using System.Threading;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Messages;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests

@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Messages;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
@@ -33,9 +32,9 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         void can_unsubscribe_messages_and_events_by_disposing()
         {
             Parallel.ForEach(_messages, msg => _bus.Publish(msg));
-
-            Assert.IsOrBecomesTrue(() => _sub.MessagesHandled == _msgCount);
-            Assert.IsOrBecomesTrue(() => _sub.EventsHandled == _msgCount);
+            var sub = _sub;
+            Assert.IsOrBecomesTrue(() => sub.MessagesHandled == _msgCount);
+            Assert.IsOrBecomesTrue(() => sub.EventsHandled == _msgCount);
 
             _sub.Dispose();
 

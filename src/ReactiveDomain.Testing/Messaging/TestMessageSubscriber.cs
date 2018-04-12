@@ -1,10 +1,11 @@
 ﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging.Testing
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing
 {
     public class TestQueuedSubscriber :
-        Messaging.Bus.QueuedSubscriber,
+        QueuedSubscriber,
         IHandle<TestMessage>,
         IHandle<TestMessage2>,
         IHandle<ChildTestMessage>
