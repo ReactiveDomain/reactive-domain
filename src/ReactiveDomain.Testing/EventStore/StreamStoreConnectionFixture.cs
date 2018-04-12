@@ -5,7 +5,7 @@ using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
 #if ! (NETCOREAPP2_0 || NETSTANDARD2_0)
 using EventStore.ClientAPI.Embedded;
-using EventStore.Core;
+using EventStore.Common.Options;
 #endif
 
 // ReSharper disable once CheckNamespace
@@ -33,6 +33,8 @@ namespace ReactiveDomain.Testing {
                         .DisableHTTPCaching()
                         //.DisableScavengeMerging()
                         .DoNotVerifyDbHashes()
+                        .RunProjections(ProjectionType.System)
+                        .StartStandardProjections()
                         .Build();
 
             node.StartAndWaitUntilReady().Wait();
