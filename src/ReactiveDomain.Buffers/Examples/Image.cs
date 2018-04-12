@@ -5,11 +5,14 @@ using ReactiveDomain.Buffers.Memory;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Buffers.FrameFormats
+namespace ReactiveDomain.Buffers.Examples
 {
+    /// <summary>
+    /// this is an example of using structs to map to memory in C# 
+    /// </summary>
     //n.b. The layout of the first 4 fields for VideoFrameHeader, RawMonoFrame and RawColorFrame must match
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct VideoFrameHeader
+    public unsafe struct FrameHeader
     {
         public long FrameNumber;
         public fixed byte FrameId[16];
@@ -80,7 +83,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
             get
             {
                 CheckLifetime();
-                return Buffer + sizeof(VideoFrameHeader);
+                return Buffer + sizeof(FrameHeader);
             }
         }
 
@@ -89,7 +92,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
             get
             {
                 CheckLifetime();
-                return Utility.ParseGuidBuffer(((VideoFrameHeader*)Buffer)->VideoId);
+                return Utility.ParseGuidBuffer(((FrameHeader*)Buffer)->VideoId);
             }
             set
             {
@@ -100,7 +103,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
                     throw new ArgumentException("VideoId cannot be an empty Guid.");
                 }
 
-                value.CopyToBuffer(((VideoFrameHeader*) Buffer)->VideoId);
+                value.CopyToBuffer(((FrameHeader*) Buffer)->VideoId);
             }
         }
 
@@ -109,7 +112,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
             get
             {
                 CheckLifetime();
-                return Utility.ParseGuidBuffer(((VideoFrameHeader*)Buffer)->FrameId);
+                return Utility.ParseGuidBuffer(((FrameHeader*)Buffer)->FrameId);
             }
             set
             {
@@ -119,7 +122,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
                     Log.Error("FrameId cannot be an empty Guid.");
                     throw new ArgumentException("FrameId cannot be an empty Guid.");
                 }
-                value.CopyToBuffer(((VideoFrameHeader*)Buffer)->FrameId);
+                value.CopyToBuffer(((FrameHeader*)Buffer)->FrameId);
             }
         }
 
@@ -128,13 +131,13 @@ namespace ReactiveDomain.Buffers.FrameFormats
             get
             {
                 CheckLifetime();
-                return ((VideoFrameHeader*)Buffer)->FrameNumber;
+                return ((FrameHeader*)Buffer)->FrameNumber;
             }
             set
             {
                 CheckLifetime();
                 Ensure.Positive(value, "FrameNumber");
-                ((VideoFrameHeader*)Buffer)->FrameNumber = value;
+                ((FrameHeader*)Buffer)->FrameNumber = value;
             }
         }
 
@@ -143,7 +146,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
             get
             {
                 CheckLifetime();
-                return ((VideoFrameHeader*)Buffer)->OffsetMilliseconds;
+                return ((FrameHeader*)Buffer)->OffsetMilliseconds;
             }
             set
             {
@@ -153,11 +156,11 @@ namespace ReactiveDomain.Buffers.FrameFormats
                     Log.Error("Offset must be a positive value.");
                     throw new ArgumentException("Offset must be a positive value.");
                 }
-                ((VideoFrameHeader*)Buffer)->OffsetMilliseconds = value;
+                ((FrameHeader*)Buffer)->OffsetMilliseconds = value;
             }
         }
 
-        public VideoFrameHeader Header => *(VideoFrameHeader*) _buffer;
+        public FrameHeader Header => *(FrameHeader*) _buffer;
 
         public void CopyFrom(Image other)
         {
@@ -168,7 +171,7 @@ namespace ReactiveDomain.Buffers.FrameFormats
         public void Clear()
         {
             CheckLifetime();
-            Utility.Clear((IntPtr)Buffer, sizeof(ThreeByte1024X1024Frame));
+            Utility.Clear((IntPtr)Buffer, BufferSize);
         }
         #region IDisposable
         public void Dispose()

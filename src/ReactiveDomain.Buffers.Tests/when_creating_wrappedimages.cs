@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Buffers.Memory;
+﻿using ReactiveDomain.Buffers.Examples;
+using ReactiveDomain.Buffers.Memory;
 using Xunit;
 
 namespace ReactiveDomain.Buffers.Tests
@@ -7,36 +8,42 @@ namespace ReactiveDomain.Buffers.Tests
     public class when_creating_wrappedimages
     {
         protected BufferManager BufferMgr = new BufferManager("Image Tests");
-        [Fact]
+        [Fact(Skip="Add Wrapped Image example test")]
         public unsafe void can_create_wrappedimages()
         {
-            int dimension = 1024;
+            //N.B. was based on remove square image method on Buffer manager
+            //TODO: re-implement for GetFramedImage
+          
+            /*  int dimension = 1024;
             int bytesPerPixel = 2;
-            WrappedSquareImage image1024 = BufferMgr.GetWrappedSquareImage(dimension, bytesPerPixel);
+            var wrapped = BufferMgr.GetFramedImage<ThreeByte1024X1024Image>();
 
-            Assert.Equal(image1024.ImagePixelHeight, dimension);
-            Assert.Equal(image1024.ImagePixelWidth, dimension);
-            Assert.Equal(image1024.BytesPerPixel, bytesPerPixel);
-            Assert.Equal(image1024.PixelBufferLength, dimension * dimension * bytesPerPixel );
+            var frame = (ThreeByte1024X1024Frame*)wrapped.Buffer;
+
+
+            //Assert.Equal((1024*1024*3) + sizeof(FrameHeader),wrapped.Frame.BufferSize);
+            //Assert.Equal(image1024.ImagePixelWidth, dimension);
+            //Assert.Equal(image1024.BytesPerPixel, bytesPerPixel);
+            //Assert.Equal(image1024.PixelBufferLength, dimension * dimension * bytesPerPixel );
 
             //TODO: fix or remove
             //these don't seem to play well with run all
             //not sure what they are proving either
 
-            //byte* pByte = image1024.PixelBuffer + dimension;
-            //*pByte = 255;
-            //Assert.Equal(*pByte, 255);
-            //Assert.NotEqual(*(pByte + 1), 255);
+            byte* pByte = image1024.PixelBuffer + dimension;
+            *pByte = 255;
+            Assert.Equal(*pByte, 255);
+            Assert.NotEqual(*(pByte + 1), 255);
 
-            //pByte = image1024.PixelBuffer + (dimension * dimension);
-            //*pByte = 255;
-            //Assert.Equal(*pByte, 255);
-            //Assert.NotEqual(*(pByte + 1), 255);
+            pByte = image1024.PixelBuffer + (dimension * dimension);
+            *pByte = 255;
+            Assert.Equal(*pByte, 255);
+            Assert.NotEqual(*(pByte + 1), 255);
 
-            //pByte = image1024.PixelBuffer + image1024.PixelBufferLength;
-            //*pByte = 255;
-            //Assert.Equal(*pByte, 255);
-            //Assert.NotEqual(*(pByte - 1), 255); //let's not go off the end here
+            pByte = image1024.PixelBuffer + image1024.PixelBufferLength;
+            *pByte = 255;
+            Assert.Equal(*pByte, 255);
+            Assert.NotEqual(*(pByte - 1), 255); //let's not go off the end here
 
             dimension = 512;
             WrappedSquareImage image512 = BufferMgr.GetWrappedSquareImage(dimension, bytesPerPixel);
@@ -70,6 +77,7 @@ namespace ReactiveDomain.Buffers.Tests
             Assert.Equal(image1024.ImagePixelWidth, dimension);
             Assert.Equal(image1024.BytesPerPixel, bytesPerPixel);
             Assert.Equal(image1024.PixelBufferLength, dimension * dimension * bytesPerPixel);
+            */
         }
     }
 }
