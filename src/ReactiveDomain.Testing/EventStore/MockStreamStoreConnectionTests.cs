@@ -211,7 +211,7 @@ namespace ReactiveDomain.Testing
             }
         }
 
-        [Fact(Skip = "ES event duplicates - fails on run all test with projection enabled only ")]
+        [Fact]
         public void can_subscribe_to_all()
         {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events in each stream in the right order
@@ -226,15 +226,8 @@ namespace ReactiveDomain.Testing
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
 
-                async void EventAppeared(RecordedEvent evt)
-                {
-                    if (streams.Contains(evt.EventStreamId))
-                        capturedEvents.Add(evt);
-                    await Task.FromResult(Unit.Default);
-                }
-
                 var sub = conn.SubscribeToAll(
-                                        EventAppeared,
+                                        async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
                                         (reason, ex) => dropped = true,
                                         _admin);
 
@@ -307,7 +300,7 @@ namespace ReactiveDomain.Testing
                     for (int i = 0; i < numberOfEvent; i++)
                     {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                        Assert.Equal(expectedEvents[i].Type, capturedEvents[i].EventType);
+                        Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
                         Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                         Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                     }
@@ -355,7 +348,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < numberOfEvent; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].EventType);
+                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                 }
