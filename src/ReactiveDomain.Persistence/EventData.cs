@@ -12,7 +12,7 @@ namespace ReactiveDomain {
         /// The name of the event type. It is strongly recommended that these
         /// use lowerCamelCase if projections are to be used.
         /// </summary>
-        string Type { get; }
+        string EventType { get; }
         /// <summary>
         /// Flag indicating whether the data and metadata are JSON.
         /// </summary>
@@ -33,7 +33,7 @@ namespace ReactiveDomain {
         /// The name of the event type. It is strongly recommended that these
         /// use lowerCamelCase if projections are to be used.
         /// </summary>
-        public string Type { get; }
+        public string EventType { get; }
         /// <summary>
         /// Flag indicating whether the data and metadata are JSON.
         /// </summary>
@@ -57,7 +57,7 @@ namespace ReactiveDomain {
                 throw new ArgumentNullException(nameof(type), "Type cannot be null, empty or whitespace");
             Ensure.NotEmptyGuid(eventId, nameof(eventId));
             EventId = eventId;
-            Type = type;
+            EventType = type;
             IsJson = isJson;
             Data = data ?? new byte[0];
             Metadata = metadata ?? new byte[0];
