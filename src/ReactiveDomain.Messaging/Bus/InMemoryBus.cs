@@ -191,33 +191,33 @@ namespace ReactiveDomain.Messaging.Bus
                 return;
             }
 
-            var handlers = _handlers[message.GetType()];
-
-
-            for (int i = 0, n = handlers.Count; i < n; ++i)
-            {
-                var handler = handlers[i];
-
-                if (_watchSlowMsg)
+            // Call each handler registered to the message type.
+            List<IMessageHandler> handlers;
+            if (_handlers.TryGetValue(message.GetType(), out handlers)) {
+                for (int i = 0, n = handlers.Count; i < n; ++i)
                 {
-                    var before = DateTime.UtcNow;
-                    handler.TryHandle(message);
+                    var handler = handlers[i];
 
-                    var elapsed = DateTime.UtcNow - before;
-                    if (elapsed <= _slowMsgThreshold) continue;
+                    if (_watchSlowMsg)
+                    {
+                        var before = DateTime.UtcNow;
+                        handler.TryHandle(message);
 
-                    Log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
-                        Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
-                    if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
-                        Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+                        var elapsed = DateTime.UtcNow - before;
+                        if (elapsed <= _slowMsgThreshold) continue;
+
+                        Log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
                             Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
-                }
-                else
-                {
-                    handler.TryHandle(message);
+                        if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
+                            Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+                                Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
+                    }
+                    else
+                    {
+                        handler.TryHandle(message);
+                    }
                 }
             }
-
         }
         #region Implementation of IDisposable
 
