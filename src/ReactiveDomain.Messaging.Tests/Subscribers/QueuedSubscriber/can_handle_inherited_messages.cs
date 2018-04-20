@@ -13,8 +13,9 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             _fixture = fixture;
         }
         [Fact]
-        public void queued_subscriber_honors_subscription_inheritance()
-        {
+        public void queued_subscriber_honors_subscription_inheritance() {
+            Assert.IsOrBecomesTrue(() => _fixture.Idle);
+            _fixture.Clear();
             var testEvent = new TestEvent(CorrelatedMessage.NewRoot());
             _fixture.Publish(testEvent);
             Assert.IsOrBecomesTrue(() => _fixture.TestEventCount == 1,msg:$"Expected 1 got {_fixture.TestEventCount}");
