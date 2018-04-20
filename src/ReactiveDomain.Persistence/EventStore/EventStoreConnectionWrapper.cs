@@ -258,7 +258,7 @@ namespace ReactiveDomain.EventStore
             Ensure.NotNull(@event, nameof(@event));
             return new ES.EventData(
                             @event.EventId,
-                            @event.Type,
+                            @event.EventType,
                             @event.IsJson,
                             @event.Data,
                             @event.Metadata);

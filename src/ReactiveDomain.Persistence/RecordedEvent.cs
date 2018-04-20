@@ -13,7 +13,7 @@ namespace ReactiveDomain
         /// <summary>The number of this event in the stream</summary>
         public readonly long EventNumber;
         /// <summary>The type of event this is</summary>
-        public string Type { get; }
+        public string EventType { get; }
         /// <summary>A byte array representing the data of this event</summary>
         public byte[] Data { get; }
         /// <summary>
@@ -46,7 +46,7 @@ namespace ReactiveDomain
             EventStreamId = eventStreamId;
             EventId = eventId;
             EventNumber = eventNumber;
-            Type = eventType;
+            EventType = eventType;
             Data = data;
             Metadata = metadata;
             IsJson = isJson;

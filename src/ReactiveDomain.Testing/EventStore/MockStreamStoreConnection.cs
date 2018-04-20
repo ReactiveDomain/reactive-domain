@@ -95,7 +95,7 @@ namespace ReactiveDomain.Testing.EventStore
                                             stream,
                                             events[i].EventId,
                                             eventStream.Count + 1,
-                                            events[i].Type,
+                                            events[i].EventType,
                                             events[i].Data,
                                             events[i].Metadata,
                                             events[i].IsJson,

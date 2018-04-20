@@ -81,7 +81,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, slice.Events[i].Type);
+                    Assert.Equal(expectedEvents[i].EventType, slice.Events[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, slice.Events[i].Metadata);
                 }
@@ -117,7 +117,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, slice.Events[i].Type);
+                    Assert.Equal(expectedEvents[i].EventType, slice.Events[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, slice.Events[i].Metadata);
                 }
@@ -153,7 +153,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < numberOfEvent; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
+                    Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                 }
@@ -201,7 +201,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
+                    Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                 }
@@ -246,7 +246,7 @@ namespace ReactiveDomain.Testing
                     for (int i = 0; i < numberOfEvent; i++)
                     {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                        Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
+                        Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                         Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                         Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                     }
@@ -300,7 +300,7 @@ namespace ReactiveDomain.Testing
                     for (int i = 0; i < numberOfEvent; i++)
                     {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                        Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
+                        Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                         Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                         Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                     }
@@ -348,7 +348,7 @@ namespace ReactiveDomain.Testing
                 for (int i = 0; i < numberOfEvent; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                    Assert.Equal(expectedEvents[i].Type, capturedEvents[i].Type);
+                    Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
                     Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
                 }
