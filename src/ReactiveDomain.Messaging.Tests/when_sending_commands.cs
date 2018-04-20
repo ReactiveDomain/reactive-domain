@@ -4,8 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests
-{
+namespace ReactiveDomain.Messaging.Tests {
     public class TestCommandBusFixture :
         IHandleCommand<TestCommands.Command1>,
         IHandleCommand<TestCommands.Command2>,
@@ -19,8 +18,7 @@ namespace ReactiveDomain.Messaging.Tests
         IHandleCommand<TestCommands.ChainedCaller>,
         IHandleCommand<TestCommands.RemoteHandled>,
         IHandleCommand<TestCommands.LongRunning>,
-        IHandleCommand<TestCommands.Command3>
-    {
+        IHandleCommand<TestCommands.Command3> {
         public readonly IDispatcher Bus;
         public readonly IDispatcher RemoteBus;
 
@@ -45,8 +43,7 @@ namespace ReactiveDomain.Messaging.Tests
 
         public readonly TimeSpan StandardTimeout;
 
-        public TestCommandBusFixture()
-        {
+        public TestCommandBusFixture() {
             StandardTimeout = TimeSpan.FromSeconds(0.2);
             Bus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
             RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
@@ -73,7 +70,7 @@ namespace ReactiveDomain.Messaging.Tests
 
         private void Warmup() {
             //get all the threads and queues running
-           CorrelatedMessage source = CorrelatedMessage.NewRoot();
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < 100; i++) {
                 var evt = new TestCommands.Command1(source);
                 Bus.TryFire(evt);
@@ -84,8 +81,7 @@ namespace ReactiveDomain.Messaging.Tests
             ClearCounters();
         }
 
-        public void ClearCounters()
-        {
+        public void ClearCounters() {
             Interlocked.Exchange(ref GotChainedCaller, 0);
             Interlocked.Exchange(ref GotTestCommand1, 0);
             Interlocked.Exchange(ref GotTestCommand2, 0);
@@ -106,34 +102,28 @@ namespace ReactiveDomain.Messaging.Tests
             Interlocked.Exchange(ref GotTestCommand3, 0);
         }
 
-        public CommandResponse Handle(TestCommands.ChainedCaller command)
-        {
+        public CommandResponse Handle(TestCommands.ChainedCaller command) {
             Interlocked.Increment(ref GotChainedCaller);
             Bus.Fire(new TestCommands.Command1(command));
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.Command1 command)
-        {
+        public CommandResponse Handle(TestCommands.Command1 command) {
             Interlocked.Increment(ref GotTestCommand1);
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.Command2 command)
-        {
+        public CommandResponse Handle(TestCommands.Command2 command) {
             Interlocked.Increment(ref GotTestCommand2);
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.Command3 command)
-        {
+        public CommandResponse Handle(TestCommands.Command3 command) {
             Interlocked.Increment(ref GotTestCommand3);
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.RemoteHandled command)
-        {
+        public CommandResponse Handle(TestCommands.RemoteHandled command) {
             Interlocked.Increment(ref GotRemoteHandled);
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.LongRunning command)
-        {
+        public CommandResponse Handle(TestCommands.LongRunning command) {
             Interlocked.Increment(ref GotLongRunning);
             Interlocked.Exchange(ref CancelLongRunning, 0);
             //wait too long
@@ -144,30 +134,24 @@ namespace ReactiveDomain.Messaging.Tests
                           timespan);
             return command.Succeed();
         }
-        public CommandResponse Handle(TestCommands.Fail command)
-        {
+        public CommandResponse Handle(TestCommands.Fail command) {
             Interlocked.Increment(ref GotTestFailCommand);
             return command.Fail();
         }
-        public CommandResponse Handle(TestCommands.Throw command)
-        {
+        public CommandResponse Handle(TestCommands.Throw command) {
             Interlocked.Increment(ref GotTestThrowCommand);
             throw new TestException();
         }
-        public CommandResponse Handle(TestCommands.WrapException command)
-        {
+        public CommandResponse Handle(TestCommands.WrapException command) {
             Interlocked.Increment(ref GotTestWrapCommand);
-            try
-            {
+            try {
                 throw new TestException();
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 return command.Fail(e);
             }
         }
-        public CommandResponse Handle(TestCommands.TypedResponse command)
-        {
+        public CommandResponse Handle(TestCommands.TypedResponse command) {
             Interlocked.Increment(ref GotTypedResponse);
             var data = 42;
             if (command.FailCommand)
@@ -175,19 +159,15 @@ namespace ReactiveDomain.Messaging.Tests
 
             return command.Succeed(data);
         }
-        public void Handle(AckCommand command)
-        {
+        public void Handle(AckCommand command) {
             Interlocked.Increment(ref GotAck);
         }
-        public void Handle(Message command)
-        {
+        public void Handle(Message command) {
             Interlocked.Increment(ref GotMessage);
         }
-        public void Handle(CommandResponse command)
-        {
+        public void Handle(CommandResponse command) {
             Interlocked.Increment(ref GotCommandResponse);
-            switch (command)
-            {
+            switch (command) {
                 case Success _:
                     Interlocked.Increment(ref GotSuccess);
                     if (command is TestCommands.TestResponse response)
@@ -208,43 +188,36 @@ namespace ReactiveDomain.Messaging.Tests
 
     // ReSharper disable once InconsistentNaming
     public class when_sending_commands :
-        IClassFixture<TestCommandBusFixture>
-
-    {
+        IClassFixture<TestCommandBusFixture> {
         private readonly TestCommandBusFixture _fixture;
 
-        public when_sending_commands(TestCommandBusFixture fixture)
-        {
+        public when_sending_commands(TestCommandBusFixture fixture) {
             _fixture = fixture;
         }
         [Fact]
-        public void publish_publishes_command_as_message()
-        {
+        public void publish_publishes_command_as_message() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             _fixture.Bus.Publish(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
             SpinWait.SpinUntil(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, 250);
         }
         [Fact]
-        public void fire_publishes_command_as_message()
-        {
+        public void fire_publishes_command_as_message() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             _fixture.Bus.Fire(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
             SpinWait.SpinUntil(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, 250);
         }
         [Fact]
-        public void command_handler_acks_command_message()
-        {
-            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+        public void command_handler_acks_command_message() {
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle, 2000, "Timeout waiting for idle");
             _fixture.ClearCounters();
             _fixture.Bus.Fire(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1);
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1);
         }
         [Fact]
-        public void command_handler_responds_to_command_message()
-        {
+        public void command_handler_responds_to_command_message() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -256,8 +229,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null, "Expected Response");
         }
         [Fact]
-        public void fire_passing_command_should_pass()
-        {
+        public void fire_passing_command_should_pass() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -270,8 +242,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
-        public void fire_failing_command_should_fail()
-        {
+        public void fire_failing_command_should_fail() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -285,8 +256,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
-        public void try_fire_passing_command_should_pass()
-        {
+        public void try_fire_passing_command_should_pass() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -300,8 +270,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCanceled) == 0, null, "Unexpected Cancel received.");
         }
         [Fact]
-        public void try_fire_failing_command_should_fail()
-        {
+        public void try_fire_failing_command_should_fail() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -316,9 +285,8 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void handlers_that_wrap_exceptions_rethrow_on_fire()
-        {
-            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+        public void handlers_that_wrap_exceptions_rethrow_on_fire() {
+            Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle,2000);
             _fixture.ClearCounters();
 
             Assert.CommandThrows<TestCommandBusFixture.TestException>(() =>
@@ -331,8 +299,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void handlers_that_throw_exceptions_rethrow_on_fire()
-        {
+        public void handlers_that_throw_exceptions_rethrow_on_fire() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -347,8 +314,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void handlers_that_wrap_exceptions_return_on_tryfire()
-        {
+        public void handlers_that_wrap_exceptions_return_on_tryfire() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -364,8 +330,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null, $"Unexpected Number of messages received {Interlocked.Read(ref _fixture.GotMessage)}.");
         }
         [Fact]
-        public void handlers_that_throw_exceptions_return_on_tryfire()
-        {
+        public void handlers_that_throw_exceptions_return_on_tryfire() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -382,8 +347,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void typed_fire_passing_command_should_pass()
-        {
+        public void typed_fire_passing_command_should_pass() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             const int data = 42;
             _fixture.ClearCounters();
@@ -394,8 +358,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
         }
         [Fact]
-        public void typed_tryfire_passing_command_should_pass()
-        {
+        public void typed_tryfire_passing_command_should_pass() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             const int data = 42;
             _fixture.ClearCounters();
@@ -409,8 +372,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void typed_failing_fire_command_should_fail()
-        {
+        public void typed_failing_fire_command_should_fail() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             const int data = 42;
             _fixture.ClearCounters();
@@ -423,8 +385,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void typed_failing_tryfire_command_should_fail()
-        {
+        public void typed_failing_tryfire_command_should_fail() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             const int data = 42;
             _fixture.ClearCounters();
@@ -438,8 +399,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void multiple_commands_can_register()
-        {
+        public void multiple_commands_can_register() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -451,8 +411,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void cannot_subscribe_twice_on_same_bus()
-        {
+        public void cannot_subscribe_twice_on_same_bus() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             Assert.Throws<ExistingHandlerException>(
@@ -460,8 +419,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void chained_commands_should_not_deadlock()
-        {
+        public void chained_commands_should_not_deadlock() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             _fixture.Bus.Fire(new TestCommands.ChainedCaller(CorrelatedMessage.NewRoot()));
@@ -470,15 +428,13 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotChainedCaller) == 1, msg: "Expected chained Caller to be handled");
         }
         [Fact]
-        public void unsubscribed_commands_should_throw_ack_timeout()
-        {
+        public void unsubscribed_commands_should_throw_ack_timeout() {
             Assert.Throws<CommandNotHandledException>(() =>
                  _fixture.Bus.Fire(new TestCommands.Unhandled(CorrelatedMessage.NewRoot())));
         }
 
         [Fact]
-        public void try_fire_unsubscribed_commands_should_return_throw_commandNotHandledException()
-        {
+        public void try_fire_unsubscribed_commands_should_return_throw_commandNotHandledException() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             var result = _fixture.Bus.TryFire(new TestCommands.Unhandled(CorrelatedMessage.NewRoot()), out var response);
@@ -489,8 +445,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void slow_commands_should_return_timeout()
-        {
+        public void slow_commands_should_return_timeout() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -504,8 +459,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 2, msg: "Expected Long Running to be completed twice");
         }
         [Fact]
-        public void slow_commands_can_override_timeout()
-        {
+        public void slow_commands_can_override_timeout() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -514,8 +468,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotLongRunning) == 1, msg: "Expected Long Running to be handled");
         }
         [Fact(Skip = "Distributed commands are currently disabled")]
-        public void passing_commands_on_connected_buses_should_pass()
-        {
+        public void passing_commands_on_connected_buses_should_pass() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -524,8 +477,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotRemoteHandled) == 1, msg: "Expected RemoteHandled to be handled");
         }
         [Fact(Skip = "Connected bus scenarios currently disabled")]
-        public void fire_oversubscribed_commands_should_throw_oversubscribed()
-        {
+        public void fire_oversubscribed_commands_should_throw_oversubscribed() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             Assert.True(false);
@@ -565,8 +517,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void commands_should_not_call_other_commands()
-        {
+        public void commands_should_not_call_other_commands() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -595,8 +546,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void unsubscribe_should_remove_handler()
-        {
+        public void unsubscribe_should_remove_handler() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 
@@ -614,8 +564,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void can_resubscribe_handler()
-        {
+        public void can_resubscribe_handler() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
             //no subscription
@@ -644,8 +593,7 @@ namespace ReactiveDomain.Messaging.Tests
         }
 
         [Fact]
-        public void unsubscribe_should_not_remove_other_handlers()
-        {
+        public void unsubscribe_should_not_remove_other_handlers() {
             Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
             _fixture.ClearCounters();
 

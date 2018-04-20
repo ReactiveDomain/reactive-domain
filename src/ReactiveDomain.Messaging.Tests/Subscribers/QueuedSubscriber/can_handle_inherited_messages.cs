@@ -14,7 +14,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         }
         [Fact]
         public void queued_subscriber_honors_subscription_inheritance() {
-            Assert.IsOrBecomesTrue(() => _fixture.Idle);
+            Assert.IsOrBecomesTrue(() => _fixture.Idle,2000);
             _fixture.Clear();
             var testEvent = new TestEvent(CorrelatedMessage.NewRoot());
             _fixture.Publish(testEvent);

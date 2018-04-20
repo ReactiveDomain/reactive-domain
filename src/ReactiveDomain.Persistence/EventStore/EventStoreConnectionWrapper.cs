@@ -156,8 +156,7 @@ namespace ReactiveDomain.EventStore
             var sub = _conn.SubscribeToAllAsync(
                                     false,
                                     async (_, evt) => {
-                                        if (!evt.Event.EventStreamId.StartsWith("$"))
-                                            eventAppeared(evt.Event.ToRecordedEvent());
+                                        eventAppeared(evt.Event.ToRecordedEvent());
                                         await Task.FromResult(Unit.Default); 
                                     },
                                     (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
