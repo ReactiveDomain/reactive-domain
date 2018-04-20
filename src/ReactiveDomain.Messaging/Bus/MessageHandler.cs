@@ -7,7 +7,7 @@ namespace ReactiveDomain.Messaging.Bus
         string HandlerName { get; }
         Type MessageType { get; }
         bool TryHandle(Message message);
-        bool IsSame<T>(object handler);
+        bool IsSame(Type messagesType, object handler);
     }
     
     internal class MessageHandler<T> : IMessageHandler where T : Message
@@ -36,9 +36,9 @@ namespace ReactiveDomain.Messaging.Bus
             return true;
         }
 
-        public bool IsSame<T2>(object handler)
+        public bool IsSame(Type messageType, object handler)
         {
-            return ReferenceEquals(_handler, handler) && typeof(T) == typeof(T2);
+            return ReferenceEquals(_handler, handler) && typeof(T) == messageType;
         }
 
         public override string ToString()
