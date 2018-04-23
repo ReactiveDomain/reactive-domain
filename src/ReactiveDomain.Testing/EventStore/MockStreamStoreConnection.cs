@@ -1,24 +1,14 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Foundation;
 using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Testing.EventStore
-{
-    public class MockStreamStoreConnection : IStreamStoreConnection
-    {
+namespace ReactiveDomain.Testing.EventStore {
+    public class MockStreamStoreConnection : IStreamStoreConnection {
 
         public const string CategoryStreamNamePrefix = @"$ce";
         public const string EventTypeStreamNamePrefix = @"$et";
@@ -30,8 +20,7 @@ namespace ReactiveDomain.Testing.EventStore
         private bool _connected;
         private bool _disposed;
 
-        public MockStreamStoreConnection(string name)
-        {
+        public MockStreamStoreConnection(string name) {
             _all = new List<RecordedEvent>();
             _store = new Dictionary<string, List<RecordedEvent>>();
             _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
@@ -50,12 +39,10 @@ namespace ReactiveDomain.Testing.EventStore
 
         public string ConnectionName { get; }
 
-        public void Connect()
-        {
+        public void Connect() {
             _connected = true;
         }
-        public void Close()
-        {
+        public void Close() {
             _connected = false;
         }
 
@@ -65,8 +52,7 @@ namespace ReactiveDomain.Testing.EventStore
                             string stream,
                             long expectedVersion,
                             UserCredentials credentials = null,
-                            params EventData[] events)
-        {
+                            params EventData[] events) {
             if (!_connected || _disposed)
                 throw new Exception();
             if (string.IsNullOrWhiteSpace(stream))
@@ -75,20 +61,19 @@ namespace ReactiveDomain.Testing.EventStore
             var streamExists = _store.TryGetValue(stream, out var eventStream);
             if (streamExists && expectedVersion == ExpectedVersion.NoStream)
                 throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
-            if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists || expectedVersion == ExpectedVersion.EmptyStream))
+            if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
                 throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
-            if (!streamExists)
-            {
+            if (!streamExists) {
                 eventStream = new List<RecordedEvent>();
                 _store.Add(stream, eventStream);
             }
             var startingPosition = eventStream.Count;
-            if (expectedVersion != startingPosition)
+            if (expectedVersion != ExpectedVersion.NoStream &&
+                expectedVersion != startingPosition)
                 throw new WrongExpectedVersionException($"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
             var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            for (var i = 0; i < events.Length; i++)
-            {
+            for (var i = 0; i < events.Length; i++) {
                 var created = DateTime.UtcNow;
                 var epochTime = (long)(created - epochStart).TotalSeconds;
                 var recordedEvent = new RecordedEvent(
@@ -103,67 +88,99 @@ namespace ReactiveDomain.Testing.EventStore
                                             epochTime);
                 eventStream.Add(recordedEvent);
                 _all.Add(recordedEvent);
-                _inboundEventHandler.Handle(new EventWritten(recordedEvent));
+                _inboundEventHandler.Handle(new EventWritten(stream, recordedEvent));
                 //_inboundEventHandler.Handle(new ProjectedEventWritten(AllStreamName,recordedEvent));
                 //_inboundEventHandler.Handle(new ProjectedEventWritten(stream,recordedEvent));
             }
-            return new WriteResult(eventStream.Count);
+            return new WriteResult(eventStream.Count - 1);
         }
 
 
-        public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null)
-        {
-            throw new NotImplementedException();
+        public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null) {
+            if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
+            var result = _store[stream].Skip((int)start).Take((int)count).ToArray();
+
+
+            var slice = new StreamEventsSlice(
+                        stream,
+                        start,
+                        ReadDirection.Forward,
+                        result,
+                        start + result.Length,
+                        _store[stream].Count - 1,
+                        start + result.Length == _store[stream].Count);
+            return slice;
         }
 
-        public StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null)
-        {
+        public StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null) {
             throw new NotImplementedException();
         }
 
         public IDisposable SubscribeToStream(
-            string stream, 
+            string stream,
             Action<ReactiveDomain.RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null)
-        {
-            throw new NotImplementedException();
+            UserCredentials userCredentials = null) {
+            if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
+            return SubscribeToStreamFrom(
+                    stream,
+                    _store[stream].Count - 1,
+                    CatchUpSubscriptionSettings.Default,
+                    eventAppeared,
+                    null, //live processing started
+                    subscriptionDropped,
+                    userCredentials);
         }
 
         public IDisposable SubscribeToStreamFrom(
-            string stream, 
+            string stream,
             long? lastCheckpoint,
-            CatchUpSubscriptionSettings settings, Action<ReactiveDomain.RecordedEvent> eventAppeared,
-            Action<Unit> liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null)
-        {
-            throw new NotImplementedException();
+            CatchUpSubscriptionSettings settings,
+            Action<RecordedEvent> eventAppeared,
+            Action<Unit> liveProcessingStarted = null,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null) {
+            if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
+            long _live = 0;
+            string streamName = stream;
+            var subscription = _inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(@event => {
+                if (_live != 0 && string.CompareOrdinal(streamName, @event.OriginalStream) == 0) {
+                    eventAppeared(@event.Event);
+                }
+            }));
+            //n.b. this leaves a possible gap in the events at switchover, #mock-life
+            var start = lastCheckpoint ?? 0;
+            var curEvents = _store[stream].Skip((int)start).ToArray();
+            while (curEvents.Length > 0) {
+                for (int i = 0; i < curEvents.Length; i++) {
+                    eventAppeared(curEvents[i]);
+                }
+                start = start + curEvents.Length;
+                curEvents = _store[stream].Skip((int)start).ToArray();
+            }
+            Interlocked.Exchange(ref _live, 1);
+            liveProcessingStarted?.Invoke(Unit.Default);
+            return subscription;
         }
 
         public IDisposable SubscribeToAll(Action<ReactiveDomain.RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                                 UserCredentials userCredentials = null)
-        {
+                                                 UserCredentials userCredentials = null) {
             throw new NotImplementedException();
         }
 
-        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
-        {
+        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null) {
             throw new NotImplementedException();
         }
-        private void WriteCategoryStream(EventWritten @event)
-        {
+        private void WriteCategoryStream(EventWritten @event) {
 
         }
-        private void WriteEventStream(EventWritten @event)
-        {
+        private void WriteEventStream(EventWritten @event) {
 
         }
-        private void PublishToSubscriptions(ProjectedEventWritten @event)
-        {
+        private void PublishToSubscriptions(ProjectedEventWritten @event) {
 
         }
-        public void Dispose()
-        {
+        public void Dispose() {
             Close();
             _inboundEventHandler?.Stop();
             _disposed = true;
@@ -254,21 +271,20 @@ namespace ReactiveDomain.Testing.EventStore
         //    }
         //}
 
-        public class EventWritten : Message
-        {
+        public class EventWritten : Message {
+            public readonly string OriginalStream;
             public readonly RecordedEvent Event;
             public EventWritten(
-                RecordedEvent @event)
-            {
+                string originalStream,
+                RecordedEvent @event) {
+                OriginalStream = originalStream;
                 Event = @event;
             }
         }
-        public class ProjectedEventWritten : Message
-        {
+        public class ProjectedEventWritten : Message {
             public readonly ProjectedEvent Event;
             public ProjectedEventWritten(
-                ProjectedEvent @event)
-            {
+                ProjectedEvent @event) {
                 Event = @event;
             }
         }

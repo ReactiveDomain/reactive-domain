@@ -17,7 +17,7 @@ namespace ReactiveDomain.Foundation.Tests {
         public when_using_listener(StreamStoreConnectionFixture fixture) {
             //given
             fixture.Connection.Connect();
-            var testStream = $"testStream-{Guid.NewGuid()}";
+            var testStream = $"testStream-{Guid.NewGuid():N}";
             IEventSerializer eventSerializer = new JsonMessageSerializer();
 
             StreamListener listener = new SynchronizableStreamListener(
