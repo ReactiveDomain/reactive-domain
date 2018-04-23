@@ -1,11 +1,15 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public sealed class can_handle_ordered_queued_messages : when_using_counted_message_subscriber
+    // ReSharper disable once RedundantExtendsListEntry
+    public sealed class can_handle_ordered_queued_messages : 
+                            when_using_counted_message_subscriber,
+                            IDisposable
     {
         private int FirstTaskMax = 1000;
         private readonly Task _t1;
@@ -34,7 +38,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                 });
         }
 
-        [Fact]
+        [Fact(Skip = "Poor thread management in test, remove Task based threading")]
         void can_handle_messages_in_order()
         {
             _t1.Start();
@@ -50,7 +54,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                 msg: $"Expected {FirstTaskMax} Messages, found {MsgCount}");
         }
 
-        [Fact]
+        [Fact(Skip = "Poor thread management in test, remove Task based threading")]
         void can_handle_events_in_order()
         {
             _t2.Start();

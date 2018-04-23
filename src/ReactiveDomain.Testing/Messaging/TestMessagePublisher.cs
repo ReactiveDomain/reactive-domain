@@ -3,15 +3,12 @@ using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing
-{
-    public class TestMessagePublisher
-    {
+namespace ReactiveDomain.Testing {
+    public class TestMessagePublisher {
         private readonly IDispatcher _bus;
         private bool _publish = true;
 
-        public TestMessagePublisher(IDispatcher bus)
-        {
+        public TestMessagePublisher(IDispatcher bus) {
             _bus = bus;
         }
 
@@ -19,15 +16,13 @@ namespace ReactiveDomain.Testing
         /// Publishes TestMessages in a loop at a given time interval
         /// </summary>
         /// <param name="intervalInMs"></param>
-        public void StartPublishing(int intervalInMs)
-        {
+        public void StartPublishing(int intervalInMs) {
             Task.Run(
-                () =>
-                {
-                    while (_publish)
-                    {
+                () => {
+                    while (_publish) {
                         _bus.Publish(new TestMessage());
-                        if (intervalInMs > 0) Thread.Sleep(intervalInMs);
+                        if (intervalInMs > 0)
+                            SpinWait.SpinUntil(() => false, intervalInMs);
                     }
                 });
         }
@@ -36,8 +31,7 @@ namespace ReactiveDomain.Testing
         /// <summary>
         /// Set the loop control variable to stop publishing.
         /// </summary>
-        public void StopPublishing()
-        {
+        public void StopPublishing() {
             _publish = false;
         }
     }

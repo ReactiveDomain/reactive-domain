@@ -1,10 +1,14 @@
-﻿using ReactiveDomain.Testing;
+﻿using System;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public sealed class can_handle_high_volume_queued_messages : when_using_queued_subscriber
+    // ReSharper disable once RedundantExtendsListEntry
+    public sealed class can_handle_high_volume_queued_messages : 
+                            when_using_queued_subscriber,
+                            IDisposable
     {
         private TestMessagePublisher _pub1;
         private TestMessagePublisher _pub2;
@@ -22,7 +26,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             _pub4 = new TestMessagePublisher(Bus);
         }
 
-        [Fact]
+        [Fact(Skip = "Poor thread management in test, remove Task.Run")]
         void can_handle_multiple_publishers()
         {
             // start publishers
@@ -46,7 +50,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
             // verify all the messages were handled
             Assert.IsOrBecomesTrue(() => MessageSubscriber.TimesTestMessageHandled == MsgCount,
                 TimeoutInMs,
-                $"Subscriber handled ParentTest message {MessageSubscriber.ParentTestMessage} times. Bus count = {MsgCount}");
+                $"Subscriber handled ParentTest message {MessageSubscriber.TimesTestMessageHandled} times. Bus count = {MsgCount}");
 
         }
     }

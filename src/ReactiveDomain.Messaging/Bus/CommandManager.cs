@@ -32,37 +32,35 @@ namespace ReactiveDomain.Messaging.Bus {
                 throw new ObjectDisposedException(nameof(CommandManager));
             }
 
-            lock (_registerLock) {
-                if (Log.LogLevel >= LogLevel.Debug)
-                    Log.Debug("Registering command tracker for" + command.GetType().Name);
-                if (_pendingCommands.ContainsKey(command.MsgId))
-                    throw new CommandException($"Command tracker already registered for this Command {command.GetType().Name} Id {command.MsgId}.", command);
+            if (Log.LogLevel >= LogLevel.Debug)
+                Log.Debug("Registering command tracker for" + command.GetType().Name);
+            if (_pendingCommands.ContainsKey(command.MsgId))
+                throw new CommandException($"Command tracker already registered for this Command {command.GetType().Name} Id {command.MsgId}.", command);
 
-                var tcs = new TaskCompletionSource<CommandResponse>();
-                var tracker = new CommandTracker(
-                                        command,
-                                        tcs,
-                                        () => {
-                                            if (_pendingCommands.TryRemove(command.MsgId, out var tr))
-                                                tr.Dispose();
-                                        },
-                                        () => {
-                                            _outBus.Publish(new Canceled(command));
-                                            if (_pendingCommands.TryRemove(command.MsgId, out var tr))
-                                                tr.Dispose();
-                                        },
-                                        ackTimeout ?? DefaultAckTimeout,
-                                        responseTimeout ?? DefaultResponseTimeout);
-
-                if (_pendingCommands.TryAdd(command.MsgId, tracker)) {
-                    return tcs;
-                }
-                //Add failed, cleanup & throw
-                tracker.Dispose();
-                tcs.SetResult(new Canceled(command));
-                tcs.SetCanceled();
-                throw new CommandException($"Failed to register command tracker for this Command {command.GetType().Name} Id {command.MsgId}.", command);
+            var tcs = new TaskCompletionSource<CommandResponse>();
+            var tracker = new CommandTracker(
+                                    command,
+                                    tcs,
+                                    () => {
+                                        if (_pendingCommands.TryRemove(command.MsgId, out var tr))
+                                            tr.Dispose();
+                                    },
+                                    () => {
+                                        _outBus.Publish(new Canceled(command));
+                                        if (_pendingCommands.TryRemove(command.MsgId, out var tr))
+                                            tr.Dispose();
+                                    },
+                                    ackTimeout ?? DefaultAckTimeout,
+                                    responseTimeout ?? DefaultResponseTimeout);
+            if (_pendingCommands.TryAdd(command.MsgId, tracker)) {
+                return tcs;
             }
+            //Add failed, cleanup & throw
+            tracker.Dispose();
+            tcs.SetResult(new Canceled(command));
+            tcs.SetCanceled();
+            throw new CommandException($"Failed to register command tracker for this Command {command.GetType().Name} Id {command.MsgId}.", command);
+
         }
 
         public void Handle(CommandResponse message) {
