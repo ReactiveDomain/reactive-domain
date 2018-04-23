@@ -1,6 +1,9 @@
+//#define LIVE_ES_CONNECTION
+
 using System;
 using System.Diagnostics;
 using System.Threading;
+using EventStore.ClientAPI;
 using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
 #if ! (NETCOREAPP2_0 || NETSTANDARD2_0)
@@ -10,7 +13,6 @@ using EventStore.Common.Options;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing {
-
     public class StreamStoreConnectionFixture : IDisposable {
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
 
@@ -21,6 +23,12 @@ namespace ReactiveDomain.Testing {
         public StreamStoreConnectionFixture()
         {
             AdminCredentials = new UserCredentials("admin", "changeit");
+#if LIVE_ES_CONNECTION
+            Connection =new EventStoreConnectionWrapper(
+                              EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500"));
+            return;
+#endif
+
 #if NETCOREAPP2_0 || NETSTANDARD2_0
 
             Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");

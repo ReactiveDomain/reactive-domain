@@ -33,7 +33,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             _multiFireCount = 0;
 
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
+            _listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);

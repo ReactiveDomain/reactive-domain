@@ -14,20 +14,23 @@ namespace ReactiveDomain.Foundation.EventStore
             string name,
             IStreamStoreConnection connection,
             IStreamNameBuilder streamNameBuilder,
+            IEventSerializer serializer,
             bool sync = false,
             string busName = null) :
-                base(name, connection, streamNameBuilder, busName)
+                base(name, connection, streamNameBuilder, serializer, busName)
         {
 
             Sync = sync;
-            SyncQueue = new QueuedHandler(this, "SyncListenerQueue");
+            if (Sync) {
+                SyncQueue = new QueuedHandler(this, "SyncListenerQueue");
+            }
         }
 
         protected override void GotEvent(Message @event)
         {
             if (_disposed) return; //todo: fix dispose
             if (Sync)
-                SyncQueue.Publish(@event);
+                SyncQueue?.Publish(@event);
             else
                 base.GotEvent(@event);
 
@@ -40,7 +43,7 @@ namespace ReactiveDomain.Foundation.EventStore
         public override void Start(string streamName, int? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
         {
             if (Sync)
-                SyncQueue.Start();
+                SyncQueue?.Start();
             base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
             if (waitUntilLive)
                 SpinWait.SpinUntil(() => SyncQueue.Idle, millisecondsTimeout);

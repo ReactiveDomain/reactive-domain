@@ -31,7 +31,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public when_logging_disabled_and_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
        
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
+            _listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
             _listener.EventStream.Subscribe<Event>(this);
 
             _listener.Start(Logging.FullStreamName);

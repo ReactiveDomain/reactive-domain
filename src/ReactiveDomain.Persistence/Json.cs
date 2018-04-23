@@ -94,33 +94,5 @@ namespace ReactiveDomain
                 }
             });
         }
-        public static object DeserializeEvent(this RecordedEvent @event)
-        {
-            return @event.Metadata.DeserializeEvent(@event.Data);
-        }
-
-        //TODO: needs a real home and to link up with the deserializer
-        public static object DeserializeEvent(this byte[] metadata, byte[] data)
-        {
-            //HACK: Fix this string value 
-            JToken eventClrTypeName = JObject.Parse(Encoding.UTF8.GetString(metadata)).Property("EventClrTypeName").Value;
-            var typeName = (string)eventClrTypeName;
-            var type = Type.GetType(typeName);
-            if (type == null)
-            {
-                throw new UnknownTypeException(typeName);
-            }
-            object @event = null;
-            try
-            {
-                @event = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(data), type, new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Populate });
-            }
-            catch (Exception ex)
-            {
-                var str = ex.Message;
-            }
-            
-            return @event;
-        }
     }
 }

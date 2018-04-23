@@ -15,6 +15,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Connection = connection;
             Bus = new Dispatcher(nameof(with_message_logging_enabled));
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+            EventSerializer = new JsonMessageSerializer(); 
             Repo = new StreamStoreRepository(StreamNameBuilder, Connection, new JsonMessageSerializer());
             // instantiate Logger class that inherits from QueuedSubscriber
             Logging = new EventStoreMessageLogger(Bus,
@@ -28,7 +29,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected StreamStoreRepository Repo;
         protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
-
+        protected IEventSerializer EventSerializer;
       
         public void Dispose() {
             Dispose(true);
