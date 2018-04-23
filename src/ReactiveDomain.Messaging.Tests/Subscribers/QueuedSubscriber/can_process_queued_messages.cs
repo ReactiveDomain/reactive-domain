@@ -1,13 +1,14 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable InconsistentNaming
-    public sealed class can_process_queued_messages : when_using_queued_subscriber {
-        public can_process_queued_messages() {
-            
-        }
+    // ReSharper disable once RedundantExtendsListEntry
+    public sealed class can_process_queued_messages : 
+                            when_using_queued_subscriber,
+                            IDisposable{
         [Fact]
         public void can_handle_two_messages() {
             var msg = new TestMessage();

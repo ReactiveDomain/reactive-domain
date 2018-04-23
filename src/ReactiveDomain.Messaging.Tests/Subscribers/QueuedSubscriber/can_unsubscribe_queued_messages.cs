@@ -8,7 +8,8 @@ using Xunit;
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public sealed class can_unsubscribe_queued_messages : IDisposable
+    public sealed class can_unsubscribe_queued_messages : 
+                            IDisposable
     {
         private readonly CountedMessageSubscriber _sub;
         private readonly IDispatcher _bus = new Dispatcher("test", 3, false);
@@ -27,7 +28,6 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
                 source = evt;
             }
         }
-
         [Fact]
         void can_unsubscribe_messages_and_events_by_disposing()
         {

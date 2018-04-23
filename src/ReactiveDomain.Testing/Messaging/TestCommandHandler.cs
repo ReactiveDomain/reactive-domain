@@ -12,10 +12,7 @@ namespace ReactiveDomain.Testing
    
         public CommandResponse Handle(TestCommands.Command3 command)
         {
-            for (int i = 0; i < 5; i++)
-            {
-                Thread.Sleep(10);
-            }
+           SpinWait.SpinUntil(()=>false, 500);
             return command.Succeed();
         }
 

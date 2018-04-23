@@ -1,12 +1,16 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
-    public sealed class QueuedSubscriberFixture : IPublisher {
+    public sealed class QueuedSubscriberFixture : 
+                            IPublisher,
+                            IDisposable{
         private readonly Subscriber _subscriber;
         private readonly IBus _bus;
         public QueuedSubscriberFixture() {
+            Monitor.Enter(QueuedSubscriberLock.LockObject);
             _bus = new InMemoryBus("test");
             _subscriber = new Subscriber(_bus);
             Warmup();
@@ -64,8 +68,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             public void Handle(ChildTestEvent message) => Interlocked.Increment(ref ChildEventCount);
 
             public void Handle(GrandChildTestEvent message) => Interlocked.Increment(ref GrandChildEventCount);
-
-           
+        }
+        public void Dispose() {
+            Monitor.Exit(QueuedSubscriberLock.LockObject);
+            _subscriber?.Dispose();
         }
     }
 }

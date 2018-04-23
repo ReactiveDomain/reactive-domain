@@ -137,7 +137,7 @@ namespace ReactiveDomain.Testing
 
                 var sub = conn.SubscribeToStream(
                                         streamName,
-                                        async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                        capturedEvents.Add,
                                         (reason, ex) => dropped = true);
 
                 var expectedEvents = new List<EventData>();
@@ -182,7 +182,7 @@ namespace ReactiveDomain.Testing
                                             streamName,
                                             lastCheckpoint,
                                             settings,
-                                            async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                            capturedEvents.Add,
                                             _ => liveProcessingStarted = true,
                                             (reason, ex) => dropped = true);
 
@@ -226,11 +226,10 @@ namespace ReactiveDomain.Testing
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
 
-                async void EventAppeared(RecordedEvent evt)
+                void EventAppeared(RecordedEvent evt)
                 {
                     if (streams.Contains(evt.EventStreamId))
                         capturedEvents.Add(evt);
-                    await Task.FromResult(Unit.Default);
                 }
 
                 var sub = conn.SubscribeToAll(
@@ -284,7 +283,7 @@ namespace ReactiveDomain.Testing
 
                 var sub = conn.SubscribeToStream(
                                     streamTypeName,
-                                    async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                    capturedEvents.Add,
                                     (reason, ex) => dropped = true,
                                     _admin);
 
@@ -335,7 +334,7 @@ namespace ReactiveDomain.Testing
 
                 var sub = conn.SubscribeToStream(
                                     streamCategoryName,
-                                    async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                    capturedEvents.Add,
                                     (reason, ex) => dropped = true,
                                     _admin);
 

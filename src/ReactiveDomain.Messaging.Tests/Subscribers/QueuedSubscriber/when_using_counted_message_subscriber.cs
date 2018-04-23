@@ -6,10 +6,10 @@ using ReactiveDomain.Testing;
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable InconsistentNaming
     public abstract class when_using_counted_message_subscriber :
-        IHandle<Message>,
-        IHandle<CountedEvent>,
-        IHandle<CountedTestMessage>,
-        IDisposable {
+                            IHandle<Message>,
+                            IHandle<CountedEvent>,
+                            IHandle<CountedTestMessage>,
+                            IDisposable {
        
         protected IDispatcher Bus;
         private long _msgCount;
@@ -31,6 +31,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         }
 
         protected when_using_counted_message_subscriber() {
+            Monitor.Enter(QueuedSubscriberLock.LockObject);
             Bus = new Dispatcher(nameof(when_using_queued_subscriber));
             Bus.Subscribe<Message>(this);
             Bus.Subscribe<CountedEvent>(this);
@@ -55,6 +56,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
 
         protected virtual void Dispose(bool disposing) {
             if (!disposing) return;
+            Monitor.Exit(QueuedSubscriberLock.LockObject);
             Bus?.Dispose();
         }
     }

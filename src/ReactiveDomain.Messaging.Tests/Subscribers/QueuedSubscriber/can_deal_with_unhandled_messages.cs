@@ -1,10 +1,14 @@
-﻿using ReactiveDomain.Testing;
+﻿using System;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
 {
     // ReSharper disable once InconsistentNaming
-    public sealed class can_deal_with_unhandled_messages : when_using_counted_message_subscriber
+    // ReSharper disable once RedundantExtendsListEntry
+    public sealed class can_deal_with_unhandled_messages : 
+        when_using_counted_message_subscriber,
+        IDisposable
     {
         private int FirstTaskMax = 20;
         private int TimeoutInMs = 5000;
