@@ -25,7 +25,7 @@ namespace ReactiveDomain {
         /// </summary>
         public readonly bool IsEndOfStream;
         
-        internal StreamEventsSlice(
+        public StreamEventsSlice(
                     string stream, 
                     long fromEventNumber, 
                     ReadDirection readDirection, 

@@ -20,7 +20,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         }
         public when_events_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
-            _listener = new SynchronizableStreamListener(Logging.FullStreamName, Connection, StreamNameBuilder);
+            _listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
             _listener.EventStream.Subscribe<Event>(this);
 
             _listener.Start(Logging.FullStreamName);
@@ -53,7 +57,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Assert.IsOrBecomesTrue(()=> _gotEvt >0);
 
             // Wait  for last event to be queued
-            Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 9000);
+            Assert.IsOrBecomesTrue(()=>_countedEventCount == _maxCountedEvents, 2000);
             Assert.True(_countedEventCount == _maxCountedEvents, $"Message {_countedEventCount} doesn't match expected index {_maxCountedEvents}");
             Assert.IsOrBecomesTrue(() => _testDomainEventCount == 1, 1000);
 

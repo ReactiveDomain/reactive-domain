@@ -323,9 +323,12 @@ namespace ReactiveDomain.Testing
         public void can_subscribe_to_category_stream()
         {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events of the right category in the right order
-            var streamCategoryName = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
-            var streamNameInCategory = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
-            var streamNameOutOfCategory = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid());
+            var streamCategoryName = 
+                _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
+            var streamNameInCategory = 
+                _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+            var streamNameOutOfCategory = 
+                _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid());
 
             foreach (var conn in _streamStoreConnections)
             {

@@ -20,9 +20,11 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
         protected StreamStoreRepository Repo;
         protected IStreamNameBuilder StreamNameBuilder;
+        protected IEventSerializer EventSerializer;
         protected with_message_logging_disabled()
         {
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+            EventSerializer = new JsonMessageSerializer();
             Repo = new StreamStoreRepository(StreamNameBuilder, Connection, new JsonMessageSerializer());
             // ctor defaults to disabled
             Logging = new EventStoreMessageLogger(Bus,

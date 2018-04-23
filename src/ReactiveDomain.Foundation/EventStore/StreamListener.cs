@@ -12,6 +12,7 @@ namespace ReactiveDomain.Foundation.EventStore {
         IDisposable _subscription;
         private bool _started;
         private readonly IStreamNameBuilder _streamNameBuilder;
+        private readonly IEventSerializer _serializer;
         private readonly object _startlock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
@@ -23,17 +24,20 @@ namespace ReactiveDomain.Foundation.EventStore {
         /// <param name="listenerName"></param>
         /// <param name="eventStoreConnection">The event store to subscribe to</param>
         /// <param name="streamNameBuilder">The source for correct stream names based on aggregates and events</param>
+        /// <param name="serializer"></param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
         public StreamListener(
                 string listenerName,
                 IStreamStoreConnection eventStoreConnection,
                 IStreamNameBuilder streamNameBuilder,
+                IEventSerializer serializer,
                 string busName = null) {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _eventStoreConnection = eventStoreConnection ?? throw new ArgumentNullException(nameof(eventStoreConnection));
 
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
+            _serializer = serializer;
         }
         /// <summary>
         /// Event Stream Listener
@@ -43,9 +47,19 @@ namespace ReactiveDomain.Foundation.EventStore {
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="millisecondsTimeout"></param>
-        public void Start(Type tMessage, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) {
-            if (!tMessage.IsSubclassOf(typeof(Event))) throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
-            Start(tMessage.GetEventTypeStreamName(), checkpoint, blockUntilLive, millisecondsTimeout);
+        public void Start(
+            Type tMessage, 
+            int? checkpoint = null, 
+            bool blockUntilLive = false, 
+            int millisecondsTimeout = 1000) {
+            if (!tMessage.IsSubclassOf(typeof(Event))) {
+                throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
+            }
+            Start(
+                tMessage.GetEventTypeStreamName(), 
+                checkpoint, 
+                blockUntilLive, 
+                millisecondsTimeout);
         }
         /// <summary>
         /// Category Stream Listener
@@ -55,8 +69,16 @@ namespace ReactiveDomain.Foundation.EventStore {
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource {
-            Start(_streamNameBuilder.GenerateForCategory(typeof(TAggregate)), checkpoint, blockUntilLive, timeout);
+        public void Start<TAggregate>(
+                        int? checkpoint = null, 
+                        bool blockUntilLive = false, 
+                        int timeout = 1000) where TAggregate : class, IEventSource {
+
+            Start(
+                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)), 
+                checkpoint, 
+                blockUntilLive, 
+                timeout);
         }
 
         /// <summary>
@@ -68,8 +90,16 @@ namespace ReactiveDomain.Foundation.EventStore {
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) where TAggregate : class, IEventSource {
-            Start(_streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), checkpoint, blockUntilLive, timeout);
+        public void Start<TAggregate>(
+                        Guid id, 
+                        int? checkpoint = null, 
+                        bool blockUntilLive = false, 
+                        int timeout = 1000) where TAggregate : class, IEventSource {
+            Start(
+                _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), 
+                checkpoint, 
+                blockUntilLive, 
+                timeout);
         }
 
         /// <summary>
@@ -80,7 +110,11 @@ namespace ReactiveDomain.Foundation.EventStore {
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
-        public virtual void Start(string streamName, int? checkpoint = null, bool blockUntilLive = false, int timeout = 1000) {
+        public virtual void Start(
+                            string streamName, 
+                            int? checkpoint = null, 
+                            bool blockUntilLive = false, 
+                            int timeout = 1000) {
             _liveLock.Reset();
             lock (_startlock) {
                 if (_started)
@@ -91,7 +125,7 @@ namespace ReactiveDomain.Foundation.EventStore {
                 _subscription =
                     SubscribeToStreamFrom(
                         streamName,
-                        checkpoint ?? 0,// StreamCheckpoint.StreamStart,
+                        checkpoint ?? null,
                         true,
                         eventAppeared: GotEvent,
                         liveProcessingStarted: () => {
@@ -117,7 +151,7 @@ namespace ReactiveDomain.Foundation.EventStore {
                 stream,
                 lastCheckpoint,
                 settings,
-                resolvedEvent => eventAppeared(resolvedEvent.DeserializeEvent() as Message),
+                resolvedEvent => eventAppeared(_serializer.Deserialize(resolvedEvent) as Message),
                 _ => liveProcessingStarted?.Invoke(),
                 (reason, exception) => subscriptionDropped?.Invoke(reason, exception),
                 userCredentials);
@@ -126,7 +160,8 @@ namespace ReactiveDomain.Foundation.EventStore {
         }
 
         public bool ValidateStreamName(string streamName) {
-            return _eventStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
+            var isValid = _eventStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
+            return isValid;
         }
         protected virtual void GotEvent(Message @event) {
             if (@event != null) _bus.Publish(@event);
