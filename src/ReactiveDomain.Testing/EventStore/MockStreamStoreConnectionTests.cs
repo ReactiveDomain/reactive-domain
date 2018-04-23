@@ -1,13 +1,13 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Util;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading;
 using Xunit;
 
-namespace ReactiveDomain.Testing
-{
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Testing {
     // todo: separate stream connection tests and repo tests
     // ReSharper disable InconsistentNaming
     public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture> {
@@ -17,8 +17,7 @@ namespace ReactiveDomain.Testing
         private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly UserCredentials _admin;
 
-        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture)
-        {
+        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture) {
             _admin = fixture.AdminCredentials;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
 
@@ -32,11 +31,9 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_create_then_delete_stream()
-        {
+        public void can_create_then_delete_stream() {
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { 0 }, new byte[] { 0 });
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
                 var slice = conn.ReadStreamForward(streamName, 0, 1);
@@ -54,32 +51,28 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_read_stream_forward()
-        {
+        public void can_read_stream_forward() {
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
             var numEventsToBeSent = 5; // thoughts: think about randomizing those maybe?
             long count = 2;
             long startFrom = numEventsToBeSent - count; // We want to get the <count> last events in the right order (forward)
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var expectedEvents = new List<EventData>();
-                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
-                {
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++) {
                     var eventMetaData = eventByteData;
-                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                     conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
                     if (eventByteData >= startFrom) expectedEvents.Add(createEvent);
                 }
-                
+
                 var slice = conn.ReadStreamForward(
                                             streamName,
                                             startFrom,
                                             count);
 
                 Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events forward");
-                for (int i = 0; i < count; i++)
-                {
+                for (int i = 0; i < count; i++) {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
                     Assert.Equal(expectedEvents[i].EventType, slice.Events[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
@@ -89,20 +82,17 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_read_stream_backward()
-        {
+        public void can_read_stream_backward() {
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
             var numEventsToBeSent = 5;
             long count = 4;
             long startFrom = count - 1; // We want to get the <count> first events in the right order (backward)
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var expectedEvents = new List<EventData>();
-                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
-                {
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++) {
                     var eventMetaData = eventByteData;
-                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                     conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
                     if (eventByteData <= startFrom) expectedEvents.Add(createEvent);
                 }
@@ -114,8 +104,7 @@ namespace ReactiveDomain.Testing
                                             count);
 
                 Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events backward");
-                for (int i = 0; i < count; i++)
-                {
+                for (int i = 0; i < count; i++) {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
                     Assert.Equal(expectedEvents[i].EventType, slice.Events[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, slice.Events[i].Data);
@@ -125,33 +114,29 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_subscribe_to_stream()
-        {
+        public void can_subscribe_to_stream() {
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
             var numberOfEvent = 2;
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
 
                 var sub = conn.SubscribeToStream(
                                         streamName,
-                                        async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                        capturedEvents.Add,
                                         (reason, ex) => dropped = true);
 
                 var expectedEvents = new List<EventData>();
-                for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
-                {
+                for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++) {
                     var eventMetaData = eventByteData;
-                    var testEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var testEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                     conn.AppendToStream(streamName, ExpectedVersion.Any, null, testEvent);
                     expectedEvents.Add(testEvent);
                 }
 
                 Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to capture events. Expected {numberOfEvent} found {capturedEvents.Count}");
-                for (int i = 0; i < numberOfEvent; i++)
-                {
+                for (int i = 0; i < numberOfEvent; i++) {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
                     Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
@@ -164,16 +149,14 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_subscribe_to_stream_from()
-        {
+        public void can_subscribe_to_stream_from() {
             var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
             var numEventsToBeSent = 5;
             var count = 2;
             var lastCheckpoint = numEventsToBeSent - count - 1;  // we want to capture the <count> last events in the right order
             var settings = new CatchUpSubscriptionSettings(numEventsToBeSent, 1, true, streamName);
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
                 var liveProcessingStarted = false;
@@ -182,24 +165,27 @@ namespace ReactiveDomain.Testing
                                             streamName,
                                             lastCheckpoint,
                                             settings,
-                                            async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                            capturedEvents.Add,
                                             _ => liveProcessingStarted = true,
                                             (reason, ex) => dropped = true);
 
                 Assert.IsOrBecomesTrue(() => liveProcessingStarted, msg: "Failed handle live processing start");
 
                 var expectedEvents = new List<EventData>();
-                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
-                {
+                for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++) {
                     var eventMetaData = eventByteData;
-                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var createEvent = new EventData(
+                                            Guid.NewGuid(),
+                                            typeof(TestAggregateMessages.NewAggregate).Name,
+                                            true,
+                                            new[] { eventByteData },
+                                            new[] { eventMetaData });
                     conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
                     if (eventByteData >= numEventsToBeSent - count) expectedEvents.Add(createEvent);
                 }
 
                 Assert.IsOrBecomesTrue(() => count == capturedEvents.Count, msg: $"Failed to capture events. Expected {count} found {capturedEvents.Count}");
-                for (int i = 0; i < count; i++)
-                {
+                for (int i = 0; i < count; i++) {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
                     Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
@@ -211,9 +197,8 @@ namespace ReactiveDomain.Testing
             }
         }
 
-        [Fact(Skip = "ES event duplicates - fails on run all test with projection enabled only ")]
-        public void can_subscribe_to_all()
-        {
+        [Fact]
+        public void can_subscribe_to_all() {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events in each stream in the right order
             var streams = new List<string>
             {
@@ -221,54 +206,52 @@ namespace ReactiveDomain.Testing
                 _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid())
             };
 
-            foreach (var conn in _streamStoreConnections)
-            {
-                var capturedEvents = new List<RecordedEvent>();
+            foreach (var conn in _streamStoreConnections) {
+                var allEvents = new ConcurrentQueue<RecordedEvent>();
                 var dropped = false;
 
-                async void EventAppeared(RecordedEvent evt)
-                {
-                    if (streams.Contains(evt.EventStreamId))
-                        capturedEvents.Add(evt);
-                    await Task.FromResult(Unit.Default);
-                }
-
                 var sub = conn.SubscribeToAll(
-                                        EventAppeared,
+                                        allEvents.Enqueue,
                                         (reason, ex) => dropped = true,
                                         _admin);
 
-                foreach (var stream in streams)
-                {
+                foreach (var stream in streams) {
                     var expectedEvents = new List<EventData>();
-                    for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
-                    {
+                    for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++) {
                         var eventMetaData = eventByteData;
-                        var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
-                        conn.AppendToStream(stream, ExpectedVersion.Any, null, createEvent);
+                        var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                         expectedEvents.Add(createEvent);
+                        conn.AppendToStream(stream, ExpectedVersion.Any, null, createEvent);
                     }
 
-                    Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on stream {stream}. Expected {numberOfEvent} found {capturedEvents.Count}");
-                    for (int i = 0; i < numberOfEvent; i++)
-                    {
-                        Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
-                        Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
-                        Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
-                        Assert.Equal(expectedEvents[i].Metadata, capturedEvents[i].Metadata);
-                    }
-
-                    capturedEvents.Clear();
+                    //the all stream will have more events than just what we put in
+                    //we just need to make sure we get the ones we entered back, and in order
+                    var i = 0;
+                    var retry = 0;
+                    do {
+                        while (allEvents.TryDequeue(out var evt) && i < expectedEvents.Count) {
+                            if ((expectedEvents[i].EventId == evt.EventId) &&
+                                expectedEvents[i].EventType == evt.EventType) {
+                                i++;
+                            }
+                        }
+                        //we're async here so the event might not be delivered yet
+                        if (i != expectedEvents.Count) {
+                            SpinWait.SpinUntil(() => false, 100);
+                        }
+                        retry++;
+                    } while (retry < 3);
+                    Assert.True(i == expectedEvents.Count, $"Didn't find all of them expected{expectedEvents.Count - 1} found {i} ");
                 }
 
                 sub.Dispose();
                 Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
+
         }
 
         [Fact]
-        public void can_subscribe_to_event_type_stream()
-        {
+        public void can_subscribe_to_event_type_stream() {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events of the right type in each stream in the right order
             var streamTypeName = _streamNameBuilder.GenerateForEventType(typeof(TestAggregateMessages.NewAggregate).Name);
             var streams = new List<string>
@@ -277,35 +260,31 @@ namespace ReactiveDomain.Testing
                 _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid())
             };
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
 
                 var sub = conn.SubscribeToStream(
                                     streamTypeName,
-                                    async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                    capturedEvents.Add,
                                     (reason, ex) => dropped = true,
                                     _admin);
 
-                foreach (var stream in streams)
-                {
+                foreach (var stream in streams) {
                     var expectedEvents = new List<EventData>();
-                    for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
-                    {
+                    for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++) {
                         var eventMetaData = eventByteData;
-                        var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                        var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                         conn.AppendToStream(stream, ExpectedVersion.Any, null, createEvent);
                         expectedEvents.Add(createEvent);
 
                         // The following is event we are not supposed to catch
-                        var incrementEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.Increment).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                        var incrementEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.Increment).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                         conn.AppendToStream(stream, ExpectedVersion.Any, null, incrementEvent);
                     }
 
                     Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamTypeName}. Expected {numberOfEvent} found {capturedEvents.Count}");
-                    for (int i = 0; i < numberOfEvent; i++)
-                    {
+                    for (int i = 0; i < numberOfEvent; i++) {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
                         Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                         Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
@@ -321,39 +300,35 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
-        public void can_subscribe_to_category_stream()
-        {
+        public void can_subscribe_to_category_stream() {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events of the right category in the right order
             var streamCategoryName = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
             var streamNameInCategory = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
             var streamNameOutOfCategory = _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid());
 
-            foreach (var conn in _streamStoreConnections)
-            {
+            foreach (var conn in _streamStoreConnections) {
                 var capturedEvents = new List<RecordedEvent>();
                 var dropped = false;
 
                 var sub = conn.SubscribeToStream(
                                     streamCategoryName,
-                                    async evt => { capturedEvents.Add(evt); await Task.FromResult(Unit.Default); },
+                                    capturedEvents.Add,
                                     (reason, ex) => dropped = true,
                                     _admin);
 
                 var expectedEvents = new List<EventData>();
-                for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++)
-                {
+                for (byte eventByteData = 0; eventByteData < numberOfEvent; eventByteData++) {
                     var eventMetaData = eventByteData;
-                    var eventInCategory = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var eventInCategory = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                     conn.AppendToStream(streamNameInCategory, ExpectedVersion.Any, null, eventInCategory);
                     expectedEvents.Add(eventInCategory);
 
-                    var eventOutOfCategory = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var eventOutOfCategory = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new[] { eventByteData }, new[] { eventMetaData });
                     conn.AppendToStream(streamNameOutOfCategory, ExpectedVersion.Any, null, eventOutOfCategory);
                 }
 
                 Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamCategoryName}. Expected {numberOfEvent} found {capturedEvents.Count}");
-                for (int i = 0; i < numberOfEvent; i++)
-                {
+                for (int i = 0; i < numberOfEvent; i++) {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
                     Assert.Equal(expectedEvents[i].EventType, capturedEvents[i].EventType);
                     Assert.Equal(expectedEvents[i].Data, capturedEvents[i].Data);
@@ -458,7 +433,7 @@ namespace ReactiveDomain.Testing
         [Fact]
         public void can_multiple_update_and_save_multiple_aggregates() {
             foreach (var repo in _repos) {
-               var id1 = Guid.NewGuid();
+                var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
                 tAgg.RaiseBy(1);
                 tAgg.RaiseBy(2);
