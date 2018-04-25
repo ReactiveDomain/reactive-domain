@@ -13,20 +13,8 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             Monitor.Enter(QueuedSubscriberLock.LockObject);
             _bus = new InMemoryBus("test");
             _subscriber = new Subscriber(_bus);
-            Warmup();
         }
-
-        private void Warmup() {
-            CorrelatedMessage source = CorrelatedMessage.NewRoot();
-            for (int i = 0; i < 10; i++) {
-                var evt = new TestEvent(source);
-                _bus.Publish(evt);
-                source = evt;
-            }
-            SpinWait.SpinUntil(() => _subscriber.Starving);
-            Clear();
-        }
-
+        
         public long TestEventCount => _subscriber.TestEventCount;
         public long ParentEventCount => _subscriber.ParentEventCount;
         public long ChildEventCount => _subscriber.ChildEventCount;
@@ -48,7 +36,6 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             IHandle<ParentTestEvent>,
             IHandle<ChildTestEvent>,
             IHandle<GrandChildTestEvent> {
-            private bool _disposed;
             public long TestEventCount;
             public long ParentEventCount;
             public long ChildEventCount;

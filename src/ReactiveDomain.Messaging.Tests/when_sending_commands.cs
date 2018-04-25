@@ -46,7 +46,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public TestCommandBusFixture() {
             StandardTimeout = TimeSpan.FromSeconds(0.2);
             Bus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
-            RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 2, false, StandardTimeout, StandardTimeout);
+            RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false, StandardTimeout, StandardTimeout);
             //todo: fix connector
             //var conn = new BusConnector(Bus, RemoteBus);
 
@@ -64,23 +64,8 @@ namespace ReactiveDomain.Messaging.Tests {
             Bus.Subscribe<TestCommands.LongRunning>(this);
             //Deliberately not subscribed 
             //Bus.Subscribe<TestCommands.Command3>(this);
-
-            Warmup();
         }
-
-        private void Warmup() {
-            //get all the threads and queues running
-            CorrelatedMessage source = CorrelatedMessage.NewRoot();
-            for (int i = 0; i < 100; i++) {
-                var evt = new TestCommands.Command1(source);
-                Bus.TryFire(evt);
-                source = evt;
-            }
-
-            SpinWait.SpinUntil(() => Bus.Idle);
-            ClearCounters();
-        }
-
+        
         public void ClearCounters() {
             Interlocked.Exchange(ref GotChainedCaller, 0);
             Interlocked.Exchange(ref GotTestCommand1, 0);

@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Bus
         public IdempotentHandler(IHandle<T> handle, int bufferSize = 1)
         {
             Ensure.NotNull(handle, "handle");
-            Ensure.GreaterThan(0, bufferSize, "buffersize");
+            Ensure.GreaterThan(0, bufferSize, nameof(bufferSize));
             _handler = handle;
             _bufferSize = bufferSize;
             _guidQueue = new Queue<Guid>(bufferSize);
