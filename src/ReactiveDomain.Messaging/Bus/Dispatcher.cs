@@ -16,14 +16,14 @@ namespace ReactiveDomain.Messaging.Bus {
         public bool Idle => _queuedPublisher.Idle;
         public Dispatcher(
                     string name,
-                    int concurrency = 3,
+                    int queueCount = 1,
                     bool watchSlowMsg = true,
                     TimeSpan? slowMsgThreshold = null,
                     TimeSpan? slowCmdThreshold = null) {
             var slowMsgThreshold1 = slowMsgThreshold ?? TimeSpan.FromMilliseconds(100);
             var slowCmdThreshold1 = slowCmdThreshold ?? TimeSpan.FromMilliseconds(500);
             _bus = new InMemoryBus(name, watchSlowMsg, slowMsgThreshold);
-            _queuedPublisher = new MultiQueuedPublisher(_bus, concurrency, slowMsgThreshold1, slowCmdThreshold1);
+            _queuedPublisher = new MultiQueuedPublisher(_bus, queueCount, slowMsgThreshold1, slowCmdThreshold1);
             _handleWrappers = new Dictionary<Type, object>();
         }
 

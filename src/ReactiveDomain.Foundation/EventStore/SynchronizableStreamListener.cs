@@ -42,11 +42,13 @@ namespace ReactiveDomain.Foundation.EventStore
 
         public override void Start(string streamName, int? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
         {
-            if (Sync)
+            if (Sync) {
                 SyncQueue?.Start();
+            }
             base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
-            if (waitUntilLive)
+            if (SyncQueue != null && waitUntilLive) {
                 SpinWait.SpinUntil(() => SyncQueue.Idle, millisecondsTimeout);
+            }
         }
 
         private bool _disposed;
