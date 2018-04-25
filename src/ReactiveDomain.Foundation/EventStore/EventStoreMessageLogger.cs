@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using EventStore.ClientAPI;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -10,13 +9,15 @@ namespace ReactiveDomain.Foundation.EventStore
         QueuedSubscriber,
         IHandle<Message>
     {
-        private readonly IEventStoreConnection _eventStore;
+        private readonly IStreamStoreConnection _eventStore;
         private readonly string _streamPrefix;
-        private readonly IGeneralBus _bus;
+        private readonly IDispatcher _bus;
+        private readonly IStreamNameBuilder _streamNameBuilder;
+        private readonly IEventSerializer _eventSerializer;
 
         public EventStoreMessageLogger(
-            IGeneralBus bus,
-            IEventStoreConnection es,
+            IDispatcher bus,
+            IStreamStoreConnection es,
             string logStreamPrefix = "",
             bool enableLogging = false,
             bool idempotent = true) : base(bus, idempotent)
@@ -26,15 +27,18 @@ namespace ReactiveDomain.Foundation.EventStore
             Enabled = enableLogging;
             _streamPrefix = logStreamPrefix;
             if (Enabled)
-                _eventStore?.ConnectAsync();
+                _eventStore?.Connect();
+            _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(logStreamPrefix);
+            _eventSerializer =  new JsonMessageSerializer();
 
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<Message>(this);
         }
 
         public bool Enabled { get; set; }
         //TODO:  eventually, connect on enable, disconnect on disable?
 
-
+        // TODO: use _streamNameBuilder
         public string FullStreamName
         {
             get
@@ -58,14 +62,15 @@ namespace ReactiveDomain.Foundation.EventStore
             };
 
 
-            var ed = GetEventStoreRepository.ToEventData(message.MsgId, message, metadata);
+            var ed = _eventSerializer.Serialize(message, metadata);
             var data = new List<EventData> {ed};
 
-            int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
-            _eventStore.AppendToStreamAsync(
+           // int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
+            _eventStore.AppendToStream(
                 FullStreamName,
                 ExpectedVersion.Any,
-                data);
+                null,
+                data.ToArray());
         }
 
     }

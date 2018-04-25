@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
-using ReactiveDomain.Messaging.Concurrent;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
@@ -23,7 +23,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         public int MessageCount => _queue.Count;
         public string Name => _queueStats.Name;
-        public bool Starving => _starving;
+        public bool Idle => _starving;
         private readonly IHandle<Message> _consumer;
 
         private readonly bool _watchSlowMsg;
@@ -78,7 +78,7 @@ namespace ReactiveDomain.Messaging.Bus
         {
             _stop = true;
             if (!_stopped.Wait(_threadStopWaitTimeout))
-                throw new TimeoutException(string.Format("Unable to stop thread '{0}'.", Name));
+                throw new TimeoutException($"Unable to stop thread '{Name}'.");
         }
 
         public void RequestStop()

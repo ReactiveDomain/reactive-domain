@@ -1,0 +1,61 @@
+<Project>
+    <PropertyGroup>
+        <BuildPropsImported>true</BuildPropsImported>
+    </PropertyGroup>
+    <PropertyGroup>
+        <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
+        <IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
+        <DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
+        <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
+    </PropertyGroup>
+    <PropertyGroup>
+        <PackageVersionPrefix>0.8.14</PackageVersionPrefix>
+        <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
+        <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
+        <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
+        <NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
+    </PropertyGroup>
+    <PropertyGroup>
+        <Prefer32Bit>false</Prefer32Bit>
+        <Platforms>AnyCPU</Platforms>
+        <Authors>PerkinElmer,Linedata</Authors>
+        <Company>PerkinElmer,Linedata</Company>
+        <Copyright>Copyright © 2014-2018 PerkinElmer, Inc.</Copyright>
+        <Description />
+        <AssemblyVersion>0.8.14.0</AssemblyVersion>
+        <FileVersion>0.8.14.0</FileVersion>
+        <NeutralLanguage />
+        <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+    </PropertyGroup>
+    <PropertyGroup>
+        <OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup>
+        <NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
+    </PropertyGroup>
+    <PropertyGroup>
+        <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
+    </PropertyGroup>
+    <Choose>
+        <When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
+            <PropertyGroup>
+                <HomeDirectory>$(HOME)</HomeDirectory>
+            </PropertyGroup>
+        </When>
+        <When Condition=" $(OS) == 'WINDOWS_NT'">
+            <PropertyGroup>
+                <HomeDirectory>$(USERPROFILE)</HomeDirectory>
+            </PropertyGroup>
+        </When>
+    </Choose>
+    <PropertyGroup Condition="$(OS) == 'WINDOWS_NT'">
+        <LibTargetFrameworks>net462;net452;netstandard2.0</LibTargetFrameworks>
+        <TestTargetFrameworks>net462;net452;netcoreapp2.0</TestTargetFrameworks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" $(OS) != 'WINDOWS_NT'">
+        <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks>
+        <TestTargetFrameworks>netcoreapp2.0</TestTargetFrameworks>
+    </PropertyGroup>
+</Project>

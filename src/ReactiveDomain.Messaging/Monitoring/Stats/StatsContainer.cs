@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Monitoring.Stats
 {

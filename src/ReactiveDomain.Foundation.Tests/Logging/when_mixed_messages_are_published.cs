@@ -1,25 +1,19 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
+using System;
+using System.Threading;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Logging
 {
     // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_mixed_messages_are_published :
         with_message_logging_enabled,
         IHandle<Message>
     {
-        private readonly Guid _correlationId = Guid.NewGuid();
-        private IListener _listener;
-
-        public when_mixed_messages_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
-        {
-            
-        }
         private readonly int _maxCountedMessages = 25;
         private int _multiFireCount;
         private int _testCommandCount;
@@ -27,10 +21,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
         private int _testDomainEventCount;
+        private long _gotEvt;
 
-
-        private TestCommandSubscriber _cmdHandler;
-        protected override void When()
+        private readonly TestCommandSubscriber _cmdHandler;
+        public when_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
             // commands must have a commandHandler
             _cmdHandler = new TestCommandSubscriber(Bus);
@@ -38,37 +32,36 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
-            _listener.EventStream.Subscribe<Message>(this);
+            IListener listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
+            listener.EventStream.Subscribe<Message>(this);
 
-            _listener.Start(Logging.FullStreamName);
-
+            listener.Start(Logging.FullStreamName);
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                var evt = new CountedEvent(i,cmd);
+                Bus.Publish(evt);
+                source = evt;
+            }
+            Bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotEvt)));
 
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new TestEvent(source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
-            }
-
-            var tstCmd = new TestCommands.TestCommand3(
-                        Guid.NewGuid(),
-                        null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",
@@ -80,10 +73,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         
         public void commands_are_logged()
         {
-
-            TestQueue.WaitFor<TestDomainEvent>(TimeSpan.FromSeconds(5));
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
-
+            Assert.IsOrBecomesTrue(()=> _gotEvt >0);
+           
+           
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
             // Wait  for last event to be queued
             Assert.IsOrBecomesTrue(() => _countedEventCount == _maxCountedMessages, 2000);
             Assert.True(_countedEventCount == _maxCountedMessages, $"Message {_countedEventCount} doesn't match expected index {_maxCountedMessages}");
@@ -108,10 +101,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
-            if (msg is TestCommands.TestCommand3) _testCommandCount++;
+            if (msg is TestCommands.Command2) _multiFireCount++;
+            if (msg is TestCommands.Command3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
-            if (msg is TestDomainEvent) _testDomainEventCount++;
+            if (msg is TestEvent) _testDomainEventCount++;
         }
     }
 }

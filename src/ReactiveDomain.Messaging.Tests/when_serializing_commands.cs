@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Serialization;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests
@@ -17,13 +17,13 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Succeed(15);
-            TestCommands.TestCommandResponse farSide;
+            TestCommands.TestResponse farSide;
             var ms = new MemoryStream();
-            using (var writer = new BsonWriter(ms))
+            using (var writer = new BsonDataWriter(ms))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
             var array = ms.ToArray();
@@ -32,21 +32,20 @@ namespace ReactiveDomain.Messaging.Tests
             StringWriter sw = new StringWriter(sb);
             using (var writer = new JsonTextWriter(sw))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
-            var foo = sb.ToString();
 
             var ms2 = new MemoryStream(array);
 
-            using (var reader = new BsonReader(ms2))
+            using (var reader = new BsonDataReader(ms2))
             {
-                var serializer = new JsonSerializer();
-                farSide = serializer.Deserialize<TestCommands.TestCommandResponse>(reader);
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
+                farSide = serializer.Deserialize<TestCommands.TestResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
-            Assert.Equal(nearSide.MsgTypeId, farSide.MsgTypeId);
+            Assert.Equal(nearSide.GetType(), farSide.GetType());
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
@@ -57,32 +56,29 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Succeed(15);
-            TestCommands.TestCommandResponse farSide;
+            TestCommands.TestResponse farSide;
 
 
             StringBuilder sb = new StringBuilder();
             StringWriter sw = new StringWriter(sb);
             using (var writer = new JsonTextWriter(sw))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
-            var foo = sb.ToString();
 
-
-
-            using (var reader = new JsonTextReader(new StringReader(foo)))
+            using (var reader = new JsonTextReader(new StringReader(sb.ToString())))
             {
-                var serializer = new JsonSerializer();
-                serializer.Binder = new TestDeserializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
+                serializer.SerializationBinder = new TestDeserializer();
                 serializer.ContractResolver = new TestContractResolver();
-                farSide = serializer.Deserialize<TestCommands.TestCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.TestResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
-            Assert.Equal(nearSide.MsgTypeId, farSide.MsgTypeId);
+            Assert.Equal(nearSide.GetType(), farSide.GetType());
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
@@ -94,13 +90,13 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
-            TestCommands.TestFailedCommandResponse farSide;
+            TestCommands.FailedResponse farSide;
             var ms = new MemoryStream();
-            using (var writer = new BsonWriter(ms))
+            using (var writer = new BsonDataWriter(ms))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
             var array = ms.ToArray();
@@ -109,21 +105,20 @@ namespace ReactiveDomain.Messaging.Tests
             StringWriter sw = new StringWriter(sb);
             using (var writer = new JsonTextWriter(sw))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
-            var foo = sb.ToString();
 
             var ms2 = new MemoryStream(array);
 
-            using (var reader = new BsonReader(ms2))
+            using (var reader = new BsonDataReader(ms2))
             {
-                var serializer = new JsonSerializer();
-                farSide = serializer.Deserialize<TestCommands.TestFailedCommandResponse>(reader);
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
+                farSide = serializer.Deserialize<TestCommands.FailedResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
-            Assert.Equal(nearSide.MsgTypeId, farSide.MsgTypeId);
+            Assert.Equal(nearSide.GetType(), farSide.GetType());
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
@@ -135,32 +130,29 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedTestCommand(Guid.NewGuid(), null);
-            var nearSide = cmd.Fail(new CommandException("O_Ops",cmd), 15);
-            TestCommands.TestFailedCommandResponse farSide;
+            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
+            var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
+            TestCommands.FailedResponse farSide;
 
 
             StringBuilder sb = new StringBuilder();
             StringWriter sw = new StringWriter(sb);
             using (var writer = new JsonTextWriter(sw))
             {
-                var serializer = new JsonSerializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
                 serializer.Serialize(writer, nearSide);
             }
-            var foo = sb.ToString();
 
-
-
-            using (var reader = new JsonTextReader(new StringReader(foo)))
+            using (var reader = new JsonTextReader(new StringReader(sb.ToString())))
             {
-                var serializer = new JsonSerializer();
-                serializer.Binder = new TestDeserializer();
+                var serializer = JsonSerializer.Create(Json.JsonSettings);
+                serializer.SerializationBinder = new TestDeserializer();
                 serializer.ContractResolver = new TestContractResolver();
-                farSide = serializer.Deserialize<TestCommands.TestFailedCommandResponse>(reader);
+                farSide = serializer.Deserialize<TestCommands.FailedResponse>(reader);
             }
 
             Assert.Equal(nearSide.MsgId, farSide.MsgId);
-            Assert.Equal(nearSide.MsgTypeId, farSide.MsgTypeId);
+            Assert.Equal(nearSide.GetType(), farSide.GetType());
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
@@ -171,8 +163,6 @@ namespace ReactiveDomain.Messaging.Tests
     }
     public class TestContractResolver : DefaultContractResolver
     {
-
-
         protected override IList<JsonProperty> CreateConstructorParameters(ConstructorInfo constructor, JsonPropertyCollection memberProperties)
         {
             var rslt = base.CreateConstructorParameters(constructor, memberProperties);

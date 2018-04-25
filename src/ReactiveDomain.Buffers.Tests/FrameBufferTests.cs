@@ -1,5 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Buffers.FrameFormats;
+using ReactiveDomain.Buffers.Examples;
 using ReactiveDomain.Buffers.Memory;
 using Xunit;
 

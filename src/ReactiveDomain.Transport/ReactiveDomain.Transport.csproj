@@ -1,32 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Version>0.8.2.0</Version>
-    <Authors>PerkinElmer</Authors>
-    <Company>PerkinElmer</Company>
-    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
-    <Description />
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <FileVersion>0.8.2.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
-
   <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
-
 </Project>

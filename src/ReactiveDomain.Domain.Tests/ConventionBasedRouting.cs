@@ -22,7 +22,7 @@ namespace ReactiveDomain.Domain.Tests
             Assert.Equal(event2, sut.RouteForEvent2.Captured);
         }
 
-        class HasRoutesDiscoveredByConvention : AggregateRootEntity
+        class HasRoutesDiscoveredByConvention : EventDrivenStateMachine
         {
             public readonly CapturingRoute RouteForEvent1 = new CapturingRoute();
             public readonly CapturingRoute RouteForEvent2 = new CapturingRoute();

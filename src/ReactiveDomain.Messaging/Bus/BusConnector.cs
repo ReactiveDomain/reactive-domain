@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
@@ -11,7 +11,7 @@ namespace ReactiveDomain.Messaging.Bus
     {
         private readonly BusAdapter _left;
         private readonly BusAdapter _right;
-        public BusConnector(IGeneralBus left, IGeneralBus right)
+        public BusConnector(IDispatcher left, IDispatcher right)
         {
             _left = new BusAdapter(left);
             _right = new BusAdapter(right);
@@ -31,12 +31,12 @@ namespace ReactiveDomain.Messaging.Bus
         IHandle<Message>,
         ISubscriber
     {
-        private readonly IGeneralBus _bus;
+        private readonly IDispatcher _bus;
         private MessageIdTracker _idTracker;
         private object _handler;
         private readonly HashSet<Guid> _trackedMessages;
 
-        public BusAdapter(IGeneralBus bus)
+        public BusAdapter(IDispatcher bus)
         {
             _idTracker = null;
             _bus = bus;
@@ -62,7 +62,7 @@ namespace ReactiveDomain.Messaging.Bus
             _handler = handler;
             _idTracker = new MessageIdTracker((IHandle<Message>)handler, (g) => _trackedMessages.Add(g));
             _bus.Subscribe<Message>(_idTracker);
-            return new SubscriptionDisposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+            return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
 
         public void Unsubscribe<T>(IHandle<T> handler) where T : Message

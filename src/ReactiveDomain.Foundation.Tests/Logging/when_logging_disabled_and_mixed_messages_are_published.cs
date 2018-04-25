@@ -1,8 +1,8 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
+using System;
 using Xunit;
 using Xunit.Sdk;
 
@@ -10,7 +10,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 {
 
     // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_logging_disabled_and_mixed_messages_are_published :
         with_message_logging_disabled,
         IHandle<Message>
@@ -20,11 +20,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             BootStrap.Load();
         }
 
-        public when_logging_disabled_and_mixed_messages_are_published(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
-        {
-            
-        }
-        private readonly Guid _correlationId = Guid.NewGuid();
+        
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
 
         private readonly int _maxCountedEvents = 5;
@@ -39,14 +36,9 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private TestCommandSubscriber _cmdHandler;
 
 
-        protected override void When()
+        public when_logging_disabled_and_mixed_messages_are_published(StreamStoreConnectionFixture fixture):base(fixture.Connection)
         {
-
-            _listener = Repo.GetListener(Logging.FullStreamName);
-            _listener.EventStream.Subscribe<Message>(this);
-
-            _listener.Start(Logging.FullStreamName);
-
+        
             _countedEventCount = 0;
             _testDomainEventCount = 0;
 
@@ -55,36 +47,37 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = Repo.GetListener(Logging.FullStreamName);
+            _listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
             _listener.EventStream.Subscribe<Message>(this);
 
             _listener.Start(Logging.FullStreamName);
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++)
             {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(evt);
+
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
+            }
+           
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new TestEvent(source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(new TestDomainEvent(_correlationId, Guid.NewGuid()));
-            }
-
-            var tstCmd = new TestCommands.TestCommand3(
-                        Guid.NewGuid(),
-                        null);
+            var tstCmd = new TestCommands.Command3(source);
 
             Bus.Fire(tstCmd,
                 "Test Command exception message",
@@ -97,7 +90,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         public void mixed_messages_are_not_logged()
         {
             // all events published, commands fired
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
 
             // Wait  for last CountedEvent to be "heard" from logger/repo - times out because events not logged
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -135,10 +128,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         public void Handle(Message msg)
         {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
-            if (msg is TestCommands.TestCommand3) _testCommandCount++;
+            if (msg is TestCommands.Command2) _multiFireCount++;
+            if (msg is TestCommands.Command3) _testCommandCount++;
             if (msg is CountedEvent) _countedEventCount++;
-            if (msg is TestDomainEvent) _testDomainEventCount++;
+            if (msg is TestEvent) _testDomainEventCount++;
         }
     }
 }

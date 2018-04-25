@@ -1,24 +1,32 @@
-﻿using System;
-using ReactiveDomain.Foundation.Tests.EventStore;
+﻿using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Testing;
+using ReactiveDomain.Testing;
+using System;
 using Xunit;
 using Xunit.Sdk;
 
-namespace ReactiveDomain.Foundation.Tests.Logging
-{
-        // ReSharper disable once InconsistentNaming
-    [Collection("ESEmbeded")]
-    public class when_toggling_logging : 
+namespace ReactiveDomain.Foundation.Tests.Logging {
+    // ReSharper disable once InconsistentNaming
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
+    public class when_toggling_logging :
         with_message_logging_enabled,
-        IHandle<Message>
-    {
-        public when_toggling_logging(EmbeddedEventStoreFixture fixture):base(fixture.Connection)
-        {
-            
+        IHandle<Message> {
+        public when_toggling_logging(StreamStoreConnectionFixture fixture) : base(fixture.Connection) {
+            // command must have a commandHandler
+            _cmdHandler = new TestCommandSubscriber(Bus);
+
+            _multiFireCount = 0;
+
+            _listener = new SynchronizableStreamListener(
+                Logging.FullStreamName, 
+                Connection, 
+                StreamNameBuilder,
+                EventSerializer);
+
+            _listener.Start(Logging.FullStreamName);
         }
-        private readonly Guid _correlationId = Guid.NewGuid();
+        private readonly CorrelationId _correlationId = CorrelationId.NewId();
         private IListener _listener;
         private readonly int _maxCountedEvents = 5;
         private int _countedEventCount;
@@ -28,33 +36,17 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
         private TestCommandSubscriber _cmdHandler;  // "never used" is a red herring. It handles the command
 
-
-        protected override void When()
-        {
-            // command must have a commandHandler
-            _cmdHandler = new TestCommandSubscriber(Bus);
-
-            _multiFireCount = 0;
-
-            _listener = Repo.GetListener(Logging.FullStreamName);
-            _listener.EventStream.Subscribe<Message>(this);
-
-            _listener.Start(Logging.FullStreamName);
-
-        }
-
-        public void commands_logged_only_while_logging_is_enabled()
-        {
+        [Fact(Skip = "Mock store not implemented")]
+        private void commands_logged_only_while_logging_is_enabled() {
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
+            for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
             Assert.IsOrBecomesTrue(
@@ -66,15 +58,13 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
 
             // create and fire a mixed set of commands and events
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
+            for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -85,26 +75,23 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             Logging.Enabled = true;
             _multiFireCount = 0;
 
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
+            for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
+                var cmd = new TestCommands.Command2(source);
                 Bus.Fire(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
+                source = cmd;
             }
 
-            var tstCmd = new TestCommands.TestCommand3(
-                Guid.NewGuid(),
-                null);
-
+            var tstCmd = new TestCommands.Command3(source);
+            _cmdHandler.TestCommand3Handled = 0;
             Bus.Fire(tstCmd,
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
+            source = tstCmd;
 
-            TestQueue.WaitFor<TestCommands.TestCommand3>(TimeSpan.FromSeconds(5));
+            Assert.IsOrBecomesTrue(() => _cmdHandler.TestCommand3Handled > 0);
 
             Assert.IsOrBecomesTrue(
                 () => _multiFireCount == _maxCountedMessages,
@@ -116,18 +103,15 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 $"Third set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
 
         }
-
-        public void events_logged_only_while_logging_is_enabled()
-        {
+        [Fact(Skip = "Mock store not implemented")]
+        private void events_logged_only_while_logging_is_enabled() {
             _countedEventCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.IsOrBecomesTrue(
@@ -139,12 +123,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _countedEventCount = 0;
 
             // publish again, with logging disabled
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -156,12 +138,10 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _countedEventCount = 0;
 
             // publish again, with logging disabled
-            for (int i = 0; i < _maxCountedEvents; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
+            for (int i = 0; i < _maxCountedEvents; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                source = evt;
             }
 
             Assert.IsOrBecomesTrue(
@@ -169,26 +149,17 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 1000,
                $"Third set of Events count {_countedEventCount} - not properly logged");
         }
-
-        public void mixed_messages_logged_only_while_logging_is_enabled()
-        {
+        [Fact(Skip = "Mock store not implemented")]
+        private void mixed_messages_logged_only_while_logging_is_enabled() {
             _countedEventCount = 0;
-
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and publish a set of events and commands
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+            for (int i = 0; i < _maxCountedMessages; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.IsOrBecomesTrue(
@@ -206,20 +177,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
 
             // repeat, with logging disabled
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+            for (int i = 0; i < _maxCountedMessages; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.Throws<TrueException>(() => Assert.IsOrBecomesTrue(
@@ -239,20 +202,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             _multiFireCount = 0;
 
             // repeat, with logging enabled again
-            for (int i = 0; i < _maxCountedMessages; i++)
-            {
-                Bus.Publish(
-                    new CountedEvent(i,
-                        _correlationId,
-                        Guid.NewGuid()));
-
-                var cmd = new TestCommands.TestCommand2(
-                                        Guid.NewGuid(),
-                                        null);
-
-                Bus.Fire(cmd,
-                    $"exception message{i}",
-                    TimeSpan.FromSeconds(1));
+            for (int i = 0; i < _maxCountedMessages; i++) {
+                var evt = new CountedEvent(i, source);
+                Bus.Publish(evt);
+                var cmd = new TestCommands.Command2(evt);
+                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                source = cmd;
             }
 
             Assert.IsOrBecomesTrue(
@@ -269,9 +224,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
 
 
-        public void Handle(Message msg)
-        {
-            if (msg is TestCommands.TestCommand2) _multiFireCount++;
+        public void Handle(Message msg) {
+            if (msg is TestCommands.Command2) _multiFireCount++;
 
             if (msg is CountedEvent) _countedEventCount++;
 

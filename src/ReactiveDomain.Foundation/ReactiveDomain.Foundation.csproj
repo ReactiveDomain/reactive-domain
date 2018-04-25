@@ -1,39 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Version>0.8.2.0</Version>
-    <Authors>PerkinElmer</Authors>
-    <Company>PerkinElmer</Company>
-    <Copyright>Copyright © 2014-2017 PerkinElmer, Inc.</Copyright>
-    <Description />
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <FileVersion>0.8.2.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="4.1.0" />
-    <PackageReference Include="EventStore.Client.Embedded" Version="4.1.0" />
+    <Compile Remove="Diagnostics\MonitoredCommandBus.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="reactiveui" Version="7.4.0" />
     <PackageReference Include="xunit.core" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
+    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net462'" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Domain\ReactiveDomain.Domain.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <Compile Remove="ReadModel\*.cs" />
+    <Compile Remove="ViewObjects\*.cs" />
+    <Compile Remove="Threading.cs" />
+    <Compile Remove="TransientSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="PresentationFramework" />
+    <Folder Include="Diagnostics\" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\..\bld\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\..\bld\Release</OutputPath>
-  </PropertyGroup>
+  <ItemGroup Condition="">
+    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net452'" />
+    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net462'" />
+  </ItemGroup>
 </Project>

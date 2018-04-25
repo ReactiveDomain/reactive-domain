@@ -2,8 +2,9 @@
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using ReactiveDomain.Buffers.Examples;
 using ReactiveDomain.Buffers.Memory;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Buffers.FileIO
 {

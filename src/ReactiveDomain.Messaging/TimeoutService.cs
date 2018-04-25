@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Logging;
+using ReactiveDomain.Messaging.Messages;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
 {
-    public class TimeoutMessage : DomainEvent
+    public class TimeoutMessage : Event
     {
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId => TypeId;
-
         public Guid TargetId { get; private set; }
 
         /// <summary>
@@ -21,9 +19,8 @@ namespace ReactiveDomain.Messaging
         public TimeoutMessage(
                         Guid targetId,
                         long timeoutMs,
-                        Guid correlationId,
-                        Guid sourceId)
-                        : base(correlationId, sourceId)
+                        CorrelatedMessage source)
+                        : base(source)
         {
             TargetId = targetId;
             TimeoutMs = timeoutMs;
@@ -33,21 +30,18 @@ namespace ReactiveDomain.Messaging
     public class TimeoutRequestNode : PriorityQueueNode
     {
         public TimeoutRequestNode(
-         Guid correlationId,
-         Guid sourceId,
-         Guid targetId,
-         long timeoutMs,
-         Action<TimeoutMessage> timeoutAction
+                CorrelatedMessage source,
+                Guid targetId,
+                long timeoutMs,
+                Action<TimeoutMessage> timeoutAction
             ) : base(timeoutMs)
         {
-            CorrelationId = correlationId;
-            SourceId = sourceId;
+            Source = source;
             TargetId = targetId;
             TimeoutMs = timeoutMs;
             TimeoutAction = timeoutAction;
         }
-        public Guid CorrelationId { get; }
-        public Guid SourceId { get; }
+        public CorrelatedMessage Source { get; }
         public Guid TargetId { get; }
         public long TimeoutMs { get; }
         public Action<TimeoutMessage> TimeoutAction;
@@ -57,9 +51,7 @@ namespace ReactiveDomain.Messaging
             TimeoutAction(new TimeoutMessage(
                                         TargetId,
                                         TimeoutMs,
-                                        CorrelationId,
-                                        SourceId
-                                        ));
+                                        Source));
         }
     }
 
@@ -170,16 +162,14 @@ namespace ReactiveDomain.Messaging
             Thread.EndThreadAffinity();
         }
         public void PostTimeoutAfter(
-                            Guid correlationId,
-                            Guid sourceId,
+                            CorrelatedMessage source,
                             Guid targetId,
                             long timeoutMs,
                             Action<TimeoutMessage> timeoutAction)
         {
             Ensure.NotNull(timeoutAction, "timeoutAction");
             var timeoutRequest = new TimeoutRequestNode(
-                                                 correlationId,
-                                                 sourceId,
+                                                 source,
                                                  targetId,
                                                  timeoutMs,
                                                  timeoutAction);

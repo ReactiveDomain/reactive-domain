@@ -1,12 +1,10 @@
-﻿using System;
-
-namespace ReactiveDomain.Foundation
+﻿namespace ReactiveDomain.Foundation
 {
     public static class RepositoryExtensions
     {
-         public static void Save(this IRepository repository, IEventSource aggregate, Guid commitId)
+         public static void Save(this IRepository repository, IEventSource aggregate)
          {
-             repository.Save(aggregate, commitId, a => {});
+             repository.Save(aggregate);
          }
     }
 }

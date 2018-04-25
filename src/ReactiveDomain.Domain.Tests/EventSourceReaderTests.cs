@@ -4,17 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using EventStore.ClientAPI;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Domain.Tests
 {
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class EventSourceReaderTests
     {
-        private readonly EmbeddedEventStoreFixture _fixture;
+        private readonly StreamStoreConnectionFixture _fixture;
 
-        public EventSourceReaderTests(EmbeddedEventStoreFixture fixture)
+        public EventSourceReaderTests(StreamStoreConnectionFixture fixture)
         {
             _fixture = fixture;
         }
@@ -183,7 +183,7 @@ namespace ReactiveDomain.Domain.Tests
         private Task DeleteStream(string stream)
         {
             return _fixture.Connection.DeleteStreamAsync(
-                stream,
+                new StreamName(stream),
                 ExpectedVersion.Any);
         }
 

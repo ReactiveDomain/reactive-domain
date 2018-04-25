@@ -6,25 +6,25 @@ using ReactiveDomain.Transport.CommandSocket;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Transport
 {
     public abstract class TcpBusSide : IHandle<Message>
     {
         protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        protected readonly IGeneralBus MessageBus;
+        protected readonly IDispatcher MessageBus;
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
         protected Timer StatsTimer;
-        protected ITcpConnection TcpConnection;
+        protected List<ITcpConnection> TcpConnection = new List<ITcpConnection>();
         protected LengthPrefixMessageFramer Framer = new LengthPrefixMessageFramer();
 
         protected TcpBusSide(
             IPAddress hostIp,
             int commandPort,
-            IGeneralBus messageBus)
+            IDispatcher messageBus)
         {
             _hostIp = hostIp;
             _commandPort = commandPort;
@@ -97,7 +97,7 @@ namespace ReactiveDomain.Transport
                 throw;
             }
 
-            Type type = MessageHierarchy.GetMsgType(tcpMessage.WrappedMessage.MsgTypeId);
+            Type type = tcpMessage.WrappedMessage.GetType();
             Log.Trace("Message " + tcpMessage.WrappedMessage.MsgId + " (Type " + type.Name + ") received from TCP.");
 
             if (_inboundSpamMessageTypes.Contains(type))
@@ -124,7 +124,7 @@ namespace ReactiveDomain.Transport
 
         public void Handle(Message message)
         {
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
 
             if (TcpConnection == null)
@@ -133,14 +133,17 @@ namespace ReactiveDomain.Transport
                 return;
             }
 
-            try
+            foreach (var conn in TcpConnection)
             {
-                var framed = Framer.FrameData((new TcpMessage(message).AsArraySegment()));
-                TcpConnection.EnqueueSend(framed);
-            }
-            catch (Exception ex)
-            {
-                Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                try
+                {
+                    var framed = Framer.FrameData(new TcpMessage(message).Data);
+                    conn.EnqueueSend(framed);
+                }
+                catch (Exception ex)
+                {
+                    Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                }
             }
         }
     }

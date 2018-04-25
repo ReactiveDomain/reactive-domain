@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Buffers.Memory
 {
+    /// <summary>
+    /// Image is one example of using a pinned buffer.
+    /// The Wrapped buffer can also used to setup ring buffers for "disrupter" style high speed processing
+    /// </summary>
     public sealed unsafe class PinnedBuffer : IDisposable
     {
         private static readonly ILogger Log = LogManager.GetLogger("Common");

@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging
 {

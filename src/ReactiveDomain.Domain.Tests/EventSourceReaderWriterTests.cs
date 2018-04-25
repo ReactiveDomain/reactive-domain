@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Domain.Tests
 {
-    [Collection(nameof(EmbeddedEventStoreCollection))]
+    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class EventSourceReaderWriterTests
     {
-        private readonly EmbeddedEventStoreFixture _fixture;
+        private readonly StreamStoreConnectionFixture _fixture;
 
-        public EventSourceReaderWriterTests(EmbeddedEventStoreFixture fixture)
+        public EventSourceReaderWriterTests(StreamStoreConnectionFixture fixture)
         {
             _fixture = fixture;
         }

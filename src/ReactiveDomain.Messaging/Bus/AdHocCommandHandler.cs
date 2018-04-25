@@ -1,5 +1,5 @@
 using System;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
@@ -25,9 +25,8 @@ namespace ReactiveDomain.Messaging.Bus
             _currentCommand = command.MsgId;
             try
             {
-                var tCmd = command as TokenCancellableCommand;
-                if (tCmd?.IsCanceled ?? false)
-                    return tCmd.Canceled();
+                if (command.IsCanceled)
+                    return command.Canceled();
 
                 passed = _handleCommand(command);
             }

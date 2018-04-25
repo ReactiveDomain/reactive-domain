@@ -1,5 +1,5 @@
 ﻿using System;
-using ReactiveDomain.Messaging.Util;
+using ReactiveDomain.Util;
 using Xunit;
 
 // ReSharper disable InconsistentNaming

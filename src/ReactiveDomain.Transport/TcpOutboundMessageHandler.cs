@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Logging;
 
 namespace ReactiveDomain.Transport
 {
     public class TcpOutboundMessageHandler : IHandle<Message>
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        private readonly IGeneralBus _messageBus;
+        private readonly IDispatcher _messageBus;
         private readonly QueuedHandler _outboundMessageQueuedHandler;
 
         private readonly ConcurrentDictionary<Guid, Message> _messagesThatCameFromTcp =
             new ConcurrentDictionary<Guid, Message>();
 
         public TcpOutboundMessageHandler(
-            IGeneralBus messageBus,
+            IDispatcher messageBus,
             QueuedHandler outboundMessageQueuedHandler)
         {
             _messageBus = messageBus;
@@ -33,7 +33,7 @@ namespace ReactiveDomain.Transport
 
         public void IgnoreThisMessage(Message message)
         {
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             if (message.MsgId == Guid.Empty)
             {
                 Log.Error("Message " + message.MsgId + " (Type " + type.Name + ") - INTERNAL ERROR: there should NEVER be a message with that MsgId value");
@@ -48,7 +48,7 @@ namespace ReactiveDomain.Transport
 
         public void Handle(Message message)
         {
-            Type type = MessageHierarchy.GetMsgType(message.MsgTypeId);
+            Type type = message.GetType();
             Message removedMessage;
             if (_messagesThatCameFromTcp.TryRemove(message.MsgId, out removedMessage))
             {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Buffers.FrameFormats;
-using ReactiveDomain.Messaging.Logging;
+using ReactiveDomain.Buffers.Examples;
+using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Buffers.Memory
 {
@@ -23,18 +23,17 @@ namespace ReactiveDomain.Buffers.Memory
         {
             return new WrappedBuffer(this, CheckOutBuffer(size));
         }
-
-        public WrappedImage<T> GetFrame<T>() where T: Image ,new()
+        /// <summary>
+        /// for example
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public WrappedImage<T> GetFramedImage<T>() where T: Image ,new()
         {
             var frameType = new T();
             return new WrappedImage<T>(this, CheckOutBuffer(frameType.BufferSize));
         }
-
-        public WrappedSquareImage GetWrappedSquareImage(int dimension, int bytesPerPixel)
-        {
-            return new WrappedSquareImage(this, CheckOutBuffer((long)(dimension * dimension * bytesPerPixel)), dimension, bytesPerPixel);
-        }
-
+        
         private PinnedBuffer CheckOutBuffer(long size)
         {
             var buffer = FirstAvailableBuffer(size);

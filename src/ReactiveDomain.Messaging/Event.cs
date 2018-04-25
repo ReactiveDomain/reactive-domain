@@ -1,16 +1,16 @@
-﻿using System.Threading;
+﻿using System;
+using System.Diagnostics.Tracing;
+using System.Threading;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using ReactiveDomain.Messaging.Messages;
 
-namespace ReactiveDomain.Messaging
-{
-    public class Event : Message, IEvent
-    {
+namespace ReactiveDomain.Messaging {
+    public class Event : CorrelatedMessage, IEvent  {
         protected ushort Version = 1;
-        private static readonly int TypeId = Interlocked.Increment(ref NextMsgId);
-        public override int MsgTypeId { get { return TypeId; } }
-        public Event()
-        {
-
-        }
+       
+        protected Event(CorrelatedMessage source):base(source.CorrelationId,new SourceId(source)){}
+        [JsonConstructor]
+        protected Event(CorrelationId correlationId, SourceId sourceId):base(correlationId, sourceId) { }
     }
 }
