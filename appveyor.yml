@@ -4,3 +4,14 @@ before_build:
   - msbuild /t:restore ./src/ReactiveDomain.sln
 build:
   project: ./src/ReactiveDomain.sln  
+test_script:
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Buffers.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Foundation.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Messaging.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.PrivateLedger.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Transport.Tests.dll -appveyor'
+  #- dotnet test  ./src/ReactiveDomain.Buffers.Tests/ReactiveDomain.Buffers.Tests.csproj
+  - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj
+  - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
+  - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
+  - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
