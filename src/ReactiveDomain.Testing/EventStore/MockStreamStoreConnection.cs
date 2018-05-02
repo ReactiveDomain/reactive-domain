@@ -3,24 +3,30 @@ using ReactiveDomain.Messaging.Bus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Testing.EventStore {
-    public class MockStreamStoreConnection : IStreamStoreConnection {
+    public class MockStreamStoreConnection : IStreamStoreConnection
+    {
 
         public const string CategoryStreamNamePrefix = @"$ce";
         public const string EventTypeStreamNamePrefix = @"$et";
         public const string AllStreamName = @"All";
         private readonly Dictionary<string, List<RecordedEvent>> _store;
         private readonly List<RecordedEvent> _all;
+        private List<RecordedEvent> _category;
+        private List<RecordedEvent> _eventType;
         private readonly QueuedHandler _inboundEventHandler;
         private readonly IBus _inboundEventBus;
         private bool _connected;
         private bool _disposed;
 
-        public MockStreamStoreConnection(string name) {
+        public MockStreamStoreConnection(string name)
+        {
             _all = new List<RecordedEvent>();
             _store = new Dictionary<string, List<RecordedEvent>>();
             _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
@@ -29,9 +35,9 @@ namespace ReactiveDomain.Testing.EventStore {
             _inboundEventBus.Subscribe(new AdHocHandler<ProjectedEventWritten>(PublishToSubscriptions));
 
             _inboundEventHandler = new QueuedHandler(
-                    new AdHocHandler<Message>(_inboundEventBus.Publish),
-                    nameof(_inboundEventHandler),
-                    false);
+                new AdHocHandler<Message>(_inboundEventBus.Publish),
+                nameof(_inboundEventHandler),
+                false);
             _inboundEventHandler.Start();
             ConnectionName = name;
         }
@@ -39,20 +45,24 @@ namespace ReactiveDomain.Testing.EventStore {
 
         public string ConnectionName { get; }
 
-        public void Connect() {
+        public void Connect()
+        {
             _connected = true;
         }
-        public void Close() {
+
+        public void Close()
+        {
             _connected = false;
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
 
         public WriteResult AppendToStream(
-                            string stream,
-                            long expectedVersion,
-                            UserCredentials credentials = null,
-                            params EventData[] events) {
+            string stream,
+            long expectedVersion,
+            UserCredentials credentials = null,
+            params EventData[] events)
+        {
             if (!_connected || _disposed)
                 throw new Exception();
             if (string.IsNullOrWhiteSpace(stream))
@@ -64,55 +74,105 @@ namespace ReactiveDomain.Testing.EventStore {
             if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
                 throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
-            if (!streamExists) {
+            if (!streamExists)
+            {
                 eventStream = new List<RecordedEvent>();
                 _store.Add(stream, eventStream);
             }
+
             var startingPosition = eventStream.Count;
             if (expectedVersion != ExpectedVersion.NoStream &&
                 expectedVersion != startingPosition)
-                throw new WrongExpectedVersionException($"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
+                throw new WrongExpectedVersionException(
+                    $"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
             var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            for (var i = 0; i < events.Length; i++) {
+            for (var i = 0; i < events.Length; i++)
+            {
                 var created = DateTime.UtcNow;
-                var epochTime = (long)(created - epochStart).TotalSeconds;
+                var epochTime = (long) (created - epochStart).TotalSeconds;
                 var recordedEvent = new RecordedEvent(
-                                            stream,
-                                            events[i].EventId,
-                                            eventStream.Count + 1,
-                                            events[i].EventType,
-                                            events[i].Data,
-                                            events[i].Metadata,
-                                            events[i].IsJson,
-                                            created,
-                                            epochTime);
+                    stream,
+                    events[i].EventId,
+                    eventStream.Count + 1,
+                    events[i].EventType,
+                    events[i].Data,
+                    events[i].Metadata,
+                    events[i].IsJson,
+                    created,
+                    epochTime);
                 eventStream.Add(recordedEvent);
                 _all.Add(recordedEvent);
                 _inboundEventHandler.Handle(new EventWritten(stream, recordedEvent));
                 //_inboundEventHandler.Handle(new ProjectedEventWritten(AllStreamName,recordedEvent));
                 //_inboundEventHandler.Handle(new ProjectedEventWritten(stream,recordedEvent));
             }
+
             return new WriteResult(eventStream.Count - 1);
         }
 
+        /// <summary>
+        /// Generate the Category Stream
+        /// </summary>
+        /// <remarks>
+        /// <see also href="https://eventstore.org/docs/projections/system-projections/index.html"/>
+        /// The category stream name is generated by spliting the event stream at the first dash. This is the default 
+        /// configuration setting (prefix (a category) by splitting a stream id by a configurable separator.)
+        /// ToDo: involk this from the category writer or the append to stream? The writer doesn't have the type
+        /// ToDo: for the GenerateForCategory, so creating it based on the projection. Add as an option to PrefixedCamelStreamNameBuilder?
+        /// </remarks>
+        /// <param name="aggregateStream">Original event stream in the aggregate-GUID format</param>
+        /// <param name="expectedVersion"><see cref="ExpectedVersion"/>Should the stream exist?</param>
+        /// <returns>cateogryStreamName</returns>
+        private string CreateCategoryStream(string aggregateStream, long expectedVersion)
+        {
+            var sb = new StringBuilder(CategoryStreamNamePrefix);
+            var category = aggregateStream.Split('-')[0];
+            // var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(aggregateStream.Split('-')[0]);
+            var categoryStreamName = sb.Append("-").Append(category).ToString();
+            //var categoryStreamName = streamNameBuilder.GenerateForCategory(null); // doesn't use the "Type"
 
-        public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null) {
+            var streamExists = _store.TryGetValue(categoryStreamName, out var categoryStream);
+            if (streamExists && expectedVersion == ExpectedVersion.NoStream)
+                throw new WrongExpectedVersionException($"Stream {aggregateStream} exists, expected no stream");
+            if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
+                throw new WrongExpectedVersionException($"Stream {aggregateStream} does not exist, expected stream");
+
+            if (!streamExists)
+            {
+                categoryStream = new List<RecordedEvent>();
+                _store.Add(categoryStreamName, categoryStream);
+                _category = categoryStream;
+            }
+
+            return categoryStreamName;
+        }
+
+        private string CreateEventTypeStream(string[] @event)
+        {
+            return EventTypeStreamNamePrefix + "-" + @event[0].GetType();
+        }
+
+        public StreamEventsSlice ReadStreamForward(string stream, long start, long count,
+            UserCredentials credentials = null)
+        {
             if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
-            var result = _store[stream].Skip((int)start).Take((int)count).ToArray();
+            var result = _store[stream].Skip((int) start).Take((int) count).ToArray();
 
 
             var slice = new StreamEventsSlice(
-                        stream,
-                        start,
-                        ReadDirection.Forward,
-                        result,
-                        start + result.Length,
-                        _store[stream].Count - 1,
-                        start + result.Length == _store[stream].Count);
+                stream,
+                start,
+                ReadDirection.Forward,
+                result,
+                start + result.Length,
+                _store[stream].Count - 1,
+                start + result.Length == _store[stream].Count);
             return slice;
         }
 
-        public StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null) {
+        public StreamEventsSlice ReadStreamBackward(string stream, long start, long count,
+            UserCredentials credentials = null)
+        {
             throw new NotImplementedException();
         }
 
@@ -120,16 +180,17 @@ namespace ReactiveDomain.Testing.EventStore {
             string stream,
             Action<ReactiveDomain.RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null) {
+            UserCredentials userCredentials = null)
+        {
             if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
             return SubscribeToStreamFrom(
-                    stream,
-                    _store[stream].Count - 1,
-                    CatchUpSubscriptionSettings.Default,
-                    eventAppeared,
-                    null, //live processing started
-                    subscriptionDropped,
-                    userCredentials);
+                stream,
+                _store[stream].Count - 1,
+                CatchUpSubscriptionSettings.Default,
+                eventAppeared,
+                null, //live processing started
+                subscriptionDropped,
+                userCredentials);
         }
 
         public IDisposable SubscribeToStreamFrom(
@@ -139,47 +200,94 @@ namespace ReactiveDomain.Testing.EventStore {
             Action<RecordedEvent> eventAppeared,
             Action<Unit> liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null) {
+            UserCredentials userCredentials = null)
+        {
             if (!_store.ContainsKey(stream)) throw new StreamNotFoundException(stream);
             long _live = 0;
             string streamName = stream;
-            var subscription = _inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(@event => {
-                if (_live != 0 && string.CompareOrdinal(streamName, @event.OriginalStream) == 0) {
+            var subscription = _inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(@event =>
+            {
+                if (_live != 0 && string.CompareOrdinal(streamName, @event.OriginalStream) == 0)
+                {
                     eventAppeared(@event.Event);
                 }
             }));
             //n.b. this leaves a possible gap in the events at switchover, #mock-life
             var start = lastCheckpoint ?? 0;
-            var curEvents = _store[stream].Skip((int)start).ToArray();
-            while (curEvents.Length > 0) {
-                for (int i = 0; i < curEvents.Length; i++) {
+            var curEvents = _store[stream].Skip((int) start).ToArray();
+            while (curEvents.Length > 0)
+            {
+                for (int i = 0; i < curEvents.Length; i++)
+                {
                     eventAppeared(curEvents[i]);
                 }
+
                 start = start + curEvents.Length;
-                curEvents = _store[stream].Skip((int)start).ToArray();
+                curEvents = _store[stream].Skip((int) start).ToArray();
             }
+
             Interlocked.Exchange(ref _live, 1);
             liveProcessingStarted?.Invoke(Unit.Default);
             return subscription;
         }
 
-        public IDisposable SubscribeToAll(Action<ReactiveDomain.RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                                 UserCredentials userCredentials = null) {
+        public IDisposable SubscribeToAll(Action<ReactiveDomain.RecordedEvent> eventAppeared,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null)
+        {
             throw new NotImplementedException();
         }
 
-        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null) {
+        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
+        {
             throw new NotImplementedException();
         }
-        private void WriteCategoryStream(EventWritten @event) {
 
+        /// <summary>
+        /// Write to the Category Stream
+        /// </summary>
+        /// <remarks>
+        /// If the category stream doesn't exist, create it.
+        /// The data in the event parameter includes the original stream, the recoreded event, and messageId.
+        /// <seealso cref="EventWritten"/>
+        /// Generate the name from the original stream. <see cref="CreateCategoryStream"/>
+        /// The caller sets up the Category Stream, append the events."/>
+        /// </remarks>
+        /// <param name="event"></param>
+        private void WriteCategoryStream(EventWritten @event)
+        {
+            if (!_connected || _disposed)
+                throw new Exception();
+            var categoryStreamName = CreateCategoryStream(@event.OriginalStream, ExpectedVersion.NoStream);
+
+            var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var created = DateTime.UtcNow;
+            var epochTime = (long)(created - epochStart).TotalSeconds;
+
+            var projectedEvent = new ProjectedEvent(
+                    categoryStreamName,
+                    _category.Count + 1,
+                    @event.Event.EventStreamId,
+                    @event.Event.EventId, // reusing since the projection is linking to the original event
+                    @event.Event.EventNumber,
+                    @event.Event.EventType,
+                    @event.Event.Data,
+                    @event.Event.Metadata,
+                    @event.Event.IsJson,
+                    created,
+                    epochTime);
+            _category.Add(projectedEvent);
+            _inboundEventHandler.Handle(new ProjectedEventWritten(projectedEvent));
         }
+
         private void WriteEventStream(EventWritten @event) {
 
         }
+
         private void PublishToSubscriptions(ProjectedEventWritten @event) {
 
         }
+
         public void Dispose() {
             Close();
             _inboundEventHandler?.Stop();

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests {
     public class TestCommandBusFixture :
+        IHandleCommand<TestCommands.AckedCommand>,
         IHandleCommand<TestCommands.Command1>,
         IHandleCommand<TestCommands.Command2>,
         IHandle<AckCommand>,
@@ -23,6 +24,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public readonly IDispatcher RemoteBus;
 
         public long GotChainedCaller;
+        public long GotAckedCommand;
         public long GotTestCommand1;
         public long GotTestCommand2;
         public long GotRemoteHandled;
@@ -50,6 +52,7 @@ namespace ReactiveDomain.Messaging.Tests {
             //todo: fix connector
             //var conn = new BusConnector(Bus, RemoteBus);
 
+            Bus.Subscribe<TestCommands.AckedCommand>(this);
             Bus.Subscribe<TestCommands.Command1>(this);
             Bus.Subscribe<TestCommands.Command2>(this);
             Bus.Subscribe<AckCommand>(this);
@@ -68,6 +71,7 @@ namespace ReactiveDomain.Messaging.Tests {
         
         public void ClearCounters() {
             Interlocked.Exchange(ref GotChainedCaller, 0);
+            Interlocked.Exchange(ref GotAckedCommand, 0);
             Interlocked.Exchange(ref GotTestCommand1, 0);
             Interlocked.Exchange(ref GotTestCommand2, 0);
             Interlocked.Exchange(ref GotRemoteHandled, 0);
@@ -90,6 +94,12 @@ namespace ReactiveDomain.Messaging.Tests {
         public CommandResponse Handle(TestCommands.ChainedCaller command) {
             Interlocked.Increment(ref GotChainedCaller);
             Bus.Fire(new TestCommands.Command1(command));
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.AckedCommand command) {
+            Interlocked.Increment(ref GotAckedCommand);
+            //avoid race condition in test don't complete the command until ack returned
+            SpinWait.SpinUntil(() => Interlocked.Read(ref GotAck) == 1);
             return command.Succeed();
         }
         public CommandResponse Handle(TestCommands.Command1 command) {
@@ -125,10 +135,14 @@ namespace ReactiveDomain.Messaging.Tests {
         }
         public CommandResponse Handle(TestCommands.Throw command) {
             Interlocked.Increment(ref GotTestThrowCommand);
+            //avoid race condition in test don't complete the command until ack returned
+            SpinWait.SpinUntil(() => Interlocked.Read(ref GotAck) == 1);
             throw new TestException();
         }
         public CommandResponse Handle(TestCommands.WrapException command) {
             Interlocked.Increment(ref GotTestWrapCommand);
+            //avoid race condition in test don't complete the command until ack returned
+            SpinWait.SpinUntil(() => Interlocked.Read(ref GotAck) == 1);
             try {
                 throw new TestException();
             }
@@ -205,8 +219,8 @@ namespace ReactiveDomain.Messaging.Tests {
             lock (_fixture) {
                 Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
                 _fixture.ClearCounters();
-                _fixture.Bus.Fire(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
-                Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1);
+                _fixture.Bus.Fire(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
+                Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAckedCommand) == 1);
                 Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1);
             }
         }
@@ -217,12 +231,12 @@ namespace ReactiveDomain.Messaging.Tests {
                 Assert.IsOrBecomesTrue(() => _fixture.Bus.Idle);
                 _fixture.ClearCounters();
 
-                _fixture.Bus.Fire(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
+                _fixture.Bus.Fire(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
 
                 Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
                     "Expected 3 Messages");
                 Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack");
-                Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, null,
+                Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAckedCommand) == 1, null,
                     "Expected Command was handled");
                 Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotCommandResponse) == 1, null,
                     "Expected Response");

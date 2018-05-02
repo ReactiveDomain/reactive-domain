@@ -8,13 +8,13 @@ namespace ReactiveDomain.Buffers.Tests
     public class when_creating_wrappedimages
     {
         protected BufferManager BufferMgr = new BufferManager("Image Tests");
-        [Fact(Skip="Add Wrapped Image example test")]
+         /* [Fact(Skip="Add Wrapped Image example test")]
         public unsafe void can_create_wrappedimages()
         {
             //N.B. was based on remove square image method on Buffer manager
             //TODO: re-implement for GetFramedImage
           
-            /*  int dimension = 1024;
+            int dimension = 1024;
             int bytesPerPixel = 2;
             var wrapped = BufferMgr.GetFramedImage<ThreeByte1024X1024Image>();
 
@@ -77,7 +77,7 @@ namespace ReactiveDomain.Buffers.Tests
             Assert.Equal(image1024.ImagePixelWidth, dimension);
             Assert.Equal(image1024.BytesPerPixel, bytesPerPixel);
             Assert.Equal(image1024.PixelBufferLength, dimension * dimension * bytesPerPixel);
-            */
-        }
+            
+        }*/
     }
 }

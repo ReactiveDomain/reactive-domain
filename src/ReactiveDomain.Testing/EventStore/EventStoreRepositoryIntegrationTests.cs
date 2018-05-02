@@ -64,7 +64,7 @@ namespace ReactiveDomain.Testing
         }
         //TODO fix this
         //It looks like the eventstore is choking on writing
-        //the catageory and event type streams for this
+        //the category and event type streams for this
         // It just keeps logging checkpoints for them at very low numbers
         [Fact(Skip = "Eventstore bug???")]
         public void CanHandleLargeNumberOfEventsInOneTransaction()

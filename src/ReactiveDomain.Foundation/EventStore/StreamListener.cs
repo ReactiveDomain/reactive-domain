@@ -56,7 +56,7 @@ namespace ReactiveDomain.Foundation.EventStore {
                 throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
             }
             Start(
-                tMessage.GetEventTypeStreamName(), 
+               _streamNameBuilder.GenerateForEventType(tMessage.Name), 
                 checkpoint, 
                 blockUntilLive, 
                 millisecondsTimeout);

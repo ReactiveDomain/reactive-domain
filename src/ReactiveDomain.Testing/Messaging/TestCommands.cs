@@ -21,6 +21,9 @@ namespace ReactiveDomain.Testing {
         public class ChainedCaller : Command {
             public ChainedCaller(CorrelatedMessage source) : base(source) { }
         }
+        public class AckedCommand : Command {
+            public AckedCommand(CorrelatedMessage source) : base(source) { }
+        }
         public class Command1 : Command {
             public Command1(CorrelatedMessage source) : base(source) { }
         }
