@@ -62,18 +62,23 @@ namespace ReactiveDomain.Messaging
 
         private static void AssemblyLoadEventHandler(object sender, AssemblyLoadEventArgs args)
         {
-            // TODO: Comment on this if condition.
+            // don't load dynamic assembles or non-bin assemblies for security and complexity concerns respectively
             if (!args.LoadedAssembly.IsDynamic && args.LoadedAssembly.Location.Contains(AppDomain.CurrentDomain.BaseDirectory))
             {
-                var addedTypes = GetTypesDerivedFrom(typeof(Message));
-                // Update lookups for name and fullnames
-                addedTypes.ForEach(t => nameToType[t.Name] = t);
-                addedTypes.ForEach(t => fullNameToType[t.FullName] = t);
-                if (addedTypes.FirstOrDefault() != null)
-                {
-                    TypeTree.ResetTypeTree(addedTypes);
-                    MessageTypesAdded(null, null);
-                }
+                RebuildMessageTree();
+            }
+        }
+
+        private static void RebuildMessageTree()
+        {
+            var addedTypes = GetTypesDerivedFrom(typeof(Message));
+            // Update lookups for name and fullnames
+            addedTypes.ForEach(t => nameToType[t.Name] = t);
+            addedTypes.ForEach(t => fullNameToType[t.FullName] = t);
+            if (addedTypes.FirstOrDefault() != null)
+            {
+                TypeTree.AddToTypeTree(addedTypes);
+                MessageTypesAdded(null, null);
             }
         }
 
@@ -137,7 +142,7 @@ namespace ReactiveDomain.Messaging
         }
     }
 
-    internal static class TypeTree
+    internal static class TypeTree  
     {
         private static TypeTreeNode _root;
         private static Dictionary<Type, TypeTreeNode> _typeToNode = new Dictionary<Type, TypeTreeNode>();
@@ -147,13 +152,14 @@ namespace ReactiveDomain.Messaging
             BuildTypeTree(types);
         }
 
-        internal static void ResetTypeTree(List<Type> types)
+        internal static void AddToTypeTree(List<Type> types)
         {
             // Rebuild the type tree. Lock in case multiple overlapping resets are called.
             lock (_loadingLock)
             {
+                var typeList = types.Concat(_typeToNode.Keys).ToList();
                 _typeToNode = new Dictionary<Type, TypeTreeNode>();
-                BuildTypeTree(types);
+                BuildTypeTree(typeList);
             }
         }
 
