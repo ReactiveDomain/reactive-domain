@@ -26,9 +26,9 @@ namespace ReactiveDomain.Messaging.Tests {
             TokenSource = new CancellationTokenSource();
             TokenSource.Cancel();
             Assert.Throws<CommandCanceledException>(() =>
-                _dispatcher.Fire(new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token)));
+                _dispatcher.Send(new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token)));
             Assert.False(
-                _dispatcher.TryFire(new TestTokenCancellableCmd(false,  CorrelatedMessage.NewRoot(), TokenSource.Token), out var response));
+                _dispatcher.TrySend(new TestTokenCancellableCmd(false,  CorrelatedMessage.NewRoot(), TokenSource.Token), out var response));
             Assert.IsType<Canceled>(response);
 
             Assert.IsOrBecomesTrue(() => _dispatcher.Idle);
@@ -72,8 +72,8 @@ namespace ReactiveDomain.Messaging.Tests {
             _tokenSource2 = new CancellationTokenSource();
             _cmd1 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource1.Token);
             _cmd2 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource2.Token);
-            _bus.TryFire(_cmd1);
-            _bus.TryFire(_cmd2);
+            _bus.TrySend(_cmd1);
+            _bus.TrySend(_cmd2);
             SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 200);
             _tokenSource1.Cancel();
             Interlocked.Increment(ref _releaseCmd);
@@ -122,7 +122,7 @@ namespace ReactiveDomain.Messaging.Tests {
 
             _tokenSource = new CancellationTokenSource();
             var cmd = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource.Token);
-            _bus.Fire(cmd);
+            _bus.Send(cmd);
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _success) == 1, msg: "Success not triggered");
         }
 
@@ -132,7 +132,7 @@ namespace ReactiveDomain.Messaging.Tests {
             _tokenSource = new CancellationTokenSource();
             var cmd = new TestTokenCancellableLongRunningCmd(false, CorrelatedMessage.NewRoot(), _tokenSource.Token);
 
-            _bus.TryFire(cmd);
+            _bus.TrySend(cmd);
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _gotCmd) == 1, msg: "Command not handled");
             Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _canceled) == 1, msg: "Command not canceled");
         }
@@ -189,7 +189,7 @@ namespace ReactiveDomain.Messaging.Tests {
             _cancelFirst = true;
             TokenSource = new CancellationTokenSource();
             Assert.CommandThrows<CommandCanceledException>(() => {
-                _bus.Fire(
+                _bus.Send(
                     new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token));
             });
             Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
@@ -200,7 +200,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public void cancel_will_cancel_nested_commands() {
             TokenSource = new CancellationTokenSource();
             Assert.CommandThrows<CommandCanceledException>(() => {
-                _bus.Fire(
+                _bus.Send(
                     new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token));
             });
             Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
@@ -217,12 +217,12 @@ namespace ReactiveDomain.Messaging.Tests {
             var nestedCommand = new NestedTestTokenCancellableCmd(command);
             if (_cancelFirst) {
                 TokenSource.Cancel(); //global cancel
-                _bus.Fire(nestedCommand); // a pre canceled command will just return
+                _bus.Send(nestedCommand); // a pre canceled command will just return
             }
             else {
                 Assert.CommandThrows<CommandCanceledException>(
                     () => {
-                        _bus.Fire(nestedCommand);
+                        _bus.Send(nestedCommand);
                     });
             }
             return command.IsCanceled ? command.Canceled() : command.Succeed();

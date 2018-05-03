@@ -65,7 +65,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(evt);
 
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -79,7 +79,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
 
             var tstCmd = new TestCommands.Command3(source);
 
-            Bus.Fire(tstCmd,
+            Bus.Send(tstCmd,
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
 

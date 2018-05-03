@@ -29,13 +29,13 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of ICommandPublisher
 
-        public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull || _target == null) return;
-            _target.Fire(command, exceptionMsg, responseTimeout, ackTimeout);
+            _target.Send(command, exceptionMsg, responseTimeout, ackTimeout);
         }
 
-        public bool TryFire(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,
+        public bool TrySend(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull || _target == null)
@@ -43,13 +43,13 @@ namespace ReactiveDomain.Messaging.Bus
                 response = command.Succeed();
                 return true;
             }
-            return _target.TryFire(command, out response, responseTimeout, ackTimeout);
+            return _target.TrySend(command, out response, responseTimeout, ackTimeout);
         }
 
-        public bool TryFire(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySend(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull) return true;
-            return _target?.TryFire(command, responseTimeout, ackTimeout) ?? false;
+            return _target?.TrySend(command, responseTimeout, ackTimeout) ?? false;
         }
 
         #endregion

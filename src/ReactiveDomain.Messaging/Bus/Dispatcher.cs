@@ -36,12 +36,12 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public void Fire(
+        public void Send(
                         Command command,
                         string exceptionMsg = null,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
-            => _queuedPublisher.Fire(command, exceptionMsg, responseTimeout, ackTimeout);
+            => _queuedPublisher.Send(command, exceptionMsg, responseTimeout, ackTimeout);
 
         /// <summary>
         ///  Enqueue a command and block until completed
@@ -51,12 +51,12 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns>Command returned success</returns>
-        public bool TryFire(
+        public bool TrySend(
                         Command command,
                         out CommandResponse response,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
-            => _queuedPublisher.TryFire(command, out response, responseTimeout, ackTimeout);
+            => _queuedPublisher.TrySend(command, out response, responseTimeout, ackTimeout);
 
         /// <summary>
         /// Enqueue a command and return
@@ -65,11 +65,11 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns>Command enqueued</returns>
-        public bool TryFire(
+        public bool TrySend(
                         Command command,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
-            => _queuedPublisher.TryFire(command, out var _, responseTimeout, ackTimeout);
+            => _queuedPublisher.TrySend(command, out var _, responseTimeout, ackTimeout);
 
         public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command {
             if (HasSubscriberFor<T>())

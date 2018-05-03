@@ -1,62 +1,44 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once RedundantExtendsListEntry
-    public sealed class can_handle_multiple_publisher_threads_queued : 
-                            when_using_counted_message_subscriber,
-                            IDisposable{
-        private int FirstTaskMax = 100000;
-        private int SecondTaskMax = 200000;
-        private int ThirdTaskMax = 300000;
-        private int FourthTaskMax = 400000;
-
-        private Task _t1;
-        private Task _t2;
-        private Task _t3;
-        private Task _t4;
-        public can_handle_multiple_publisher_threads_queued() {
-            _t1 = new Task(
-                () => {
-                    for (int i = 0; i < FirstTaskMax; i++) {
-                        Bus.Publish(new CountedTestMessage(i));
-                    }
-                });
-
-            _t2 = new Task(
-                () => {
-                    for (int i = FirstTaskMax; i < SecondTaskMax; i++) {
-                        Bus.Publish(new CountedTestMessage(i));
-                    }
-                });
-            _t3 = new Task(
-                () => {
-                    for (int i = SecondTaskMax; i < ThirdTaskMax; i++) {
-                        Bus.Publish(new CountedTestMessage(i));
-                    }
-                });
-            _t4 = new Task(
-                () => {
-                    for (int i = ThirdTaskMax; i < FourthTaskMax; i++) {
-                        Bus.Publish(new CountedTestMessage(i));
-                    }
-                });
-
-            _t1.Start();
-            _t2.Start();
-            _t3.Start();
-            _t4.Start();
+    public sealed class can_handle_multiple_publisher_threads_queued 
+    {
+        private class TestSubscriber : Bus.QueuedSubscriber
+        {
+            public TestSubscriber(IBus bus) : base(bus) { }
         }
+        private int _count = 100;
+        private int _msgCount;
+       
 
-        [Fact(Skip = "Poor thread management in test, remove Task based threading")]
+        [Fact]
         void can_handle_threaded_messages() {
+            var bus = new Dispatcher("test",2);
+            using (var sub = new  TestSubscriber(bus) ) {
+                sub.Subscribe(
+                    new AdHocHandler<CountedTestMessage>(_=> Interlocked.Increment(ref _msgCount)));
+                var messages = new Message[_count];
+                for (int i = 0; i < _count; i++) {
+                    messages[i] = new CountedTestMessage(i);
+                }
+
+                for (int i = 0; i < _count; i++) {
+                    bus.Publish(messages[i]);
+                }
+
             Assert.IsOrBecomesTrue(
-                () => MsgCount == FourthTaskMax,
-                FourthTaskMax,
-                $"Expected message count to be {FourthTaskMax} Messages, found {MsgCount }");
+                () => _msgCount == _count,
+                1000,
+                $"Expected message count to be {_count} Messages, found {_msgCount }");
+
+            }
         }
 
     }

@@ -64,8 +64,7 @@ namespace ReactiveDomain.Foundation.EventStore
 
             var ed = _eventSerializer.Serialize(message, metadata);
             var data = new List<EventData> {ed};
-
-           // int amPm = (DateTime.UtcNow.Hour > 12) ? 2 : 1;
+            
             _eventStore.AppendToStream(
                 FullStreamName,
                 ExpectedVersion.Any,

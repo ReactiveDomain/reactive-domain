@@ -53,7 +53,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -72,7 +72,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -90,7 +90,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
             for (int i = 0; i < _maxCountedMessages; i++)
             {   
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -164,7 +164,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 var evt = new CountedEvent(i, source);
                 Bus.Publish(evt);
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                Bus.Send(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 
@@ -189,7 +189,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(evt);
 
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                Bus.Send(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 
@@ -214,7 +214,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 var evt = new CountedEvent(i, source);
                 Bus.Publish(evt);
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
+                Bus.Send(cmd,$"exception message{i}",TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 

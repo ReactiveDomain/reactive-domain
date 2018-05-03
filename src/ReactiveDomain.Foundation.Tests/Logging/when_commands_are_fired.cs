@@ -1,88 +1,65 @@
 ﻿using System;
+using System.Threading;
 using Xunit;
-using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 
 
-namespace ReactiveDomain.Foundation.Tests.Logging
-{
+namespace ReactiveDomain.Foundation.Tests.Logging {
 
     // ReSharper disable once InconsistentNaming
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_commands_are_fired :
         with_message_logging_enabled,
-        IHandle<Message>
-    {
-        private const int MaxCountedCommands = 25;
-        private IListener _listener;
+        IHandle<Message> {
 
+        private const int MaxCountedCommands = 25;
         private int _multiFireCount;
         private int _testCommandCount;
 
-        private TestCommandSubscriber _cmdHandler;
+        public when_commands_are_fired(StreamStoreConnectionFixture fixture) : base(fixture.Connection) {
 
-
-        static when_commands_are_fired()
-        {
-            Messaging.BootStrap.Load();
-        }
-
-        public when_commands_are_fired(StreamStoreConnectionFixture fixture):base(fixture.Connection)
-        {
-            // command must have a commandHandler
-            _cmdHandler = new TestCommandSubscriber(Bus);
+            Bus.Subscribe(new AdHocCommandHandler<TestCommands.Command2>(_ => true));
+            Bus.Subscribe(new AdHocCommandHandler<TestCommands.Command3>(_ => true));
+            Bus.Subscribe<Message>(this);
 
             _multiFireCount = 0;
             _testCommandCount = 0;
 
-            _listener = new SynchronizableStreamListener(
-                                Logging.FullStreamName, 
-                                Connection, 
-                                StreamNameBuilder,
-                                EventSerializer);
-            _listener.EventStream.Subscribe<Message>(this);
 
-            _listener.Start(Logging.FullStreamName);
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a set of commands
-            for (int i = 0; i < MaxCountedCommands; i++)
-            {
+            for (int i = 0; i < MaxCountedCommands; i++) {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
 
             }
-            var tstCmd = new TestCommands.Command3(source);
 
-            Bus.Fire(tstCmd,
+
+            Bus.Send(new TestCommands.Command3(source),
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
-        }
-        
 
-        [Fact(Skip = "Mock store not implemented")]
-        private void all_commands_are_logged()
-        {
-            // Wait  for last command to be queued
-            Assert.IsOrBecomesTrue(()=> _cmdHandler.TestCommand3Handled >0);
-            
-            Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000);
-            Assert.True(_multiFireCount == MaxCountedCommands, $"Command count {_multiFireCount} doesn't match expected index {MaxCountedCommands}");
-            Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000);
-
-            Assert.True(_testCommandCount == 1, $"Last event count {_testCommandCount} doesn't match expected value {1}");
-
+            Assert.IsOrBecomesTrue(() => _testCommandCount == 1, 1000, "Set Setup failed: Timed out waiting for last cmd");
+            Assert.IsOrBecomesTrue(() => _multiFireCount == MaxCountedCommands, 9000, "Didn't get all commands");
         }
 
-        public void Handle(Message msg)
-        {
-            if (msg is TestCommands.Command2) _multiFireCount++;
-            if (msg is TestCommands.Command3) _testCommandCount++;
+
+        [Fact]
+        private void all_commands_are_logged() {
+            var totalEvents = _multiFireCount + _testCommandCount;
+            var events = Connection.ReadStreamForward(Logging.FullStreamName, StreamPosition.Start, totalEvents);
+            Assert.True(events.LastEventNumber == totalEvents);
+        }
+
+        public void Handle(Message msg) {
+            if (msg is TestCommands.Command2) Interlocked.Increment(ref _multiFireCount);
+            if (msg is TestCommands.Command3) Interlocked.Increment(ref _testCommandCount);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace ReactiveDomain.Messaging.Bus
         private readonly IBus _internalBus;
         protected object Last = null;
         public bool Starving => _messageQueue.Idle;
-        protected QueuedSubscriber(IBus bus, bool idempotent = true)
+        protected QueuedSubscriber(IBus bus, bool idempotent = false)
         {
 	        _generalBus = bus ?? throw new ArgumentNullException(nameof(bus));
             _internalBus = new InMemoryBus("SubscriptionBus");

@@ -49,7 +49,7 @@ namespace ReactiveDomain.Messaging.Bus
                 return;
             if (message is Command)
             {
-                _bus.TryFire((Command) message);
+                _bus.TrySend((Command) message);
             }
             else
                 _bus.Publish(message);

@@ -48,6 +48,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber
         public void Dispose()
         {
             _bus?.Dispose();
+            
         }
     }
 }

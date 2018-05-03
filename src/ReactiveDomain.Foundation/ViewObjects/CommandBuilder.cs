@@ -177,7 +177,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
             {
                 foreach (var func in commands)
                 {
-                    bus.Fire(func(), userErrorMsg, responseTimeout, ackTimeout);
+                    bus.Send(func(), userErrorMsg, responseTimeout, ackTimeout);
                 }
             });
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
@@ -254,7 +254,7 @@ namespace ReactiveDomain.Foundation.ViewObjects
             Func<object, Task> task = async _ => await Task.Run(() =>
             {
                 var c = commandFunc(_);
-                if (c != null) bus.Fire(c, userErrorMsg, responseTimeout, ackTimeout);
+                if (c != null) bus.Send(c, userErrorMsg, responseTimeout, ackTimeout);
             });
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 

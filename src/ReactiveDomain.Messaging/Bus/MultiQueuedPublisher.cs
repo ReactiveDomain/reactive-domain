@@ -28,7 +28,7 @@ namespace ReactiveDomain.Messaging.Bus
         public void Publish(Message message) {
            _publishQueue.Publish(message);
         }
-        public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (command.IsCanceled)
             {
@@ -45,7 +45,7 @@ namespace ReactiveDomain.Messaging.Bus
             else
                 throw new CommandException(exceptionMsg ?? $"{command.GetType().Name}: Failed", command);
         }
-        public bool TryFire(Command command,
+        public bool TrySend(Command command,
             out CommandResponse response,
             TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
@@ -69,9 +69,9 @@ namespace ReactiveDomain.Messaging.Bus
             return response is Success;
         }
 
-        public bool TryFire(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySend(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
-            return TryFire(command, out var _, responseTimeout, ackTimeout);
+            return TrySend(command, out var _, responseTimeout, ackTimeout);
 
         }
 

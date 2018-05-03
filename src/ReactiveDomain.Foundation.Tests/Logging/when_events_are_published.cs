@@ -51,7 +51,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
         private int _testDomainEventCount;
         private long _gotEvt;
        
-        [Fact(Skip="To be fixed")]
+        [Fact]
         public void all_events_are_logged()
         {
             Assert.IsOrBecomesTrue(()=> _gotEvt >0);

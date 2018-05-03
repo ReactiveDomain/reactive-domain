@@ -62,11 +62,8 @@ namespace ReactiveDomain.Testing
             var retrieved = _repo.GetById<TestWoftamAggregate>(savedId, 126);
             Assert.Equal(125, retrieved.AppliedEventCount);
         }
-        //TODO fix this
-        //It looks like the eventstore is choking on writing
-        //the category and event type streams for this
-        // It just keeps logging checkpoints for them at very low numbers
-        [Fact(Skip = "Eventstore bug???")]
+        
+        [Fact]
         public void CanHandleLargeNumberOfEventsInOneTransaction()
         {
             const int numberOfEvents = 50000;

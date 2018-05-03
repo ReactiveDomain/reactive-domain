@@ -211,7 +211,7 @@ namespace ReactiveDomain.Testing
             }
         }
 
-        [Fact(Skip = "ES event duplicates - fails on run all test with projection enabled only ")] 
+        [Fact]
         public void can_subscribe_to_all()
         {
             var numberOfEvent = 2; // We want to make sure we capture the <numberOfEvent> events in each stream in the right order

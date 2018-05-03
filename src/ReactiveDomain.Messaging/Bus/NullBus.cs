@@ -18,23 +18,23 @@ namespace ReactiveDomain.Messaging.Bus
         public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message{return false;}
         public string Name { get; }
 
-        public void Fire(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null,
+        public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
         {
             /*null bus, just drop it*/
         }
 
-        public bool TryFire(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,
+        public bool TrySend(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
         {
             response = null;
             return false;
         }
 
-        public bool TryFire(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySend(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             CommandResponse response;
-            return TryFire(command, out response, responseTimeout, ackTimeout);
+            return TrySend(command, out response, responseTimeout, ackTimeout);
         }
 
         public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command

@@ -36,14 +36,14 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
 
         private TestCommandSubscriber _cmdHandler;  // "never used" is a red herring. It handles the command
 
-        [Fact(Skip = "Mock store not implemented")]
+        [Fact]
         private void commands_logged_only_while_logging_is_enabled() {
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
             // create and fire a mixed set of commands and events
             for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
             for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -78,7 +78,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
             for (int i = 0; i < _maxCountedMessages; i++) {
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(source);
-                Bus.Fire(cmd,
+                Bus.Send(cmd,
                     $"exception message{i}",
                     TimeSpan.FromSeconds(2));
                 source = cmd;
@@ -86,7 +86,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
 
             var tstCmd = new TestCommands.Command3(source);
             _cmdHandler.TestCommand3Handled = 0;
-            Bus.Fire(tstCmd,
+            Bus.Send(tstCmd,
                 "Test Command exception message",
                 TimeSpan.FromSeconds(1));
             source = tstCmd;
@@ -103,7 +103,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
                 $"Third set of Commands count {_multiFireCount} doesn't match expected index {_maxCountedMessages}");
 
         }
-        [Fact(Skip = "Mock store not implemented")]
+        [Fact]
         private void events_logged_only_while_logging_is_enabled() {
             _countedEventCount = 0;
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
@@ -149,7 +149,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
                 1000,
                $"Third set of Events count {_countedEventCount} - not properly logged");
         }
-        [Fact(Skip = "Mock store not implemented")]
+        [Fact]
         private void mixed_messages_logged_only_while_logging_is_enabled() {
             _countedEventCount = 0;
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
@@ -158,7 +158,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
                 var evt = new CountedEvent(i, source);
                 Bus.Publish(evt);
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                Bus.Send(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 
@@ -181,7 +181,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
                 var evt = new CountedEvent(i, source);
                 Bus.Publish(evt);
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                Bus.Send(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 
@@ -206,7 +206,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging {
                 var evt = new CountedEvent(i, source);
                 Bus.Publish(evt);
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
+                Bus.Send(cmd, $"exception message{i}", TimeSpan.FromSeconds(1));
                 source = cmd;
             }
 

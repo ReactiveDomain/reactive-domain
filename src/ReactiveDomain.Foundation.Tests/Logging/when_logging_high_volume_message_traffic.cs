@@ -59,14 +59,14 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Bus.Publish(evt);
                 // this is just an example command - choice to fire this one was random
                 var cmd = new TestCommands.Command2(evt);
-                Bus.Fire(cmd, $"exception message{i}", TimeSpan.FromSeconds(2));
+                Bus.Send(cmd, $"exception message{i}", TimeSpan.FromSeconds(2));
                 var evt2 = new TestEvent(cmd);
                 Bus.Publish(evt2);
                 source = evt2;
             }
             var tstCmd = new TestCommands.Command3(source);
 
-            Bus.Fire(tstCmd,
+            Bus.Send(tstCmd,
                 "TestCommand3 failed",
                 TimeSpan.FromSeconds(2));
         }

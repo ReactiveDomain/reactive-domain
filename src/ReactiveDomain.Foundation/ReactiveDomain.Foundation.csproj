@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Diagnostics\MonitoredCommandBus.cs" />
+    <Compile Remove="EventStore\EventStoreMessageLogger.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />

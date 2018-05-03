@@ -43,7 +43,7 @@ namespace ReactiveDomain.Messaging.Tests
         public void concurrent_commands_should_pass()
         {
 
-            Parallel.ForEach(_commands, cmd => _bus.Fire(cmd));
+            Parallel.ForEach(_commands, cmd => _bus.Send(cmd));
 
             Assert.True(_cmd1Count == _count, $"Should be {_count}, found { _cmd1Count}");
             Assert.True(_cmd2Count == _count, $"Should be {_count}, found { _cmd2Count}");

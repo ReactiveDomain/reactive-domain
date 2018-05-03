@@ -10,6 +10,12 @@ namespace ReactiveDomain.Foundation.Tests.Logging
     {
         protected readonly IStreamStoreConnection Connection;
         protected IDispatcher Bus;
+        protected EventStoreMessageLogger Logging;
+        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
+        protected StreamStoreRepository Repo;
+        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
+        protected IEventSerializer EventSerializer;
+
         protected with_message_logging_enabled(IStreamStoreConnection connection)
         {
             Connection = connection;
@@ -22,14 +28,8 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 Connection,
                 StreamName,
                 true);
-
-            Thread.Sleep(2000); // needs a bit of time to set up the ES
         }
-        protected EventStoreMessageLogger Logging;
-        protected string StreamName = $"LogTest-{Guid.NewGuid():N}";
-        protected StreamStoreRepository Repo;
-        protected PrefixedCamelCaseStreamNameBuilder StreamNameBuilder;
-        protected IEventSerializer EventSerializer;
+      
       
         public void Dispose() {
             Dispose(true);
