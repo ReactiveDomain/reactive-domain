@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -33,7 +31,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
                     bus.Publish(messages[i]);
                 }
 
-            Assert.IsOrBecomesTrue(
+            AssertEx.IsOrBecomesTrue(
                 () => _msgCount == _count,
                 1000,
                 $"Expected message count to be {_count} Messages, found {_msgCount }");

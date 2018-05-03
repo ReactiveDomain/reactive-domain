@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -70,7 +65,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
         private long _testEventCount;
         [Fact]
         public void can_get_events_from_category_projection() {
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1,3000);
+            AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1,3000);
         }
 
         public void Handle(Message message) {

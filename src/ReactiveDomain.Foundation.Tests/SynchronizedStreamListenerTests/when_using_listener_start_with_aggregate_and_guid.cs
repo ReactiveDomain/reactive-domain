@@ -50,7 +50,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
         [Fact]
         public void can_get_events_from_category_stream()
         {
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1,3000);
+            AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1,3000);
         }
 
         public void Handle(Message message) {

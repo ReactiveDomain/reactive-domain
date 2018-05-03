@@ -11,7 +11,6 @@ script:
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
   - dotnet test ./src/ReactiveDomain.Buffers.Tests/ReactiveDomain.Buffers.Tests.csproj
-  - dotnet test ./src/ReactiveDomain.Domain.Tests/ReactiveDomain.Domain.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj

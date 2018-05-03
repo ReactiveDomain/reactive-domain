@@ -1,15 +1,17 @@
-﻿using ReactiveDomain.Messaging.Bus;
-using System;
+﻿using System;
 using System.Threading;
+using ReactiveDomain.Messaging.Bus;
+using Xunit;
 
-namespace Xunit
+
+namespace ReactiveDomain.Testing
 {
-    public partial class Assert
+    public class AssertEx
     {
         public static void CommandThrows<T>(Action fireAction) where T : Exception
         {
-            var exp = Throws<CommandException>(fireAction);
-            IsType<T>(exp.InnerException);
+            var exp = Assert.Throws<CommandException>(fireAction);
+            Assert.IsType<T>(exp.InnerException);
         }
 
         public static void ArraySegmentEqual<T>(
@@ -19,7 +21,7 @@ namespace Xunit
             {
                 int b = i + offset;
 
-                True(buffer[b].Equals(expectedSequence[i]),
+                Assert.True(buffer[b].Equals(expectedSequence[i]),
                     $"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
             }
         }
@@ -38,9 +40,7 @@ namespace Xunit
                 if(func()) break;
                 //DispatchOtherThings();
             }
-            True(func(), msg ?? "");
+            Assert.True(func(), msg ?? "");
         }
-
-        static partial void DispatchOtherThings();
     }
 }

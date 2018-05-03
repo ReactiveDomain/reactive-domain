@@ -22,7 +22,7 @@ namespace ReactiveDomain
         /// </summary>
 
         void Close();
-        //todo: do we need this?
+        
         /// <summary>
         /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> connects to an Event Store server.
         /// </summary>
@@ -52,7 +52,7 @@ namespace ReactiveDomain
         /// <param name="start">The starting point to read from.</param>
         /// <param name="count">The count of items to read.</param>
         /// <param name="credentials">The user credentials</param>
-        /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> containing the results of the read operation.</returns>
+        /// <returns>A StreamEventsSlice containing the results of the read operation.</returns>
         StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null);
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace ReactiveDomain
         /// <param name="start">The starting point to read from.</param>
         /// <param name="count">The count of items to read.</param>
         /// <param name="credentials">The user credentials</param>
-        /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> containing the results of the read operation.</returns>
+        /// <returns>A StreamEventsSlice containing the results of the read operation.</returns>
         StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null);
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace ReactiveDomain
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
-        /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> representing the subscription.</returns>
+        /// <returns>An IDisposable that can be used to dispose the subscription.</returns>
         IDisposable SubscribeToStream(
             string stream,
             Action<RecordedEvent> eventAppeared,
@@ -110,7 +110,7 @@ namespace ReactiveDomain
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
         /// <param name="settings">The <see cref="T:ReactiveDomain.CatchUpSubscriptionSettings" /> for the subscription.</param>
-        /// <returns>An <see cref="T:ReactiveDomain.EventStoreStreamCatchUpSubscription" /> representing the subscription.</returns>
+        /// <returns>An IDisposable that can be used to close the subscription.</returns>
         IDisposable SubscribeToStreamFrom(
                  string stream,
                  long? lastCheckpoint,
@@ -128,7 +128,7 @@ namespace ReactiveDomain
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
-        /// <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> representing the subscription.</returns>
+        /// <returns>An IDisposable that can be used to close the subscription.</returns>
         IDisposable SubscribeToAll(
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,

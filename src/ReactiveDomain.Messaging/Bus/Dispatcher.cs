@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Bus {
         public Dispatcher(
                     string name,
                     int queueCount = 1,
-                    bool watchSlowMsg = true,
+                    bool watchSlowMsg = false,
                     TimeSpan? slowMsgThreshold = null,
                     TimeSpan? slowCmdThreshold = null) {
             var slowMsgThreshold1 = slowMsgThreshold ?? TimeSpan.FromMilliseconds(100);

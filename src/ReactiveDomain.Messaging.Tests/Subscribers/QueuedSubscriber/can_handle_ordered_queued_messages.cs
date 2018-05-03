@@ -38,7 +38,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             for (int i = 0; i < _count; i++) {
                 _bus.Publish(new CountedTestMessage(i));
             }
-            Assert.IsOrBecomesTrue(
+            AssertEx.IsOrBecomesTrue(
                 () => _testMsgCount == _count,
                 msg: $"Expected message count to be {_count} Messages, found {_testMsgCount}");
             Assert.True(_isInOrder);
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
                 _bus.Publish(evt);
                 source = evt;
             }
-            Assert.IsOrBecomesTrue(
+            AssertEx.IsOrBecomesTrue(
                 () => _eventCount == _count,
                 msg: $"Expected message count to be {_count} Messages, found {_eventCount}");
             Assert.True(_isInOrder);

@@ -2,6 +2,6 @@
     <PropertyGroup>
         <Xunit>2.3.1</Xunit>
         <DotNetWatcher>1.0.1</DotNetWatcher>
-        <NewtonsoftJson>10.0.3</NewtonsoftJson>
+        <NewtonsoftJson>11.0.2</NewtonsoftJson>
     </PropertyGroup>
 </Project>

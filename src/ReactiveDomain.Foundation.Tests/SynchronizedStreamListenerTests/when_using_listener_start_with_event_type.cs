@@ -72,7 +72,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
         private long _testEventCount;
         [Fact]
         public void can_get_events_from_event_projection() {
-            Assert.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
+            AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
         }
 
         public void Handle(Message message) {

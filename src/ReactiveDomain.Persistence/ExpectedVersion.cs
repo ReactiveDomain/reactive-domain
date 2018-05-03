@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ReactiveDomain
+﻿namespace ReactiveDomain
 {
   /// <summary>Constants used for expected version control, Maps to ExpectedVersion in Eventstore.ClientApi</summary>
   /// <remarks>

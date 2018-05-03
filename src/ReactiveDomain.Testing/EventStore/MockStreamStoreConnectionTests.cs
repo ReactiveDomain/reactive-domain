@@ -77,7 +77,7 @@ namespace ReactiveDomain.Testing
                                             startFrom,
                                             count);
 
-                Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events forward");
+                AssertEx.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events forward");
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
@@ -113,7 +113,7 @@ namespace ReactiveDomain.Testing
                                             startFrom,
                                             count);
 
-                Assert.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events backward");
+                AssertEx.IsOrBecomesTrue(() => count == slice.Events.Length, msg: "Failed to read events backward");
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, slice.Events[i].EventId);
@@ -149,7 +149,7 @@ namespace ReactiveDomain.Testing
                     expectedEvents.Add(testEvent);
                 }
 
-                Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to capture events. Expected {numberOfEvent} found {capturedEvents.Count}");
+                AssertEx.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to capture events. Expected {numberOfEvent} found {capturedEvents.Count}");
                 for (int i = 0; i < numberOfEvent; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
@@ -159,7 +159,7 @@ namespace ReactiveDomain.Testing
                 }
 
                 sub.Dispose();
-                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+                AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
 
@@ -186,7 +186,7 @@ namespace ReactiveDomain.Testing
                                             _ => liveProcessingStarted = true,
                                             (reason, ex) => dropped = true);
 
-                Assert.IsOrBecomesTrue(() => liveProcessingStarted, msg: "Failed handle live processing start");
+                AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, msg: "Failed handle live processing start");
 
                 var expectedEvents = new List<EventData>();
                 for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
@@ -197,7 +197,7 @@ namespace ReactiveDomain.Testing
                     if (eventByteData >= numEventsToBeSent - count) expectedEvents.Add(createEvent);
                 }
 
-                Assert.IsOrBecomesTrue(() => count == capturedEvents.Count, msg: $"Failed to capture events. Expected {count} found {capturedEvents.Count}");
+                AssertEx.IsOrBecomesTrue(() => count == capturedEvents.Count, msg: $"Failed to capture events. Expected {count} found {capturedEvents.Count}");
                 for (int i = 0; i < count; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
@@ -207,7 +207,7 @@ namespace ReactiveDomain.Testing
                 }
 
                 sub.Dispose();
-                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+                AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
 
@@ -248,7 +248,7 @@ namespace ReactiveDomain.Testing
                         expectedEvents.Add(createEvent);
                     }
 
-                    Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on stream {stream}. Expected {numberOfEvent} found {capturedEvents.Count}");
+                    AssertEx.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on stream {stream}. Expected {numberOfEvent} found {capturedEvents.Count}");
                     for (int i = 0; i < numberOfEvent; i++)
                     {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
@@ -261,7 +261,7 @@ namespace ReactiveDomain.Testing
                 }
 
                 sub.Dispose();
-                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+                AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
 
@@ -302,7 +302,7 @@ namespace ReactiveDomain.Testing
                         conn.AppendToStream(stream, ExpectedVersion.Any, null, incrementEvent);
                     }
 
-                    Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamTypeName}. Expected {numberOfEvent} found {capturedEvents.Count}");
+                    AssertEx.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamTypeName}. Expected {numberOfEvent} found {capturedEvents.Count}");
                     for (int i = 0; i < numberOfEvent; i++)
                     {
                         Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
@@ -315,7 +315,7 @@ namespace ReactiveDomain.Testing
                 }
 
                 sub.Dispose();
-                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+                AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
 
@@ -353,7 +353,7 @@ namespace ReactiveDomain.Testing
                     conn.AppendToStream(streamNameOutOfCategory, ExpectedVersion.Any, null, eventOutOfCategory);
                 }
 
-                Assert.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamCategoryName}. Expected {numberOfEvent} found {capturedEvents.Count}");
+                AssertEx.IsOrBecomesTrue(() => numberOfEvent == capturedEvents.Count, msg: $"Failed to subscribe to events on type stream {streamCategoryName}. Expected {numberOfEvent} found {capturedEvents.Count}");
                 for (int i = 0; i < numberOfEvent; i++)
                 {
                     Assert.Equal(expectedEvents[i].EventId, capturedEvents[i].EventId);
@@ -363,7 +363,7 @@ namespace ReactiveDomain.Testing
                 }
 
                 sub.Dispose();
-                Assert.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
+                AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
 

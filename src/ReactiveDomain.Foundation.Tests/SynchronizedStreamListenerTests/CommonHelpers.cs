@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
-using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests
 {
@@ -14,8 +9,8 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests
     {
         internal static void WaitForStream(IStreamStoreConnection conn, string streamName)
         {
-            //wait for the categorty projection to be written
-            Assert.IsOrBecomesTrue(
+            //wait for the category projection to be written
+            AssertEx.IsOrBecomesTrue(
                 () =>
                 {
                     try
