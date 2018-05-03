@@ -581,26 +581,11 @@ namespace ReactiveDomain.Messaging.Tests {
                 _fixture.ClearCounters();
 
                 _fixture.Bus.Send(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
-                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAckedCommand) == 1);
-              
-              
-                Assert.True(Interlocked.Read(ref _fixture.GotChainedCaller) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestCommand1) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestCommand2) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotRemoteHandled) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotLongRunning) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestFailCommand) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestThrowCommand) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestWrapCommand) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTypedResponse) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotAck) == 1);
-                Assert.True(Interlocked.Read(ref _fixture.GotCommandResponse) == 1);
-                Assert.True(Interlocked.Read(ref _fixture.GotFail) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotSuccess) == 1);
-                Assert.True(Interlocked.Read(ref _fixture.GotCanceled) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.ResponseData) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotMessage) == 3,
-                    $"Unexpected Number of events {Interlocked.Read(ref _fixture.GotMessage)}");
+                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAckedCommand) == 1, msg: "Command not Handled");
+                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAck) == 1,msg: "Ack not Handled");
+                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotSuccess) == 1,msg: "Success not Handled");
+                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotMessage) == 3,
+                    msg: $"Unexpected Number of events {Interlocked.Read(ref _fixture.GotMessage)}");
             }
         }
 
