@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 

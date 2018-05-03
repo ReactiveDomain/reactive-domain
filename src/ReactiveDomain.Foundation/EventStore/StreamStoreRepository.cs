@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Foundation.EventStore
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation
 {
     public class StreamStoreRepository : IRepository {
        

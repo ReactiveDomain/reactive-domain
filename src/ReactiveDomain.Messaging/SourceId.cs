@@ -1,6 +1,5 @@
 ﻿using System;
 using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
 {

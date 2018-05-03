@@ -2,7 +2,8 @@
 using Newtonsoft.Json.Serialization;
 using System.Reflection;
 
-namespace ReactiveDomain.Foundation.EventStore
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation
 {
     public class ContractResolver : DefaultContractResolver {
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization) {

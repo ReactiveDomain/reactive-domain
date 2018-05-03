@@ -1,11 +1,9 @@
 ﻿using ReactiveDomain.Foundation;
-using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Util;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing
 {
     // todo: separate stream connection tests and repo tests
@@ -67,7 +65,12 @@ namespace ReactiveDomain.Testing
                 for (byte eventByteData = 0; eventByteData < numEventsToBeSent; eventByteData++)
                 {
                     var eventMetaData = eventByteData;
-                    var createEvent = new EventData(Guid.NewGuid(), typeof(TestAggregateMessages.NewAggregate).Name, true, new byte[] { eventByteData }, new byte[] { eventMetaData });
+                    var createEvent = new EventData(
+                                            Guid.NewGuid(), 
+                                            typeof(TestAggregateMessages.NewAggregate).Name, 
+                                            true, 
+                                            new [] { eventByteData }, 
+                                            new [] { eventMetaData });
                     conn.AppendToStream(streamName, ExpectedVersion.Any, null, createEvent);
                     if (eventByteData >= startFrom) expectedEvents.Add(createEvent);
                 }

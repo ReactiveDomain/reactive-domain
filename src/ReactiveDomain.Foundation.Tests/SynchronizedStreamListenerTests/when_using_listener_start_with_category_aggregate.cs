@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using ReactiveDomain.Foundation.EventStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;

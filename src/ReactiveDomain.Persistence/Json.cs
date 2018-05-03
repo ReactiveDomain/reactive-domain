@@ -1,7 +1,6 @@
 // ReSharper disable MemberCanBePrivate.Global
 
 using System;
-using System.Text;
 using System.Xml;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;

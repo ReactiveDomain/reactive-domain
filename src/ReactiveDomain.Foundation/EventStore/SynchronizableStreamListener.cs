@@ -2,7 +2,8 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Foundation.EventStore
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation
 {
     public class SynchronizableStreamListener : StreamListener, IHandle<Message>
     {

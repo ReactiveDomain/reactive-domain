@@ -2,7 +2,8 @@
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Foundation.EventStore
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation
 {
     public class ReadModelBase:
         IListener

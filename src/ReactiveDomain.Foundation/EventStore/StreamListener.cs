@@ -3,9 +3,9 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
-using ReactiveDomain.EventStore;
 
-namespace ReactiveDomain.Foundation.EventStore {
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation {
     public class StreamListener : IListener {
         protected readonly string ListenerName;
         private InMemoryBus _bus;

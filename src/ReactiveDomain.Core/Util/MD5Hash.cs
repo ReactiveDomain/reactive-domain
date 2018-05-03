@@ -4,7 +4,6 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Util
 {

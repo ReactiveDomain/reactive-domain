@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using ReactiveDomain.Buffers.Examples;
-using ReactiveDomain.Buffers.Memory;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Buffers.FileIO

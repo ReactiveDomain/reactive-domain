@@ -1,7 +1,5 @@
 ﻿using System;
-using System.ComponentModel.Design.Serialization;
 using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
 {

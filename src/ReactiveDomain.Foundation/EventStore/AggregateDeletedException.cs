@@ -2,7 +2,8 @@ using System;
 
 // ReSharper disable  MemberCanBePrivate.Global
 // ReSharper disable  NotAccessedField.Global
-namespace ReactiveDomain.Foundation.EventStore
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation
 {
     public class AggregateDeletedException : Exception
     {

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Linq;
 using ReactiveDomain.Foundation;
-using ReactiveDomain.Foundation.EventStore;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing
 {
     /// <summary>
@@ -13,8 +12,6 @@ namespace ReactiveDomain.Testing
     public class EventStoreRepositoryIntegrationTests
     {
         private const string DomainPrefix = "UnitTest";
-        private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
-
 
         private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents)
         {
@@ -103,7 +100,7 @@ namespace ReactiveDomain.Testing
             aggregateToSave.ProduceEvents(10);
             _repo.Save(aggregateToSave);
 
-            Assert.Equal(0, ((IEventSource)aggregateToSave).TakeEvents().Count());
+            Assert.Empty(((IEventSource)aggregateToSave).TakeEvents());
         }
 
         [Fact]

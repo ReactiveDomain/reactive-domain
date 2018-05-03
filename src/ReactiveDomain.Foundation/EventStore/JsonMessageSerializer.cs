@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Messages;
 
-namespace ReactiveDomain.Foundation.EventStore {
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation {
     public class JsonMessageSerializer : IEventSerializer {
         private static readonly JsonSerializerSettings SerializerSettings;
         public const string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";

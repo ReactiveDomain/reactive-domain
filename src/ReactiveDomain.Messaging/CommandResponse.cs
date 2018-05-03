@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging
 {

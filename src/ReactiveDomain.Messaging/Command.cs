@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics.Tracing;
 using System.Threading;
 using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.Messaging {
     /// <summary>

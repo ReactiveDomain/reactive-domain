@@ -1,5 +1,4 @@
-﻿using ReactiveDomain.Foundation.EventStore;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 using Xunit;
 

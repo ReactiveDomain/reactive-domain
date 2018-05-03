@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain {
     /// <summary>
     /// The base class each process manager or aggregate's root entity should derive from.
@@ -10,7 +11,7 @@ namespace ReactiveDomain {
         private readonly EventRecorder _recorder;
         private readonly EventRouter _router;
         private long _version;
-
+        public bool HasRecordedEvents => _recorder.HasRecordedEvents;
 
         public Guid Id { get; protected set; }
 
@@ -26,7 +27,6 @@ namespace ReactiveDomain {
         protected EventDrivenStateMachine() {
             _recorder = new EventRecorder();
             _router = new EventRouter();
-
             _version = -1;
         }
 
@@ -45,9 +45,14 @@ namespace ReactiveDomain {
             }
         }
 
+        protected virtual void TakeEventStarted() { }
+        protected virtual void TakeEventsCompleted() { }
+
         public object[] TakeEvents() {
+            TakeEventStarted();
             var records = _recorder.RecordedEvents;
             _recorder.Reset();
+            TakeEventsCompleted();
             return records;
         }
 
@@ -68,12 +73,13 @@ namespace ReactiveDomain {
         protected void Register(Type typeOfEvent, Action<object> route) {
             _router.RegisterRoute(typeOfEvent, route);
         }
-
+        protected virtual void OnEventRaised(object @event) { }
         /// <summary>
         /// Raises the specified <paramref name="event"/> - applies it to this instance and records it in its history.
         /// </summary>
         /// <param name="event">The event to apply and record.</param>
         protected void Raise(object @event) {
+            OnEventRaised(@event);
             _router.Route(@event);
             _recorder.Record(@event);
         }

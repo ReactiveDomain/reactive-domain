@@ -1,5 +1,4 @@
 using System;
-
 namespace ReactiveDomain.Foundation
 {
     public interface IRepository

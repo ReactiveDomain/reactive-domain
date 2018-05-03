@@ -2,7 +2,6 @@
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Logging;
-using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging

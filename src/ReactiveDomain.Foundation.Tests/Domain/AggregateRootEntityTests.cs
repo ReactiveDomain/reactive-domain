@@ -1,6 +1,7 @@
 ﻿using System;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Domain.Tests
 {
     namespace AggregateRootEntityTests

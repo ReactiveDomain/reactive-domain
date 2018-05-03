@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Threading;
+﻿using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Transport.CommandSocket;
 using Xunit;
 

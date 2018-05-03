@@ -3,7 +3,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using EventStore.ClientAPI;
 using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
 #if ! (NETCOREAPP2_0 || NETSTANDARD2_0)

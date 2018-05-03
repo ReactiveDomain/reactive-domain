@@ -131,6 +131,8 @@ namespace ReactiveDomain.Messaging.Tests {
         }
         public CommandResponse Handle(TestCommands.Fail command) {
             Interlocked.Increment(ref GotTestFailCommand);
+            //avoid race condition in test don't complete the command until ack returned
+            SpinWait.SpinUntil(() => Interlocked.Read(ref GotAck) == 1);
             return command.Fail();
         }
         public CommandResponse Handle(TestCommands.Throw command) {
@@ -436,7 +438,7 @@ namespace ReactiveDomain.Messaging.Tests {
 
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, null, "Expected Success");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
-                Assert.IsType(typeof(TestCommands.TestResponse), response);
+                Assert.IsType<TestCommands.TestResponse>(response);
                 Assert.Equal(data, ((TestCommands.TestResponse)response).Data);
             }
         }
@@ -469,7 +471,7 @@ namespace ReactiveDomain.Messaging.Tests {
 
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null, "Expected Failure");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.ResponseData) == data);
-                Assert.IsType(typeof(TestCommands.FailedResponse), response);
+                Assert.IsType<TestCommands.FailedResponse>(response);
                 Assert.Equal(data, ((TestCommands.FailedResponse)response).Data);
             }
         }
@@ -532,8 +534,8 @@ namespace ReactiveDomain.Messaging.Tests {
                     out var response);
 
                 Assert.False(result, "Expected false return");
-                Assert.IsType(typeof(Fail), response);
-                Assert.IsType(typeof(CommandNotHandledException), ((Fail)response).Exception);
+                Assert.IsType<Fail>(response);
+                Assert.IsType<CommandNotHandledException>(((Fail)response).Exception);
             }
         }
 
@@ -578,14 +580,12 @@ namespace ReactiveDomain.Messaging.Tests {
                 AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
                 _fixture.ClearCounters();
 
-                _fixture.Bus.Send(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
-                var passed = _fixture.Bus.TrySend(
-                    new TestCommands.Command1(CorrelatedMessage.NewRoot()), out var response);
-                AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
-                Assert.True(passed, "Expected false return");
-                Assert.IsType(typeof(Success), response);
+                _fixture.Bus.Send(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
+                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAckedCommand) == 1);
+              
+              
                 Assert.True(Interlocked.Read(ref _fixture.GotChainedCaller) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotTestCommand1) == 2);
+                Assert.True(Interlocked.Read(ref _fixture.GotTestCommand1) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.GotTestCommand2) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.GotRemoteHandled) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.GotLongRunning) == 0);
@@ -593,13 +593,13 @@ namespace ReactiveDomain.Messaging.Tests {
                 Assert.True(Interlocked.Read(ref _fixture.GotTestThrowCommand) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.GotTestWrapCommand) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.GotTypedResponse) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotAck) == 2);
-                Assert.True(Interlocked.Read(ref _fixture.GotCommandResponse) == 2);
+                Assert.True(Interlocked.Read(ref _fixture.GotAck) == 1);
+                Assert.True(Interlocked.Read(ref _fixture.GotCommandResponse) == 1);
                 Assert.True(Interlocked.Read(ref _fixture.GotFail) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotSuccess) == 2);
+                Assert.True(Interlocked.Read(ref _fixture.GotSuccess) == 1);
                 Assert.True(Interlocked.Read(ref _fixture.GotCanceled) == 0);
                 Assert.True(Interlocked.Read(ref _fixture.ResponseData) == 0);
-                Assert.True(Interlocked.Read(ref _fixture.GotMessage) == 6,
+                Assert.True(Interlocked.Read(ref _fixture.GotMessage) == 3,
                     $"Unexpected Number of events {Interlocked.Read(ref _fixture.GotMessage)}");
             }
         }

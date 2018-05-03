@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace ReactiveDomain.Foundation.EventStore {
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain.Foundation {
     public interface IEventSerializer {
         EventData Serialize(object @event, IDictionary<string, object> headers = null);
         object Deserialize(IEventData @event);

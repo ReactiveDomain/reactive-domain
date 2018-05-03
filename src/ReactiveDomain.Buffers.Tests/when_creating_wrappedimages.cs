@@ -1,6 +1,4 @@
-﻿using ReactiveDomain.Buffers.Examples;
-using ReactiveDomain.Buffers.Memory;
-using Xunit;
+﻿using ReactiveDomain.Buffers.Memory;
 
 namespace ReactiveDomain.Buffers.Tests
 {
