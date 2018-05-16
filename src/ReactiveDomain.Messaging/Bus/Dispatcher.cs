@@ -4,8 +4,9 @@ using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus {
-
-    public class Dispatcher : IDispatcher, IDisposable 
+    
+    /// <inheritdoc cref="IDispatcher"/>
+    public class Dispatcher : IDispatcher 
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
@@ -65,11 +66,11 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns>Command enqueued</returns>
-        public bool TrySend(
+        public bool TrySendAsync(
                         Command command,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
-            => _queuedPublisher.TrySend(command, out var _, responseTimeout, ackTimeout);
+            => _queuedPublisher.TrySendAsync(command, responseTimeout, ackTimeout);
 
         public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command {
             if (HasSubscriberFor<T>())

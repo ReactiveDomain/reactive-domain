@@ -36,7 +36,7 @@ namespace ReactiveDomain.Messaging.Bus
                 throw new CommandCanceledException(command);
             }
 
-            var rslt = Execute(command, responseTimeout, ackTimeout);
+            Execute(command,out var rslt, true, responseTimeout, ackTimeout);
             if (rslt is Success) return;
 
             var fail = rslt as Fail;
@@ -52,15 +52,13 @@ namespace ReactiveDomain.Messaging.Bus
         {
             try
             {
-                //todo: we're not chaining through the fire method here because it doesn't give 
-                //us the command response to return so there are some duplicated checks 
                 if (command.IsCanceled)
                 {
                     response = command.Canceled();
                     _publishQueue.Publish(response);
                     return false;
                 }
-                response = Execute(command, responseTimeout, ackTimeout);
+                Execute(command, out response, true, responseTimeout, ackTimeout);
             }
             catch (Exception ex)
             {
@@ -69,17 +67,33 @@ namespace ReactiveDomain.Messaging.Bus
             return response is Success;
         }
 
-        public bool TrySend(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySendAsync(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
-            return TrySend(command, out var _, responseTimeout, ackTimeout);
+            try
+            {
+                if (command.IsCanceled)
+                {
+                   var response = command.Canceled();
+                    _publishQueue.Publish(response);
+                    return false;
+                }
+                Execute(command,out var _, false, responseTimeout, ackTimeout);
+            }
+            catch (Exception) {
+                return false;
+            }
+            return true;
 
         }
 
-        private CommandResponse Execute(
+        private void Execute(
             Command command,
+            out CommandResponse response,
+            bool blocking = true,
             TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
         {
+           
             TaskCompletionSource<CommandResponse> tcs = null;
             try
             {
@@ -110,10 +124,15 @@ namespace ReactiveDomain.Messaging.Bus
                 tcs.SetResult(command.Fail(ex));
                 throw;
             }
+
+            if (!blocking) {
+                response = null;
+                return;
+            }
             try
             {
                 //blocking caller until result is set 
-                return tcs.Task.Result;
+                response = tcs.Task.Result;
             }
             catch (AggregateException aggEx)
             {

@@ -49,7 +49,7 @@ namespace ReactiveDomain.Messaging.Bus
                 return;
             if (message is Command)
             {
-                _bus.TrySend((Command) message);
+                _bus.TrySendAsync((Command) message);
             }
             else
                 _bus.Publish(message);
@@ -61,7 +61,9 @@ namespace ReactiveDomain.Messaging.Bus
             if (typeof(T) != typeof(Message)) throw new ArgumentException("Only Message type subscriptions supported");
             _handler = handler;
             _idTracker = new MessageIdTracker((IHandle<Message>)handler, (g) => _trackedMessages.Add(g));
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
             _bus.Subscribe<Message>(_idTracker);
+            // ReSharper disable once ConstantConditionalAccessQualifier
             return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
 
@@ -70,6 +72,7 @@ namespace ReactiveDomain.Messaging.Bus
             if (_handler == null || _idTracker == null) return;
             if (!ReferenceEquals(handler, (IHandle<T>)_handler))
                 throw new ArgumentException("Handler is not current registered handler");
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
             _bus.Unsubscribe<Message>(_idTracker);
             _handler = null;
             _idTracker = null;

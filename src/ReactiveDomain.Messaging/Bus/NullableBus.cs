@@ -12,15 +12,14 @@ namespace ReactiveDomain.Messaging.Bus
     /// Returns success for any TryFire.
     /// 
     /// </summary>
-    public class NullableBus : IDispatcher, IDisposable
+    public class NullableBus : IDispatcher
     {
         private IDispatcher _target;
         public bool Idle => _target.Idle;
 
         public NullableBus(IDispatcher target, bool directToNull = true, string name = null)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            _target = target;
+            _target = target ?? throw new ArgumentNullException(nameof(target));
             Name = name ?? _target.Name;
             RedirectToNull = directToNull;
         }
@@ -46,10 +45,10 @@ namespace ReactiveDomain.Messaging.Bus
             return _target.TrySend(command, out response, responseTimeout, ackTimeout);
         }
 
-        public bool TrySend(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySendAsync(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull) return true;
-            return _target?.TrySend(command, responseTimeout, ackTimeout) ?? false;
+            return _target?.TrySendAsync(command, responseTimeout, ackTimeout) ?? false;
         }
 
         #endregion
@@ -58,12 +57,12 @@ namespace ReactiveDomain.Messaging.Bus
 
         public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command
         {
-            return _target?.Subscribe<T>(handler);
+            return _target?.Subscribe(handler);
         }
 
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command
         {
-            _target?.Unsubscribe<T>(handler);
+            _target?.Unsubscribe(handler);
         }
 
         #endregion
@@ -83,13 +82,13 @@ namespace ReactiveDomain.Messaging.Bus
         public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
         {
 
-            return _target?.Subscribe<T>(handler);
+            return _target?.Subscribe(handler);
         }
 
         public void Unsubscribe<T>(IHandle<T> handler) where T : Message
         {
 
-            _target?.Unsubscribe<T>(handler);
+            _target?.Unsubscribe(handler);
         }
 
         public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message

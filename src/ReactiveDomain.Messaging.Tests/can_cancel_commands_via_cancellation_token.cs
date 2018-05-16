@@ -8,19 +8,17 @@ using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests {
     // ReSharper disable once InconsistentNaming
-    public class precanceled_commands_via_cancellation_token : IHandle<TestTokenCancellableCmd>, IDisposable {
-        private IDispatcher _dispatcher;
-        private readonly IHandleCommand<TestTokenCancellableCmd> _handler;
+    public class precanceled_commands_via_cancellation_token :
+                    IHandle<TestTokenCancellableCmd>, IDisposable {
+        private readonly IDispatcher _dispatcher;
         protected CancellationTokenSource TokenSource;
         private long _commandReceivedCount;
 
         public precanceled_commands_via_cancellation_token() {
             _dispatcher = new Dispatcher(nameof(precanceled_commands_via_cancellation_token));
-            _handler = new TokenCancellableCmdHandler();
-            _dispatcher.Subscribe<TestTokenCancellableCmd>(_handler);
-
-
-
+            IHandleCommand<TestTokenCancellableCmd> handler = new TokenCancellableCmdHandler();
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
+            _dispatcher.Subscribe<TestTokenCancellableCmd>(handler);
         }
         [Fact]
         public void canceled_commands_will_not_fire() {
@@ -33,7 +31,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.IsType<Canceled>(response);
 
             AssertEx.IsOrBecomesTrue(() => _dispatcher.Idle);
-            Assert.Equal(_commandReceivedCount, 0);
+            Assert.Equal(0, _commandReceivedCount);
         }
         public void Dispose() {
             Dispose(true);
@@ -46,7 +44,7 @@ namespace ReactiveDomain.Messaging.Tests {
             }
         }
 
-        public void Handle(TestTokenCancellableCmd message) {
+        void IHandle<TestTokenCancellableCmd>.Handle(TestTokenCancellableCmd message) {
             Interlocked.Increment(ref _commandReceivedCount);
         }
     }
@@ -57,7 +55,7 @@ namespace ReactiveDomain.Messaging.Tests {
         private CancellationTokenSource _tokenSource2;
         private TestTokenCancellableCmd _cmd1;
         private TestTokenCancellableCmd _cmd2;
-        private Dispatcher _bus = new Dispatcher("test", 3, false);
+        private readonly Dispatcher _bus = new Dispatcher("test", 3);
         private long _releaseCmd;
         private long _gotCmd;
         private Guid _canceled;
@@ -73,8 +71,8 @@ namespace ReactiveDomain.Messaging.Tests {
             _tokenSource2 = new CancellationTokenSource();
             _cmd1 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource1.Token);
             _cmd2 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource2.Token);
-            _bus.TrySend(_cmd1);
-            _bus.TrySend(_cmd2);
+            _bus.TrySendAsync(_cmd1);
+            _bus.TrySendAsync(_cmd2);
             SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 200);
             _tokenSource1.Cancel();
             Interlocked.Increment(ref _releaseCmd);
@@ -86,8 +84,6 @@ namespace ReactiveDomain.Messaging.Tests {
         public CommandResponse Handle(TestTokenCancellableCmd cmd) {
             Interlocked.Increment(ref _gotCmd);
             SpinWait.SpinUntil(() => Interlocked.Read(ref _releaseCmd) == 1, 5000);
-
-
             if (cmd.IsCanceled) {
                 _canceled = cmd.MsgId;
             }
@@ -114,7 +110,6 @@ namespace ReactiveDomain.Messaging.Tests {
                 false,
                 TimeSpan.FromSeconds(2.5),
                 TimeSpan.FromSeconds(2.5));
-
         }
         [Fact]
         public void will_succeed_if_not_canceled() {
@@ -133,7 +128,7 @@ namespace ReactiveDomain.Messaging.Tests {
             _tokenSource = new CancellationTokenSource();
             var cmd = new TestTokenCancellableLongRunningCmd(false, CorrelatedMessage.NewRoot(), _tokenSource.Token);
 
-            _bus.TrySend(cmd);
+            _bus.TrySendAsync(cmd);
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotCmd) == 1, msg: "Command not handled");
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _canceled) == 1, msg: "Command not canceled");
         }
@@ -206,12 +201,9 @@ namespace ReactiveDomain.Messaging.Tests {
             });
             Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
             Assert.True(Interlocked.Read(ref _gotNestedCmd) == 1, "Nested Command received");
-
         }
 
-
         private long _gotCmd;
-
         public CommandResponse Handle(TestTokenCancellableCmd command) {
 
             Interlocked.Increment(ref _gotCmd);
@@ -271,10 +263,8 @@ namespace ReactiveDomain.Messaging.Tests {
             base(source, cancellationToken) {
             RequestFail = requestFail;
         }
-
     }
     public class TestTokenCancellableLongRunningCmd : Command {
-       
         public readonly bool RequestFail;
         public TestTokenCancellableLongRunningCmd(
             bool requestFail,
@@ -283,15 +273,12 @@ namespace ReactiveDomain.Messaging.Tests {
             base(source, cancellationToken) {
             RequestFail = requestFail;
         }
-
     }
     public class NestedTestTokenCancellableCmd : Command {
-      
         public NestedTestTokenCancellableCmd(Command source) : base(source) { }
         public NestedTestTokenCancellableCmd(
             CorrelatedMessage source,
             CancellationToken? cancellationToken) : base(source, cancellationToken) {
         }
-
     }
 }
