@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive.Linq;
 using ReactiveUI;
 
 namespace ReactiveDomain.UI.Tests.Helpers
@@ -13,7 +14,7 @@ namespace ReactiveDomain.UI.Tests.Helpers
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Subscribe(Xunit.Assert.True)) { }
+            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(Xunit.Assert.True)) { }
         }
 
         /// <summary>
@@ -24,7 +25,7 @@ namespace ReactiveDomain.UI.Tests.Helpers
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Subscribe(Xunit.Assert.False)) { }
+            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(Xunit.Assert.False)) { }
         }
     }
 }
