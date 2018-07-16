@@ -234,9 +234,7 @@ namespace ReactiveDomain.Messaging.Tests {
                 _fixture.ClearCounters();
 
                 _fixture.Bus.Send(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
-
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
-                    "Expected 3 Messages");
+                
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAckedCommand) == 1, null,
                     "Expected Command was handled");
@@ -337,8 +335,6 @@ namespace ReactiveDomain.Messaging.Tests {
                     "Expected Ack received.");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null,
                     "Expected fail received.");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
-                    "Unexpected Number of messages received.");
             }
 
         }
@@ -358,8 +354,6 @@ namespace ReactiveDomain.Messaging.Tests {
                     "Expected Ack received.");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null,
                     "Expected fail received.");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
-                    "Unexpected Number of messages received.");
             }
         }
 
@@ -382,8 +376,6 @@ namespace ReactiveDomain.Messaging.Tests {
                     "Expected Ack received.");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null,
                     "Expected fail received.");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
-                    $"Unexpected Number of messages received {Interlocked.Read(ref _fixture.GotMessage)}.");
             }
         }
 
@@ -406,8 +398,6 @@ namespace ReactiveDomain.Messaging.Tests {
                     "Expected Ack received.");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotFail) == 1, null,
                     "Expected fail received.");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotMessage) == 3, null,
-                    "Unexpected Number of messages received.");
             }
         }
 
@@ -584,8 +574,6 @@ namespace ReactiveDomain.Messaging.Tests {
                 AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAckedCommand) == 1, msg: "Command not Handled");
                 AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAck) == 1,msg: "Ack not Handled");
                 AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotSuccess) == 1,msg: "Success not Handled");
-                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotMessage) == 3,
-                    msg: $"Unexpected Number of events {Interlocked.Read(ref _fixture.GotMessage)}");
             }
         }
 

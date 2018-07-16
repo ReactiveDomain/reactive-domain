@@ -5,8 +5,8 @@ before_build:
 build:
   project: ./src/ReactiveDomain.sln  
 test_script:
-  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Messaging.Tests.dll -appveyor'
-  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Buffers.Tests.dll -appveyor'
-  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Foundation.Tests.dll -appveyor'  
-  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.PrivateLedger.Tests.dll -appveyor'
-  - '%xunit20%\xunit.console.exe ./bld/Debug/net452/ReactiveDomain.Transport.Tests.dll -appveyor' 
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net472/ReactiveDomain.Messaging.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net472/ReactiveDomain.Buffers.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net472/ReactiveDomain.Foundation.Tests.dll -appveyor'  
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net472/ReactiveDomain.PrivateLedger.Tests.dll -appveyor'
+  - '%xunit20%\xunit.console.exe ./bld/Debug/net472/ReactiveDomain.Transport.Tests.dll -appveyor' 

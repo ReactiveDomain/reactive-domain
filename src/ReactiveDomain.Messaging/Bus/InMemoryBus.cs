@@ -70,7 +70,6 @@ namespace ReactiveDomain.Messaging.Bus {
                     Subscribe(registeredHandler);
                 }
             }
-
         }
         public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message {
             Ensure.NotNull(handler, "handler");
@@ -78,6 +77,7 @@ namespace ReactiveDomain.Messaging.Bus {
             // ReSharper disable once ConstantConditionalAccessQualifier
             return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
+
         private void Subscribe(IMessageHandler handler) {
             // Subscribe to the underlying message type and it's descendants
             var messageTypes = MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray();
@@ -95,6 +95,7 @@ namespace ReactiveDomain.Messaging.Bus {
                 }
             }
         }
+
         public void Unsubscribe<T>(IHandle<T> handler) where T : Message {
             Ensure.NotNull(handler, "handler");
             var descendants = MessageHierarchy.DescendantsAndSelf(typeof(T)).ToArray();

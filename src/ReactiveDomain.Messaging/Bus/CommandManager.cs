@@ -8,22 +8,24 @@ namespace ReactiveDomain.Messaging.Bus {
     public class CommandManager :
         QueuedSubscriber,
         IHandle<CommandResponse>,
-        IHandle<AckCommand> {
+        IHandle<AckCommand>,
+        IHandle<AckTimeout>,
+        IHandle<CompletionTimeout> {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private static readonly TimeSpan DefaultAckTimeout = TimeSpan.FromMilliseconds(100);
         private static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(500);
         private readonly IBus _outBus;
+        private readonly IBus _timeoutBus;
         private readonly ConcurrentDictionary<Guid, CommandTracker> _pendingCommands;
         private bool _disposed;
 
-        public CommandManager(IBus bus) : base(bus) {
+        public CommandManager(IBus bus,IBus timeoutBus) : base(bus) {
             _outBus = bus;
+            _timeoutBus = timeoutBus;
             _pendingCommands = new ConcurrentDictionary<Guid, CommandTracker>();
             Subscribe<CommandResponse>(this);
             Subscribe<AckCommand>(this);
         }
-
-        private readonly object _registerLock = new object();
         public TaskCompletionSource<CommandResponse> RegisterCommandAsync(
                                                                 Command command,
                                                                 TimeSpan? ackTimeout = null,
@@ -51,7 +53,8 @@ namespace ReactiveDomain.Messaging.Bus {
                                             tr.Dispose();
                                     },
                                     ackTimeout ?? DefaultAckTimeout,
-                                    responseTimeout ?? DefaultResponseTimeout);
+                                    responseTimeout ?? DefaultResponseTimeout,
+                                    _timeoutBus);
             if (_pendingCommands.TryAdd(command.MsgId, tracker)) {
                 return tcs;
             }
@@ -69,6 +72,14 @@ namespace ReactiveDomain.Messaging.Bus {
         }
 
         public void Handle(AckCommand message) {
+            _pendingCommands.TryGetValue(message.CommandId, out var tracker);
+            tracker?.Handle(message);
+        }
+        public void Handle(AckTimeout message) {
+            _pendingCommands.TryGetValue(message.CommandId, out var tracker);
+            tracker?.Handle(message);
+        }
+        public void Handle(CompletionTimeout message) {
             _pendingCommands.TryGetValue(message.CommandId, out var tracker);
             tracker?.Handle(message);
         }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
@@ -12,7 +12,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
     <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net462'" />
+    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net472'" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
@@ -29,6 +29,6 @@
   </ItemGroup>
   <ItemGroup Condition="">
     <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net452'" />
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net462'" />
+    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net472'" />
   </ItemGroup>
 </Project>
