@@ -5,7 +5,8 @@ using System.Diagnostics;
 using System.Threading;
 using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
-#if ! (NETCOREAPP2_0 || NETSTANDARD2_0)
+using EventStore.ClientAPI;
+#if !(NETCOREAPP2_0 || NETSTANDARD2_0)
 using EventStore.ClientAPI.Embedded;
 using EventStore.Common.Options;
 #endif

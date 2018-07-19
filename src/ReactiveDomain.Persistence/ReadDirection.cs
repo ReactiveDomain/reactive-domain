@@ -5,7 +5,7 @@
     /// </summary>
     public enum ReadDirection
     {
-        Forward,
-        Backward,
+        Forward = 1,
+        Backward = -1
     }
 }

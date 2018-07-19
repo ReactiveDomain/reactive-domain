@@ -154,7 +154,7 @@ namespace ReactiveDomain.EventStore
                                     UserCredentials userCredentials = null)
         {
             var sub = _conn.SubscribeToAllAsync(
-                                    false,
+                                    true,
                                     async (_, evt) => {
                                         eventAppeared(evt.Event.ToRecordedEvent());
                                         await Task.FromResult(Unit.Default); 

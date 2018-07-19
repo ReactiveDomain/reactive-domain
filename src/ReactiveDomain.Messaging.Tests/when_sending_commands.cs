@@ -19,7 +19,8 @@ namespace ReactiveDomain.Messaging.Tests {
         IHandleCommand<TestCommands.ChainedCaller>,
         IHandleCommand<TestCommands.RemoteHandled>,
         IHandleCommand<TestCommands.LongRunning>,
-        IHandleCommand<TestCommands.Command3> {
+        IHandleCommand<TestCommands.Command3>,
+        IHandle<TestEvent> {
         public readonly IDispatcher Bus;
         public readonly IDispatcher RemoteBus;
 
@@ -42,6 +43,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public long ResponseData;
         public long CancelLongRunning;
         public long GotTestCommand3;
+        public long GotTestEvent;
 
         public readonly TimeSpan StandardTimeout;
 
@@ -65,10 +67,11 @@ namespace ReactiveDomain.Messaging.Tests {
             Bus.Subscribe<TestCommands.ChainedCaller>(this);
             RemoteBus.Subscribe<TestCommands.RemoteHandled>(this);
             Bus.Subscribe<TestCommands.LongRunning>(this);
+            Bus.Subscribe<TestEvent>(this);
             //Deliberately not subscribed 
             //Bus.Subscribe<TestCommands.Command3>(this);
         }
-        
+
         public void ClearCounters() {
             Interlocked.Exchange(ref GotChainedCaller, 0);
             Interlocked.Exchange(ref GotAckedCommand, 0);
@@ -89,6 +92,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Interlocked.Exchange(ref ResponseData, 0);
             Interlocked.Exchange(ref CancelLongRunning, 0);
             Interlocked.Exchange(ref GotTestCommand3, 0);
+            Interlocked.Exchange(ref GotTestEvent, 0);
         }
 
         public CommandResponse Handle(TestCommands.ChainedCaller command) {
@@ -185,6 +189,10 @@ namespace ReactiveDomain.Messaging.Tests {
         }
 
         public class TestException : Exception { }
+
+        public void Handle(TestEvent message) {
+            Interlocked.Increment(ref GotTestEvent);
+        }
     }
 
     // ReSharper disable once InconsistentNaming
@@ -194,6 +202,14 @@ namespace ReactiveDomain.Messaging.Tests {
 
         public when_sending_commands(TestCommandBusFixture fixture) {
             _fixture = fixture;
+            //clear the pipes :-) to make sure we are starting fresh on the fixture
+            //one event for each queuedhandler
+            fixture.Bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            fixture.Bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            fixture.Bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestEvent) >= 3);
+            AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+            _fixture.ClearCounters();
         }
 
         [Fact]
@@ -234,7 +250,7 @@ namespace ReactiveDomain.Messaging.Tests {
                 _fixture.ClearCounters();
 
                 _fixture.Bus.Send(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
-                
+
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, null, "Expected Ack");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAckedCommand) == 1, null,
                     "Expected Command was handled");
@@ -292,7 +308,7 @@ namespace ReactiveDomain.Messaging.Tests {
                 _fixture.ClearCounters();
                 _fixture.Bus.TrySend(new TestCommands.Command1(CorrelatedMessage.NewRoot()), out var result);
                 Assert.True(result is Success, "Result not success");
-                AssertEx.IsOrBecomesTrue(()=> _fixture.Bus.Idle,4000);
+                AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle, 4000);
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestCommand1) == 1, null,
                     "Expected Command was handled");
             }
@@ -563,7 +579,7 @@ namespace ReactiveDomain.Messaging.Tests {
                     msg: "Expected Long Running to be handled");
             }
         }
-        
+
         [Fact]
         public void commands_should_not_call_other_commands() {
             lock (_fixture) {
@@ -571,9 +587,9 @@ namespace ReactiveDomain.Messaging.Tests {
                 _fixture.ClearCounters();
 
                 _fixture.Bus.Send(new TestCommands.AckedCommand(CorrelatedMessage.NewRoot()));
-                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAckedCommand) == 1, msg: "Command not Handled");
-                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotAck) == 1,msg: "Ack not Handled");
-                AssertEx.IsOrBecomesTrue(()=>Interlocked.Read(ref _fixture.GotSuccess) == 1,msg: "Success not Handled");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAckedCommand) == 1, msg: "Command not Handled");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotAck) == 1, msg: "Ack not Handled");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotSuccess) == 1, msg: "Success not Handled");
             }
         }
 
