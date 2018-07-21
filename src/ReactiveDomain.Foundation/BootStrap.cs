@@ -16,11 +16,7 @@ namespace ReactiveDomain.Foundation
         }
         public static void Load()
         {
-            Log.Info(AssemblyName + " Configured.");
-        }
-        public static void Configure()
-        {
-            Log.Info(AssemblyName + " Configured.");
+            Log.Info(AssemblyName + " Loaded.");
         }
     }
 }

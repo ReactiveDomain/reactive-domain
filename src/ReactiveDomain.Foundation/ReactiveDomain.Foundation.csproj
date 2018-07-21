@@ -5,30 +5,14 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Diagnostics\MonitoredCommandBus.cs" />
-    <Compile Remove="EventStore\EventStoreMessageLogger.cs" />
+    <Compile Remove="StreamStore\EventStoreMessageLogger.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net472'" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
-    <Compile Remove="ReadModel\*.cs" />
-    <Compile Remove="ViewObjects\*.cs" />
-    <Compile Remove="Threading.cs" />
-    <Compile Remove="TransientSubscriber.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Diagnostics\" />
-  </ItemGroup>
-  <ItemGroup Condition="">
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net452'" />
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net472'" />
   </ItemGroup>
 </Project>

@@ -6,7 +6,8 @@ namespace ReactiveDomain.Foundation
     public interface IListener : IDisposable
     {
         ISubscriber EventStream { get; }
-
+        long Position { get; }
+        string StreamName { get; }
         /// <summary>
         /// Starts listening on a named stream
         /// </summary>
@@ -14,7 +15,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start(string stream, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000);
+        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000);
         /// <summary>
         /// Starts listening on an aggregate root stream
         /// </summary>
@@ -23,7 +24,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start<TAggregate>(Guid id, int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
         /// <summary>
         /// Starts listening on a Aggregate Category Stream
         /// </summary>
@@ -31,6 +32,6 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start<TAggregate>(int? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
     }
 }

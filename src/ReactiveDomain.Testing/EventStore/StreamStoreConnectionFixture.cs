@@ -61,15 +61,7 @@ namespace ReactiveDomain.Testing {
         public IStreamStoreConnection Connection { get; }
 
         public UserCredentials AdminCredentials { get; }
-
-        public StreamName NextStreamName() {
-            return new StreamName($"stream-{Interlocked.Increment(ref _suffix)}");
-        }
-
-        public string NextStreamNamePrefix() {
-            return $"scenario-{Interlocked.Increment(ref _prefix):D}-";
-        }
-
+        
         private bool _disposed;
         public void Dispose() {
             if (_disposed) return;

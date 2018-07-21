@@ -17,7 +17,9 @@ namespace ReactiveDomain.Foundation {
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
         private readonly IStreamStoreConnection _eventStoreConnection;
-
+        public long Position => _position;
+        public string StreamName { get; private set; }
+        private long _position;
         /// <summary>
         /// For listening to generic streams 
         /// </summary>
@@ -49,7 +51,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="millisecondsTimeout"></param>
         public void Start(
             Type tMessage, 
-            int? checkpoint = null, 
+            long? checkpoint = null, 
             bool blockUntilLive = false, 
             int millisecondsTimeout = 1000) {
             if (!tMessage.IsSubclassOf(typeof(Event))) {
@@ -70,7 +72,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public void Start<TAggregate>(
-                        int? checkpoint = null, 
+                        long? checkpoint = null, 
                         bool blockUntilLive = false, 
                         int timeout = 1000) where TAggregate : class, IEventSource {
 
@@ -92,7 +94,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public void Start<TAggregate>(
                         Guid id, 
-                        int? checkpoint = null, 
+                        long? checkpoint = null, 
                         bool blockUntilLive = false, 
                         int timeout = 1000) where TAggregate : class, IEventSource {
             Start(
@@ -112,7 +114,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public virtual void Start(
                             string streamName, 
-                            int? checkpoint = null, 
+                            long? checkpoint = null, 
                             bool blockUntilLive = false, 
                             int timeout = 1000) {
             _liveLock.Reset();
@@ -121,15 +123,15 @@ namespace ReactiveDomain.Foundation {
                     throw new InvalidOperationException("Listener already started.");
                 if (!ValidateStreamName(streamName))
                     throw new ArgumentException("Stream not found.", streamName);
-
+                StreamName = streamName;
                 _subscription =
                     SubscribeToStreamFrom(
                         streamName,
-                        checkpoint ?? null,
+                        checkpoint,
                         true,
                         eventAppeared: GotEvent,
                         liveProcessingStarted: () => {
-                            _bus.Publish(new EventStoreMsg.CatchupSubscriptionBecameLive());
+                            _bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
                             _liveLock.Set();
                         });
                 _started = true;
@@ -139,7 +141,7 @@ namespace ReactiveDomain.Foundation {
         }
         public IDisposable SubscribeToStreamFrom(
             string stream,
-            int? lastCheckpoint,
+            long? lastCheckpoint,
             bool resolveLinkTos,
             Action<Message> eventAppeared,
             Action liveProcessingStarted = null,
@@ -147,11 +149,15 @@ namespace ReactiveDomain.Foundation {
             UserCredentials userCredentials = null,
             int readBatchSize = 500) {
             var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false);
+            StreamName = stream;
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
                 settings,
-                resolvedEvent => eventAppeared(_serializer.Deserialize(resolvedEvent) as Message),
+                resolvedEvent => {
+                    Interlocked.Exchange(ref _position, resolvedEvent.EventNumber);
+                    eventAppeared(_serializer.Deserialize(resolvedEvent) as Message);
+                },
                 _ => liveProcessingStarted?.Invoke(),
                 (reason, exception) => subscriptionDropped?.Invoke(reason, exception),
                 userCredentials);

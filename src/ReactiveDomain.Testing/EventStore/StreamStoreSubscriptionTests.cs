@@ -20,7 +20,7 @@ namespace ReactiveDomain.Testing.EventStore {
         public StreamStoreSubscriptionTests(StreamStoreConnectionFixture fixture) {
             _admin = fixture.AdminCredentials;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            var mockStreamStore = new MockStreamStoreConnection("Test");
+            var mockStreamStore = new MockStreamStoreConnection(nameof(MockStreamStoreConnection));
             mockStreamStore.Connect();
             fixture.Connection.Connect();
             _stores.Add(mockStreamStore);
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 AppendEvents(eventCount, store, _streamName);
             }
 
-           
+
         }
         private void AppendEvents(int numEventsToBeSent, IStreamStoreConnection conn, string streamName, int startNumber = 0) {
             for (int evtNumber = startNumber; evtNumber < numEventsToBeSent + startNumber; evtNumber++) {
@@ -90,7 +90,7 @@ namespace ReactiveDomain.Testing.EventStore {
 
                 var sub = conn.SubscribeToStreamFrom(
                                             streamName,
-                                            1,
+                                            2,//after the third event of 5
                                             CatchUpSubscriptionSettings.Default,
                                             // ReSharper disable once AccessToModifiedClosure
                                             evt => Interlocked.Increment(ref evtCount),
@@ -99,10 +99,11 @@ namespace ReactiveDomain.Testing.EventStore {
 
 
                 AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, 2000, msg: "Failed handle live processing start");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 2, 5000, msg: $"Expected 2 Events got { Interlocked.Read(ref evtCount)}");
+                Task.Run(()=> AppendEvents(5, conn, streamName));
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 7, 5000, msg: $"Expected 7 Events got { Interlocked.Read(ref evtCount)}");
                 AppendEvents(5, conn, streamName);
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 8, 5000, msg: $"Expected 3 Events got { Interlocked.Read(ref evtCount)}");
-                Task.Run(() => AppendEvents(5, conn, streamName));
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 13, 5000, msg: $"Expected 8 Events got { Interlocked.Read(ref evtCount)}");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 12, 5000, msg: $"Expected 12 Events got { Interlocked.Read(ref evtCount)}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
@@ -116,7 +117,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid()),
                 _streamNameBuilder.GenerateForAggregate(typeof(TestWoftamAggregate), Guid.NewGuid())
             };
-            
+
             foreach (var conn in _stores) {
 
 
@@ -177,19 +178,23 @@ namespace ReactiveDomain.Testing.EventStore {
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
+        public class STestCategoryAggregate : EventDrivenStateMachine { }
         [Fact]
         public void can_subscribe_to_category_stream() {
-            var streamTypeName = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
-            var streams = new List<string>
+            var streamTypeName = _streamNameBuilder.GenerateForCategory(typeof(STestCategoryAggregate));
+            var streams = new []
             {
-                _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid()),
-                _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid())
+                _streamNameBuilder.GenerateForAggregate(typeof(STestCategoryAggregate), Guid.NewGuid()),
+                _streamNameBuilder.GenerateForAggregate(typeof(STestCategoryAggregate), Guid.NewGuid())
             };
 
             foreach (var conn in _stores) {
                 long evtCount = 0;
                 var dropped = false;
-
+                foreach (var stream in streams) {
+                    AppendEvents(1, conn, stream);
+                }
+                Thread.Sleep(250);
                 var sub = conn.SubscribeToStream(
                     streamTypeName,
                     // ReSharper disable once AccessToModifiedClosure
@@ -197,18 +202,19 @@ namespace ReactiveDomain.Testing.EventStore {
                     (reason, ex) => dropped = true,
                     _admin);
 
-                foreach (var stream in streams) {
-                    AppendEvents(5, conn, stream);
-                }
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 10, 2000, $"Expected 10 got {Interlocked.Read(ref evtCount)}");
+
+                AppendEvents(5, conn, streams[0]);
+                AppendEvents(5, conn, streams[1]);
+
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 10, 2000,
+                    $"Expected 10 got {Interlocked.Read(ref evtCount)} on {conn.ConnectionName}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
-        public class StreamCreatedTestEvent : Event
-        {
-            public StreamCreatedTestEvent():base(NewRoot()) {
-                
+        public class StreamCreatedTestEvent : Event {
+            public StreamCreatedTestEvent() : base(NewRoot()) {
+
             }
         }
         public class SubscriptionTestEvent : Event {

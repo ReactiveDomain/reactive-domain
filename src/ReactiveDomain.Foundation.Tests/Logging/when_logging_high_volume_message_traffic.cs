@@ -137,7 +137,7 @@ namespace ReactiveDomain.Foundation.Tests.Logging
                 _commandSuccessCount++;
             else if (msg is AckCommand)
                 _commandAckCount++;
-            if (! (msg is EventStoreMsg.CatchupSubscriptionBecameLive))
+            if (! (msg is StreamStoreMsgs.CatchupSubscriptionBecameLive))
                 _numberOfItemsLogged++;
         }
     }

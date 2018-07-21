@@ -29,6 +29,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Persistence"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Core", "ReactiveDomain.Core\ReactiveDomain.Core.csproj", "{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.UI", "ReactiveDomain.UI\ReactiveDomain.UI.csproj", "{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.UI.Tests", "ReactiveDomain.UI.Tests\ReactiveDomain.UI.Tests.csproj", "{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +91,14 @@ Global
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

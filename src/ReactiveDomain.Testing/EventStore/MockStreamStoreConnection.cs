@@ -94,7 +94,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 var recordedEvent = new RecordedEvent(
                     stream,
                     events[i].EventId,
-                    eventStream.Count + 1,
+                    eventStream.Count,
                     events[i].EventType,
                     events[i].Data,
                     events[i].Metadata,
@@ -312,7 +312,7 @@ namespace ReactiveDomain.Testing.EventStore {
 
 
 
-            var subscription = new Subscription(stream, start, subscriptionDropped, eventAppeared);
+            var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
             subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
             _subscriptions.Add(subscription);
             liveProcessingStarted?.Invoke(Unit.Default);
@@ -356,7 +356,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 if (_store.ContainsKey(stream)) {
                     _store.Remove(stream);
                 }
-                if(expectedVersion == ExpectedVersion.StreamExists) {
+                if (expectedVersion == ExpectedVersion.StreamExists) {
                     throw new ArgumentOutOfRangeException();
                 }
             }
@@ -384,7 +384,7 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                     streamName,
-                    stream.Count + 1,
+                    stream.Count,
                     @event.Event.EventStreamId,
                     @event.Event.EventId, // reusing since the projection is linking to the original event
                     @event.Event.EventNumber,
@@ -396,7 +396,7 @@ namespace ReactiveDomain.Testing.EventStore {
                     epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, stream.Count));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
         }
 
         /// <summary>
@@ -421,7 +421,7 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                 streamName,
-                stream.Count + 1,
+                stream.Count,
                 @event.Event.EventStreamId,
                 @event.Event.EventId, // reusing since the projection is linking to the original event
                 @event.Event.EventNumber,
@@ -433,7 +433,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, stream.Count));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
         }
 
 

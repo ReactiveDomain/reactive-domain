@@ -41,7 +41,7 @@ namespace ReactiveDomain.Foundation
             base.GotEvent(@event);
         }
 
-        public override void Start(string streamName, int? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
+        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
         {
             if (Sync) {
                 SyncQueue?.Start();

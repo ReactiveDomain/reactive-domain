@@ -19,21 +19,18 @@ namespace ReactiveDomain.Testing {
         public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture) {
          
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-
-            // todo: uncomment this and make sure all tests pass
-
+            
             var mockStreamStore = new MockStreamStoreConnection("Test");
             _streamStoreConnections.Add(mockStreamStore);
             mockStreamStore.Connect();
             _streamStoreConnections.Add(fixture.Connection);
 
+            _repos.Add(new StreamStoreRepository(_streamNameBuilder, mockStreamStore, new JsonMessageSerializer()));
 
-            //todo: reconnect bus to the all stream subscription
-            //_repos.Add(new StreamStoreRepository(_streamNameBuilder, new MockStreamStoreConnection("Test"), new JsonMessageSerializer()));
             _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection, new JsonMessageSerializer()));
         }
        
-
+        
         [Fact]
         public void can_save_new_aggregate() {
             foreach (var repo in _repos) {
@@ -41,6 +38,35 @@ namespace ReactiveDomain.Testing {
                 var tAgg = new TestAggregate(id);
                 repo.Save(tAgg);
                 var rAgg = repo.GetById<TestAggregate>(id);
+                Assert.NotNull(rAgg);
+                Assert.Equal(tAgg.Id, rAgg.Id);
+            }
+        }
+        [Fact]
+        public void can_try_get_new_aggregate() {
+            foreach (var repo in _repos) {
+                var id = Guid.NewGuid();
+                Assert.False(repo.TryGetById(id, out TestAggregate tAgg));
+                Assert.Null(tAgg);
+                tAgg = new TestAggregate(id);
+                repo.Save(tAgg);
+                
+                Assert.True(repo.TryGetById(id, out TestAggregate rAgg));
+                Assert.NotNull(rAgg);
+                Assert.Equal(tAgg.Id, rAgg.Id);
+            }
+        }
+        [Fact]
+        public void can_try_get_new_aggregate_at_version() {
+           
+            foreach (var repo in _repos) {
+                var id = Guid.NewGuid();
+                Assert.False(repo.TryGetById(id, 1, out TestAggregate tAgg));
+                Assert.Null(tAgg);
+                tAgg = new TestAggregate(id);
+                repo.Save(tAgg);
+                
+                Assert.True(repo.TryGetById(id, 1, out TestAggregate rAgg));
                 Assert.NotNull(rAgg);
                 Assert.Equal(tAgg.Id, rAgg.Id);
             }
@@ -83,6 +109,7 @@ namespace ReactiveDomain.Testing {
         public void can_get_aggregate_at_version() {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
+                Assert.Throws<InvalidOperationException>(() => repo.GetById<TestAggregate>(id, 0));
                 var tAgg = new TestAggregate(id);
                 tAgg.RaiseBy(1);
                 Assert.Equal((uint)1, tAgg.CurrentAmount());
@@ -120,7 +147,7 @@ namespace ReactiveDomain.Testing {
                 //Update & save original copy
                 tAgg.RaiseBy(6);
                 var r = repo; //copy iteration varible for closure
-                Assert.Throws<AggregateException>(() => r.Save(tAgg));
+                Assert.Throws<WrongExpectedVersionException>(() => r.Save(tAgg));
             }
         }
 
