@@ -115,7 +115,7 @@ namespace ReactiveDomain.Messaging.Bus {
             if (_thread?.IsAlive ?? false) { _thread?.Abort(); }
         }
     }
-#if NET452
+#if NET452 || NET40
     //copied from from .net framework 472 ToUnixTimeMilliseconds implementation
     //added here to support 452
     public static class TimeHelper {

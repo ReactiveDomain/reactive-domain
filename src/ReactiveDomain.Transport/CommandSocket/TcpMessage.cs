@@ -1,15 +1,21 @@
 ﻿using System;
 using System.IO;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 using Settings = ReactiveDomain.Messaging.Json;
+#if !NET40
+using BsonDataReader = Newtonsoft.Json.Bson.BsonDataReader;
+using BsonDataWriter = Newtonsoft.Json.Bson.BsonDataWriter;
+#else
+using BsonDataReader = Newtonsoft.Json.Bson.BsonReader;
+using BsonDataWriter = Newtonsoft.Json.Bson.BsonWriter;
+#endif
 
 namespace ReactiveDomain.Transport.CommandSocket
 {
-    public struct TcpMessage
+	public struct TcpMessage
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         public readonly Type MessageType;

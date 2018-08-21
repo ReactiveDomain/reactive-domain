@@ -79,7 +79,9 @@ namespace ReactiveDomain.Messaging
         /// Removes every node from the queue.  O(n) (So, don't do this often!)
         /// </summary>
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public void Clear()
         {
             Array.Clear(_nodes, 1, _numNodes);
@@ -90,7 +92,9 @@ namespace ReactiveDomain.Messaging
         /// Returns (in O(1)!) whether the given node is in the queue.  O(1)
         /// </summary>
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public bool Contains(T node)
         {
 
@@ -109,7 +113,9 @@ namespace ReactiveDomain.Messaging
         /// If the node is already enqueued, the result is undefined
         /// O(log n)
         /// </summary>
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public void Enqueue(T node, long priority)
         {
 
@@ -131,7 +137,9 @@ namespace ReactiveDomain.Messaging
         }
 
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private void Swap(T node1, T node2)
         {
             //Swap the nodes
@@ -163,7 +171,9 @@ namespace ReactiveDomain.Messaging
         }
 
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private void CascadeDown(T node)
         {
             //aka Heapify-down
@@ -225,7 +235,9 @@ namespace ReactiveDomain.Messaging
         /// Note that calling HasHigherPriority(node, node) (i.e. both arguments the same node) will return false
         /// </summary>
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private bool HasHigherPriority(T higher, T lower)
         {
             return higher.Priority < lower.Priority ||
@@ -328,7 +340,9 @@ namespace ReactiveDomain.Messaging
         /// O(log n)
         /// </summary>
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public void UpdatePriority(T node, long priority)
         {
             if(!Contains(node))

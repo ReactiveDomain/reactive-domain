@@ -50,12 +50,29 @@
             </PropertyGroup>
         </When>
     </Choose>
-    <PropertyGroup Condition="$(OS) == 'WINDOWS_NT'">
-        <LibTargetFrameworks>net472;net452;netstandard2.0</LibTargetFrameworks>
-        <TestTargetFrameworks>net472;net452;netcoreapp2.0</TestTargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition=" $(OS) != 'WINDOWS_NT'">
-        <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks>
-        <TestTargetFrameworks>netcoreapp2.0</TestTargetFrameworks>
-    </PropertyGroup>
+    <Choose>
+      <When Condition="$(OS) == 'WINDOWS_NT'">
+        <Choose>
+          <When Condition="$(BuildWithNet40) == 'true'">
+            <PropertyGroup>
+              <LibTargetFrameworks>net472;net452;net40;netstandard2.0</LibTargetFrameworks>
+            </PropertyGroup>
+          </When>
+          <When Condition="$(BuildWithNet40) != 'true'">
+            <PropertyGroup>
+              <LibTargetFrameworks>net472;net452;netstandard2.0</LibTargetFrameworks>
+            </PropertyGroup>
+          </When>
+        </Choose>
+        <PropertyGroup>
+          <TestTargetFrameworks>net472;net452;netcoreapp2.0</TestTargetFrameworks>
+        </PropertyGroup>
+      </When>
+      <When Condition=" $(OS) != 'WINDOWS_NT'">
+        <PropertyGroup>
+          <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks>
+          <TestTargetFrameworks>netcoreapp2.0</TestTargetFrameworks>
+        </PropertyGroup>
+      </When>
+    </Choose>
 </Project>
