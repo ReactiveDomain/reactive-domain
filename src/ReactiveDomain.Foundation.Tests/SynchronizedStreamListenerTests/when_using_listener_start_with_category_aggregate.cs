@@ -49,7 +49,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000);
         }
 
-        public void Handle(Message message) {
+        private void Handle(Message message) {
             dynamic evt = message;
             if (evt is TestEvent) {
                 Interlocked.Increment(ref _testEventCount);

@@ -64,7 +64,7 @@ namespace ReactiveDomain.Transport.Tests
         public void can_create_tcp_message_from_message()
         {
             var tcpMsg = new TcpMessage(_testEvent);
-            Assert.NotNull(tcpMsg.Data);
+            Assert.NotNull(tcpMsg.Data.Array);
             // ReSharper disable once AssignNullToNotNullAttribute
             var reader = new BsonDataReader(new MemoryStream(tcpMsg.Data.Array));
             // read object
@@ -82,7 +82,7 @@ namespace ReactiveDomain.Transport.Tests
         public void can_create_tcp_message_from_byte_array()
         {
             var tcpMsg = new TcpMessage(_testEvent);
-            Assert.NotNull(tcpMsg.Data);
+            Assert.NotNull(tcpMsg.Data.Array);
             // ReSharper disable once AssignNullToNotNullAttribute
             var reader = new BsonDataReader(new MemoryStream(tcpMsg.Data.Array));
             // read object

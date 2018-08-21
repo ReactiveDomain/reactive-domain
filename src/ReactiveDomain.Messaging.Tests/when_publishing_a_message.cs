@@ -118,20 +118,20 @@ namespace ReactiveDomain.Messaging.Tests {
             _bus.Unsubscribe<TestEvent>(this);
             Assert.False(_bus.HasSubscriberFor<TestEvent>());
 
-            long _gotAdHoc = 0;
-            var sub2 = _bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref _gotAdHoc)));
+            long gotAdHoc = 0;
+            var sub2 = _bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref gotAdHoc)));
             _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>_gotAdHoc == 1);
+            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 1);
 
             sub = _bus.Subscribe<TestEvent>(this);
             _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>_gotAdHoc == 2);
+            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 2);
             AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
 
             sub.Dispose();
@@ -139,7 +139,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>_gotAdHoc == 3);
+            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 3);
             AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
             
             sub2.Dispose();
@@ -147,7 +147,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.False(_bus.HasSubscriberFor<Message>(true));
             Assert.False(_bus.HasSubscriberFor<TestEvent>());
-            AssertEx.IsOrBecomesTrue(()=>_gotAdHoc == 3);
+            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 3);
             AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
         }
 
@@ -158,10 +158,10 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
         }
 
-        public void Handle(TestEvent message) => Interlocked.Increment(ref _testEventCount);
-        public void Handle(ParentTestEvent message) => Interlocked.Increment(ref _parentTestEventCount);
-        public void Handle(ChildTestEvent message) => Interlocked.Increment(ref _childTestEventCount);
-        public void Handle(GrandChildTestEvent message) => Interlocked.Increment(ref _grandChildTestEventCount);
+        void IHandle<TestEvent>.Handle(TestEvent message) => Interlocked.Increment(ref _testEventCount);
+        void IHandle<ParentTestEvent>.Handle(ParentTestEvent message) => Interlocked.Increment(ref _parentTestEventCount);
+        void IHandle<ChildTestEvent>.Handle(ChildTestEvent message) => Interlocked.Increment(ref _childTestEventCount);
+        void IHandle<GrandChildTestEvent>.Handle(GrandChildTestEvent message) => Interlocked.Increment(ref _grandChildTestEventCount);
     }
 
     public abstract class TestWrapper : IDisposable {
@@ -170,10 +170,10 @@ namespace ReactiveDomain.Messaging.Tests {
             this.Reset();
         }
 
-        abstract protected void Reset();
+        protected abstract void Reset();
 
         void IDisposable.Dispose() {
-            // Noop
+            // No-op
         }
     }
 }

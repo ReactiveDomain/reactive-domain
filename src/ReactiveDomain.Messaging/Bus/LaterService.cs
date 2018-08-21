@@ -29,7 +29,7 @@ namespace ReactiveDomain.Messaging.Bus {
 
         public void Start() {
             if (_disposed) { throw new ObjectDisposedException(nameof(LaterService)); }
-            var thread = new Thread(Process) { Name = nameof(LaterService) };
+            var thread = new Thread(Process) { Name = nameof(LaterService), IsBackground = true};
             if (Interlocked.CompareExchange(ref _thread, thread, null) != null) throw new InvalidOperationException("Already started");
             _stop = False;
             _stopped = False;

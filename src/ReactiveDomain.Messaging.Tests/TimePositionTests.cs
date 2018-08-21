@@ -35,11 +35,14 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.False((TimePosition)null == p1);
             Assert.True((TimePosition)null == (TimePosition)null);
             Assert.False(p1 == p3);
+#pragma warning disable CS1718 // Comparison made to same variable
             Assert.True(p1 == p1);
+#pragma warning restore CS1718 // Comparison made to same variable
             Assert.True(p1.Equals(p1));
             Assert.True(p1.GetHashCode() == p2.GetHashCode());
         }
         [Fact]
+        [SuppressMessage("ReSharper", "RedundantCast")]
         public void TimePositionsCanBeCompared() {
             var p1 = new TimePosition(50);
             var p2 = new TimePosition(50);

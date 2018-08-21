@@ -59,7 +59,9 @@ namespace ReactiveDomain.Foundation.ViewObjects
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
+#pragma warning disable CS0618 // Type or member is obsolete
                        .ObserveOn(MainThreadScheduler).SelectMany(ex => UserError.Throw(userErrorMsg ?? ex.Message, ex))
+#pragma warning restore CS0618 // Type or member is obsolete
                        .Subscribe(result =>
                        {
                            //This will return the recovery option returned from the registered user error handler
@@ -183,7 +185,9 @@ namespace ReactiveDomain.Foundation.ViewObjects
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
+#pragma warning disable CS0618 // Type or member is obsolete
                        .SelectMany(ex => UserError.Throw(userErrorMsg, ex))
+#pragma warning restore CS0618 // Type or member is obsolete
                        .ObserveOn(MainThreadScheduler).Subscribe(result =>
                        {
                            //This will return the recovery option returned from the registered user error handler
@@ -259,7 +263,9 @@ namespace ReactiveDomain.Foundation.ViewObjects
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
+#pragma warning disable CS0618 // Type or member is obsolete
                        .SelectMany(ex => UserError.Throw(userErrorMsg ?? ex.Message, ex))
+#pragma warning restore CS0618 // Type or member is obsolete
                        .ObserveOn(MainThreadScheduler).Subscribe(result =>
                        {
                            //This will return the recovery option returned from the registered user error handler
@@ -324,7 +330,9 @@ namespace ReactiveDomain.Foundation.ViewObjects
             var cmd = ReactiveCommand.CreateFromTask(task, canExecute, scheduler);
 
             cmd.ThrownExceptions
+#pragma warning disable CS0618 // Type or member is obsolete
                        .SelectMany(ex => UserError.Throw(userErrorMsg ?? ex.Message, ex))
+#pragma warning restore CS0618 // Type or member is obsolete
                        .ObserveOn(MainThreadScheduler).Subscribe(result =>
                        {
                            //This will return the recovery option returned from the registered user error handler

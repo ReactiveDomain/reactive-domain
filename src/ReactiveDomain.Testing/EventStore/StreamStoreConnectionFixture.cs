@@ -15,10 +15,8 @@ using EventStore.Common.Options;
 namespace ReactiveDomain.Testing {
     public class StreamStoreConnectionFixture : IDisposable {
         private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
-
-        private int _suffix;
-        private int _prefix;
-        private readonly IDisposable _node;
+        
+        private readonly IDisposable _node = null;
 
         public StreamStoreConnectionFixture()
         {

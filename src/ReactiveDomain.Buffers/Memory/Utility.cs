@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -14,6 +15,7 @@ namespace ReactiveDomain.Buffers.Memory
                 StringComparison.InvariantCultureIgnoreCase) == 0;
         }
 
+        [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         public static bool NearlyEqual(float a, float b, float epsilon)
         {
             float absA = Math.Abs(a);
@@ -25,6 +27,7 @@ namespace ReactiveDomain.Buffers.Memory
                 // shortcut, handles infinities
                 return true;
             }
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (a == 0 || b == 0 || diff < float.MinValue)
             {
                 // a or b is zero or both are extremely close to it
@@ -62,8 +65,7 @@ namespace ReactiveDomain.Buffers.Memory
 
 
         public const int FramesPerBuffer = 30;
-        private static unsafe void* destination;
-
+        
         public static unsafe Guid ParseGuidBuffer(byte* buffer)
         {
             return new Guid(

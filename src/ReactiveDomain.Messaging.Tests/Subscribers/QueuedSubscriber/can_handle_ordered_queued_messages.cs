@@ -57,13 +57,13 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             Assert.True(_isInOrder);
         }
 
-        public void Handle(CountedEvent message) {
+        void IHandle<CountedEvent>.Handle(CountedEvent message) {
             if (message.MessageNumber != _eventCount)
                 _isInOrder = false;
             Interlocked.Increment(ref _eventCount);
         }
 
-        public void Handle(CountedTestMessage message) {
+        void IHandle<CountedTestMessage>.Handle(CountedTestMessage message) {
             if (message.MessageNumber != _testMsgCount)
                 _isInOrder = false;
             Interlocked.Increment(ref _testMsgCount);

@@ -35,7 +35,9 @@ namespace ReactiveDomain.Transport.CommandSocket
                 throw new ArgumentException($"ArraySegment null or too short, length: {data.Count}", nameof(data));
 
             Message msg;
+#pragma warning disable 618
             using (var reader = new BsonDataReader(new MemoryStream(data.Array)))
+#pragma warning restore 618
             {
                 reader.Read(); //object
                 reader.Read(); //property name
@@ -66,7 +68,9 @@ namespace ReactiveDomain.Transport.CommandSocket
             Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.GetType().Name + " to be wrapped.");
 
             var ms = new MemoryStream();
+#pragma warning disable 618
             using (var writer = new BsonDataWriter(ms))
+#pragma warning restore 618
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName(MessageType.FullName);
