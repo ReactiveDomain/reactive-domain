@@ -34,7 +34,7 @@ namespace ReactiveDomain.Transport
                 {
                     Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint.Address + ":" + endPoint.Port + ") successfully constructed TcpConnection.");
 
-                    ConfigureTcpListener();
+                    ConfigureTcpListener(conn);
                 },
                 (conn, err) =>
                 {
@@ -56,7 +56,7 @@ namespace ReactiveDomain.Transport
         }
 
 
-        private void ConfigureTcpListener()
+        private void ConfigureTcpListener(ITcpConnection conn)
         {
             Framer.RegisterMessageArrivedCallback(TcpMessageArrived);
             Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
@@ -72,9 +72,9 @@ namespace ReactiveDomain.Transport
                     // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                     return;
                 }
-                TcpConnection[0].ReceiveAsync(callback); //client should only have one connection
+                conn.ReceiveAsync(callback);
             };
-            TcpConnection[0].ReceiveAsync(callback); //client should only have one connection
+            conn.ReceiveAsync(callback);
         }
 
     }
