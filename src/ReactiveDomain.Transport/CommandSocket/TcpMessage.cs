@@ -1,23 +1,17 @@
 ﻿using System;
-using System.IO;
+using System.Text;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 using Settings = ReactiveDomain.Messaging.Json;
-#if !NET40
-using BsonDataReader = Newtonsoft.Json.Bson.BsonDataReader;
-using BsonDataWriter = Newtonsoft.Json.Bson.BsonDataWriter;
-#else
-using BsonDataReader = Newtonsoft.Json.Bson.BsonReader;
-using BsonDataWriter = Newtonsoft.Json.Bson.BsonWriter;
-#endif
 
 namespace ReactiveDomain.Transport.CommandSocket
 {
-	public struct TcpMessage
+    public struct TcpMessage
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly Encoding Encoding = Helper.UTF8NoBom;
         public readonly Type MessageType;
         public readonly ArraySegment<byte> Data;
         public readonly Message WrappedMessage;
@@ -34,21 +28,19 @@ namespace ReactiveDomain.Transport.CommandSocket
             if (data.Array == null || data.Count < sizeof(int))
                 throw new ArgumentException($"ArraySegment null or too short, length: {data.Count}", nameof(data));
 
-            Message msg;
-#pragma warning disable 618
-            using (var reader = new BsonDataReader(new MemoryStream(data.Array)))
-#pragma warning restore 618
-            {
-                reader.Read(); //object
-                reader.Read(); //property name
+            var offset = data.Offset;
+            offset += ReadBytes(data.Array, offset, out var typeNameByteCount);
+            offset += ReadBytes(data.Array, offset, typeNameByteCount, out var typeName);
+            offset += ReadBytes(data.Array, offset, out var jsonByteCount);
+            ReadBytes(data.Array, offset, jsonByteCount, out var json);
 
-                var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
-                reader.Read(); //property value
-                msg = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Settings.JsonSettings);
-            }
+            var messageType = MessageHierarchy.GetTypeByFullName(typeName);
+            var msg = (Message)JsonConvert.DeserializeObject(json, messageType, Settings.JsonSettings);
+
             Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgType" + msg.GetType().Name);
             return new TcpMessage(msg, data);
         }
+
         //used by FromArraySegment to set the values and return the struct
         private TcpMessage(Message message, ArraySegment<byte> data)
         {
@@ -67,19 +59,49 @@ namespace ReactiveDomain.Transport.CommandSocket
             MessageType = message.GetType();
             Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + message.GetType().Name + " to be wrapped.");
 
-            var ms = new MemoryStream();
-#pragma warning disable 618
-            using (var writer = new BsonDataWriter(ms))
-#pragma warning restore 618
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName(MessageType.FullName);
-                writer.WriteValue(JsonConvert.SerializeObject(message, Settings.JsonSettings));
-                writer.WriteEnd();
-            }
-            Data = new ArraySegment<byte>(ms.ToArray());
+            var typeName = MessageType.FullName;
+            var json = JsonConvert.SerializeObject(message, Settings.JsonSettings);
+
+            var typeNameByteCount = Encoding.GetByteCount(typeName);
+            var jsonByteCount = Encoding.GetByteCount(json);
+            var totalByteCount = sizeof(int) + typeNameByteCount + sizeof(int) + jsonByteCount;
+
+            var array = new byte[totalByteCount];
+            Data = new ArraySegment<byte>(array);
+
+            var offset = 0;
+            offset += WriteBytes(typeNameByteCount, array, offset);
+            offset += WriteBytes(typeName, array, offset);
+            offset += WriteBytes(jsonByteCount, array, offset);
+            WriteBytes(json, array, offset);
+
             WrappedMessage = message;
         }
-    }
 
+        private static int ReadBytes(byte[] source, int offset, out int destination)
+        {
+            destination = BitConverter.ToInt32(source, offset);
+            return sizeof(int);
+        }
+
+        private static int WriteBytes(int source, byte[] destination, int offset)
+        {
+            destination[offset + 0] = (byte)source;
+            destination[offset + 1] = (byte)(source >> 8);
+            destination[offset + 2] = (byte)(source >> 16);
+            destination[offset + 3] = (byte)(source >> 24);
+            return sizeof(int);
+        }
+
+        private static int ReadBytes(byte[] source, int offset, int count, out string destination)
+        {
+            destination = Encoding.GetString(source, offset, count);
+            return count;
+        }
+
+        private static int WriteBytes(string source, byte[] destination, int offset)
+        {
+            return Encoding.GetBytes(source, 0, source.Length, destination, offset);
+        }
+    }
 }

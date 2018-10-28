@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Transport.CommandSocket;
 using Xunit;
@@ -10,92 +9,6 @@ namespace ReactiveDomain.Transport.Tests
     // ReSharper disable InconsistentNaming
     public class when_creating_tcp_messages
     {
-        [Fact]
-        public void bson_serialize_object_test()
-        {
-            var propName = "Value";
-            var propValue = "Dummy";
-            MemoryStream ms = new MemoryStream();
-            var bs = new BsonDataWriter(ms);
-            bs.WriteStartObject();
-            bs.WritePropertyName(propName);
-            bs.WriteValue(propValue);
-            bs.WriteEnd();
- 
-            ms.Seek(0, SeekOrigin.Begin);
- 
-            var reader = new BsonDataReader(ms);
-            // object
-            reader.Read();
-            // property name
-            reader.Read();
-            Assert.Equal(propName, (string) reader.Value);
-            reader.Read();
-            Assert.Equal(propValue, (string) reader.Value);
-        }
-        [Fact]
-        public void bson_serialize_message_test()
-        {
-            var prop1 = "prop1";
-            var prop2 = "prop2";
-            var msg = new WoftamEvent(prop1,prop2);
-            MemoryStream ms = new MemoryStream();
-            var bs = new BsonDataWriter(ms);
-            bs.WriteStartObject();
-            bs.WritePropertyName(msg.GetType().FullName);
-            bs.WriteValue(JsonConvert.SerializeObject(msg));
-            bs.WriteEnd();
- 
-            ms.Seek(0, SeekOrigin.Begin);
-            Message msg2;
-            var reader = new BsonDataReader(ms);
-            // read object
-            reader.Read();
-            // read type name
-            reader.Read();
-            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
-            reader.Read(); //property value
-            msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType);
-            Assert.IsType<WoftamEvent>(msg2);
-            Assert.Equal(prop1,((WoftamEvent)msg2).Property1);
-        }
-
-        [Fact]
-        public void can_create_tcp_message_from_message()
-        {
-            var tcpMsg = new TcpMessage(_testEvent);
-            Assert.NotNull(tcpMsg.Data.Array);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            var reader = new BsonDataReader(new MemoryStream(tcpMsg.Data.Array));
-            // read object
-            reader.Read();
-            // read type name
-            reader.Read();
-            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
-            reader.Read(); //read json value
-            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
-            Assert.IsType<WoftamEvent>(msg2);
-            Assert.Equal(Prop1,((WoftamEvent)msg2).Property1);
-        }
-
-        [Fact]
-        public void can_create_tcp_message_from_byte_array()
-        {
-            var tcpMsg = new TcpMessage(_testEvent);
-            Assert.NotNull(tcpMsg.Data.Array);
-            // ReSharper disable once AssignNullToNotNullAttribute
-            var reader = new BsonDataReader(new MemoryStream(tcpMsg.Data.Array));
-            // read object
-            reader.Read();
-            // read type name
-            reader.Read();
-            var messageType = MessageHierarchy.GetTypeByFullName((string)reader.Value);
-            reader.Read(); //read json value
-            var msg2 = (Message)JsonConvert.DeserializeObject((string)reader.Value, messageType, Json.JsonSettings);
-            Assert.IsType<WoftamEvent>(msg2);
-            Assert.Equal(Prop1,((WoftamEvent)msg2).Property1);
-        }
-
         [Fact]
         public void can_serialize_from_message()
         {
