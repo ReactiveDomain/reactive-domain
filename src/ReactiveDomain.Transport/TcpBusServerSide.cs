@@ -25,11 +25,12 @@ namespace ReactiveDomain.Transport
             {
                var conn = Transport.TcpConnection.CreateAcceptedTcpConnection(Guid.NewGuid(), endPoint, socket, verbose: true);
 
+                LengthPrefixMessageFramer framer = new LengthPrefixMessageFramer();
+                framer.RegisterMessageArrivedCallback(TcpMessageArrived);
+
                 Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
                 callback = (x, data) =>
                 {
-                    LengthPrefixMessageFramer framer = new LengthPrefixMessageFramer();
-                    framer.RegisterMessageArrivedCallback(TcpMessageArrived);
                     try
                     {
                         framer.UnFrameData(data);
