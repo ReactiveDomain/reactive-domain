@@ -6,6 +6,10 @@ using ReactiveDomain.Messaging;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing {
     public class TestCommands {
+        public class TestMessage : Message {
+            public TestMessage() { }
+        }
+
         public class TimeoutTestCommand : Command {
             public TimeoutTestCommand(CorrelatedMessage source) : base(source) { }
         }
