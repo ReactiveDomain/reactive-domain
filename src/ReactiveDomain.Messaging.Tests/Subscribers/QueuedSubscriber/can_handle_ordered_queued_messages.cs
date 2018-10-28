@@ -12,9 +12,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         IHandle<CountedTestMessage>, IDisposable
     {
         private readonly int _count = 100;
-        private readonly IBus _bus;
+        private readonly IDispatcher _bus;
         private readonly Bus.QueuedSubscriber _subscriber;
         private long _eventCount;
+        private long _cmdCount;
         private long _testMsgCount;
 
         private bool _isInOrder = true;
@@ -26,7 +27,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         }
 
         public can_handle_ordered_queued_messages() {
-            _bus = new InMemoryBus("test");
+            _bus = new Dispatcher("test");
             _subscriber = new TestSubscriber(_bus);
             _subscriber.Subscribe<CountedEvent>(this);
             _subscriber.Subscribe<CountedTestMessage>(this);
@@ -55,6 +56,23 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
                 () => _eventCount == _count,
                 msg: $"Expected message count to be {_count} Messages, found {_eventCount}");
             Assert.True(_isInOrder);
+        }
+        [Fact] 
+        void can_handle_cmds_in_order() {
+            _subscriber.Subscribe(new AdHocCommandHandler<TestCommands.OrderedCommand>(
+                cmd => {
+                    Interlocked.Increment(ref _cmdCount);
+                    return Interlocked.Read(ref _cmdCount) == cmd.SequenceNumber + 1;
+                }));
+            CorrelatedMessage source = CorrelatedMessage.NewRoot();
+            for (int i = 0; i < _count; i++) {
+                var cmd = new TestCommands.OrderedCommand(i, source);
+                _bus.Send(cmd);
+                source = cmd;
+            }
+            AssertEx.IsOrBecomesTrue(
+                () => Interlocked.Read(ref _cmdCount) == _count,
+                msg: $"Expected message count to be {_count} Messages, found {_cmdCount}");
         }
 
         void IHandle<CountedEvent>.Handle(CountedEvent message) {

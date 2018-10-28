@@ -37,6 +37,12 @@ namespace ReactiveDomain.Testing {
         public class Command3 : Command {
             public Command3(CorrelatedMessage source) : base(source) { }
         }
+        public class OrderedCommand : Command {
+            public readonly int SequenceNumber;
+            public OrderedCommand(int sequenceNumber, CorrelatedMessage source) : base(source) {
+                SequenceNumber = sequenceNumber;
+            }
+        }
         public class RemoteHandled : Command {
             public RemoteHandled(CorrelatedMessage source) : base(source) { }
         }
