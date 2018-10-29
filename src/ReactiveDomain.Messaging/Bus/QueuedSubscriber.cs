@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus {
     public abstract class QueuedSubscriber :
@@ -8,12 +9,12 @@ namespace ReactiveDomain.Messaging.Bus {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
 
         private readonly QueuedHandler _messageQueue;
-        private readonly IBus _generalBus;
-        private readonly IBus _internalBus;
+        private readonly IBus _externalBus;
+        private readonly InMemoryBus _internalBus;
         protected object Last = null;
         public bool Starving => _messageQueue.Idle;
         protected QueuedSubscriber(IBus bus, bool idempotent = false) {
-            _generalBus = bus ?? throw new ArgumentNullException(nameof(bus));
+            _externalBus = bus ?? throw new ArgumentNullException(nameof(bus));
             _internalBus = new InMemoryBus("SubscriptionBus");
 
             if (idempotent)
@@ -28,17 +29,27 @@ namespace ReactiveDomain.Messaging.Bus {
                                         "SubscriptionQueue");
             _messageQueue.Start();
         }
-        public void Subscribe<T>(IHandle<T> handler) where T : Message {
-            _internalBus.Subscribe<T>(handler);
-            _subscriptions.Add(
-                _generalBus.Subscribe<T>(new AdHocHandler<T>(_messageQueue.Handle))
-                              );
+        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message {
+            var internalSub = _internalBus.Subscribe(handler);
+            var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
+            _subscriptions.Add(internalSub);
+            _subscriptions.Add(externalSub);
+            return new Disposer(() => {
+                internalSub?.Dispose();
+                externalSub?.Dispose();
+                return Unit.Default;
+            });
         }
-        public void Subscribe<T>(IHandleCommand<T> handler) where T : Command {
-            _internalBus.Subscribe<T>(new CommandHandler<T>(_generalBus, handler));
-            _subscriptions.Add(
-                _generalBus.Subscribe<T>(new AdHocHandler<T>(_messageQueue.Handle))
-            );
+        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command {
+            var internalSub = _internalBus.Subscribe(new CommandHandler<T>(_externalBus, handler));
+            var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
+            _subscriptions.Add(internalSub);
+            _subscriptions.Add(externalSub);
+            return new Disposer(() => {
+                internalSub?.Dispose();
+                externalSub?.Dispose();
+                return Unit.Default;
+            });
         }
         public void Dispose() {
             Dispose(true);
@@ -51,6 +62,7 @@ namespace ReactiveDomain.Messaging.Bus {
             if (disposing) {
                 _messageQueue.RequestStop();
                 _subscriptions?.ForEach(s => s.Dispose());
+                _internalBus?.Dispose();
                 _disposed = true;
             }
         }

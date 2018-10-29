@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
 
@@ -45,6 +46,9 @@ namespace ReactiveDomain.Testing {
         }
         public class RemoteHandled : Command {
             public RemoteHandled(CorrelatedMessage source) : base(source) { }
+        }
+        public class RemoteCancel : Command {
+            public RemoteCancel(CorrelatedMessage source, CancellationToken token) : base(source, token) { }
         }
         //n.b. don't register a handler for this
         public class Unhandled : Command {

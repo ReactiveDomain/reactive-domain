@@ -36,6 +36,9 @@ namespace ReactiveDomain.Messaging.Bus
                     return command.Fail(ex);
                 throw;
             }
+            if (command.IsCanceled)
+                return command.Canceled();
+
             return passed ? command.Succeed() : command.Fail();
         }
     }

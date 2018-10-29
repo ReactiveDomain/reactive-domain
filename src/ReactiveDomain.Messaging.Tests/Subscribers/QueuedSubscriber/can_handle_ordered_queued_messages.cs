@@ -5,97 +5,105 @@ using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
-    // ReSharper disable once InconsistentNaming
-    // ReSharper disable once RedundantExtendsListEntry
-    public sealed class can_handle_ordered_queued_messages : 
-        IHandle<CountedEvent>,
-        IHandle<CountedTestMessage>, IDisposable
-    {
-        private readonly int _count = 100;
-        private readonly IDispatcher _bus;
-        private readonly Bus.QueuedSubscriber _subscriber;
-        private long _eventCount;
-        private long _cmdCount;
-        private long _testMsgCount;
+    public class QueuedOrderingFixture {
+        public Dispatcher Dispatcher { get; }
 
-        private bool _isInOrder = true;
-        
+        public long EventCount;
+        public long CmdCount;
+        public long MsgCount;
+        public bool IsInOrder = true;
+        private TestSubscriber _subscriber;
 
-        private class TestSubscriber : Bus.QueuedSubscriber
-        {
-            public TestSubscriber(IBus bus) : base(bus) { }
+        public QueuedOrderingFixture() {
+            Dispatcher = new Dispatcher("Test");
+            _subscriber = new TestSubscriber(Dispatcher, this);
         }
 
-        public can_handle_ordered_queued_messages() {
-            _bus = new Dispatcher("test");
-            _subscriber = new TestSubscriber(_bus);
-            _subscriber.Subscribe<CountedEvent>(this);
-            _subscriber.Subscribe<CountedTestMessage>(this);
+        public void Reset() {
+            EventCount = 0;
+            CmdCount = 0;
+            MsgCount = 0;
+            IsInOrder = true;
+        }
+        private class TestSubscriber :
+            Bus.QueuedSubscriber,
+            IHandle<CountedEvent>,
+            IHandle<CountedTestMessage> {
+            private readonly QueuedOrderingFixture _fixture;
+            public TestSubscriber(IBus bus, QueuedOrderingFixture fixture) : base(bus) {
+                _fixture = fixture;
+                Subscribe<CountedEvent>(this);
+                Subscribe<CountedTestMessage>(this);
+                Subscribe(new AdHocCommandHandler<TestCommands.OrderedCommand>(
+                    cmd => {
+                        Interlocked.Increment(ref _fixture.CmdCount);
+                        return Interlocked.Read(ref _fixture.CmdCount) == cmd.SequenceNumber + 1;
+                    }));
+            }
+            void IHandle<CountedEvent>.Handle(CountedEvent @event) {
+                if (@event.MessageNumber != _fixture.EventCount)
+                    _fixture.IsInOrder = false;
+                Interlocked.Increment(ref _fixture.EventCount);
+            }
+
+            void IHandle<CountedTestMessage>.Handle(CountedTestMessage message) {
+                if (message.MessageNumber != _fixture.MsgCount)
+                    _fixture.IsInOrder = false;
+                Interlocked.Increment(ref _fixture.MsgCount);
+            }
+        }
+
+    }
+    // ReSharper disable once InconsistentNaming
+    // ReSharper disable once RedundantExtendsListEntry
+    public sealed class when_using_queued_subscriber_message_order_is_preserved :
+        IClassFixture<QueuedOrderingFixture> {
+        private readonly QueuedOrderingFixture _fixture;
+        private readonly int _count = 100;
+
+        public when_using_queued_subscriber_message_order_is_preserved(QueuedOrderingFixture fixture) {
+            _fixture = fixture;
         }
 
         [Fact]
         void can_handle_messages_in_order() {
+            _fixture.Reset();
             for (int i = 0; i < _count; i++) {
-                _bus.Publish(new CountedTestMessage(i));
+                _fixture.Dispatcher.Publish(new CountedTestMessage(i));
             }
             AssertEx.IsOrBecomesTrue(
-                () => _testMsgCount == _count,
-                msg: $"Expected message count to be {_count} Messages, found {_testMsgCount}");
-            Assert.True(_isInOrder);
+                () => Interlocked.Read(ref _fixture.MsgCount) == _count,
+                msg: $"Expected message count to be {_count} Messages, found {_fixture.MsgCount}");
+            Assert.True(_fixture.IsInOrder);
         }
 
-        [Fact] 
+        [Fact]
         void can_handle_events_in_order() {
+            _fixture.Reset();
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < _count; i++) {
                 var evt = new CountedEvent(i, source);
-                _bus.Publish(evt);
+                _fixture.Dispatcher.Publish(evt);
                 source = evt;
             }
             AssertEx.IsOrBecomesTrue(
-                () => _eventCount == _count,
-                msg: $"Expected message count to be {_count} Messages, found {_eventCount}");
-            Assert.True(_isInOrder);
+                () => Interlocked.Read(ref _fixture.EventCount) == _count,
+                msg: $"Expected message count to be {_count} Messages, found {_fixture.EventCount}");
+            Assert.True(_fixture.IsInOrder);
         }
-        [Fact] 
-        void can_handle_cmds_in_order() {
-            _subscriber.Subscribe(new AdHocCommandHandler<TestCommands.OrderedCommand>(
-                cmd => {
-                    Interlocked.Increment(ref _cmdCount);
-                    return Interlocked.Read(ref _cmdCount) == cmd.SequenceNumber + 1;
-                }));
+        [Fact]
+        void can_handle_commands_in_order() {
+            _fixture.Reset();
             CorrelatedMessage source = CorrelatedMessage.NewRoot();
             for (int i = 0; i < _count; i++) {
                 var cmd = new TestCommands.OrderedCommand(i, source);
-                _bus.Send(cmd);
+                _fixture.Dispatcher.Send(cmd);
                 source = cmd;
             }
             AssertEx.IsOrBecomesTrue(
-                () => Interlocked.Read(ref _cmdCount) == _count,
-                msg: $"Expected message count to be {_count} Messages, found {_cmdCount}");
+                () => Interlocked.Read(ref _fixture.CmdCount) == _count,
+                msg: $"Expected message count to be {_count} Messages, found {_fixture.CmdCount}");
         }
 
-        void IHandle<CountedEvent>.Handle(CountedEvent message) {
-            if (message.MessageNumber != _eventCount)
-                _isInOrder = false;
-            Interlocked.Increment(ref _eventCount);
-        }
-
-        void IHandle<CountedTestMessage>.Handle(CountedTestMessage message) {
-            if (message.MessageNumber != _testMsgCount)
-                _isInOrder = false;
-            Interlocked.Increment(ref _testMsgCount);
-        }
-
-        public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing) {
-            if (!disposing) return;
-          
-            _subscriber?.Dispose();
-        }
     }
 }
