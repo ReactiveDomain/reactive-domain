@@ -7,7 +7,7 @@ namespace ReactiveDomain.Transport.Tests
 {
     public class MockTcpConnection : ITcpConnection
     {
-        private static IPEndPoint _remoteEndPoint;
+        private static EndPoint _remoteEndPoint;
         private static Guid _connectionId;
 
         public static MockTcpConnection CreateConnectingTcpConnection(Guid connectionId,
@@ -23,7 +23,7 @@ namespace ReactiveDomain.Transport.Tests
             return new MockTcpConnection();
         }
 
-        public static MockTcpConnection CreateAcceptedTcpConnection(Guid connectionId, IPEndPoint remoteEndPoint, Socket socket, bool verbose)
+        public static MockTcpConnection CreateAcceptedTcpConnection(Guid connectionId, EndPoint remoteEndPoint, Socket socket, bool verbose)
         {
             throw new NotImplementedException();
         }
@@ -32,9 +32,9 @@ namespace ReactiveDomain.Transport.Tests
 
         public Guid ConnectionId => _connectionId;
 
-        public IPEndPoint RemoteEndPoint => _remoteEndPoint;
+        public EndPoint RemoteEndPoint => _remoteEndPoint;
 
-        public IPEndPoint LocalEndPoint => null;
+        public EndPoint LocalEndPoint => null;
 
         public int SendQueueSize
         {

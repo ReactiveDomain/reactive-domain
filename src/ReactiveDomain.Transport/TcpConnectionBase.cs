@@ -8,8 +8,8 @@ namespace ReactiveDomain.Transport
 {
     public class TcpConnectionBase : IMonitoredTcpConnection
     {
-        public IPEndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return _localEndPoint; } }
+        public EndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _localEndPoint; } }
 
         public bool IsInitialized { get { return _socket != null; } }
         public bool IsClosed { get { return _isClosed; } }
@@ -92,8 +92,8 @@ namespace ReactiveDomain.Transport
         }
 
         private Socket _socket;
-        private readonly IPEndPoint _remoteEndPoint;
-        private IPEndPoint _localEndPoint;
+        private readonly EndPoint _remoteEndPoint;
+        private EndPoint _localEndPoint;
 
         private long _lastSendStarted = -1;
         private long _lastReceiveStarted = -1;
@@ -110,7 +110,7 @@ namespace ReactiveDomain.Transport
         private int _recvAsyncs;
         private int _recvAsyncCallbacks;
 
-        public TcpConnectionBase(IPEndPoint remoteEndPoint)
+        public TcpConnectionBase(EndPoint remoteEndPoint)
         {
             Ensure.NotNull(remoteEndPoint, "remoteEndPoint");
             _remoteEndPoint = remoteEndPoint;
@@ -123,7 +123,7 @@ namespace ReactiveDomain.Transport
             Ensure.NotNull(socket, "socket");
 
             _socket = socket;
-            _localEndPoint = Helper.EatException(() => (IPEndPoint)socket.LocalEndPoint);
+            _localEndPoint = Helper.EatException(() => socket.LocalEndPoint);
         }
 
         protected void NotifySendScheduled(int bytes)

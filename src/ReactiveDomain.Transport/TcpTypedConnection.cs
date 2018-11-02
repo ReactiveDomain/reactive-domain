@@ -23,8 +23,8 @@ namespace ReactiveDomain.Transport
 
         private Action<TcpTypedConnection<T>, T> _receiveCallback;
 
-        public IPEndPoint RemoteEndPoint { get { return _connection.RemoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return _connection.LocalEndPoint; } }
+        public EndPoint RemoteEndPoint { get { return _connection.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _connection.LocalEndPoint; } }
 
         public int SendQueueSize
         {

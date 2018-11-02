@@ -38,8 +38,8 @@ namespace ReactiveDomain.Transport
         event Action<ITcpConnection, SocketError> ConnectionClosed;
 
         Guid ConnectionId { get; }
-        IPEndPoint RemoteEndPoint { get; }
-        IPEndPoint LocalEndPoint { get; }
+        EndPoint RemoteEndPoint { get; }
+        EndPoint LocalEndPoint { get; }
         int SendQueueSize { get; }
         bool IsInitialized { get; }
         bool IsClosed { get; }

@@ -20,7 +20,7 @@ namespace ReactiveDomain.Transport
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         public static ITcpConnection CreateConnectingConnection(Guid connectionId, 
-                                                                IPEndPoint remoteEndPoint, 
+                                                                EndPoint remoteEndPoint, 
                                                                 string targetHost,
                                                                 bool validateServer,
                                                                 TcpClientConnector connector, 
@@ -95,7 +95,7 @@ namespace ReactiveDomain.Transport
         private bool _validateServer;
         private readonly byte[] _receiveBuffer = new byte[TcpConnection.BufferManager.ChunkSize];
 
-        private TcpConnectionSsl(Guid connectionId, IPEndPoint remoteEndPoint, bool verbose): base(remoteEndPoint)
+        private TcpConnectionSsl(Guid connectionId, EndPoint remoteEndPoint, bool verbose): base(remoteEndPoint)
         {
             Ensure.NotEmptyGuid(connectionId, "connectionId");
 

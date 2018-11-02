@@ -23,7 +23,7 @@ namespace ReactiveDomain.Transport
                                                                                    () => new SocketAsyncEventArgs());
 
         public static ITcpConnection CreateConnectingTcpConnection(Guid connectionId, 
-                                                                   IPEndPoint remoteEndPoint, 
+                                                                   EndPoint remoteEndPoint, 
                                                                    TcpClientConnector connector, 
                                                                    TimeSpan connectionTimeout,
                                                                    Action<ITcpConnection> onConnectionEstablished, 
@@ -77,7 +77,7 @@ namespace ReactiveDomain.Transport
 
         private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> _receiveCallback;
 
-        private TcpConnection(Guid connectionId, IPEndPoint remoteEndPoint, bool verbose): base(remoteEndPoint)
+        private TcpConnection(Guid connectionId, EndPoint remoteEndPoint, bool verbose): base(remoteEndPoint)
         {
             Ensure.NotEmptyGuid(connectionId, "connectionId");
 

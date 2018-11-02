@@ -17,7 +17,7 @@ namespace ReactiveDomain.Transport
             : base(hostIp, commandPort, messageBus)
         {
            
-            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint.Port + ") entered.");
+            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") entered.");
             
             var listener = new TcpServerListener(CommandEndpoint);
 
@@ -46,7 +46,7 @@ namespace ReactiveDomain.Transport
                 conn.ReceiveAsync(callback);
                 TcpConnection.Add(conn);
             }, "Standard");
-            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint.Port + ") successfully constructed TcpServerListener.");
+            Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") successfully constructed TcpServerListener.");
             _commandPortListener = listener;
         }
     }

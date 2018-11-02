@@ -9,8 +9,15 @@ using ReactiveDomain.Messaging.Bus;
 namespace ReactiveDomain.Transport
 {
     public class TcpBusClientSide : TcpBusSide
-
     {
+        public TcpBusClientSide(
+            IDispatcher messageBus,
+            EndPoint endpoint,
+            ITcpConnection tcpConnection = null)
+            : base(endpoint, messageBus)
+        {
+            TcpConnection.Add(tcpConnection ?? CreateTcpConnection(CommandEndpoint));
+        }
 
         public TcpBusClientSide(
             IDispatcher messageBus,
@@ -23,16 +30,16 @@ namespace ReactiveDomain.Transport
             TcpConnection.Add(tcpConnection ?? CreateTcpConnection(CommandEndpoint));
         }
 
-        private ITcpConnection CreateTcpConnection(IPEndPoint endPoint)
+        private ITcpConnection CreateTcpConnection(EndPoint endPoint)
         {
-            Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint.Address + ":" + endPoint.Port + ") entered.");
+            Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") entered.");
             var clientTcpConnection = Transport.TcpConnection.CreateConnectingTcpConnection(Guid.NewGuid(),
                 endPoint,
                 new TcpClientConnector(),
                 TimeSpan.FromSeconds(120),
                 conn =>
                 {
-                    Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint.Address + ":" + endPoint.Port + ") successfully constructed TcpConnection.");
+                    Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") successfully constructed TcpConnection.");
 
                     ConfigureTcpListener(conn);
                 },

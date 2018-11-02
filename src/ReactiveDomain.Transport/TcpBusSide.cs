@@ -25,32 +25,22 @@ namespace ReactiveDomain.Transport
             IPAddress hostIp,
             int commandPort,
             IDispatcher messageBus)
+            : this(new IPEndPoint(hostIp, commandPort), messageBus)
+        { }
+
+        protected TcpBusSide(
+            EndPoint endpoint,
+            IDispatcher messageBus)
         {
-            _hostIp = hostIp;
-            _commandPort = commandPort;
+            CommandEndpoint = endpoint;
             MessageBus = messageBus;
             StatsTimer = new Timer(60000);             // getting the stats takes a while - only do it once a minute
             StatsTimer.Elapsed += _statsTimer_Elapsed;
             StatsTimer.Enabled = true;
         }
 
-        /// <summary>
-        /// IP address of the Host application
-        /// </summary>        
-        private IPAddress _hostIp;
-        private int _commandPort;
+        public EndPoint CommandEndpoint { get; }
 
-        public IPEndPoint CommandEndpoint
-        {
-            get
-            {
-                if (_commandEndpoint == null)
-                    _commandEndpoint = new IPEndPoint(_hostIp, _commandPort);
-                return _commandEndpoint;
-            }
-        }
-
-        private IPEndPoint _commandEndpoint;
         public List<Type> InboundSpamMessageTypes
         {
             set { _inboundSpamMessageTypes = value; }

@@ -45,7 +45,7 @@ namespace ReactiveDomain.Transport
         }
 
         public ITcpConnection ConnectSslTo(Guid connectionId,
-                                           IPEndPoint remoteEndPoint,
+                                           EndPoint remoteEndPoint,
                                            TimeSpan connectionTimeout,
                                            string targetHost,
                                            bool validateServer,
@@ -59,9 +59,9 @@ namespace ReactiveDomain.Transport
                                                                this, connectionTimeout, onConnectionEstablished, onConnectionFailed, verbose);
         }
 
-        internal void InitConnect(IPEndPoint serverEndPoint,
-                                  Action<IPEndPoint, Socket> onConnectionEstablished,
-                                  Action<IPEndPoint, SocketError> onConnectionFailed,
+        internal void InitConnect(EndPoint serverEndPoint,
+                                  Action<EndPoint, Socket> onConnectionEstablished,
+                                  Action<EndPoint, SocketError> onConnectionFailed,
                                   ITcpConnection connection,
                                   TimeSpan connectionTimeout)
         {

@@ -12,12 +12,12 @@ namespace ReactiveDomain.Transport
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
-        private readonly IPEndPoint _serverEndPoint;
+        private readonly EndPoint _serverEndPoint;
         private readonly Socket _listeningSocket;
         private readonly SocketArgsPool _acceptSocketArgsPool;
         private Action<IPEndPoint, Socket> _onSocketAccepted;
 
-        public TcpServerListener(IPEndPoint serverEndPoint)
+        public TcpServerListener(EndPoint serverEndPoint)
         {
             Ensure.NotNull(serverEndPoint, "serverEndPoint");
 
