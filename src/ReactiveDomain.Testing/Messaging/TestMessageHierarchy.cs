@@ -3,29 +3,26 @@ using ReactiveDomain.Messaging;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing
-{
-    public class MessageHierarchyTest
-    {
+namespace ReactiveDomain.Testing {
+    public class MessageHierarchyTest {
         [Fact]
-        public void TestNameLookup()
-        {
+        public void TestNameLookup() {
             var messageType = MessageHierarchy.GetTypeByName("Message");
-            Assert.Equal(typeof(Message), messageType);
+            Assert.Equal(typeof(Message), messageType[0]);
+            Assert.True(messageType.Count == 1);
             var childMessageType = MessageHierarchy.GetTypeByName("Event");
-            Assert.Equal(typeof(Event), childMessageType);
+            Assert.Equal(typeof(Event), childMessageType[0]);
+            Assert.True(childMessageType.Count == 1);
         }
         [Fact]
-        public void TestFullNameLookup()
-        {
+        public void TestFullNameLookup() {
             var messageType = MessageHierarchy.GetTypeByFullName("ReactiveDomain.Messaging.Message");
             Assert.Equal(typeof(Message), messageType);
             var childMessageType = MessageHierarchy.GetTypeByFullName("ReactiveDomain.Messaging.Event");
             Assert.Equal(typeof(Event), childMessageType);
         }
         [Fact]
-        public void TestMessageAncestors()
-        {
+        public void TestMessageAncestors() {
             var sut = typeof(Message);
             var ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
             Assert.Single(ancestors);
@@ -40,8 +37,7 @@ namespace ReactiveDomain.Testing
             Assert.Contains(typeof(Message), ancestors);
         }
         [Fact]
-        public void TestMessageDescendents()
-        {
+        public void TestMessageDescendents() {
             var sut = typeof(ParentTestEvent);
             var descendants = MessageHierarchy.DescendantsAndSelf(sut).ToList();
             Assert.Equal(3, descendants.Count());

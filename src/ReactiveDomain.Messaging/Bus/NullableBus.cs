@@ -79,7 +79,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of ISubscriber
 
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message
         {
 
             return _target?.Subscribe(handler);

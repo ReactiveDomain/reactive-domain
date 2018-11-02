@@ -65,6 +65,18 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 1, msg: $"Expected 1 got {_grandChildTestEventCount}");
         }
         [Fact]
+        public void TestPublishSimpleMessageWithoutDerived() {
+            _bus.Subscribe<ChildTestEvent>(this, false);
+            _bus.Publish(new ParentTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new ChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new GrandChildTestEvent(CorrelatedMessage.NewRoot()));
+           
+            AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 1 got {_testEventCount}");
+            AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 0, msg: $"Expected 0 got {_parentTestEventCount}");
+            AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 1, msg: $"Expected 0 got {_childTestEventCount}");
+            AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
+        }
+        [Fact]
         public void TestUnsubscribeTestMessage() {
             _bus.Subscribe<ParentTestEvent>(this);
             _bus.Publish(new ParentTestEvent(CorrelatedMessage.NewRoot()));
@@ -124,31 +136,31 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 1);
+            AssertEx.IsOrBecomesTrue(() => gotAdHoc == 1);
 
             sub = _bus.Subscribe<TestEvent>(this);
             _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 2);
-            AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
+            AssertEx.IsOrBecomesTrue(() => gotAdHoc == 2);
+            AssertEx.IsOrBecomesTrue(() => _testEventCount == 1);
 
             sub.Dispose();
             _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
-            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 3);
-            AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
-            
+            AssertEx.IsOrBecomesTrue(() => gotAdHoc == 3);
+            AssertEx.IsOrBecomesTrue(() => _testEventCount == 1);
+
             sub2.Dispose();
             _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.False(_bus.HasSubscriberFor<Message>(true));
             Assert.False(_bus.HasSubscriberFor<TestEvent>());
-            AssertEx.IsOrBecomesTrue(()=>gotAdHoc == 3);
-            AssertEx.IsOrBecomesTrue(()=>_testEventCount == 1);
+            AssertEx.IsOrBecomesTrue(() => gotAdHoc == 3);
+            AssertEx.IsOrBecomesTrue(() => _testEventCount == 1);
         }
 
         [Fact]

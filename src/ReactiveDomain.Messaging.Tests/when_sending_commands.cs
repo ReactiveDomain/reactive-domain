@@ -9,6 +9,7 @@ namespace ReactiveDomain.Messaging.Tests {
         IHandleCommand<TestCommands.AckedCommand>,
         IHandleCommand<TestCommands.Command1>,
         IHandleCommand<TestCommands.Command2>,
+        IHandleCommand<TestCommands.ParentCommand>,
         IHandle<AckCommand>,
         IHandle<Message>,
         IHandle<CommandResponse>,
@@ -26,6 +27,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public long GotAckedCommand;
         public long GotTestCommand1;
         public long GotTestCommand2;
+        public long GotParentCommand;
         public long GotLongRunning;
         public long CancelLongRunning;
         public long GotTestFailCommand;
@@ -51,6 +53,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Bus.Subscribe<TestCommands.AckedCommand>(this);
             Bus.Subscribe<TestCommands.Command1>(this);
             Bus.Subscribe<TestCommands.Command2>(this);
+            Bus.Subscribe<TestCommands.ParentCommand>(this);
             Bus.Subscribe<AckCommand>(this);
             Bus.Subscribe<Message>(this);
             Bus.Subscribe<CommandResponse>(this);
@@ -70,6 +73,7 @@ namespace ReactiveDomain.Messaging.Tests {
             Interlocked.Exchange(ref GotAckedCommand, 0);
             Interlocked.Exchange(ref GotTestCommand1, 0);
             Interlocked.Exchange(ref GotTestCommand2, 0);
+            Interlocked.Exchange(ref GotParentCommand, 0);
             Interlocked.Exchange(ref GotLongRunning, 0);
             Interlocked.Exchange(ref CancelLongRunning, 0);
             Interlocked.Exchange(ref GotTestFailCommand, 0);
@@ -104,6 +108,10 @@ namespace ReactiveDomain.Messaging.Tests {
         }
         public CommandResponse Handle(TestCommands.Command2 command) {
             Interlocked.Increment(ref GotTestCommand2);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(TestCommands.ParentCommand command) {
+            Interlocked.Increment(ref GotParentCommand);
             return command.Succeed();
         }
         public CommandResponse Handle(TestCommands.Command3 command) {
@@ -322,7 +330,23 @@ namespace ReactiveDomain.Messaging.Tests {
                     "Unexpected Cancel received.");
             }
         }
+        [Fact]
+        public void command_handlers_only_handle_exact_type() {
+            lock (_fixture) {
+                AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+                _fixture.ClearCounters();
 
+                _fixture.Bus.Send(new TestCommands.ParentCommand(CorrelatedMessage.NewRoot()));
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotParentCommand) == 1);
+
+                _fixture.Bus.Publish(new TestCommands.ChildCommand(CorrelatedMessage.NewRoot()));
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotParentCommand) == 1);
+
+                _fixture.Bus.Publish(new TestCommands.ParentCommand(CorrelatedMessage.NewRoot()));
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotParentCommand) == 2);
+
+            }
+        }
         [Fact]
         public void handlers_that_wrap_exceptions_rethrow_on_send() {
             lock (_fixture) {

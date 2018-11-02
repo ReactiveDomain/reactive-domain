@@ -10,7 +10,7 @@ namespace ReactiveDomain.Messaging.Bus
         public NullBus(string name = "NullBus"){Name = name;}
         public void Publish(Message message){/*null bus, just drop it*/}
         public bool Idle => true; //always idle
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message
         {
             throw new InvalidOperationException("Cannot subscribe to a null bus");
         }

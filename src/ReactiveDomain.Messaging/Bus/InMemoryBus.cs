@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
@@ -48,8 +49,6 @@ namespace ReactiveDomain.Messaging.Bus {
                 Name = name;
                 _watchSlowMsg = watchSlowMsg;
                 _slowMsgThreshold = slowMsgThreshold ?? DefaultSlowMessageThreshold;
-
-                MessageHierarchy.MessageTypesAdded += MessageHierarchy_MessageTypesAdded;
             }
             catch (Exception ex) {
                 if (Log.LogLevel >= LogLevel.Error) Log.ErrorException(ex, "Error building InMemoryBus");
@@ -58,40 +57,36 @@ namespace ReactiveDomain.Messaging.Bus {
 
         }
 
-        void MessageHierarchy_MessageTypesAdded(object sender, EventArgs e) {
-            //we have a new set of types added so rebuild subscriptions with new tree
-            var currentHandlers = new HashSet<IMessageHandler>();
-            lock (_handlers) {
-                foreach (var msgHandler in _handlers.Values.SelectMany(h => h)) {
-                    currentHandlers.Add(msgHandler);
-                }
-                _handlers = new Dictionary<Type, List<IMessageHandler>>();
-                foreach (var registeredHandler in currentHandlers) {
-                    Subscribe(registeredHandler);
-                }
-            }
-        }
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message {
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message {
             Ensure.NotNull(handler, "handler");
-            Subscribe(new MessageHandler<T>(handler, handler.GetType().Name));
+            Subscribe(new MessageHandler<T>(handler, handler.GetType().Name), includeDerived);
             // ReSharper disable once ConstantConditionalAccessQualifier
             return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
 
-        private void Subscribe(IMessageHandler handler) {
-            // Subscribe to the underlying message type and it's descendants
-            var messageTypes = MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray();
+        private void Subscribe(IMessageHandler handler, bool includeDerived) {
+            Type[] messageTypes;
+            if (includeDerived) {
+                messageTypes = MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray();
+            }
+            else {
+                messageTypes = new[] {handler.MessageType};
+            }
             for (var i = 0; i < messageTypes.Length; i++) {
-                var messageType = messageTypes[i];
-                var handlers = GetHandlesFor(messageType);
-                if (!handlers.Any(hndl => hndl.IsSame(messageType, handler))) {
-                    lock (_handlers) {
-                        if (!_handlers.TryGetValue(messageType, out var handleList)) {
-                            handleList = new List<IMessageHandler>();
-                            _handlers.Add(messageType, handleList);
-                        }
-                        handleList.Add(handler);
+                Subcribe(handler, messageTypes[i]);
+            }
+        }
+
+        private void Subcribe(IMessageHandler handler, Type messageType) {
+            var handlers = GetHandlesFor(messageType);
+            if (!handlers.Any(hndl => hndl.IsSame(messageType, handler))) {
+                lock (_handlers) {
+                    if (!_handlers.TryGetValue(messageType, out var handleList)) {
+                        handleList = new List<IMessageHandler>();
+                        _handlers.Add(messageType, handleList);
                     }
+
+                    handleList.Add(handler);
                 }
             }
         }

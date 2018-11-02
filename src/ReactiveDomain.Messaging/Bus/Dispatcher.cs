@@ -77,7 +77,7 @@ namespace ReactiveDomain.Messaging.Bus {
                 throw new ExistingHandlerException("Duplicate registration for command type.");
             var handleWrapper = new CommandHandler<T>(_bus, handler);
             _handleWrappers.Add(typeof(T), handleWrapper);
-            Subscribe(handleWrapper);
+            Subscribe(handleWrapper, false);
             return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
         }
         public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command {
@@ -89,8 +89,8 @@ namespace ReactiveDomain.Messaging.Bus {
         public void Publish(Message message)
             => _queuedPublisher.Publish(message);
 
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message
-            => _bus.Subscribe(handler);
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message
+            => _bus.Subscribe(handler, includeDerived);
 
         public void Unsubscribe<T>(IHandle<T> handler) where T : Message {
             _bus.Unsubscribe(handler);

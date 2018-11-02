@@ -10,8 +10,9 @@ namespace ReactiveDomain.Messaging.Bus
         /// </summary>
         /// <typeparam name="T">the type to be notified of</typeparam>
         /// <param name="handler">The object implementing IHandle T indicating function to be called</param>
+        /// <param name="includeDerived">Register handlers on derived types</param>
         /// <returns>IDisposable wrapper to calling Dispose on the wrapper will unsubscribe</returns>
-        IDisposable Subscribe<T>(IHandle<T> handler) where T : Message;
+        IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message;
         /// <summary>
         /// Unregister being called when a message is published of the type T or
         /// of a derived type from T 
