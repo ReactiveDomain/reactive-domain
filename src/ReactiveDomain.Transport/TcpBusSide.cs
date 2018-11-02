@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Timers;
-using ReactiveDomain.Transport.CommandSocket;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Logging;
+using ReactiveDomain.Transport.Serialization;
 
 namespace ReactiveDomain.Transport
 {
@@ -17,22 +17,27 @@ namespace ReactiveDomain.Transport
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
         private QueuedHandler _inboundMessageQueuedHandler;
+        private IMessageSerializer _messageSerializer;
         protected Timer StatsTimer;
         protected List<ITcpConnection> TcpConnection = new List<ITcpConnection>();
         protected LengthPrefixMessageFramer Framer = new LengthPrefixMessageFramer();
+        
 
         protected TcpBusSide(
             IPAddress hostIp,
             int commandPort,
-            IDispatcher messageBus)
-            : this(new IPEndPoint(hostIp, commandPort), messageBus)
+            IDispatcher messageBus,
+            IMessageSerializer messageSerializer = null)
+            : this(new IPEndPoint(hostIp, commandPort), messageBus, messageSerializer)
         { }
 
         protected TcpBusSide(
             EndPoint endpoint,
-            IDispatcher messageBus)
+            IDispatcher messageBus,
+            IMessageSerializer messageSerializer = null)
         {
             CommandEndpoint = endpoint;
+            _messageSerializer = messageSerializer ?? new MessageSerializer();
             MessageBus = messageBus;
             StatsTimer = new Timer(60000);             // getting the stats takes a while - only do it once a minute
             StatsTimer.Elapsed += _statsTimer_Elapsed;
@@ -76,10 +81,10 @@ namespace ReactiveDomain.Transport
 
         protected void TcpMessageArrived(ArraySegment<byte> obj)
         {
-            TcpMessage tcpMessage;
+            Message message;
             try
             {
-                tcpMessage = TcpMessage.FromArraySegment(obj);
+                message = _messageSerializer.FromBytes(obj);
             }
             catch (Exception ex)
             {
@@ -87,8 +92,8 @@ namespace ReactiveDomain.Transport
                 throw;
             }
 
-            Type type = tcpMessage.WrappedMessage.GetType();
-            Log.Trace("Message " + tcpMessage.WrappedMessage.MsgId + " (Type " + type.Name + ") received from TCP.");
+            var type = message.GetType();
+            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") received from TCP.");
 
             if (_inboundSpamMessageTypes.Contains(type))
             {
@@ -98,7 +103,7 @@ namespace ReactiveDomain.Transport
                     return;
                 }
 
-                _inboundSpamMessageQueuedHandler.Publish(tcpMessage.WrappedMessage);
+                _inboundSpamMessageQueuedHandler.Publish(message);
             }
             else
             {
@@ -108,13 +113,13 @@ namespace ReactiveDomain.Transport
                     return;
                 }
 
-                _inboundMessageQueuedHandler.Publish(tcpMessage.WrappedMessage);
+                _inboundMessageQueuedHandler.Publish(message);
             }
         }
 
         public void Handle(Message message)
         {
-            Type type = message.GetType();
+            var type = message.GetType();
             Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
 
             if (TcpConnection == null)
@@ -127,7 +132,8 @@ namespace ReactiveDomain.Transport
             {
                 try
                 {
-                    var framed = Framer.FrameData(new TcpMessage(message).Data);
+                    var data = _messageSerializer.ToBytes(message);
+                    var framed = Framer.FrameData(data);
                     conn.EnqueueSend(framed);
                 }
                 catch (Exception ex)

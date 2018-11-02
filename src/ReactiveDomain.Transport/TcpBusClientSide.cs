@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Transport.Serialization;
 
 namespace ReactiveDomain.Transport
 {
@@ -13,8 +14,9 @@ namespace ReactiveDomain.Transport
         public TcpBusClientSide(
             IDispatcher messageBus,
             EndPoint endpoint,
-            ITcpConnection tcpConnection = null)
-            : base(endpoint, messageBus)
+            ITcpConnection tcpConnection = null,
+            IMessageSerializer messageSerializer = null)
+            : base(endpoint, messageBus, messageSerializer)
         {
             TcpConnection.Add(tcpConnection ?? CreateTcpConnection(CommandEndpoint));
         }
@@ -23,10 +25,10 @@ namespace ReactiveDomain.Transport
             IDispatcher messageBus,
             IPAddress hostIP,
             int commandPort,
-            ITcpConnection tcpConnection = null)
-            : base(hostIP, commandPort, messageBus)
+            ITcpConnection tcpConnection = null,
+            IMessageSerializer messageSerializer = null)
+            : base(hostIP, commandPort, messageBus, messageSerializer)
         {
-
             TcpConnection.Add(tcpConnection ?? CreateTcpConnection(CommandEndpoint));
         }
 

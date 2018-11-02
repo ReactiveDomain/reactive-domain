@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Transport.Serialization;
 
 namespace ReactiveDomain.Transport
 {
@@ -13,8 +14,9 @@ namespace ReactiveDomain.Transport
         public TcpBusServerSide(
             IPAddress hostIp,
             int commandPort,
-            IDispatcher messageBus)
-            : base(hostIp, commandPort, messageBus)
+            IDispatcher messageBus,
+            IMessageSerializer messageSerializer = null)
+            : base(hostIp, commandPort, messageBus, messageSerializer)
         {
            
             Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") entered.");
