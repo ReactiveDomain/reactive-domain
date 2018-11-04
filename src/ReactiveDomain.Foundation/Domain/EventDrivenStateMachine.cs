@@ -45,16 +45,28 @@ namespace ReactiveDomain {
             }
         }
 
-        protected virtual void TakeEventStarted() { }
-        protected virtual void TakeEventsCompleted() { }
-
+        /// <summary>
+        /// Returns all events from the EventRecorder since state was loaded or the last time TakeEvents was called
+        /// Clears the EventRecorder
+        /// Increment the Version/ExpectedVersion by the event count
+        /// 
+        /// After this operation additional events can be applied via RestoreFromEvents
+        /// Also Events can continue to be Raised either before or after this call.
+        /// 
+        /// TakeEventStarted will be called before the the Recorder is queried.
+        /// TakeEventCompleted will be called after the the Recorder is queried and cleared.
+        /// </summary>
+        /// <returns>Array of Object containing the Events Raised by the Aggregate since it was loaded or the last time TakeEvents was called</returns>
         public object[] TakeEvents() {
             TakeEventStarted();
             var records = _recorder.RecordedEvents;
             _recorder.Reset();
+            _version += records.Length;
             TakeEventsCompleted();
             return records;
         }
+        protected virtual void TakeEventStarted() { }
+        protected virtual void TakeEventsCompleted() { }
 
         /// <summary>
         /// Registers a route for the specified <typeparamref name="TEvent">type of event</typeparamref> to the logic that needs to be applied to this instance to support future behaviors.

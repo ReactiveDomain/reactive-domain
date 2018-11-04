@@ -8,5 +8,6 @@ namespace ReactiveDomain.Foundation
         TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource;
 		TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource;
 		void Save(IEventSource aggregate);
-	}
+        void UpdateToCurrent(IEventSource aggregate);
+    }
 }

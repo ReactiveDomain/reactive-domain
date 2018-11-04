@@ -15,7 +15,7 @@ namespace ReactiveDomain.Messaging {
         /// The CancellationToken for this command
         /// </summary>
         [JsonIgnore]
-        public readonly CancellationToken? CancellationToken;
+        public CancellationToken? CancellationToken;
 
         /// <summary>
         /// Has this command been canceled?
@@ -26,6 +26,13 @@ namespace ReactiveDomain.Messaging {
         /// Does this command allow cancellation?
         /// </summary>
         public bool IsCancelable => CancellationToken != null;
+        
+        public virtual void RegisterOnCancellation(Action action) {
+            if(!IsCancelable) {
+                throw new InvalidOperationException("Command cannot be canceled");
+            }
+            CancellationToken?.Register(action);
+        }
 
         /// <summary>
         /// Constructor

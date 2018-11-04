@@ -4,10 +4,9 @@ using System.Linq;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation
-{
+namespace ReactiveDomain.Foundation {
     public class StreamStoreRepository : IRepository {
-       
+
         public const string AggregateClrTypeHeader = "AggregateClrTypeName";
         public const string AggregateClrTypeNameHeader = "AggregateClrTypeNameHeader";
         public const string CommitIdHeader = "CommitId";
@@ -20,8 +19,7 @@ namespace ReactiveDomain.Foundation
         public StreamStoreRepository(
             IStreamNameBuilder streamNameBuilder,
             IStreamStoreConnection eventStoreConnection,
-            IEventSerializer eventSerializer)
-        {
+            IEventSerializer eventSerializer) {
             _streamNameBuilder = streamNameBuilder;
             _streamStoreConnection = eventStoreConnection;
             _eventSerializer = eventSerializer;
@@ -91,7 +89,28 @@ namespace ReactiveDomain.Foundation
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
         }
 
-       
+        public void UpdateToCurrent(IEventSource aggregate) {
+            long start = aggregate.ExpectedVersion + 1;
+            var id = aggregate.Id;
+            if (start <= 0)
+                throw new InvalidOperationException("Cannot get version <= 0");
+            string streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), id);
+
+            StreamEventsSlice streamEventsSlice;
+            do {
+                streamEventsSlice = _streamStoreConnection.ReadStreamForward(streamName, start, 500);
+                if (streamEventsSlice is StreamNotFoundSlice)
+                    throw new AggregateNotFoundException(id, aggregate.GetType());
+                if (streamEventsSlice is StreamDeletedSlice)
+                    throw new AggregateDeletedException(id, aggregate.GetType());
+                start = streamEventsSlice.NextEventNumber;
+                var events = streamEventsSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)).ToArray();
+                if (events.Any()) {
+                    aggregate.RestoreFromEvents(events);
+                }
+            }
+            while (!streamEventsSlice.IsEndOfStream);
+        }
 
         public void Save(IEventSource aggregate) {
             var commitHeaders = new Dictionary<string, object>
@@ -102,18 +121,18 @@ namespace ReactiveDomain.Foundation
             };
 
             var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
-            var newEvents = aggregate.TakeEvents().ToArray();
             var expectedVersion = aggregate.ExpectedVersion;
+            var newEvents = aggregate.TakeEvents().ToArray();
             var eventsToSave = new EventData[newEvents.Length];
             for (int i = 0; i < newEvents.Length; i++) {
                 eventsToSave[i] =
                     _eventSerializer.Serialize(
-                        newEvents[i], 
+                        newEvents[i],
                         new Dictionary<string, object>(commitHeaders));
             }
             _streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
         }
 
-      
+
     }
 }

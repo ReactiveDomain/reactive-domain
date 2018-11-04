@@ -3,6 +3,10 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Logging
 {
+    /// <summary>
+    /// Wraps a Logger implementation in using the Lazy pattern.
+    /// In the Lazy pattern the factory is called on the first call 
+    /// </summary>
     public class LazyLogger : ILogger
     {
         private readonly Lazy<ILogger> _logger;
@@ -12,6 +16,12 @@ namespace ReactiveDomain.Logging
             Ensure.NotNull(factory, "factory");
             _logger = new Lazy<ILogger>(factory);
         }
+        /// <summary>
+        /// While this property is provided to support the interface the actual log level is controlled
+        /// by the logger provided by the factory. The Lazy pattern means that factory will be called
+        /// upon the first method call. Setting the LogLevel would then force instantiation of the logger
+        /// defeating the purpose of the Lazy pattern. 
+        /// </summary>
         public LogLevel LogLevel => LogLevel.Error;
         public void Flush(TimeSpan? maxTimeToWait = null)
         {

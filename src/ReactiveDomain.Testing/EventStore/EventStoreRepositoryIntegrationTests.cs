@@ -85,6 +85,22 @@ namespace ReactiveDomain.Testing
         }
 
         [Fact]
+        public void CanCallSaveMultipleTimes() {
+            var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 100 /* excludes TestAggregateCreated */);
+
+            var agg = _repo.GetById<TestWoftamAggregate>(savedId);
+            agg.ProduceEvents(50);
+            _repo.Save(agg);
+            agg.ProduceEvents(50);
+            _repo.Save(agg);
+            Assert.Equal(200, agg.AppliedEventCount);
+
+            var agg2 = _repo.GetById<TestWoftamAggregate>(savedId);
+            Assert.Equal(200, agg2.AppliedEventCount);
+
+        }
+
+        [Fact]
         public void CanSaveMultiplesOfWritePageSize()
         {
             var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 1500 /* excludes TestAggregateCreated */);
