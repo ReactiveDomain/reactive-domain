@@ -30,8 +30,7 @@ namespace ReactiveDomain.Messaging.Tests {
                 .Where(a => needed.Contains(a.GetName().Name,StringComparer.OrdinalIgnoreCase))
                 .Select(a => a.Location)).ToArray();
             CompilerParameters parameters = new CompilerParameters {
-                GenerateInMemory = true,
-                OutputAssembly = $"{Guid.NewGuid()}.dll"};
+                OutputAssembly = $"TestDynamicAssembly.dll"};
 
             parameters.ReferencedAssemblies.AddRange(assemblies);
 
@@ -40,10 +39,8 @@ namespace ReactiveDomain.Messaging.Tests {
             return r.CompiledAssembly;
         }
         [Fact]
-        public void in_memory_bus_remembers_handlers() {
-            var method = typeof(MessageHierarchy).GetMethod("LoadAssembly", BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.NotNull(method);
-
+        public void can_dynamicly_add_types_without_clearing_handlers() {
+            
             var bus = InMemoryBus.CreateTest();
 
             var fired = false;
@@ -51,14 +48,11 @@ namespace ReactiveDomain.Messaging.Tests {
 
             bus.Publish(new TestMsg());
             Assert.True(fired);
-
-            // ReSharper disable once PossibleNullReferenceException
-            method.Invoke(null, new object[] { GetDynamicAssembly() });
-
+            
+            AppDomain.CurrentDomain.Load(GetDynamicAssembly().GetName());
             var messageType = MessageHierarchy.GetTypeByName("DynamicMessage");
             Assert.Equal("DynamicMessage", messageType[0].Name);
             Assert.True(messageType.Count == 1);
-
            
             fired = false;
             bus.Publish(new TestMsg());

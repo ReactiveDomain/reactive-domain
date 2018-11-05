@@ -4,40 +4,48 @@ using System.Threading.Tasks;
 namespace ReactiveDomain.Messaging.Bus {
     public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
         private readonly CommandManager _manager;
+        private readonly IBus _bus;
         private readonly TimeSpan? _slowMsgThreshold;
         private readonly TimeSpan? _slowCmdThreshold;
         private readonly MultiQueuedHandler _publishQueue;
         private readonly LaterService _laterService;
         private readonly InMemoryBus _timeoutBus;
-        public bool Idle => _publishQueue.Idle;
+        public bool Idle => _publishQueue?.Idle ?? true;
         public MultiQueuedPublisher(
                 IBus bus,
-                int queueCount,
+                uint queueCount,
                 TimeSpan? slowMsgThreshold,
                 TimeSpan? slowCmdThreshold) {
+            this._bus = bus;
             _slowMsgThreshold = slowMsgThreshold;
             _slowCmdThreshold = slowCmdThreshold;
-            _timeoutBus = new InMemoryBus(nameof(_timeoutBus),false);
+            _timeoutBus = new InMemoryBus(nameof(_timeoutBus), false);
             _laterService = new LaterService(_timeoutBus, TimeSource.System);
             _timeoutBus.Subscribe<DelaySendEnvelope>(_laterService);
             _laterService.Start();
 
-            _manager = new CommandManager(bus,_timeoutBus);
+            _manager = new CommandManager(bus, _timeoutBus);
             _timeoutBus.Subscribe<AckTimeout>(_manager);
             _timeoutBus.Subscribe<CompletionTimeout>(_manager);
-
-            _publishQueue = new MultiQueuedHandler(
-                queueCount,
-                i => new QueuedHandler(new AdHocHandler<Message>(bus.Publish)
-                , nameof(MultiQueuedPublisher)));
-            _publishQueue.Start();
+            if (queueCount > 0) {
+                _publishQueue = new MultiQueuedHandler(
+                    (int)queueCount,
+                    i => new QueuedHandler(new AdHocHandler<Message>(bus.Publish)
+                    , nameof(MultiQueuedPublisher)));
+                _publishQueue.Start();
+            }
         }
         public void Publish(Message message) {
-            _publishQueue.Publish(message);
+            if (_publishQueue == null) {
+                _bus.Publish(message);
+            }
+            else {
+                _publishQueue.Publish(message);
+            }
         }
         public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
             if (command.IsCanceled) {
-                _publishQueue.Publish(command.Canceled());
+                Publish(command.Canceled());
                 throw new CommandCanceledException(command);
             }
 
@@ -57,7 +65,7 @@ namespace ReactiveDomain.Messaging.Bus {
             try {
                 if (command.IsCanceled) {
                     response = command.Canceled();
-                    _publishQueue.Publish(response);
+                    Publish(response);
                     return false;
                 }
                 Execute(command, out response, true, responseTimeout, ackTimeout);
@@ -72,7 +80,7 @@ namespace ReactiveDomain.Messaging.Bus {
             try {
                 if (command.IsCanceled) {
                     var response = command.Canceled();
-                    _publishQueue.Publish(response);
+                    Publish(response);
                     return false;
                 }
                 Execute(command, out var _, false, responseTimeout, ackTimeout);
@@ -110,7 +118,7 @@ namespace ReactiveDomain.Messaging.Bus {
                 //n.b. if this does not throw result will be set asynchronously 
                 //in the registered handler in the _manager 
 
-                _publishQueue.Publish(command);
+                Publish(command);
             }
             catch (Exception ex) {
                 tcs.SetResult(command.Fail(ex));

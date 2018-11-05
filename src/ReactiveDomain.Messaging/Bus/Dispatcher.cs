@@ -4,10 +4,9 @@ using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus {
-    
+
     /// <inheritdoc cref="IDispatcher"/>
-    public class Dispatcher : IDispatcher 
-    {
+    public class Dispatcher : IDispatcher {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         private readonly Dictionary<Type, object> _handleWrappers;
@@ -17,7 +16,7 @@ namespace ReactiveDomain.Messaging.Bus {
         public bool Idle => _queuedPublisher.Idle;
         public Dispatcher(
                     string name,
-                    int queueCount = 1,
+                    uint queueCount = 0,
                     bool watchSlowMsg = false,
                     TimeSpan? slowMsgThreshold = null,
                     TimeSpan? slowCmdThreshold = null) {
