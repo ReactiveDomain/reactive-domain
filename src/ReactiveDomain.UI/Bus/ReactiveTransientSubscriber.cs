@@ -6,22 +6,22 @@ using ReactiveUI;
 
 // ReSharper disable RedundantTypeArgumentsOfMethod
 
-namespace ReactiveDomain.Foundation
+namespace ReactiveDomain.UI
 {
-    public abstract class TransientSubscriber : ReactiveObject, IDisposable
+    public abstract class ReactiveTransientSubscriber : ReactiveObject, IDisposable
     {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly ISubscriber _eventSubscriber;
         private readonly ICommandSubscriber _commandSubscriber;
 
-        protected TransientSubscriber(IDispatcher bus) : this((IBus)bus)
+        protected ReactiveTransientSubscriber(IDispatcher bus) : this((IBus)bus)
         {
             _commandSubscriber = bus ?? throw new ArgumentNullException(nameof(bus));
         }
 
-        protected TransientSubscriber(IBus bus) : this((ISubscriber) bus) {}
+        protected ReactiveTransientSubscriber(IBus bus) : this((ISubscriber) bus) {}
 
-        protected TransientSubscriber(ISubscriber subscriber)
+        protected ReactiveTransientSubscriber(ISubscriber subscriber)
         {
             _eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
         }

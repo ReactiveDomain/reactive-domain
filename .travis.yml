@@ -12,4 +12,3 @@ script:
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
-  - dotnet test ./src/ReactiveDomain.UI.Tests/ReactiveDomain.UI.Tests.csproj

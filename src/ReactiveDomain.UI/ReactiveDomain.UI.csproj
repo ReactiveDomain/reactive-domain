@@ -9,7 +9,8 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
     <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net472'" />
+    <PackageReference Include="reactiveui" Version="8.7.2" Condition="'$(TargetFramework)'=='net472'" />
+    <PackageReference Include="reactiveui" Version="8.7.2" Condition="'$(TargetFramework)'=='netstandard2.0'" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
@@ -17,10 +18,7 @@
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
-    <Compile Remove="Threading.cs" />
-    <Compile Remove="TransientSubscriber.cs" />
-    <Compile Remove="ViewObjects\*.cs" />
-    <Compile Remove="ReadModel\*.cs" />
+    <Compile Remove="ViewObjects\Threading.cs" />
   </ItemGroup>
   <ItemGroup Condition="">
     <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net452'" />

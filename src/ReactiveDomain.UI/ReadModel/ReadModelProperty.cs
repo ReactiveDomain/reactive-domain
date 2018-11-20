@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 
-namespace ReactiveDomain.Foundation.ReadModel
+namespace ReactiveDomain.UI
 {
 
     public class ReadModelProperty<T> : IObservable<T>
@@ -46,11 +46,6 @@ namespace ReactiveDomain.Foundation.ReadModel
             var unsubscribe = _observable.Subscribe(observer);
             Task.Run(() => observer.OnNext(_lastValue));
             return unsubscribe;
-        }
-
-        public static implicit operator ReadModelProperty<T>(bool v)
-        {
-            throw new NotImplementedException();
         }
     }
 }

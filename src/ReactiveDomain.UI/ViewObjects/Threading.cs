@@ -2,7 +2,7 @@
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 
-namespace ReactiveDomain.Foundation
+namespace ReactiveDomain.UI
 {
     public static class Threading
     {
@@ -20,6 +20,7 @@ namespace ReactiveDomain.Foundation
                 }
             }
         }
+
         public static void RunOnUiThreadAsync(Action action)
         {
             if (System.Windows.Application.Current?.Dispatcher.CheckAccess() ?? false)
