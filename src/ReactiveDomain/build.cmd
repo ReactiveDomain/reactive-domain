@@ -14,7 +14,7 @@ echo Restore all nugets
 
 
 echo Building the ReactiveDomain Solution...
-"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" %SOLUTIONDIR%\ReactiveDomain.sln /p:Configuration="Debug" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
+"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" %SOLUTIONDIR%\ReactiveDomain.sln /p:Configuration=Debug;RestorePackages=false /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
 
 REM Make ReactiveDomain Nuget ***********************************************************************************************
