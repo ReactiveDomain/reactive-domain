@@ -132,7 +132,17 @@ namespace ReactiveDomain
         IDisposable SubscribeToAll(
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null);
+            UserCredentials userCredentials = null,
+            bool resolveLinkTos = true);
+
+        IDisposable SubscribeToAllFrom(
+            Position from,
+            Action<RecordedEvent> eventAppeared,
+            CatchUpSubscriptionSettings settings = null,
+            Action liveProcessingStarted = null,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null,
+            bool resolveLinkTos = true);
 
         void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null);
     }

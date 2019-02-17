@@ -13,12 +13,15 @@ namespace ReactiveDomain.Foundation {
         private bool _started;
         private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly IEventSerializer _serializer;
-        private readonly object _startlock = new object();
+        private readonly object _startLock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public ISubscriber EventStream => _bus;
         private readonly IStreamStoreConnection _eventStoreConnection;
         public long Position => _position;
         public string StreamName { get; private set; }
+        public CatchUpSubscriptionSettings Settings { get; set; }
+        private long _isLive;
+        public bool IsLive => _isLive == 1;
         private long _position;
         /// <summary>
         /// For listening to generic streams 
@@ -36,7 +39,7 @@ namespace ReactiveDomain.Foundation {
                 string busName = null) {
             _bus = new InMemoryBus(busName ?? "Stream Listener");
             _eventStoreConnection = eventStoreConnection ?? throw new ArgumentNullException(nameof(eventStoreConnection));
-
+            Settings = CatchUpSubscriptionSettings.Default;
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
             _serializer = serializer;
@@ -50,17 +53,17 @@ namespace ReactiveDomain.Foundation {
         /// <param name="blockUntilLive"></param>
         /// <param name="millisecondsTimeout"></param>
         public void Start(
-            Type tMessage, 
-            long? checkpoint = null, 
-            bool blockUntilLive = false, 
+            Type tMessage,
+            long? checkpoint = null,
+            bool blockUntilLive = false,
             int millisecondsTimeout = 1000) {
             if (!tMessage.IsSubclassOf(typeof(Event))) {
                 throw new ArgumentException("type must derive from ReactiveDomain.Messaging.Event", nameof(tMessage));
             }
             Start(
-               _streamNameBuilder.GenerateForEventType(tMessage.Name), 
-                checkpoint, 
-                blockUntilLive, 
+               _streamNameBuilder.GenerateForEventType(tMessage.Name),
+                checkpoint,
+                blockUntilLive,
                 millisecondsTimeout);
         }
         /// <summary>
@@ -72,14 +75,14 @@ namespace ReactiveDomain.Foundation {
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public void Start<TAggregate>(
-                        long? checkpoint = null, 
-                        bool blockUntilLive = false, 
+                        long? checkpoint = null,
+                        bool blockUntilLive = false,
                         int timeout = 1000) where TAggregate : class, IEventSource {
 
             Start(
-                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)), 
-                checkpoint, 
-                blockUntilLive, 
+                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
+                checkpoint,
+                blockUntilLive,
                 timeout);
         }
 
@@ -93,14 +96,14 @@ namespace ReactiveDomain.Foundation {
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public void Start<TAggregate>(
-                        Guid id, 
-                        long? checkpoint = null, 
-                        bool blockUntilLive = false, 
+                        Guid id,
+                        long? checkpoint = null,
+                        bool blockUntilLive = false,
                         int timeout = 1000) where TAggregate : class, IEventSource {
             Start(
-                _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id), 
-                checkpoint, 
-                blockUntilLive, 
+                _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
+                checkpoint,
+                blockUntilLive,
                 timeout);
         }
 
@@ -113,12 +116,12 @@ namespace ReactiveDomain.Foundation {
         /// <param name="blockUntilLive"></param>
         /// <param name="timeout">timeout in milliseconds default = 1000</param>
         public virtual void Start(
-                            string streamName, 
-                            long? checkpoint = null, 
-                            bool blockUntilLive = false, 
+                            string streamName,
+                            long? checkpoint = null,
+                            bool blockUntilLive = false,
                             int timeout = 1000) {
             _liveLock.Reset();
-            lock (_startlock) {
+            lock (_startLock) {
                 if (_started)
                     throw new InvalidOperationException("Listener already started.");
                 if (!ValidateStreamName(streamName))
@@ -133,6 +136,7 @@ namespace ReactiveDomain.Foundation {
                         liveProcessingStarted: () => {
                             _bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
                             _liveLock.Set();
+                            Interlocked.Exchange(ref _isLive, 1);
                         });
                 _started = true;
             }
@@ -146,14 +150,12 @@ namespace ReactiveDomain.Foundation {
             Action<Message> eventAppeared,
             Action liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
-            int readBatchSize = 500) {
-            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false);
+            UserCredentials userCredentials = null) {
             StreamName = stream;
             var sub = _eventStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
-                settings,
+                Settings,
                 resolvedEvent => {
                     Interlocked.Exchange(ref _position, resolvedEvent.EventNumber);
                     eventAppeared(_serializer.Deserialize(resolvedEvent) as Message);

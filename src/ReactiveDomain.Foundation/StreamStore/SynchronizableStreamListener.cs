@@ -3,10 +3,8 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation
-{
-    public class SynchronizableStreamListener : StreamListener, IHandle<Message>
-    {
+namespace ReactiveDomain.Foundation {
+    public class SynchronizableStreamListener : StreamListener, IHandle<Message> {
 
         protected bool Sync;
         protected readonly QueuedHandler SyncQueue;
@@ -18,8 +16,7 @@ namespace ReactiveDomain.Foundation
             IEventSerializer serializer,
             bool sync = false,
             string busName = null) :
-                base(name, connection, streamNameBuilder, serializer, busName)
-        {
+                base(name, connection, streamNameBuilder, serializer, busName) {
 
             Sync = sync;
             if (Sync) {
@@ -27,8 +24,7 @@ namespace ReactiveDomain.Foundation
             }
         }
 
-        protected override void GotEvent(Message @event)
-        {
+        protected override void GotEvent(Message @event) {
             if (_disposed) return; //todo: fix dispose
             if (Sync)
                 SyncQueue?.Publish(@event);
@@ -36,29 +32,24 @@ namespace ReactiveDomain.Foundation
                 base.GotEvent(@event);
 
         }
-        public void Handle(Message @event)
-        {
+        public void Handle(Message @event) {
             base.GotEvent(@event);
         }
 
-        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
-        {
+        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000) {
             if (Sync) {
                 SyncQueue?.Start();
             }
             base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
-            if (SyncQueue != null && waitUntilLive) {
+            if (waitUntilLive && IsLive && SyncQueue != null) {
                 SpinWait.SpinUntil(() => SyncQueue.Idle, millisecondsTimeout);
             }
         }
 
         private bool _disposed;
-        protected override void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
+        protected override void Dispose(bool disposing) {
+            if (!_disposed) {
+                if (disposing) {
                     SyncQueue?.Stop();
                 }
                 _disposed = true;

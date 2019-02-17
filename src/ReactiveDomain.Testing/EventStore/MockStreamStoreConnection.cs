@@ -320,10 +320,20 @@ namespace ReactiveDomain.Testing.EventStore {
 
         }
 
+       
+
+
+        public IDisposable SubscribeToAllFrom(Position @from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
+                                              Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+                                              UserCredentials userCredentials = null, bool resolveLinkTos = true) {
+            throw new NotImplementedException();
+        }
+
         public IDisposable SubscribeToAll(
                                 Action<RecordedEvent> eventAppeared,
                                 Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                UserCredentials userCredentials = null) {
+                                UserCredentials userCredentials = null, 
+                                bool resolveLinkTos = true) {
             return SubscribeToAll(null, eventAppeared, null, subscriptionDropped, userCredentials);
         }
 
@@ -332,8 +342,9 @@ namespace ReactiveDomain.Testing.EventStore {
             Action<RecordedEvent> eventAppeared,
             Action<Unit> liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null) {
-
+            UserCredentials userCredentials = null,
+            bool resolveLinkTos = true) {
+            //n.b. the mock store does not support linkto events, so everything is always resolved events
             return SubscribeToStreamFrom(
                 AllStreamName,
                 lastCheckpoint,

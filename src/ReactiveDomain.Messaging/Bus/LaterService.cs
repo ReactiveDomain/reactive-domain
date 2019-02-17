@@ -29,7 +29,7 @@ namespace ReactiveDomain.Messaging.Bus {
 
         public void Start() {
             if (_disposed) { throw new ObjectDisposedException(nameof(LaterService)); }
-            var thread = new Thread(Process) { Name = nameof(LaterService), IsBackground = true};
+            var thread = new Thread(Process) { Name = nameof(LaterService), IsBackground = true };
             if (Interlocked.CompareExchange(ref _thread, thread, null) != null) throw new InvalidOperationException("Already started");
             _stop = False;
             _stopped = False;
@@ -112,7 +112,9 @@ namespace ReactiveDomain.Messaging.Bus {
             _pending.Clear();
             while (_inbound.TryDequeue(out _)) { /* empty the queue */ }
             _processNext?.Dispose();
+#if NETFRAMEWORK
             if (_thread?.IsAlive ?? false) { _thread?.Abort(); }
+#endif
         }
     }
 #if NET452 || NET40

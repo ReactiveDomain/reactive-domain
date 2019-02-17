@@ -44,6 +44,9 @@ namespace ReactiveDomain.Foundation.Tests {
 
             AppendEvents(10, _conn, _stream1, 2);
             AppendEvents(10, _conn, _stream2, 3);
+            _conn.TryConfirmStream(_stream1, 10);
+            _conn.TryConfirmStream(_stream2, 10);
+            _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
         }
 
         private void AppendEvents(

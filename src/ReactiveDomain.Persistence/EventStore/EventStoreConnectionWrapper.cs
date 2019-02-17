@@ -6,14 +6,14 @@ using ES = EventStore.ClientAPI;
 
 namespace ReactiveDomain.EventStore {
     public class EventStoreConnectionWrapper : IStreamStoreConnection {
-        private readonly ES.IEventStoreConnection _conn;
+        public readonly ES.IEventStoreConnection EsConnection;
         private bool _disposed;
         private const int WriteBatchSize = 500;
 
         public EventStoreConnectionWrapper(ES.IEventStoreConnection eventStoreConnection) {
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
-            _conn = eventStoreConnection;
-            _conn.Connected += ConnOnConnected;
+            EsConnection = eventStoreConnection;
+            EsConnection.Connected += ConnOnConnected;
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
@@ -21,14 +21,14 @@ namespace ReactiveDomain.EventStore {
             Connected(sender, clientConnectionEventArgs.ToRdEventArgs(this));
         }
 
-        public string ConnectionName => _conn.ConnectionName;
+        public string ConnectionName => EsConnection.ConnectionName;
 
         public void Connect() {
-            _conn.ConnectAsync().Wait();
+            EsConnection.ConnectAsync().Wait();
         }
 
         public void Close() {
-            _conn.Close();
+            EsConnection.Close();
         }
 
 
@@ -39,10 +39,10 @@ namespace ReactiveDomain.EventStore {
                             params EventData[] events) {
             try {
                 if (events.Length < WriteBatchSize) {
-                    return _conn.AppendToStreamAsync(stream, (int)expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
+                    return EsConnection.AppendToStreamAsync(stream, (int)expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
                 }
 
-                var transaction = _conn.StartTransactionAsync(stream, (int)expectedVersion).Result;
+                var transaction = EsConnection.StartTransactionAsync(stream, (int)expectedVersion).Result;
                 var position = 0;
                 while (position < events.Length) {
                     var pageEvents = events.Skip(position).Take(WriteBatchSize).ToArray();
@@ -67,7 +67,7 @@ namespace ReactiveDomain.EventStore {
                                     long count,
                                     UserCredentials credentials = null) {
             //todo: why does this need an int with v 4.0 of eventstore?
-            var slice = _conn.ReadStreamEventsForwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsForwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
             switch (slice.Status) {
                 case ES.SliceReadStatus.Success:
                     return slice.ToStreamEventsSlice();
@@ -86,7 +86,7 @@ namespace ReactiveDomain.EventStore {
                                     long count,
                                     UserCredentials credentials = null) {
             //todo: why does this need an int with v 4.0 of eventstore?
-            var slice = _conn.ReadStreamEventsBackwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
             switch (slice.Status) {
                 case ES.SliceReadStatus.Success:
                     return slice.ToStreamEventsSlice();
@@ -104,7 +104,7 @@ namespace ReactiveDomain.EventStore {
                                     Action<RecordedEvent> eventAppeared,
                                     Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                     UserCredentials userCredentials = null) {
-            var sub = _conn.SubscribeToStreamAsync(
+            var sub = EsConnection.SubscribeToStreamAsync(
                                 stream,
                                 true,
                                 async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent()); await Task.FromResult(Unit.Default); },
@@ -125,10 +125,10 @@ namespace ReactiveDomain.EventStore {
                                             Action<Unit> liveProcessingStarted = null,
                                             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                             UserCredentials userCredentials = null) {
-            var sub = _conn.SubscribeToStreamFrom(
+            var sub = EsConnection.SubscribeToStreamFrom(
                                             stream,
                                             (int?)lastCheckpoint,
-                                            settings?.ToCatchUpSubscriptionSettings(),
+                                            settings?.ToCatchUpSubscriptionSettings() ?? ES.CatchUpSubscriptionSettings.Default,
                                             async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent()); await Task.FromResult(Unit.Default); },
                                             _ => liveProcessingStarted?.Invoke(Unit.Default),
                                             (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
@@ -139,35 +139,60 @@ namespace ReactiveDomain.EventStore {
                 return Unit.Default;
             });
         }
-
+        
         public IDisposable SubscribeToAll(
-                                    Action<RecordedEvent> eventAppeared,
-                                    Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                    UserCredentials userCredentials = null) {
-            var sub = _conn.SubscribeToAllAsync(
-                                    true,
-                                    async (_, evt) => {
-                                        eventAppeared(evt.Event.ToRecordedEvent());
-                                        await Task.FromResult(Unit.Default);
-                                    },
-                                    (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
-                                    userCredentials?.ToESCredentials()).Result;
-
+            Action<RecordedEvent> eventAppeared,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null,
+            bool resolveLinkTos = true) {
+            var sub = EsConnection.SubscribeToAllAsync(
+                resolveLinkTos,
+                async (_, evt) => {
+                    eventAppeared(evt.Event.ToRecordedEvent());
+                    await Task.FromResult(Unit.Default);
+                },
+                (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
+                userCredentials?.ToESCredentials()).Result;
             return new Disposer(() => {
                 sub?.Unsubscribe();
                 sub?.Dispose();
                 return Unit.Default;
             });
         }
+    
+        public IDisposable SubscribeToAllFrom(
+            Position from,
+            Action<RecordedEvent> eventAppeared,
+            CatchUpSubscriptionSettings settings = null, 
+            Action liveProcessingStarted = null, 
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+            UserCredentials userCredentials = null,
+            bool resolveLinkTos = true) {
+            var sub = EsConnection.SubscribeToAllFrom(
+                new ES.Position(from.CommitPosition, from.PreparePosition),
+                settings?.ToCatchUpSubscriptionSettings(),
+                async (_, evt) => {
+                    eventAppeared(evt.Event.ToRecordedEvent());
+                    await Task.FromResult(Unit.Default);
+                },
+                __ => { liveProcessingStarted?.Invoke(); },
+                (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason) (int) reason, ex),
+                userCredentials?.ToESCredentials());
+            return new Disposer(() => {
+                sub.Stop(TimeSpan.FromMilliseconds(250));
+                return Unit.Default;
+            });
+        }
+
 
         public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
-                        => _conn.DeleteStreamAsync(stream, expectedVersion, credentials.ToESCredentials()).Wait();
+                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, credentials.ToESCredentials()).Wait();
         public void Dispose() {
             if (!_disposed) {
-                if (_conn != null) {
-                    _conn.Close();
-                    _conn.Connected -= ConnOnConnected;
-                    _conn.Dispose();
+                if (EsConnection != null) {
+                    EsConnection.Close();
+                    EsConnection.Connected -= ConnOnConnected;
+                    EsConnection.Dispose();
                 }
             }
             _disposed = true;
