@@ -12,12 +12,11 @@ namespace ReactiveDomain.Foundation.Tests {
                     IClassFixture<StreamStoreConnectionFixture> {
 
         private static IListener GetListener() {
-            return new SynchronizableStreamListener(
+            return new QueuedStreamListener(
                         nameof(when_using_read_model_base),
                         _conn,
                         Namer,
-                        Serializer,
-                        true);
+                        Serializer);
         }
 
         private static IStreamStoreConnection _conn;

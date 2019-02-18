@@ -10,12 +10,11 @@ namespace ReactiveDomain.Foundation.Tests {
     // ReSharper disable once InconsistentNaming
     public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectionFixture> {
         private IListener GetListener() {
-            return new SynchronizableStreamListener(
+            return new QueuedStreamListener(
                 nameof(when_using_read_model_base),
                 _conn,
                 _namer,
-                _serializer,
-                true);
+                _serializer);
         }
 
         private readonly IStreamStoreConnection _conn;

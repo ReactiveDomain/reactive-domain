@@ -32,12 +32,11 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             // Wait for the stream to be written
             CommonHelpers.WaitForStream(conn, originStreamName);
 
-            StreamListener listener = new SynchronizableStreamListener(
+            StreamListener listener = new QueuedStreamListener(
                 originStreamName,
                 fixture.Connection,
                 new PrefixedCamelCaseStreamNameBuilder(),
                 _eventSerializer,
-                true,
                 "BUS_NAME");
             listener.EventStream.Subscribe(new AdHocHandler<Event>(Handle));
             listener.Start(originStreamName);

@@ -34,7 +34,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             // Wait for the stream to be written
             CommonHelpers.WaitForStream(conn, originStreamName);
 
-            StreamListener listener = new SynchronizableStreamListener(
+            StreamListener listener = new QueuedStreamListener(
                 "guidStream",
                 conn,
                 _streamNameBuilder,

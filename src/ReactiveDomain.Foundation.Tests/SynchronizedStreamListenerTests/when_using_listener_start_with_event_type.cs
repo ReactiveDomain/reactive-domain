@@ -35,7 +35,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             CommonHelpers.WaitForStream(conn, streamNameBuilder.GenerateForEventType(nameof(EventProjectionTestEvent)));
 
             //build the listener
-            StreamListener listener = new SynchronizableStreamListener(
+            StreamListener listener = new QueuedStreamListener(
                 "event listener",
                 conn,
                 streamNameBuilder,

@@ -34,7 +34,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             CommonHelpers.WaitForStream(conn, categoryStream);
             
             // Now set up the projection listener, and start it. 
-            var listener = new SynchronizableStreamListener(
+            var listener = new QueuedStreamListener(
                 "category listener",
                 conn,
                streamNameBuilder,
