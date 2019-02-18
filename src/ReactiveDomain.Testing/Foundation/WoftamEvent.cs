@@ -2,7 +2,7 @@ using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Testing
 {
-    public class WoftamEvent: CorrelatedMessage
+    public class WoftamEvent: Event
     {
         public WoftamEvent(string property1, string property2):base(CorrelationId.NewId(), SourceId.NullSourceId())
         {

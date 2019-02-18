@@ -8,7 +8,7 @@ namespace ReactiveDomain.Testing
 {
     public class TestAggregateMessages
     {
-        public class NewAggregate : CorrelatedMessage
+        public class NewAggregate : Event
         {
             public readonly Guid AggregateId;
             public NewAggregate(Guid aggregateId):base(CorrelationId.NewId(),SourceId.NullSourceId())
@@ -16,7 +16,7 @@ namespace ReactiveDomain.Testing
                 AggregateId = aggregateId;
             }
         }
-        public class Increment : CorrelatedMessage
+        public class Increment : Event
         {
             public readonly Guid AggregateId;
             public readonly uint Amount;

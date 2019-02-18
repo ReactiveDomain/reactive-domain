@@ -27,7 +27,7 @@ namespace ReactiveDomain.Testing.EventStore {
             _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
             _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByCategoryProjection)));
             _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByEventProjection)));
-
+            
             _inboundEventHandler = new QueuedHandler(
                 new AdHocHandler<Message>(_inboundEventBus.Publish),
                 nameof(_inboundEventHandler),
@@ -245,7 +245,8 @@ namespace ReactiveDomain.Testing.EventStore {
                 _eventAppeared = eventAppeared;
             }
             public void Handle(EventWritten evt) {
-                if (string.CompareOrdinal(_streamName, evt.StreamName) == 0) {
+                if (string.CompareOrdinal(_streamName, evt.StreamName) == 0 ||
+                    string.CompareOrdinal(_streamName, AllStreamName) == 0) {
                     if (evt.RecordedPosition > _position) {
                         _position = evt.RecordedPosition;
                         _eventAppeared(evt.Event);

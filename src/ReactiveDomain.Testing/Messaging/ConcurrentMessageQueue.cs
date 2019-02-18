@@ -24,16 +24,12 @@ namespace ReactiveDomain.Testing
 
         public TMsg DequeueNext<TMsg>() where TMsg : T
         {
-
-            T outVal;
             if (IsEmpty)
                 throw new Exception($" {_name} queue: Type {typeof(TMsg).Name} not found Queue is Empty");
-            if (!TryDequeue(out outVal))
+            if (!TryDequeue(out var outVal))
                 throw new Exception($" {_name} queue: Unable to dequeue next item.");
             if (!(outVal is TMsg))
-            {
                 throw new Exception($" {_name} queue: Type <{typeof(TMsg).Name}> is not next item, instead <{outVal.GetType().Name}> found.");
-            }
             return (TMsg)outVal;
         }
         public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg :  CorrelatedMessage, T
@@ -41,7 +37,7 @@ namespace ReactiveDomain.Testing
             msg = DequeueNext<TMsg>();
             if (msg.CorrelationId != correlationId)
             {
-                throw new Exception($" {_name} queue: Message type <{typeof(TMsg).Name}> found with incorrect corelationId. Expected [{correlationId}] found [{msg.CorrelationId}] instead.");
+                throw new Exception($" {_name} queue: Message type <{typeof(TMsg).Name}> found with incorrect correlationId. Expected [{correlationId}] found [{msg.CorrelationId}] instead.");
             }
             return this;
         }
