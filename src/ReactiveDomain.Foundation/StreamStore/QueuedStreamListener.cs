@@ -10,8 +10,8 @@ namespace ReactiveDomain.Foundation
     public class QueuedStreamListener : StreamListener, IHandle<Message>
     {
         protected readonly QueuedHandler SyncQueue;
-        private long _startWait;
-        private long _pending;
+        private ManualResetEventSlim _isLive = new ManualResetEventSlim(false);
+        private long _pendingCount;
         private ManualResetEventSlim _running = new ManualResetEventSlim(true);
 
         public QueuedStreamListener(
@@ -19,8 +19,10 @@ namespace ReactiveDomain.Foundation
             IStreamStoreConnection connection,
             IStreamNameBuilder streamNameBuilder,
             IEventSerializer serializer,
-            string busName = null) :
-                base(name, connection, streamNameBuilder, serializer, busName)
+            string busName = null,
+            Action<Unit> liveProcessingStarted = null,
+            Action<SubscriptionDropReason, Exception> subscriptionDropped = null) :
+                base(name, connection, streamNameBuilder, serializer, busName, liveProcessingStarted, subscriptionDropped)
         {
             SyncQueue = new QueuedHandler(this, "SyncListenerQueue");
         }
@@ -40,30 +42,35 @@ namespace ReactiveDomain.Foundation
             _running.Wait();
             //todo: this needs to take a RecordedEvent
             Bus.Publish(@event);
-            if (Interlocked.Read(ref _startWait) == 1)
+
+            if (!_isLive.IsSet)
             {
-                Interlocked.Decrement(ref _pending);
+                Interlocked.Decrement(ref _pendingCount);
+                if (Interlocked.Read(ref _pendingCount) <= 0 || SyncQueue.Idle)
+                {
+                    _isLive.Set();
+                }
             }
         }
 
-        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, int millisecondsTimeout = 1000)
+        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken))
         {
             SyncQueue?.Start();
-            base.Start(streamName, checkpoint, waitUntilLive, millisecondsTimeout);
+            base.Start(streamName, checkpoint, waitUntilLive, cancelWaitToken);
             if (waitUntilLive)
             {
-                Interlocked.Exchange(ref _pending, SyncQueue.MessageCount);
-                Interlocked.Exchange(ref _startWait, 1);
-                SpinWait.SpinUntil(() => Interlocked.Read(ref _pending) < 1 || SyncQueue.Idle, millisecondsTimeout);
-                Interlocked.Exchange(ref _startWait, 0);
+                Interlocked.Exchange(ref _pendingCount, SyncQueue.MessageCount);
+                _isLive.Wait(cancelWaitToken);
             }
         }
 
-        IDisposable Pause() {
+        IDisposable Pause()
+        {
             _running.Reset();
             return new Disposer(() => { Resume(); return Unit.Default; });
         }
-        void Resume() {
+        void Resume()
+        {
             _running.Set();
         }
         private bool _disposed;
@@ -73,6 +80,7 @@ namespace ReactiveDomain.Foundation
             {
                 if (disposing)
                 {
+                    _isLive.Set();
                     _running.Reset();
                     SyncQueue?.Stop();
                     _running.Dispose();

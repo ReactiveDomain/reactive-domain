@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Foundation
@@ -15,7 +16,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000);
+        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken));
         /// <summary>
         /// Starts listening on an aggregate root stream
         /// </summary>
@@ -24,7 +25,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource;
         /// <summary>
         /// Starts listening on a Aggregate Category Stream
         /// </summary>
@@ -32,6 +33,6 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="millisecondsTimeout">Timeout to wait before aborting Load defaults to 1000ms</param>
-        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource;
     }
 }

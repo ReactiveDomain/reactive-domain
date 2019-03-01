@@ -45,6 +45,7 @@ namespace ReactiveDomain.Testing.EventStore {
 
         public void Close() {
             _connected = false;
+            _subscriptions.ForEach(s => s?.Dispose());
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };

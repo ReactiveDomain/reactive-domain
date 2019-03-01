@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -15,8 +16,8 @@ namespace ReactiveDomain.Foundation {
         protected virtual void Restore(
                                 ReadModelState snapshot,
                                 bool startListeners = true, 
-                                bool block = false, 
-                                int msTimeout = 1000) {
+                                bool block = false,
+                                CancellationToken cancelWaitToken = default(CancellationToken)) {
             if(StartingState != null) {
                 throw new InvalidOperationException("ReadModel has already been restored.");
             }
@@ -26,7 +27,7 @@ namespace ReactiveDomain.Foundation {
             if (!startListeners || StartingState.Checkpoints == null) return;
 
             foreach (var stream in StartingState.Checkpoints) {
-                Start(stream.Item1,stream.Item2,block,msTimeout);
+                Start(stream.Item1,stream.Item2,block, cancelWaitToken);
             }
         }
 

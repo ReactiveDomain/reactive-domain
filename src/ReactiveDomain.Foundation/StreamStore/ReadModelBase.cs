@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
@@ -37,17 +38,17 @@ namespace ReactiveDomain.Foundation {
 
         public ISubscriber EventStream => _bus;
 
-        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) {
+        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) {
            
-            AddNewListener().Start(stream, checkpoint, blockUntilLive, millisecondsTimeout);
+            AddNewListener().Start(stream, checkpoint, blockUntilLive, cancelWaitToken);
         }
 
-        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource {
-            AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, millisecondsTimeout);
+        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource {
+            AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, cancelWaitToken);
         }
 
-        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, int millisecondsTimeout = 1000) where TAggregate : class, IEventSource {
-            AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, millisecondsTimeout);
+        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource {
+            AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, cancelWaitToken);
         }
 
         public void Dispose() {

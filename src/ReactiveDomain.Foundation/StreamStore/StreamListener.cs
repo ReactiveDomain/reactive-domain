@@ -27,6 +27,8 @@ namespace ReactiveDomain.Foundation
         private bool _started;
         private readonly IStreamNameBuilder _streamNameBuilder;
         protected readonly IEventSerializer Serializer;
+        private readonly Action<Unit> _liveProcessingStarted;
+        private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
         private readonly object _startLock = new object();
         private readonly ManualResetEventSlim _liveLock = new ManualResetEventSlim();
         public bool IsLive => _liveLock.IsSet;
@@ -50,7 +52,9 @@ namespace ReactiveDomain.Foundation
                 IStreamStoreConnection streamStoreConnection,
                 IStreamNameBuilder streamNameBuilder,
                 IEventSerializer serializer,
-                string busName = null)
+                string busName = null,
+                Action<Unit> liveProcessingStarted = null,
+                Action<SubscriptionDropReason, Exception> subscriptionDropped = null)
         {
             Bus = new InMemoryBus(busName ?? "Stream Listener");
             _streamStoreConnection = streamStoreConnection ?? throw new ArgumentNullException(nameof(streamStoreConnection));
@@ -58,6 +62,8 @@ namespace ReactiveDomain.Foundation
             ListenerName = listenerName;
             _streamNameBuilder = streamNameBuilder;
             Serializer = serializer;
+            _liveProcessingStarted = liveProcessingStarted;
+            _subscriptionDropped = subscriptionDropped;
         }
         /// <summary>
         /// Event Stream Listener
@@ -66,12 +72,12 @@ namespace ReactiveDomain.Foundation
         /// <param name="tMessage"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="millisecondsTimeout"></param>
+        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
         public void Start(
             Type tMessage,
             long? checkpoint = null,
             bool blockUntilLive = false,
-            int millisecondsTimeout = 1000)
+            CancellationToken cancelWaitToken = default(CancellationToken))
         {
             if (!tMessage.IsSubclassOf(typeof(Event)))
             {
@@ -81,7 +87,7 @@ namespace ReactiveDomain.Foundation
                _streamNameBuilder.GenerateForEventType(tMessage.Name),
                 checkpoint,
                 blockUntilLive,
-                millisecondsTimeout);
+                cancelWaitToken);
         }
         /// <summary>
         /// Category Stream Listener
@@ -90,18 +96,18 @@ namespace ReactiveDomain.Foundation
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
         public void Start<TAggregate>(
                         long? checkpoint = null,
                         bool blockUntilLive = false,
-                        int timeout = 1000) where TAggregate : class, IEventSource
+                        CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource
         {
 
             Start(
                 _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
                 checkpoint,
                 blockUntilLive,
-                timeout);
+                cancelWaitToken);
         }
 
         /// <summary>
@@ -112,18 +118,18 @@ namespace ReactiveDomain.Foundation
         /// <param name="id"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
         public void Start<TAggregate>(
                         Guid id,
                         long? checkpoint = null,
                         bool blockUntilLive = false,
-                        int timeout = 1000) where TAggregate : class, IEventSource
+                        CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource
         {
             Start(
                 _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
                 checkpoint,
                 blockUntilLive,
-                timeout);
+                cancelWaitToken);
         }
 
         /// <summary>
@@ -133,12 +139,12 @@ namespace ReactiveDomain.Foundation
         /// <param name="streamName"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="timeout">timeout in milliseconds default = 1000</param>
+        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
         public virtual void Start(
                             string streamName,
                             long? checkpoint = null,
                             bool blockUntilLive = false,
-                            int timeout = 1000)
+                            CancellationToken cancelWaitToken = default(CancellationToken))
         {
             _liveLock.Reset();
             lock (_startLock)
@@ -152,36 +158,42 @@ namespace ReactiveDomain.Foundation
                     SubscribeToStreamFrom(
                         streamName,
                         checkpoint,
-                        true,
                         eventAppeared: GotEvent,
-                        liveProcessingStarted: () => {
+                        liveProcessingStarted: () =>
+                        {
                             Bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
                             _liveLock.Set();
+                            _liveProcessingStarted?.Invoke(Unit.Default);
                         });
                 _started = true;
             }
             if (blockUntilLive)
-                _liveLock.Wait(timeout);
+            {
+                _liveLock.Wait(cancelWaitToken);
+            }
         }
         public IDisposable SubscribeToStreamFrom(
             string stream,
             long? lastCheckpoint,
-            bool resolveLinkTos,
             Action<RecordedEvent> eventAppeared,
             Action liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
-            int readBatchSize = 500)
+            UserCredentials userCredentials = null)
         {
-            var settings = new CatchUpSubscriptionSettings(10, readBatchSize, false);
             StreamName = stream;
+            Action<SubscriptionDropReason, Exception> dropped = (r, e) =>
+            {
+                _liveLock.Set();
+                (subscriptionDropped ?? _subscriptionDropped)?.Invoke(r, e);
+            };
+
             var sub = _streamStoreConnection.SubscribeToStreamFrom(
                 stream,
                 lastCheckpoint,
-                settings,
+                Settings,
                 eventAppeared,
                 _ => liveProcessingStarted?.Invoke(),
-                (reason, exception) => subscriptionDropped?.Invoke(reason, exception),
+                (reason, exception) => dropped(reason, exception),
                 userCredentials);
 
             return new Disposer(() => { sub.Dispose(); return Unit.Default; });
@@ -213,7 +225,7 @@ namespace ReactiveDomain.Foundation
         {
             if (_disposed)
                 return;
-
+            _liveLock.Set();
             _subscription?.Dispose();
             Bus?.Dispose();
             _disposed = true;
