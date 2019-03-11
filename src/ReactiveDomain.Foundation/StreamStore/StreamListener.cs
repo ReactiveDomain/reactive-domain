@@ -15,9 +15,9 @@ namespace ReactiveDomain.Foundation
     ///</summary>
     /// <remarks>
     /// N.B. The callbacks on the EventStream subscriptions will use the thread pool threads from the
-    /// Subscription and are not guaranteed to be call in order, especially if handlers require variable
-    /// amounts of time to complete processing.
-    /// If event ordering is required use the QueuedListener.
+    /// Subscription and are not guaranteed to complete in order, especially if handlers require variable
+    /// amounts of time to complete processing. This can cause out of order events to be seen in the readmodel.
+    /// If event ordering is required use the QueuedListener or a QueuedHandler to dequeue the events in order.
     /// </remarks> 
     public class StreamListener : IListener
     {
