@@ -46,7 +46,7 @@ namespace ReactiveDomain.Foundation
             if (!_isLive.IsSet)
             {
                 Interlocked.Decrement(ref _pendingCount);
-                if (Interlocked.Read(ref _pendingCount) <= 0 || SyncQueue.Idle)
+                if (base.IsLive && (Interlocked.Read(ref _pendingCount) <= 0 || SyncQueue.Idle))
                 {
                     _isLive.Set();
                 }
