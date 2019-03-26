@@ -98,7 +98,7 @@ namespace ReactiveDomain.Foundation {
 
             StreamEventsSlice streamEventsSlice;
             do {
-                streamEventsSlice = _streamStoreConnection.ReadStreamForward(streamName, start, 500);
+                streamEventsSlice = _streamStoreConnection.ReadStreamForward(streamName, start, ReadPageSize);
                 if (streamEventsSlice is StreamNotFoundSlice)
                     throw new AggregateNotFoundException(id, aggregate.GetType());
                 if (streamEventsSlice is StreamDeletedSlice)

@@ -4,11 +4,11 @@ namespace ReactiveDomain {
     public class ProjectedEvent:RecordedEvent
     {
         public string ProjectedStream;
-        public long ProjectedEventNumber;
+        public long OriginalEventNumber;
 
         public ProjectedEvent(
                 string projectedStream,
-                long projectedEventNumber,
+                long originalEventNumber,
                 string eventStreamId,
                 Guid eventId,
                 long eventNumber,
@@ -28,7 +28,7 @@ namespace ReactiveDomain {
                                         created,
                                         createdEpoch) {
             ProjectedStream = projectedStream;
-            ProjectedEventNumber = projectedEventNumber;
+            OriginalEventNumber = originalEventNumber;
         }
     }
 }

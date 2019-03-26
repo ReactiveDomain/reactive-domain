@@ -169,7 +169,7 @@ namespace ReactiveDomain.Testing.EventStore {
                                     long start,
                                     long count,
                                     UserCredentials credentials = null) {
-            if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
+            if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
             List<RecordedEvent> stream;
             lock (_store) {
                 if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
@@ -184,7 +184,7 @@ namespace ReactiveDomain.Testing.EventStore {
                                     List<RecordedEvent> stream,
                                     ReadDirection direction) {
             var result = new List<RecordedEvent>();
-            var next = (int)start;
+            var next = start == -1 ? stream.Count - 1 : (int)start;
             for (int i = 0; i < count; i++) {
                 if (next < stream.Count && next >= 0) {
                     long current = next;
@@ -397,10 +397,10 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                     streamName,
-                    stream.Count,
+                    @event.Event.EventNumber,
                     @event.Event.EventStreamId,
                     @event.Event.EventId, // reusing since the projection is linking to the original event
-                    @event.Event.EventNumber,
+                    stream.Count,
                     @event.Event.EventType,
                     @event.Event.Data,
                     @event.Event.Metadata,
@@ -409,7 +409,7 @@ namespace ReactiveDomain.Testing.EventStore {
                     epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
         /// <summary>
@@ -434,10 +434,10 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                 streamName,
-                stream.Count,
+                @event.Event.EventNumber,
                 @event.Event.EventStreamId,
                 @event.Event.EventId, // reusing since the projection is linking to the original event
-                @event.Event.EventNumber,
+                stream.Count,
                 @event.Event.EventType,
                 @event.Event.Data,
                 @event.Event.Metadata,
@@ -446,7 +446,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
 

@@ -271,7 +271,7 @@ namespace ReactiveDomain.Testing.EventStore {
                     startFrom,
                     count);
                 expectedCount = 2;
-                Assert.True(expectedCount == slice.Events.Length, "Failed to read events forward");
+                Assert.True(expectedCount == slice.Events.Length, "Failed to read events backward");
                 Assert.Equal(startFrom, slice.FromEventNumber);
                 Assert.Equal(_lastEvent, slice.LastEventNumber);
                 Assert.Equal(startFrom - count, slice.NextEventNumber);
@@ -292,7 +292,7 @@ namespace ReactiveDomain.Testing.EventStore {
                     startFrom,
                     count);
                 expectedCount = 0;
-                Assert.True(expectedCount == slice.Events.Length, "Failed to read events forward");
+                Assert.True(expectedCount == slice.Events.Length, "Failed to read events backward");
                 Assert.Equal(startFrom, slice.FromEventNumber);
                 Assert.Equal(_lastEvent, slice.LastEventNumber);
                 Assert.Equal(_lastEvent, slice.NextEventNumber);
