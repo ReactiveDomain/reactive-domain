@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EventStore.ClientAPI.Exceptions;
 using ES = EventStore.ClientAPI;
 
 namespace ReactiveDomain.EventStore
@@ -29,7 +30,15 @@ namespace ReactiveDomain.EventStore
 
         public void Connect()
         {
-            EsConnection.ConnectAsync().Wait();
+            try {
+                EsConnection.ConnectAsync().Wait();
+            }
+            catch (AggregateException aggregate) {
+                if (aggregate.InnerException is ES.Exceptions.CannotEstablishConnectionException) {
+                    throw new CannotEstablishConnectionException(aggregate.InnerException.Message, aggregate.InnerException);
+                }
+                throw;
+            }
         }
 
         public void Close()

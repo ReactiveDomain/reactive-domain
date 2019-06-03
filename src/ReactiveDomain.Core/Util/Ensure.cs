@@ -342,6 +342,7 @@ namespace ReactiveDomain.Util
         public static void Between(int low, int high, int argument, string argumentName)
         {
             if (argument <= low || argument >= high)
+
                 throw new ArgumentException(
                     $"{argumentName} expected to be between {low} and {high}, actual value: {argument}");
         }

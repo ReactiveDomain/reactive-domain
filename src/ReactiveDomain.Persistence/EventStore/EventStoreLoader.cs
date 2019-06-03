@@ -16,6 +16,7 @@ using ILogger = ReactiveDomain.Logging.ILogger;
 
 
 namespace ReactiveDomain.EventStore {
+    [Obsolete("Use EventStoreConnectionManager", false)]
     public class EventStoreLoader {
         public enum StartConflictOption {
             Kill,
