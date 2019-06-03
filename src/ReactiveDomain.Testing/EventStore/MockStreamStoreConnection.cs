@@ -49,6 +49,7 @@ namespace ReactiveDomain.Testing.EventStore {
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
+        public event EventHandler<ClientConnectionEventArgs> Disconnected = (p1, p2) => { };
 
         public WriteResult AppendToStream(
             string stream,
