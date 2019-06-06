@@ -28,6 +28,11 @@ namespace ReactiveDomain
         /// </summary>
         event EventHandler<ClientConnectionEventArgs> Connected;
 
+        /// <summary>
+        /// Fired when an <see cref="T:ReactiveDomain.IStreamStoreConnection" /> disconnects from an Event Store server.
+        /// </summary>
+        event EventHandler<ClientConnectionEventArgs> Disconnected;
+
         /// <summary>Appends events asynchronously to a stream.</summary>
         /// <remarks>
         /// When appending events to a stream the <see cref="T:ReactiveDomain.ExpectedVersion" /> choice can

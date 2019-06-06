@@ -18,9 +18,16 @@ namespace ReactiveDomain.EventStore
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
             EsConnection = eventStoreConnection;
             EsConnection.Connected += ConnOnConnected;
+            EsConnection.Disconnected += ConnOnDisconnected;
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
+        public event EventHandler<ClientConnectionEventArgs> Disconnected = (p1, p2) => { };
+        private void ConnOnDisconnected(object sender, ES.ClientConnectionEventArgs clientConnectionEventArgs)
+        {
+            Disconnected(sender, clientConnectionEventArgs.ToRdEventArgs(this));
+        }
+        
         private void ConnOnConnected(object sender, ES.ClientConnectionEventArgs clientConnectionEventArgs)
         {
             Connected(sender, clientConnectionEventArgs.ToRdEventArgs(this));
@@ -230,6 +237,7 @@ namespace ReactiveDomain.EventStore
                 {
                     EsConnection.Close();
                     EsConnection.Connected -= ConnOnConnected;
+                    EsConnection.Disconnected -= ConnOnDisconnected;
                     EsConnection.Dispose();
                 }
             }
