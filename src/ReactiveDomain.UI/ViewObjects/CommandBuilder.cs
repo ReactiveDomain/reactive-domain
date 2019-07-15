@@ -130,7 +130,7 @@ namespace ReactiveDomain.UI
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="canExecute"></param>
@@ -140,7 +140,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommand(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommand(
                                                 this ICommandPublisher bus,
                                                 IObservable<bool> canExecute,
                                                 Func<Command> commandFunc,
@@ -149,11 +149,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, new[] { commandFunc }, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, new[] { commandFunc }, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed, with a defined CanExecute.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed, with a defined CanExecute.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="canExecute"></param>
@@ -163,7 +163,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommand(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommand(
                                                 this IDispatcher bus,
                                                 IObservable<bool> canExecute,
                                                 Func<Command> commandFunc,
@@ -172,11 +172,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, new[] { commandFunc }, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, new[] { commandFunc }, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="commandFunc"></param>
@@ -185,7 +185,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommand(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommand(
                                                 this ICommandPublisher bus,
                                                 Func<Command> commandFunc,
                                                 IScheduler scheduler = null,
@@ -193,11 +193,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, new[] { commandFunc }, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, new[] { commandFunc }, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="commandFunc"></param>
@@ -206,7 +206,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommand(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommand(
                                                 this IDispatcher bus,
                                                 Func<Command> commandFunc,
                                                 IScheduler scheduler = null,
@@ -214,11 +214,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, new[] { commandFunc }, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, new[] { commandFunc }, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed, with a defined CanExecute.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed, with a defined CanExecute.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="canExecute"></param>
@@ -228,7 +228,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommand(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommand(
                                                 this ICommandPublisher bus,
                                                 IObservable<bool> canExecute,
                                                 IEnumerable<Func<Command>> commands,
@@ -237,11 +237,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, commands, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, commands, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed, with a defined CanExecute.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed, with a defined CanExecute.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="canExecute"></param>
@@ -251,7 +251,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommands(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommands(
                                                 this IDispatcher bus,
                                                 IObservable<bool> canExecute,
                                                 IEnumerable<Func<Command>> commands,
@@ -260,11 +260,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, commands, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, commands, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed. The ReactiveCommand's CanExecute will always be true.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="commands"></param>
@@ -273,7 +273,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommands(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommands(
                                                 this ICommandPublisher bus,
                                                 IEnumerable<Func<Command>> commands,
                                                 IScheduler scheduler = null,
@@ -281,11 +281,11 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, commands, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, commands, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// Creates a ReactiveCommand that will fire the specified Command on the bus when executed.
+        /// Creates a ReactiveCommand that will send the specified Command on the bus when executed.
         /// </summary>
         /// <param name="bus"></param>
         /// <param name="commands"></param>
@@ -294,7 +294,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<Unit, Unit> BuildFireCommands(
+        public static ReactiveCommand<Unit, Unit> BuildSendCommands(
                                                 this IDispatcher bus,
                                                 IEnumerable<Func<Command>> commands,
                                                 IScheduler scheduler = null,
@@ -302,10 +302,10 @@ namespace ReactiveDomain.UI
                                                 TimeSpan? responseTimeout = null,
                                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommands(bus, commands, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommands(bus, commands, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
-        private static ReactiveCommand<Unit, Unit> FireCommands(
+        private static ReactiveCommand<Unit, Unit> SendCommands(
                     ICommandPublisher bus,
                     IEnumerable<Func<Command>> commands,
                     IObservable<bool> canExecute = null,
@@ -341,7 +341,7 @@ namespace ReactiveDomain.UI
         }
 
         /// <summary>
-        /// BuildFireCommandEx() does the same thing as BuildFireCommand(), except commandFunc must be defined
+        /// BuildSendCommandEx() does the same thing as BuildSendCommand(), except commandFunc must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
@@ -352,7 +352,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<object, Unit> BuildFireCommandEx(
+        public static ReactiveCommand<object, Unit> BuildSendCommandEx(
                                 this IDispatcher bus,
                                 IObservable<bool> canExecute,
                                 Func<object, Command> commandFunc,
@@ -361,11 +361,11 @@ namespace ReactiveDomain.UI
                                 TimeSpan? responseTimeout = null,
                                 TimeSpan? ackTimeout = null)
         {
-            return FireCommandEx(bus, commandFunc, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommandEx(bus, commandFunc, canExecute, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
         /// <summary>
-        /// BuildFireCommandEx() does the same thing as BuildFireCommand(), except commandFunc must be defined
+        /// BuildSendCommandEx() does the same thing as BuildSendCommand(), except commandFunc must be defined
         /// as a function that takes an object as input and returns a Command as result.
         /// </summary>
         /// <param name="bus"></param>
@@ -375,7 +375,7 @@ namespace ReactiveDomain.UI
         /// <param name="responseTimeout"></param>
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
-        public static ReactiveCommand<object, Unit> BuildFireCommandEx(
+        public static ReactiveCommand<object, Unit> BuildSendCommandEx(
                                                        this IDispatcher bus,
                                                        Func<object, Command> commandFunc,
                                                        IScheduler scheduler = null,
@@ -383,10 +383,10 @@ namespace ReactiveDomain.UI
                                                        TimeSpan? responseTimeout = null,
                                                        TimeSpan? ackTimeout = null)
         {
-            return FireCommandEx(bus, commandFunc, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
+            return SendCommandEx(bus, commandFunc, null, scheduler, userErrorMsg, responseTimeout, ackTimeout);
         }
 
-        private static ReactiveCommand<object, Unit> FireCommandEx(
+        private static ReactiveCommand<object, Unit> SendCommandEx(
             IDispatcher bus,
             Func<object, Command> commandFunc,
             IObservable<bool> canExecute = null,
