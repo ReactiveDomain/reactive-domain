@@ -5,10 +5,14 @@ using System.Net;
 
 namespace Shovel
 {
+    using EventStore.ClientAPI.SystemData;
+
     public class Bootstrap
     {
         private IEventStoreConnection _sourceConnection;
         private IEventStoreConnection _targetConnection;
+        private UserCredentials _sourceCredentials;
+        private UserCredentials _targetCredentials;
 
         public bool Loaded { get; private set; }
 
@@ -16,13 +20,16 @@ namespace Shovel
         {
             _sourceConnection = ConnectToEventStore(ReadSetting("sourceTcpAddress"), int.Parse(ReadSetting("sourcePort")));
             _targetConnection = ConnectToEventStore(ReadSetting("targetTcpAddress"), int.Parse(ReadSetting("targetPort")));
+            _sourceCredentials = new UserCredentials(ReadSetting("sourceUsername"), ReadSetting("sourcePassword"));
+            _targetCredentials = new UserCredentials(ReadSetting("targetUsername"), ReadSetting("targetPassword"));
 
             Loaded = true;
         }
 
         public void Run()
         {
-
+            var processing = new EventShovel(_sourceConnection, _targetConnection, _sourceCredentials, _targetCredentials);
+            processing.Run();
         }
 
         private static string ReadSetting(string key)
@@ -32,7 +39,7 @@ namespace Shovel
                 var appSettings = ConfigurationManager.AppSettings;
                 string result = appSettings[key] ?? String.Empty;
 
-                Console.WriteLine(result != String.Empty ? result : $"Setting {key} is not found");
+                Console.WriteLine(result != String.Empty ? $"Setting {key}: {result}" : $"Setting {key} is not found");
 
                 return result;
             }
