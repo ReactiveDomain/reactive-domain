@@ -11,14 +11,16 @@ namespace Shovel
         private readonly IEventStoreConnection _targetConnection;
         private readonly UserCredentials _sourceCredentials;
         private readonly UserCredentials _targetCredentials;
+        private readonly IEventTransformer _eventTransformer;
 
         public EventShovel(IEventStoreConnection sourceConnection, IEventStoreConnection targetConnection,
-            UserCredentials sourceCredentials, UserCredentials targetCredentials)
+            UserCredentials sourceCredentials, UserCredentials targetCredentials, IEventTransformer eventTransformer)
         {
             _sourceConnection = sourceConnection;
             _targetConnection = targetConnection;
             _sourceCredentials = sourceCredentials;
             _targetCredentials = targetCredentials;
+            _eventTransformer = eventTransformer;
         }
 
         public void Run()
@@ -30,7 +32,6 @@ namespace Shovel
                 var slice = _sourceConnection.ReadAllEventsForwardAsync(streamPosition, maxCount, false, _sourceCredentials).Result;
                 Console.WriteLine($"Read {slice.Events.Length} events");
 
-                //processedEvents += slice.Events.Length;
                 streamPosition = slice.NextPosition;
                 foreach (var e in slice.Events)
                 {
@@ -39,6 +40,16 @@ namespace Shovel
                     {
                         Console.WriteLine($"Event {e.Event.EventId} of the type {e.Event.EventType} is internal event. Skipping it");
                         continue;
+                    }
+
+                    ResolvedEvent transformedEvent = 
+                    if (_eventTransformer != null)
+                    {
+
+                    }
+                    else
+                    {
+                        
                     }
 
                     var newEventData = new EventData(e.Event.EventId, e.Event.EventType, e.Event.IsJson, e.Event.Data, e.Event.Metadata);

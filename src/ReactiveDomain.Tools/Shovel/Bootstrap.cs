@@ -5,6 +5,7 @@ using System.Net;
 
 namespace Shovel
 {
+    using System.Reflection;
     using EventStore.ClientAPI.SystemData;
 
     public class Bootstrap
@@ -13,6 +14,7 @@ namespace Shovel
         private IEventStoreConnection _targetConnection;
         private UserCredentials _sourceCredentials;
         private UserCredentials _targetCredentials;
+        private Assembly _transformerAssembly;
 
         public bool Loaded { get; private set; }
 
@@ -23,12 +25,21 @@ namespace Shovel
             _sourceCredentials = new UserCredentials(ReadSetting("sourceUsername"), ReadSetting("sourcePassword"));
             _targetCredentials = new UserCredentials(ReadSetting("targetUsername"), ReadSetting("targetPassword"));
 
+           _transformerAssembly = Assembly.LoadFrom(@".\EventTransformer.dll");
+
             Loaded = true;
         }
 
         public void Run()
         {
-            var processing = new EventShovel(_sourceConnection, _targetConnection, _sourceCredentials, _targetCredentials);
+            IEventTransformer transformer = null;
+
+            if (_transformerAssembly != null)
+            {
+
+            }
+
+            var processing = new EventShovel(_sourceConnection, _targetConnection, _sourceCredentials, _targetCredentials, transformer);
             processing.Run();
         }
 
