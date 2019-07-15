@@ -6,8 +6,7 @@
   </PropertyGroup>
  
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
     <PackageReference Include="reactiveui" Version="8.7.2" Condition="'$(TargetFramework)'=='net472'" />
     <PackageReference Include="reactiveui" Version="8.7.2" Condition="'$(TargetFramework)'=='netstandard2.0'" />

@@ -106,7 +106,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 eventStream.Add(recordedEvent);
                 All.Add(recordedEvent);
                 _inboundEventHandler.Handle(new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber));
-            }
+               }
             return new WriteResult(eventStream.Count - 1);
 
         }
@@ -337,10 +337,13 @@ namespace ReactiveDomain.Testing.EventStore {
                                 Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                 UserCredentials userCredentials = null, 
                                 bool resolveLinkTos = true) {
-            return SubscribeToAll(null, eventAppeared, null, subscriptionDropped, userCredentials);
-        }
+            return SubscribeToStream(
+                AllStreamName,
+                eventAppeared,
+                subscriptionDropped,
+                userCredentials);}
 
-        public IDisposable SubscribeToAll(
+        public IDisposable SubscribeToAllFrom(
             long? lastCheckpoint,
             Action<RecordedEvent> eventAppeared,
             Action<Unit> liveProcessingStarted = null,
@@ -351,7 +354,7 @@ namespace ReactiveDomain.Testing.EventStore {
             return SubscribeToStreamFrom(
                 AllStreamName,
                 lastCheckpoint,
-                CatchUpSubscriptionSettings.Default,
+                CatchUpSubscriptionSettings.Default, 
                 eventAppeared,
                 liveProcessingStarted,
                 subscriptionDropped,

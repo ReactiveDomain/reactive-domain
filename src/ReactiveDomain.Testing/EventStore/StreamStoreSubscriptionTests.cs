@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,14 +21,17 @@ namespace ReactiveDomain.Testing.EventStore
         private const long True = 1;
         private const long False = 0;
 
+
         public StreamStoreSubscriptionTests(StreamStoreConnectionFixture fixture)
         {
             _admin = fixture.AdminCredentials;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+#if !NETCOREAPP2_0 && !NETSTANDARD2_0 && !NET452
             var mockStreamStore = new MockStreamStoreConnection(nameof(MockStreamStoreConnection));
             mockStreamStore.Connect();
-            fixture.Connection.Connect();
             _stores.Add(mockStreamStore);
+#endif
+            fixture.Connection.Connect();
             _stores.Add(fixture.Connection);
 
             _streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
@@ -44,6 +48,14 @@ namespace ReactiveDomain.Testing.EventStore
             for (int evtNumber = startNumber; evtNumber < numEventsToBeSent + startNumber; evtNumber++)
             {
                 var evt = new SubscriptionTestEvent(evtNumber);
+                conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
+            }
+        }
+        private void AppendEventsForAll(int numEventsToBeSent, IStreamStoreConnection conn, string streamName, int startNumber = 0)
+        {
+            for (int evtNumber = startNumber; evtNumber < numEventsToBeSent + startNumber; evtNumber++)
+            {
+                var evt = new AllSubscriptionTestEvent(evtNumber);
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
             }
         }
@@ -133,7 +145,9 @@ namespace ReactiveDomain.Testing.EventStore
 
             foreach (var conn in _stores)
             {
-
+                //TODO: The Mock event store all stream implementation is fundamentally broken see issue #42
+                if (conn is MockStreamStoreConnection)
+                    continue;
 
                 long evtCount = 0;
                 var dropped = false;
@@ -147,25 +161,35 @@ namespace ReactiveDomain.Testing.EventStore
                     conn.AppendToStream(stream, ExpectedVersion.Any, null, _serializer.Serialize(evt));
                 }
 
+                var events = new ConcurrentDictionary<string, int>();
                 var sub = conn.SubscribeToAll(
                                         evt =>
                                         {
-                                            if (string.CompareOrdinal(evt.EventType, nameof(SubscriptionTestEvent)) == 0)
+                                            if (events.ContainsKey(evt.EventType))
+                                                events[evt.EventType] += 1;
+                                            else
+                                                events.TryAdd(evt.EventType, 1);
+
+                                            if (string.Compare(evt.EventType, nameof(AllSubscriptionTestEvent), StringComparison.OrdinalIgnoreCase) == 0)
                                             {
                                                 Interlocked.Increment(ref evtCount);
                                             }
                                         },
                                         (reason, ex) => dropped = true,
                                         _admin);
+
                 foreach (var stream in streams)
                 {
-                    AppendEvents(5, conn, stream);
+                    AppendEventsForAll(5, conn, stream);
                 }
                 foreach (var stream in streams)
                 {
                     conn.TryConfirmStream(stream, 5);
                 }
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 30, 2000);
+                Assert.False(dropped);
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 30,
+                    2000,
+                    $"evtCount: Expected {30}, Actual {Interlocked.Read(ref evtCount)} ");
 
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
@@ -202,8 +226,8 @@ namespace ReactiveDomain.Testing.EventStore
                 {
                     conn.TryConfirmStream(stream, 5);
                 }
-
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 10, 2000, $"Expected 10 got {Interlocked.Read(ref evtCount)}");
+                Assert.False(dropped);
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) >= 10, 2000, $"Expected 10 got {Interlocked.Read(ref evtCount)}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
@@ -261,6 +285,17 @@ namespace ReactiveDomain.Testing.EventStore
             public Guid MsgId { get; private set; }
             public readonly int MessageNumber;
             public SubscriptionTestEvent(
+                int messageNumber)
+            {
+                MsgId = Guid.NewGuid();
+                MessageNumber = messageNumber;
+            }
+        }
+        public class AllSubscriptionTestEvent : IMessage
+        {
+            public Guid MsgId { get; private set; }
+            public readonly int MessageNumber;
+            public AllSubscriptionTestEvent(
                 int messageNumber)
             {
                 MsgId = Guid.NewGuid();

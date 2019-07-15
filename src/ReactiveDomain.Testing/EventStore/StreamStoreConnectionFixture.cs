@@ -6,7 +6,7 @@ using System.Threading;
 using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
 using EventStore.ClientAPI;
-#if !(NETCOREAPP2_0 || NETSTANDARD2_0)
+#if !(NETCOREAPP2_0 || NETSTANDARD2_0 || NET452)
 using EventStore.ClientAPI.Embedded;
 using EventStore.Common.Options;
 #endif
@@ -24,13 +24,16 @@ namespace ReactiveDomain.Testing {
 #if LIVE_ES_CONNECTION
             Connection =new EventStoreConnectionWrapper(
                               EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500"));
+
             return;
 #endif
 
-#if NETCOREAPP2_0 || NETSTANDARD2_0
+#if NETCOREAPP2_0 || NETSTANDARD2_0 || NET452
 
             Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
+            Connection.Connect();
 #else
+            
             var node = EmbeddedVNodeBuilder
                         .AsSingleNode()
                         .OnDefaultEndpoints()
