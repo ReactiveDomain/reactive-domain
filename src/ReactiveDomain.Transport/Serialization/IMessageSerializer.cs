@@ -3,8 +3,9 @@
     using System;
     using ReactiveDomain.Messaging;
 
-    public interface IMessageSerializer {
-        Message FromBytes(ArraySegment<byte> data);
-        ArraySegment<byte> ToBytes(Message message);
+    public interface IMessageSerializer
+    {
+        IMessage FromBytes(ArraySegment<byte> data);
+        ArraySegment<byte> ToBytes(IMessage message);
     }
 }

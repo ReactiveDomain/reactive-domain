@@ -8,7 +8,6 @@ script:
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
   - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
-  - dotnet test ./src/ReactiveDomain.Buffers.Tests/ReactiveDomain.Buffers.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj

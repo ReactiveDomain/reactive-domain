@@ -3,6 +3,7 @@ using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging
 {
+    //this class is to help force assembly loading when building the message hierarchy
     public static class BootStrap
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain.Messaging");

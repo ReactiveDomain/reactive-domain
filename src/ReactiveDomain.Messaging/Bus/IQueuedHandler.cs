@@ -2,7 +2,7 @@
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public interface IQueuedHandler: IHandle<Message>, IPublisher
+    public interface IQueuedHandler: IHandle<IMessage>, IPublisher
     {
         string Name { get; }
         void Start();

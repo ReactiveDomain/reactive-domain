@@ -3,7 +3,7 @@
 namespace ReactiveDomain.Messaging.Bus
 {
 
-    public interface IHandle<T> where T: Message
+    public interface IHandle<T> where T: IMessage
     {
         void Handle(T message);
     }

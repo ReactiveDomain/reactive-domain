@@ -3,7 +3,7 @@ namespace ReactiveDomain.Messaging.Bus
 {
     public class WideningHandler<TInput, TOutput> : IHandle<TInput>
         where TInput : TOutput
-        where TOutput : Message
+        where TOutput : IMessage
     {
         private readonly IHandle<TOutput> _handler;
 

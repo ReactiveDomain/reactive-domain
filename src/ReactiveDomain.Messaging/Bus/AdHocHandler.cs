@@ -3,7 +3,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public class AdHocHandler<T>: IHandle<T> where T: Message
+    public class AdHocHandler<T> : IHandle<T> where T : class, IMessage
     {
         private readonly Action<T> _handle;
 

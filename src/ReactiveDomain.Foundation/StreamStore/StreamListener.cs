@@ -207,7 +207,7 @@ namespace ReactiveDomain.Foundation
         protected virtual void GotEvent(RecordedEvent recordedEvent)
         {
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
-            if (Serializer.Deserialize(recordedEvent) is Message @event)
+            if (Serializer.Deserialize(recordedEvent) is IMessage @event)
             {
                 Bus.Publish(@event);
             }

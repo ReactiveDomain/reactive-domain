@@ -79,12 +79,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
 
         [Fact]
         void can_handle_events_in_order() {
-            _fixture.Reset();
-            CorrelatedMessage source = CorrelatedMessage.NewRoot();
+            _fixture.Reset();           
             for (int i = 0; i < _count; i++) {
-                var evt = new CountedEvent(i, source);
-                _fixture.Dispatcher.Publish(evt);
-                source = evt;
+                var evt = MessageBuilder.New(()=> new CountedEvent(i));
+                _fixture.Dispatcher.Publish(evt);               
             }
             AssertEx.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _fixture.EventCount) == _count,
@@ -94,11 +92,10 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         [Fact]
         void can_handle_commands_in_order() {
             _fixture.Reset();
-            CorrelatedMessage source = CorrelatedMessage.NewRoot();
+           
             for (int i = 0; i < _count; i++) {
-                var cmd = new TestCommands.OrderedCommand(i, source);
+                var cmd = new TestCommands.OrderedCommand(i);
                 _fixture.Dispatcher.Send(cmd);
-                source = cmd;
             }
             AssertEx.IsOrBecomesTrue(
                 () => Interlocked.Read(ref _fixture.CmdCount) == _count,

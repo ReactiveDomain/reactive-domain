@@ -3,7 +3,7 @@ using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public class CommandHandler<T> : IHandle<T> where T : Command
+    public class CommandHandler<T> : IHandle<T> where T : class, ICommand
     {
         // ReSharper disable once StaticMemberInGenericType
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");

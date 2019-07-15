@@ -27,7 +27,7 @@ namespace ReactiveDomain.Messaging.Bus {
             Subscribe<AckCommand>(this);
         }
         public TaskCompletionSource<CommandResponse> RegisterCommandAsync(
-                                                                Command command,
+                                                                ICommand command,
                                                                 TimeSpan? ackTimeout = null,
                                                                 TimeSpan? responseTimeout = null) {
             if (_disposed) {

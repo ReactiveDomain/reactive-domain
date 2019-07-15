@@ -173,11 +173,12 @@ namespace ReactiveDomain.Testing {
                 Assert.True(tAgg2.CurrentAmount() == loadedAgg2.CurrentAmount());
             }
         }
-        public class TestEvent : Event {
+        public class TestEvent : IMessage {
+            public Guid MsgId { get; private set; }
             public readonly int MessageNumber;
             public TestEvent(
-                int messageNumber
-                ) : base(NewRoot()) {
+                int messageNumber) {
+                MsgId = Guid.NewGuid();
                 MessageNumber = messageNumber;
             }
         }

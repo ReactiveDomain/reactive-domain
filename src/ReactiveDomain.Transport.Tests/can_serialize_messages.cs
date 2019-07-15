@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging;
+﻿using System;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Transport.Serialization;
 using Xunit;
 
@@ -23,16 +24,22 @@ namespace ReactiveDomain.Transport.Tests
 
         private const string Prop1 = "prop1";
         private const string Prop2 = "prop2";
-        private readonly WoftamEvent _testEvent =  new WoftamEvent(Prop1,Prop2);
+        private readonly WoftamEvent _testEvent = new WoftamEvent(Prop1, Prop2);
     }
 
-    public class WoftamEvent : CorrelatedMessage {
-        public WoftamEvent(string property1, string property2): base(CorrelationId.NewId(), SourceId.NullSourceId()) {
+    public class WoftamEvent : IMessage
+    {
+        public Guid MsgId { get; private set; }
+        public WoftamEvent(string property1, string property2)
+        {
+            MsgId = Guid.NewGuid();
             Property1 = property1;
             Property2 = property2;
         }
 
         public string Property1 { get; }
         public string Property2 { get; }
+
+
     }
 }

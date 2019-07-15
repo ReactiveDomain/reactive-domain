@@ -1,7 +1,7 @@
 ﻿namespace ReactiveDomain.Messaging.Bus
 {
     public class NarrowingHandler<TInput, TOutput> : IHandle<TInput>
-        where TInput : Message
+        where TInput : IMessage
         where TOutput : TInput
     {
         private readonly IHandle<TOutput> _handler;

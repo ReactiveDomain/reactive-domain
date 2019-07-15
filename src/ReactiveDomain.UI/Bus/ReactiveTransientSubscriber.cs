@@ -26,7 +26,7 @@ namespace ReactiveDomain.UI
             _eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
         }
 
-        protected void Subscribe<T>(IHandle<T> handler) where T : Message
+        protected void Subscribe<T>(IHandle<T> handler) where T : class, IMessage
         {
             _subscriptions.Add(_eventSubscriber.Subscribe<T>(handler));
         }

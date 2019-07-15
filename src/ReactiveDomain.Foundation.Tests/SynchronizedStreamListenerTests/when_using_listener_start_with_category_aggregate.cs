@@ -27,7 +27,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
                 aggStream, 
                 ExpectedVersion.NoStream, 
                 null, 
-                _eventSerializer.Serialize(new TestEvent(CorrelatedMessage.NewRoot())));
+                _eventSerializer.Serialize(new TestEvent()));
             Assert.True(result.NextExpectedVersion == 0);
 
             //wait for the projection to be written.
@@ -49,7 +49,7 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000);
         }
 
-        private void Handle(Message message) {
+        private void Handle(IMessage message) {
             dynamic evt = message;
             if (evt is TestEvent) {
                 Interlocked.Increment(ref _testEventCount);

@@ -25,9 +25,9 @@ namespace ReactiveDomain.Messaging.Tests {
             TokenSource = new CancellationTokenSource();
             TokenSource.Cancel();
             Assert.Throws<CommandCanceledException>(() =>
-                _dispatcher.Send(new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token)));
+                _dispatcher.Send(new TestTokenCancellableCmd(false, TokenSource.Token)));
             Assert.False(
-                _dispatcher.TrySend(new TestTokenCancellableCmd(false,  CorrelatedMessage.NewRoot(), TokenSource.Token), out var response));
+                _dispatcher.TrySend(new TestTokenCancellableCmd(false, TokenSource.Token), out var response));
             Assert.IsType<Canceled>(response);
 
             AssertEx.IsOrBecomesTrue(() => _dispatcher.Idle);
@@ -69,8 +69,8 @@ namespace ReactiveDomain.Messaging.Tests {
         public void will_not_cross_cancel() {
             _tokenSource1 = new CancellationTokenSource();
             _tokenSource2 = new CancellationTokenSource();
-            _cmd1 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource1.Token);
-            _cmd2 = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource2.Token);
+            _cmd1 = new TestTokenCancellableCmd(false, _tokenSource1.Token);
+            _cmd2 = new TestTokenCancellableCmd(false, _tokenSource2.Token);
             _bus.TrySendAsync(_cmd1);
             _bus.TrySendAsync(_cmd2);
             SpinWait.SpinUntil(() => Interlocked.Read(ref _gotCmd) == 1, 200);
@@ -117,7 +117,7 @@ namespace ReactiveDomain.Messaging.Tests {
             _bus.Subscribe<TestTokenCancellableCmd>(this);
 
             _tokenSource = new CancellationTokenSource();
-            var cmd = new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), _tokenSource.Token);
+            var cmd = new TestTokenCancellableCmd(false, _tokenSource.Token);
             _bus.Send(cmd);
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _success) == 1, msg: "Success not triggered");
         }
@@ -126,7 +126,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public void can_cancel_while_processing() {
             _bus.Subscribe<TestTokenCancellableLongRunningCmd>(this);
             _tokenSource = new CancellationTokenSource();
-            var cmd = new TestTokenCancellableLongRunningCmd(false, CorrelatedMessage.NewRoot(), _tokenSource.Token);
+            var cmd = new TestTokenCancellableLongRunningCmd(false, _tokenSource.Token);
 
             _bus.TrySendAsync(cmd);
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotCmd) == 1, msg: "Command not handled");
@@ -186,7 +186,7 @@ namespace ReactiveDomain.Messaging.Tests {
             TokenSource = new CancellationTokenSource();
             AssertEx.CommandThrows<CommandCanceledException>(() => {
                 _bus.Send(
-                    new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token));
+                    new TestTokenCancellableCmd(false, TokenSource.Token));
             });
             Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
             Assert.True(Interlocked.Read(ref _gotNestedCmd) == 0, "Nested Command Fired");
@@ -197,7 +197,7 @@ namespace ReactiveDomain.Messaging.Tests {
             TokenSource = new CancellationTokenSource();
             AssertEx.CommandThrows<CommandCanceledException>(() => {
                 _bus.Send(
-                    new TestTokenCancellableCmd(false, CorrelatedMessage.NewRoot(), TokenSource.Token));
+                    new TestTokenCancellableCmd(false, TokenSource.Token));
             });
             Assert.True(Interlocked.Read(ref _gotCmd) == 1, "Failed to receive first cmd");
             Assert.True(Interlocked.Read(ref _gotNestedCmd) == 1, "Nested Command received");
@@ -207,7 +207,7 @@ namespace ReactiveDomain.Messaging.Tests {
         public CommandResponse Handle(TestTokenCancellableCmd command) {
 
             Interlocked.Increment(ref _gotCmd);
-            var nestedCommand = new NestedTestTokenCancellableCmd(command);
+            var nestedCommand = new NestedTestTokenCancellableCmd(command.CancellationToken.Value);
             if (_cancelFirst) {
                 TokenSource.Cancel(); //global cancel
                 _bus.Send(nestedCommand); // a pre canceled command will just return
@@ -258,9 +258,8 @@ namespace ReactiveDomain.Messaging.Tests {
         public readonly bool RequestFail;
         public TestTokenCancellableCmd(
             bool requestFail,
-            CorrelatedMessage source,
             CancellationToken cancellationToken) :
-            base(source, cancellationToken) {
+            base(cancellationToken) {
             RequestFail = requestFail;
         }
     }
@@ -268,17 +267,13 @@ namespace ReactiveDomain.Messaging.Tests {
         public readonly bool RequestFail;
         public TestTokenCancellableLongRunningCmd(
             bool requestFail,
-            CorrelatedMessage source,
             CancellationToken cancellationToken) :
-            base(source, cancellationToken) {
+            base(cancellationToken) {
             RequestFail = requestFail;
         }
     }
-    public class NestedTestTokenCancellableCmd : Command {
-        public NestedTestTokenCancellableCmd(Command source) : base(source) { }
-        public NestedTestTokenCancellableCmd(
-            CorrelatedMessage source,
-            CancellationToken? cancellationToken) : base(source, cancellationToken) {
+    public class NestedTestTokenCancellableCmd : Command {      
+        public NestedTestTokenCancellableCmd( CancellationToken cancellationToken) : base( cancellationToken) {
         }
     }
 }

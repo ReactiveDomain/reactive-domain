@@ -29,12 +29,12 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var cmd = new TestCommands.Command1(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
                 _dispatcher.Send(cmd);
 
-                tq.WaitFor<Message>(TimeSpan.FromMilliseconds(100));
+                tq.WaitFor<IMessage>(TimeSpan.FromMilliseconds(100));
                 tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100));
                 tq.WaitFor<CommandResponse>(TimeSpan.FromMilliseconds(100));
                 tq.WaitFor<Success>(TimeSpan.FromMilliseconds(100));
@@ -52,8 +52,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var cmd = new TestCommands.Command1(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
                 _dispatcher.Send(cmd);
 
@@ -73,8 +73,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Command) }))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var cmd = new TestCommands.Command1(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
                 _dispatcher.Send(cmd);
 
@@ -88,8 +88,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event) }))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var cmd = new TestCommands.Command1(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
                 _dispatcher.Send(cmd);
 
@@ -103,8 +103,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var cmd = new TestCommands.Command1(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
                 _dispatcher.Send(cmd);
 
@@ -129,8 +129,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var evt2 = new TestEvent(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var evt2 = new TestEvent();
                 _dispatcher.Publish(evt);
                 _dispatcher.Publish(evt2);
 
@@ -146,7 +146,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
                 Task.Delay(50)
                     .ContinueWith( _ => _dispatcher.Publish(evt));
 
@@ -164,8 +164,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var evt2 = new TestEvent(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var evt2 = new TestEvent();
                 _dispatcher.Publish(evt);
                 _dispatcher.Publish(evt2);
 
@@ -182,8 +182,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
-                var evt2 = new TestEvent(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
+                var evt2 = new TestEvent();
                 Task.Delay(50)
                      .ContinueWith(_ =>
                      {
@@ -204,7 +204,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                var evt = new TestEvent(CorrelatedMessage.NewRoot());
+                var evt = new TestEvent();
                 _dispatcher.Publish(evt);
 
                 Assert.Throws<TimeoutException>(() => tq.WaitForMsgId(Guid.NewGuid(), TimeSpan.FromMilliseconds(100)));

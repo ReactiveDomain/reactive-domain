@@ -16,8 +16,8 @@ namespace ReactiveDomain.Messaging.Tests {
             LocalBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false, StandardTimeout, StandardTimeout);
             RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false, StandardTimeout, StandardTimeout);
 
-            LocalBus.Subscribe(new AdHocHandler<Message>(_ => Interlocked.Increment(ref LocalMsgCount)));
-            RemoteBus.Subscribe(new AdHocHandler<Message>(_ => Interlocked.Increment(ref RemoteMsgCount)));
+            LocalBus.SubscribeToAll(new AdHocHandler<IMessage>(_ => Interlocked.Increment(ref LocalMsgCount)));
+            RemoteBus.SubscribeToAll(new AdHocHandler<IMessage>(_ => Interlocked.Increment(ref RemoteMsgCount)));
             
             _connector = new BusConnector(LocalBus, RemoteBus);
             

@@ -10,7 +10,7 @@ using ReactiveDomain.Transport.Serialization;
 
 namespace ReactiveDomain.Transport
 {
-    public abstract class TcpBusSide : IHandle<Message>
+    public abstract class TcpBusSide : IHandle<IMessage>
     {
         protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         protected readonly IDispatcher MessageBus;
@@ -81,7 +81,7 @@ namespace ReactiveDomain.Transport
 
         protected void TcpMessageArrived(ArraySegment<byte> obj)
         {
-            Message message;
+            IMessage message;
             try
             {
                 message = _messageSerializer.FromBytes(obj);
@@ -117,7 +117,7 @@ namespace ReactiveDomain.Transport
             }
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             var type = message.GetType();
             Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");

@@ -11,7 +11,7 @@ namespace ReactiveDomain.Testing
     /// <summary>
     /// Has a ConcurrentMessageQueue that subscribes to all messages of the specified types on the specified ISubscriber.
     /// </summary>
-    public sealed class TestQueue : IHandle<Message>, IDisposable
+    public sealed class TestQueue : IHandle<IMessage>, IDisposable
     {
         /// <summary>
         /// The types of messages to subscribe to. Child types are included.
@@ -31,7 +31,7 @@ namespace ReactiveDomain.Testing
         /// <summary>
         /// The queue of messages.
         /// </summary>
-        public ConcurrentMessageQueue<Message> Messages { get; }
+        public ConcurrentMessageQueue<IMessage> Messages { get; }
 
         private long _cleaning = 0;
         private readonly IDisposable _subscription;
@@ -52,9 +52,9 @@ namespace ReactiveDomain.Testing
             
             _trackTypes = trackTypes;
 
-            Messages = new ConcurrentMessageQueue<Message>("Messages");
+            Messages = new ConcurrentMessageQueue<IMessage>("Messages");
 
-            _subscription = subscriber?.Subscribe(this);
+            _subscription = subscriber?.SubscribeToAll(this);
         }
         private bool _disposed;
         public void Dispose()
@@ -65,7 +65,7 @@ namespace ReactiveDomain.Testing
             Clear();
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             if (_disposed) { return; }
             var msgType = message.GetType();
@@ -106,7 +106,7 @@ namespace ReactiveDomain.Testing
         /// </summary>
         /// <typeparam name="T">The type to wait for.</typeparam>
         /// <param name="timeout">How long to wait before timing out.</param>
-        public void WaitFor<T>(TimeSpan timeout) where T : Message
+        public void WaitFor<T>(TimeSpan timeout) where T : IMessage
         {
             if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
             if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
@@ -180,7 +180,7 @@ namespace ReactiveDomain.Testing
         /// </summary>
         /// <typeparam name="TMsg">The expected type of the next message in the queue.</typeparam>
         /// <returns>The message that was dequeued.</returns>
-        public TMsg DequeueNext<TMsg>() where TMsg : Message
+        public TMsg DequeueNext<TMsg>() where TMsg : IMessage
         {
             return Messages.DequeueNext<TMsg>();
         }
@@ -192,9 +192,9 @@ namespace ReactiveDomain.Testing
         /// <param name="correlationId">The correlation ID that the message must have.</param>
         /// <param name="msg">The message that was dequeued.</param>
         /// <returns>The Messages queue after dequeueing the next message.</returns>
-        public ConcurrentMessageQueue<Message> AssertNext<TMsg>(
+        public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(
                     Guid correlationId,
-                    out TMsg msg) where TMsg : CorrelatedMessage
+                    out TMsg msg) where TMsg : ICorrelatedMessage
         {
             return Messages.AssertNext<TMsg>(correlationId, out msg);
         }
@@ -205,7 +205,7 @@ namespace ReactiveDomain.Testing
         /// <typeparam name="TMsg">The expected type of the next message in the queue.</typeparam>
         /// <param name="correlationId">The correlation ID that the message must have.</param>
         /// <returns>The Messages queue after dequeueing the next message.</returns>
-        public ConcurrentMessageQueue<Message> AssertNext<TMsg>(Guid correlationId) where TMsg : CorrelatedMessage
+        public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(Guid correlationId) where TMsg : ICorrelatedMessage
         {
             return Messages.AssertNext<TMsg>(correlationId);
         }
@@ -217,9 +217,9 @@ namespace ReactiveDomain.Testing
         /// <param name="condition">The condition that must be satisfied by the message.</param>
         /// <param name="userMessage">A message to print in the exception if the condition is not met or if the type is wrong.</param>
         /// <returns>The Messages queue after dequeueing the next message.</returns>
-        public ConcurrentMessageQueue<Message> AssertNext<TMsg>(
+        public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(
                     Func<TMsg, bool> condition,
-                    string userMessage = null) where TMsg : CorrelatedMessage
+                    string userMessage = null) where TMsg : ICorrelatedMessage
         {
             return Messages.AssertNext<TMsg>(condition, userMessage);
         }

@@ -29,7 +29,7 @@ namespace ReactiveDomain.Testing.EventStore {
             _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByEventProjection)));
             
             _inboundEventHandler = new QueuedHandler(
-                new AdHocHandler<Message>(_inboundEventBus.Publish),
+                new AdHocHandler<IMessage>(_inboundEventBus.Publish),
                 nameof(_inboundEventHandler),
                 false);
             _inboundEventHandler.Start();
@@ -459,7 +459,8 @@ namespace ReactiveDomain.Testing.EventStore {
             _inboundEventHandler?.Stop();
         }
 
-        public class EventWritten : Message {
+        public class EventWritten : IMessage {
+            public Guid MsgId { get; private set; }
             public readonly string StreamName;
             public readonly RecordedEvent Event;
             public readonly bool ProjectedEvent;
@@ -470,6 +471,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 RecordedEvent @event,
                 bool projectedEvent,
                 long recordedPosition) {
+                MsgId = Guid.NewGuid();
                 StreamName = streamName;
                 Event = @event;
                 ProjectedEvent = projectedEvent;

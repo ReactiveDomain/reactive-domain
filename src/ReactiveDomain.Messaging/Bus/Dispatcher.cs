@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Messaging.Bus {
+namespace ReactiveDomain.Messaging.Bus
+{
 
     /// <inheritdoc cref="IDispatcher"/>
-    public class Dispatcher : IDispatcher {
+    public class Dispatcher : IDispatcher
+    {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         private readonly Dictionary<Type, object> _handleWrappers;
@@ -19,7 +21,8 @@ namespace ReactiveDomain.Messaging.Bus {
                     uint queueCount = 0,
                     bool watchSlowMsg = false,
                     TimeSpan? slowMsgThreshold = null,
-                    TimeSpan? slowCmdThreshold = null) {
+                    TimeSpan? slowCmdThreshold = null)
+        {
             var slowMsgThreshold1 = slowMsgThreshold ?? TimeSpan.FromMilliseconds(100);
             var slowCmdThreshold1 = slowCmdThreshold ?? TimeSpan.FromMilliseconds(500);
             _bus = new InMemoryBus(name, watchSlowMsg, slowMsgThreshold);
@@ -37,7 +40,7 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="ackTimeout"></param>
         /// <returns></returns>
         public void Send(
-                        Command command,
+                        ICommand command,
                         string exceptionMsg = null,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
@@ -52,7 +55,7 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="ackTimeout"></param>
         /// <returns>Command returned success</returns>
         public bool TrySend(
-                        Command command,
+                        ICommand command,
                         out CommandResponse response,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
@@ -66,12 +69,13 @@ namespace ReactiveDomain.Messaging.Bus {
         /// <param name="ackTimeout"></param>
         /// <returns>Command enqueued</returns>
         public bool TrySendAsync(
-                        Command command,
+                        ICommand command,
                         TimeSpan? responseTimeout = null,
                         TimeSpan? ackTimeout = null)
             => _queuedPublisher.TrySendAsync(command, responseTimeout, ackTimeout);
 
-        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command {
+        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
+        {
             if (HasSubscriberFor<T>())
                 throw new ExistingHandlerException("Duplicate registration for command type.");
             var handleWrapper = new CommandHandler<T>(_bus, handler);
@@ -79,36 +83,44 @@ namespace ReactiveDomain.Messaging.Bus {
             Subscribe(handleWrapper, false);
             return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
         }
-        public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command {
+       
+        public void Unsubscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
+        {
             if (!_handleWrappers.TryGetValue(typeof(T), out var wrapper)) return;
             Unsubscribe((CommandHandler<T>)wrapper);
             _handleWrappers.Remove(typeof(T));
         }
 
-        public void Publish(Message message)
+        public void Publish(IMessage message)
             => _queuedPublisher.Publish(message);
 
-        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage
             => _bus.Subscribe(handler, includeDerived);
+        public IDisposable SubscribeToAll(IHandle<IMessage> handler)
+                   => _bus.SubscribeToAll(handler);
 
-        public void Unsubscribe<T>(IHandle<T> handler) where T : Message {
+        public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage
+        {
             _bus.Unsubscribe(handler);
         }
 
-        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message
+        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage
             => _bus.HasSubscriberFor<T>(includeDerived);
 
         public string Name => _bus.Name;
 
-        public void Dispose() {
+        public void Dispose()
+        {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        protected virtual void Dispose(bool disposing) {
+        protected virtual void Dispose(bool disposing)
+        {
             if (_disposed)
                 return;
             _disposed = true;
-            if (disposing) {
+            if (disposing)
+            {
                 _queuedPublisher?.Dispose();
             }
         }

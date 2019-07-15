@@ -2,12 +2,18 @@
 using System.Threading;
 using Newtonsoft.Json;
 
-namespace ReactiveDomain.Messaging {
+namespace ReactiveDomain.Messaging
+{
     /// <summary>
     /// A correlated command that is optionally cancellable using a CancellationToken. 
     /// </summary>
     /// <inheritdoc cref="Message"/>
-    public class Command : CorrelatedMessage {
+    public abstract class Command : Message, ICorrelatedMessage, ICommand
+    {
+
+        public Guid CorrelationId { get; set; }
+        public Guid CausationId { get; set; }
+
 
         public bool TimeoutTcpWait = true;
 
@@ -15,7 +21,7 @@ namespace ReactiveDomain.Messaging {
         /// The CancellationToken for this command
         /// </summary>
         [JsonIgnore]
-        public CancellationToken? CancellationToken;
+        public CancellationToken? CancellationToken { get; private set; }
 
         /// <summary>
         /// Has this command been canceled?
@@ -26,44 +32,43 @@ namespace ReactiveDomain.Messaging {
         /// Does this command allow cancellation?
         /// </summary>
         public bool IsCancelable => CancellationToken != null;
-        
-        public virtual void RegisterOnCancellation(Action action) {
-            if(!IsCancelable) {
+
+
+        public virtual void RegisterOnCancellation(Action action)
+        {
+            if (!IsCancelable)
+            {
                 throw new InvalidOperationException("Command cannot be canceled");
             }
             CancellationToken?.Register(action);
         }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="source">The source command, the cancellation token will be propagated.</param>
-        public Command(Command source) : this(source, source.CancellationToken) { }
-        public Command(CorrelatedMessage source, CancellationToken? token = null) : this(source.CorrelationId, new SourceId(source), token) { }
-
-        [JsonConstructor]
-        public Command(CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId) {
+        public Command(CancellationToken? token = null)
+        {
             CancellationToken = token;
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has succeeded.
         /// </summary>
-        public CommandResponse Succeed() {
+        public CommandResponse Succeed()
+        {
             return new Success(this);
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has failed.
         /// </summary>
-        public CommandResponse Fail(Exception ex = null) {
+        public CommandResponse Fail(Exception ex = null)
+        {
             return new Fail(this, ex);
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has been canceled.
         /// </summary>
-        public CommandResponse Canceled() {
+        public CommandResponse Canceled()
+        {
             return new Canceled(this);
         }
     }
@@ -73,11 +78,14 @@ namespace ReactiveDomain.Messaging {
     /// Does not indicate success or failure of command processing.
     /// </summary>
     /// <inheritdoc cref="Message"/>
-    public class AckCommand : CorrelatedMessage {
-       /// <summary>
+    public class AckCommand : Message, ICorrelatedMessage
+    {
+        public Guid CorrelationId { get; set; }
+        public Guid CausationId { get; set; }
+        /// <summary>
         /// The Command whose receipt is being acknowledged.
         /// </summary>
-        public Command SourceCommand { get; }
+        public ICommand SourceCommand { get; }
         /// <summary>
         /// The unique ID of the Command whose receipt is being acknowledged.
         /// </summary>
@@ -91,8 +99,12 @@ namespace ReactiveDomain.Messaging {
         /// Constructor
         /// </summary>
         /// <param name="sourceCommand">The Command whose receipt is being acknowledged.</param>
-        public AckCommand(Command sourceCommand) : base(sourceCommand.CorrelationId, new SourceId(sourceCommand)) {
+        public AckCommand(ICommand sourceCommand)
+        {
+
             SourceCommand = sourceCommand;
+            CorrelationId = sourceCommand.CorrelationId;
+            CausationId = sourceCommand.MsgId;
         }
 
     }

@@ -27,7 +27,7 @@ namespace ReactiveDomain.Foundation {
            lock (_listeners) {
                _listeners.Add(l);
            }
-           l.EventStream.Subscribe(_queue);
+           l.EventStream.SubscribeToAll(_queue);
            return l;
        }
         public List<Tuple<string, long>> GetCheckpoint() {

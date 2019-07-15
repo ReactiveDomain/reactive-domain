@@ -51,18 +51,13 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000,"Event Not Received");
         }
 
-        private void Handle(Message message) {
+        private void Handle(IMessage message) {
             dynamic evt = message;
             if (evt is EventProjectionTestEvent) {
                 Interlocked.Increment(ref _testEventCount);
             }
 
         }
-        public class EventProjectionTestEvent:Event
-        {
-            public EventProjectionTestEvent():base(CorrelatedMessage.NewRoot()) {
-                
-            }
-        }
+        public class EventProjectionTestEvent : Event { }
     }
 }

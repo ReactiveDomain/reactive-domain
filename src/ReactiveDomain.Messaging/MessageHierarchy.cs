@@ -4,15 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ReactiveDomain.Messaging {
     /// <summary>
-    /// The hierarchy of types inheriting from the Message Type.  
+    /// The hierarchy of types implementing the IMessage interface.  
     /// </summary>
     public static class MessageHierarchy {
-        public static Type MessageType = typeof(Message);
+        public static Type IMessageType = typeof(IMessage);
         private static readonly HashSet<Assembly> Loaded = new HashSet<Assembly>();
         private static readonly HashSet<Assembly> Processed = new HashSet<Assembly>();
         public static readonly TimeSpan InitialLoadTime;
@@ -33,8 +31,9 @@ namespace ReactiveDomain.Messaging {
             // Get the all of the types in the Assembly that are derived from Message and then build a 
             // backing TypeTree.
             //Load Root
-            TypeTree.AddToTypeTree(new HashSet<Type>(MessageType.Assembly.GetLoadableTypes().Where(t => t.IsSubclassOf(MessageType))));
-            Processed.Add(MessageType.Assembly);
+            var types = new HashSet<Type>(IMessageType.Assembly.GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface));
+            TypeTree.AddToTypeTree(types);
+            Processed.Add(IMessageType.Assembly);
 
             var sw = Stopwatch.StartNew();
             LoadTree();
@@ -48,7 +47,7 @@ namespace ReactiveDomain.Messaging {
             lock (Loaded) { Loaded.UnionWith(loaded); }
 
             var msgAssemblies = new List<Assembly>();
-            var rootName = MessageType.Assembly.GetName();
+            var rootName = IMessageType.Assembly.GetName();
             for (int i = 0; i < loaded.Length; i++) {
                 AssemblyName[] refs = loaded[i].GetReferencedAssemblies();
                 for (int j = 0; j < refs.Length; j++) {
@@ -61,7 +60,7 @@ namespace ReactiveDomain.Messaging {
             lock (Processed) { Processed.UnionWith(msgAssemblies); }
             var types = new HashSet<Type>();
             for (int i = 0; i < msgAssemblies.Count; i++) {
-                types.UnionWith(msgAssemblies[i].GetLoadableTypes().Where(t => t.IsSubclassOf(MessageType)));
+                types.UnionWith(msgAssemblies[i].GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface));
             }
             TypeTree.AddToTypeTree(types);
         }
@@ -81,7 +80,7 @@ namespace ReactiveDomain.Messaging {
 
                 foreach (var assembly in updated) {
                     if (assembly.GetReferencedAssemblies()
-                        .Any(name =>  name.Name == MessageType.Assembly.GetName().Name)) {
+                        .Any(name =>  name.Name == IMessageType.Assembly.GetName().Name)) {
                         lock (Processed) { Processed.Add(assembly); }
                         LoadAssembly(assembly);
                     }
@@ -91,7 +90,7 @@ namespace ReactiveDomain.Messaging {
             }
         }
         private static void LoadAssembly(Assembly assembly) {
-            TypeTree.AddToTypeTree(new HashSet<Type>(assembly.GetLoadableTypes().Where(t => t.IsSubclassOf(MessageType))));
+            TypeTree.AddToTypeTree(new HashSet<Type>(assembly.GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface)));
         }
         private static IEnumerable<Type> GetLoadableTypes(this Assembly assembly) {
             // See https://stackoverflow.com/questions/7889228/how-to-prevent-reflectiontypeloadexception-when-calling-assembly-gettypes
@@ -130,8 +129,9 @@ namespace ReactiveDomain.Messaging {
 
         public static List<Type> AncestorsAndSelf(Type type) {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (type != MessageType && !type.IsSubclassOf(MessageType)) {
-                throw new MessagingException($"{type.FullName} is not a SubClass of {MessageType.FullName}");
+            if (type != IMessageType && ! IMessageType.IsAssignableFrom(type))
+            {
+                throw new MessagingException($"{type.FullName} does not implement {IMessageType.FullName}");
             }
             if (TypeTree.TryGetAncestorsAndSelf(type, out var types)) return types;
             ExpandTree();
@@ -143,8 +143,8 @@ namespace ReactiveDomain.Messaging {
 
         public static List<Type> DescendantsAndSelf(Type type) {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (type != MessageType && !type.IsSubclassOf(MessageType)) {
-                throw new MessagingException($"{type.FullName} is not a SubClass of {MessageType.FullName}");
+            if (type != IMessageType && !IMessageType.IsAssignableFrom(type) &&  type != typeof(object)) {  
+                throw new MessagingException($"{type.FullName} does not implement {IMessageType.FullName}");
             }
             if (TypeTree.TryGetDescendantsAndSelf(type, out var types)) return types;
             ExpandTree();
@@ -165,7 +165,7 @@ namespace ReactiveDomain.Messaging {
         private static readonly ConcurrentDictionary<string, TypeTreeNode> NodesByFullName = new ConcurrentDictionary<string, TypeTreeNode>();
 
         static TypeTree() {
-            RootType = typeof(Message);
+            RootType = typeof(object);
             Root = new TypeTreeNode(RootType);
             KnownTypes.Add(RootType);
             NodesByType.TryAdd(Root.Type, Root);
@@ -181,7 +181,7 @@ namespace ReactiveDomain.Messaging {
                     KnownTypes.Add(type);
                 }
 
-                var newTypes = new HashSet<Type>(types.Where(t => t.IsSubclassOf(RootType)));
+                var newTypes = new HashSet<Type>(types.Where(t => RootType.IsAssignableFrom(t)));
                 var newNodes = new List<TypeTreeNode>(newTypes.Count);
                 foreach (var type in newTypes) {
                     var node = new TypeTreeNode(type);

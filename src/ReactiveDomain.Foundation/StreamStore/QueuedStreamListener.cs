@@ -7,7 +7,7 @@ using ReactiveDomain.Util;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation
 {
-    public class QueuedStreamListener : StreamListener, IHandle<Message>
+    public class QueuedStreamListener : StreamListener, IHandle<IMessage>
     {
         protected readonly QueuedHandler SyncQueue;
         private ManualResetEventSlim _isLive = new ManualResetEventSlim(false);
@@ -31,13 +31,13 @@ namespace ReactiveDomain.Foundation
         {
             if (_disposed) return; //todo: fix dispose
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
-            if (Serializer.Deserialize(recordedEvent) is Message @event)
+            if (Serializer.Deserialize(recordedEvent) is IMessage @event)
             {
                 //todo: this needs to publish a RecordedEvent
                 SyncQueue.Publish(@event);
             }
         }
-        public void Handle(Message @event)
+        public void Handle(IMessage @event)
         {
             _running.Wait();
             //todo: this needs to take a RecordedEvent

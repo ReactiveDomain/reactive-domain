@@ -7,7 +7,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing
 {
-    public class ConcurrentMessageQueue<T> : ConcurrentQueue<T> where T : Message
+    public class ConcurrentMessageQueue<T> : ConcurrentQueue<T> where T : IMessage
     {
         private readonly string _name;
 
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Testing
                 throw new Exception($" {_name} queue: Type <{typeof(TMsg).Name}> is not next item, instead <{outVal.GetType().Name}> found.");
             return (TMsg)outVal;
         }
-        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg :  CorrelatedMessage, T
+        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg :  ICorrelatedMessage, T
         {
             msg = DequeueNext<TMsg>();
             if (msg.CorrelationId != correlationId)
@@ -41,14 +41,14 @@ namespace ReactiveDomain.Testing
             }
             return this;
         }
-        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg :  CorrelatedMessage, T
+        public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg :  ICorrelatedMessage, T
         {
             AssertNext<TMsg>(correlationId, out var _);
             return this;
         }
         public ConcurrentMessageQueue<T> AssertNext<TMsg>(
                         Func<TMsg, bool> condition, 
-                        string userMessage = null) where TMsg :  CorrelatedMessage, T
+                        string userMessage = null) where TMsg :  ICorrelatedMessage, T
         {
             TMsg msg = DequeueNext<TMsg>();
             Assert.True(condition(msg), userMessage);

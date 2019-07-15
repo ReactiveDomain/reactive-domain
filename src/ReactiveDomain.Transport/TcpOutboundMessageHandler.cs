@@ -6,14 +6,14 @@ using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Transport
 {
-    public class TcpOutboundMessageHandler : IHandle<Message>
+    public class TcpOutboundMessageHandler : IHandle<IMessage>
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private readonly IDispatcher _messageBus;
         private readonly QueuedHandler _outboundMessageQueuedHandler;
 
-        private readonly ConcurrentDictionary<Guid, Message> _messagesThatCameFromTcp =
-            new ConcurrentDictionary<Guid, Message>();
+        private readonly ConcurrentDictionary<Guid, IMessage> _messagesThatCameFromTcp =
+            new ConcurrentDictionary<Guid, IMessage>();
 
         public TcpOutboundMessageHandler(
             IDispatcher messageBus,
@@ -31,7 +31,7 @@ namespace ReactiveDomain.Transport
         // publishes the message on the CommandBus, which immediately hands it back to me.  The Handle()
         // method (below) then keeps me from sending it BACK out on TCP, and thus we avoid the feedback loop.
 
-        public void IgnoreThisMessage(Message message)
+        public void IgnoreThisMessage(IMessage message)
         {
             Type type = message.GetType();
             if (message.MsgId == Guid.Empty)
@@ -46,10 +46,10 @@ namespace ReactiveDomain.Transport
             }
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             Type type = message.GetType();
-            Message removedMessage;
+            IMessage removedMessage;
             if (_messagesThatCameFromTcp.TryRemove(message.MsgId, out removedMessage))
             {
                 Log.Trace("Message " + message.MsgId + " (Type " + type.Name +

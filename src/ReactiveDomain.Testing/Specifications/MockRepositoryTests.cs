@@ -32,17 +32,17 @@ namespace ReactiveDomain.Testing
             var aggregate = new TestAggregate(id);
             _fixture.Repository.Save(aggregate);
             _fixture.RepositoryEvents.WaitFor<TestAggregateMessages.NewAggregate>(TimeSpan.FromMilliseconds(200));
-
+            
             _fixture
                 .RepositoryEvents
-                .AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id)
+                .AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Missmatch")
                 .AssertEmpty();
         }
 
         [Fact]
         public void can_clear_queues()
         {          
-            var evt = new TestEvent(CorrelatedMessage.NewRoot());
+            var evt = new TestEvent();
             _fixture.Dispatcher.Publish(evt);
 
             var id = Guid.NewGuid();

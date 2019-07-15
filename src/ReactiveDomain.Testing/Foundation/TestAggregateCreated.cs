@@ -3,15 +3,14 @@ using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Testing
 {
-    public class TestWoftamAggregateCreated: Event
+    public class TestWoftamAggregateCreated : IEvent
     {
-      
-        public TestWoftamAggregateCreated(Guid aggregateId):base(CorrelationId.NewId(), SourceId.NullSourceId())
+        public Guid MsgId { get; private set; }
+        public Guid AggregateId { get; private set; }
+        public TestWoftamAggregateCreated(Guid aggregateId)
         {
+            MsgId = Guid.NewGuid();
             AggregateId = aggregateId;
         }
-
-        public Guid AggregateId { get; private set; }
-
     }
 }

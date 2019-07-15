@@ -41,7 +41,7 @@ namespace ReactiveDomain.Foundation
             string stream, 
             int? lastCheckpoint, 
             bool resolveLinkTos, 
-            Action<Message> eventAppeared, 
+            Action<IMessage> eventAppeared, 
             Action liveProcessingStarted = null, 
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null, 
             UserCredentials userCredentials = null, 

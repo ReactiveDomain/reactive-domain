@@ -17,7 +17,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
+            var cmd = new TestCommands.TypedResponse(false);
             var nearSide = cmd.Succeed(15);
             TestCommands.TestResponse farSide;
             var ms = new MemoryStream();
@@ -49,14 +49,14 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
-            Assert.Equal(nearSide.SourceId, farSide.SourceId);
+            Assert.Equal(nearSide.CausationId, farSide.CausationId);
 
             Assert.Equal(nearSide.Data, farSide.Data);
         }
         [Fact]
         public void can_serialize_json_success_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
+            var cmd = new TestCommands.TypedResponse(false);
             var nearSide = cmd.Succeed(15);
             TestCommands.TestResponse farSide;
 
@@ -82,7 +82,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
-            Assert.Equal(nearSide.SourceId, farSide.SourceId);
+            Assert.Equal(nearSide.CausationId, farSide.CausationId);
 
             Assert.Equal(nearSide.Data, farSide.Data);
         }
@@ -90,7 +90,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_bson_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
+            var cmd = new TestCommands.TypedResponse(false);
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
             TestCommands.FailedResponse farSide;
             var ms = new MemoryStream();
@@ -122,7 +122,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
-            Assert.Equal(nearSide.SourceId, farSide.SourceId);
+            Assert.Equal(nearSide.CausationId, farSide.CausationId);
             Assert.Equal(nearSide.Exception.Message, farSide.Exception.Message);
 
             Assert.Equal(nearSide.Data, farSide.Data);
@@ -130,7 +130,7 @@ namespace ReactiveDomain.Messaging.Tests
         [Fact]
         public void can_serialize_json_fail_commandresponse()
         {
-            var cmd = new TestCommands.TypedResponse(false, CorrelatedMessage.NewRoot());
+            var cmd = new TestCommands.TypedResponse(false);
             var nearSide = cmd.Fail(new CommandException("O_Ops", cmd), 15);
             TestCommands.FailedResponse farSide;
 
@@ -156,7 +156,7 @@ namespace ReactiveDomain.Messaging.Tests
             Assert.Equal(nearSide.CorrelationId, farSide.CorrelationId);
             Assert.Equal(nearSide.CommandType, farSide.CommandType);
             Assert.Equal(nearSide.CommandId, farSide.CommandId);
-            Assert.Equal(nearSide.SourceId, farSide.SourceId);
+            Assert.Equal(nearSide.CausationId, farSide.CausationId);
             Assert.Equal(nearSide.Exception.Message, farSide.Exception.Message);
             Assert.Equal(nearSide.Data, farSide.Data);
         }

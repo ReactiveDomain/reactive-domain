@@ -16,16 +16,19 @@ using System.Threading;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Messaging.Bus {
+namespace ReactiveDomain.Messaging.Bus
+{
 
     /// <summary>
     /// Synchronously dispatches messages to zero or more subscribers.
     /// Subscribers are responsible for handling exceptions
     /// </summary>
 
-    public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<Message>, IDisposable {
+    public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDisposable
+    {
 
-        public static InMemoryBus CreateTest() {
+        public static InMemoryBus CreateTest()
+        {
             return new InMemoryBus();
         }
 
@@ -44,44 +47,69 @@ namespace ReactiveDomain.Messaging.Bus {
         public InMemoryBus(
                     string name,
                     bool watchSlowMsg = true,
-                    TimeSpan? slowMsgThreshold = null) {
-            try {
+                    TimeSpan? slowMsgThreshold = null)
+        {
+            try
+            {
                 Name = name;
                 _watchSlowMsg = watchSlowMsg;
                 _slowMsgThreshold = slowMsgThreshold ?? DefaultSlowMessageThreshold;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 if (Log.LogLevel >= LogLevel.Error) Log.ErrorException(ex, "Error building InMemoryBus");
                 throw;
             }
 
         }
 
-        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message {
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage
+        {
             Ensure.NotNull(handler, "handler");
             Subscribe(new MessageHandler<T>(handler, handler.GetType().Name), includeDerived);
             // ReSharper disable once ConstantConditionalAccessQualifier
             return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
         }
 
-        private void Subscribe(IMessageHandler handler, bool includeDerived) {
+
+        private void Subscribe(IMessageHandler handler, bool includeDerived)
+        {
             Type[] messageTypes;
-            if (includeDerived) {
+            if (includeDerived)
+            {
                 messageTypes = MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray();
             }
-            else {
-                messageTypes = new[] {handler.MessageType};
+            else
+            {
+                messageTypes = new[] { handler.MessageType };
             }
-            for (var i = 0; i < messageTypes.Length; i++) {
+            for (var i = 0; i < messageTypes.Length; i++)
+            {
                 Subcribe(handler, messageTypes[i]);
             }
         }
+        public IDisposable SubscribeToAll(IHandle<IMessage> handler)
+        {
+            Ensure.NotNull(handler, "handler");
+            var allHandler = new MessageHandler<IMessage>(handler, handler.GetType().Name);
+           
+            var messageTypes = MessageHierarchy.DescendantsAndSelf(typeof(object)).ToArray();
 
-        private void Subcribe(IMessageHandler handler, Type messageType) {
+            for (var i = 0; i < messageTypes.Length; i++)
+            {
+                Subcribe(allHandler, messageTypes[i]);
+            }
+            return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+        }
+        private void Subcribe(IMessageHandler handler, Type messageType)
+        {
             var handlers = GetHandlesFor(messageType);
-            if (!handlers.Any(hndl => hndl.IsSame(messageType, handler))) {
-                lock (_handlers) {
-                    if (!_handlers.TryGetValue(messageType, out var handleList)) {
+            if (!handlers.Any(hndl => hndl.IsSame(messageType, handler)))
+            {
+                lock (_handlers)
+                {
+                    if (!_handlers.TryGetValue(messageType, out var handleList))
+                    {
                         handleList = new List<IMessageHandler>();
                         _handlers.Add(messageType, handleList);
                     }
@@ -91,56 +119,71 @@ namespace ReactiveDomain.Messaging.Bus {
             }
         }
 
-        public void Unsubscribe<T>(IHandle<T> handler) where T : Message {
+        public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage
+        {
             Ensure.NotNull(handler, "handler");
             var descendants = MessageHierarchy.DescendantsAndSelf(typeof(T)).ToArray();
-            for (var d = 0; d < descendants.Length; d++) {
+            for (var d = 0; d < descendants.Length; d++)
+            {
                 var handlers = GetHandlesFor(descendants[d]);
-                for (var h = 0; h < handlers.Length; h++) {
+                for (var h = 0; h < handlers.Length; h++)
+                {
                     if (!handlers[h].IsSame(typeof(T), handler)) continue;
-                    lock (_handlers) {
+                    lock (_handlers)
+                    {
                         _handlers[descendants[d]].Remove(handlers[h]);
                     }
                     break;
                 }
             }
         }
-        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message {
+        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage
+        {
             return HasSubscriberFor(typeof(T), includeDerived);
         }
-        protected bool HasSubscriberFor(Type type, bool includeDerived) {
+        protected bool HasSubscriberFor(Type type, bool includeDerived)
+        {
             Type[] derivedTypes = { type };
-            if (includeDerived) {
+            if (includeDerived)
+            {
                 derivedTypes = MessageHierarchy.DescendantsAndSelf(type).ToArray();
             }
-            for (var i = 0; i < derivedTypes.Length; i++) {
+            for (var i = 0; i < derivedTypes.Length; i++)
+            {
                 var derivedType = derivedTypes[i];
-                if (HasSubscriberForExactType(derivedType)) {
+                if (HasSubscriberForExactType(derivedType))
+                {
                     return true;
                 }
             }
             return false;
         }
-        protected bool HasSubscriberForExactType(Type type) {
+        protected bool HasSubscriberForExactType(Type type)
+        {
             var handlers = GetHandlesFor(type);
             return handlers.Any(h => h.MessageType == type);
         }
 
 
-        public void Handle(Message message) {
+        public void Handle(IMessage message)
+        {
             Publish(message);
         }
-        public void Publish(Message message) {
-            if (message == null) {
+        public void Publish(IMessage message)
+        {
+            if (message == null)
+            {
                 Log.Error("Message was null, publishing aborted");
                 return;
             }
             // Call each handler registered to the message type.
             var handlers = GetHandlesFor(message.GetType());
-            for (int i = 0, n = handlers.Length; i < n; ++i) {
+            for (int i = 0, n = handlers.Length; i < n; ++i)
+            {
                 var handler = handlers[i];
 
-                if (_watchSlowMsg) {
+                if (_watchSlowMsg)
+                {
                     var before = DateTime.UtcNow;
                     handler.TryHandle(message);
 
@@ -153,15 +196,19 @@ namespace ReactiveDomain.Messaging.Bus {
                         Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
                             Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
                 }
-                else {
+                else
+                {
                     handler.TryHandle(message);
                 }
             }
         }
 
-        private IMessageHandler[] GetHandlesFor(Type type) {
-            lock (_handlers) {
-                if (_handlers.TryGetValue(type, out var handlers)) {
+        private IMessageHandler[] GetHandlesFor(Type type)
+        {
+            lock (_handlers)
+            {
+                if (_handlers.TryGetValue(type, out var handlers))
+                {
                     return handlers.ToArray();
                 }
                 return new IMessageHandler[] { };
@@ -169,19 +216,23 @@ namespace ReactiveDomain.Messaging.Bus {
         }
 
         //tracing 
-        public virtual void NoMessageHandler(dynamic msg, Type type) {
+        public virtual void NoMessageHandler(dynamic msg, Type type)
+        {
             Log.Info(type.Name + " message not handled (no handler)");
         }
 
-        public virtual void PreHandleMessage(dynamic msg, Type type, IMessageHandler handler) {
+        public virtual void PreHandleMessage(dynamic msg, Type type, IMessageHandler handler)
+        {
             Log.Debug("{0} message handled by {1}", type.Name, handler.HandlerName);
         }
 
-        public virtual void PostHandleMessage(dynamic msg, Type type, IMessageHandler handler, TimeSpan handleTimeSpan) {
+        public virtual void PostHandleMessage(dynamic msg, Type type, IMessageHandler handler, TimeSpan handleTimeSpan)
+        {
 
         }
 
-        public virtual void MessageReceived(dynamic msg, Type type, string publishedBy) {
+        public virtual void MessageReceived(dynamic msg, Type type, string publishedBy)
+        {
             Log.Trace("Publishing Message {0} details \n{1}\n{2}", type.FullName, type.Name, Json.ToLogJson(msg));
         }
 
@@ -190,18 +241,22 @@ namespace ReactiveDomain.Messaging.Bus {
         private bool _disposed;
 
         // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose() {
+        public void Dispose()
+        {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         // Protected implementation of Dispose pattern.
-        protected virtual void Dispose(bool disposing) {
+        protected virtual void Dispose(bool disposing)
+        {
             if (_disposed)
                 return;
 
-            if (disposing) {
-                lock (_handlers) {
+            if (disposing)
+            {
+                lock (_handlers)
+                {
                     _handlers.Clear();
                 }
             }

@@ -4,7 +4,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public class IdempotentHandler<T> : IHandle<T> where T:Message
+    public class IdempotentHandler<T> : IHandle<T> where T : class, IMessage
     {
         private readonly IHandle<T> _handler;
         private readonly int _bufferSize;
@@ -29,7 +29,7 @@ namespace ReactiveDomain.Messaging.Bus
         {
             var id = message.MsgId;
 
-            if (_last == id ||_guids.Contains(id)) return;
+            if (_last == id || _guids.Contains(id)) return;
             _last = id;
 
             if (_bufferSize > 1)

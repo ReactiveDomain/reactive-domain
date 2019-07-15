@@ -29,13 +29,12 @@ namespace ReactiveDomain.Messaging.Tests
             _bus.Subscribe<TestCommands.Command2>(this);
             _bus.Subscribe<TestCommands.Command3>(this);
             _commands = new List<Command>();
-            _count = 5;
-            CorrelatedMessage source = CorrelatedMessage.NewRoot();
+            _count = 5;            
             for (int i = 0; i < _count; i++)
             {
-                _commands.Add(new TestCommands.Command1(source));
-                _commands.Add(new TestCommands.Command2(source));
-                _commands.Add(new TestCommands.Command3(source));
+                _commands.Add(new TestCommands.Command1());
+                _commands.Add(new TestCommands.Command2());
+                _commands.Add(new TestCommands.Command3());
             }
         }
 

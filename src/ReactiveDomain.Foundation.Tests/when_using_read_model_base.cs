@@ -211,14 +211,13 @@ namespace ReactiveDomain.Foundation.Tests {
             Sum += @event.Value;
             Count++;
         }
-        public class ReadModelTestEvent : Message {
+        public class ReadModelTestEvent : Event {
             public readonly int Number;
             public readonly int Value;
 
             public ReadModelTestEvent(
                 int number,
-                int value
-                ) {
+                int value){
                 Number = number;
                 Value = value;
             }

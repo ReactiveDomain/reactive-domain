@@ -7,14 +7,17 @@ using ReactiveDomain.Testing.EventStore;
 using ReactiveDomain.Util;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests {
+namespace ReactiveDomain.Foundation.Tests
+{
     // ReSharper disable once InconsistentNaming
-    public class when_using_caching_repository {
+    public class when_using_caching_repository
+    {
         private readonly CachingRepository _cachingRepo;
         private readonly StreamStoreRepository _repo;
 
 
-        public when_using_caching_repository() {
+        public when_using_caching_repository()
+        {
 
             var mockStore = new MockStreamStoreConnection("testRepo");
             mockStore.Connect();
@@ -23,16 +26,18 @@ namespace ReactiveDomain.Foundation.Tests {
         }
 
         [Fact]
-        public void can_handle_repeated_and_cross_updates() {
+        public void can_handle_repeated_and_cross_updates()
+        {
 
             var id = Guid.NewGuid();
-            var cachedAccount = new Account(id, CorrelatedMessage.NewRoot());
+            ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));
+            var cachedAccount = new Account(id, source);
             _cachingRepo.Save(cachedAccount);
 
             Assert.Equal(0, cachedAccount.Balance);
 
             var uncachedAccount = _repo.GetById<Account>(id);
-            uncachedAccount.Credit(1, CorrelatedMessage.NewRoot());
+            uncachedAccount.Credit(1);
             _repo.Save(uncachedAccount);
 
             Assert.Equal(1, uncachedAccount.Balance);
@@ -42,14 +47,14 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(1, uncachedAccount.Balance);
             Assert.Equal(1, cachedAccount2.Balance);
 
-            cachedAccount2.Credit(2, CorrelatedMessage.NewRoot());
+            cachedAccount2.Credit(2);
             _cachingRepo.Save(cachedAccount2);
 
             Assert.Equal(3, cachedAccount.Balance); //cachedAccount is a pointer to same object as cachedAccount2 due to cache
             Assert.Equal(1, uncachedAccount.Balance); //uncachedAccount is an independent object
             Assert.Equal(3, cachedAccount2.Balance);
 
-            uncachedAccount.Credit(5, CorrelatedMessage.NewRoot());
+            uncachedAccount.Credit(5);
             Assert.Throws<WrongExpectedVersionException>(() => _repo.Save(uncachedAccount));
 
             Assert.Equal(3, cachedAccount.Balance); //cachedAccount is a pointer to same object as cachedAccount2 due to cache
@@ -63,7 +68,7 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(3, cachedAccount3.Balance); //cachedAccount is a pointer to same object as acct2/3 due to cache
 
 
-            cachedAccount.Credit(5, CorrelatedMessage.NewRoot());
+            cachedAccount.Credit(5);
             Assert.Equal(8, cachedAccount.Balance);
 
             _cachingRepo.Save(cachedAccount);
@@ -78,14 +83,16 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(8, cachedAccount4.Balance); //cachedAccount is a pointer to same object as acct2/3/4 due to cache
         }
         [Fact]
-        public void can_remove_by_id_from_the_cache() {
+        public void can_remove_by_id_from_the_cache()
+        {
             var id = Guid.NewGuid();
-            var cachedAccount = new Account(id, CorrelatedMessage.NewRoot());
-            cachedAccount.Credit(5, CorrelatedMessage.NewRoot());
+            ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));
+            var cachedAccount = new Account(id, source);
+            cachedAccount.Credit(5);
             _cachingRepo.Save(cachedAccount); //save at 5
             Assert.Equal(5, cachedAccount.Balance);
 
-            cachedAccount.Credit(7, CorrelatedMessage.NewRoot());
+            cachedAccount.Credit(7);
             Assert.Equal(12, cachedAccount.Balance);
 
             var cacheCopy = _cachingRepo.GetById<Account>(id);
@@ -99,53 +106,62 @@ namespace ReactiveDomain.Foundation.Tests {
         }
 
 
-        public class Account : EventDrivenStateMachine {
+        public class Account : EventDrivenStateMachine
+        {
             //n.b. for infrastructure testing only not for prod or business unit tests
             public long Balance { get; private set; }
-            private Account() {
+            private Account()
+            {
                 Register<AccountCreated>(evt => Id = evt.AccountId);
                 Register<AccountCredited>(evt => { Balance += evt.Amount; });
             }
-            public Account(Guid id, CorrelatedMessage source) : this() {
+            public Account(Guid id, ICorrelatedMessage source) : this()
+            {
                 Ensure.NotEmptyGuid(id, "id");
-                Raise(new AccountCreated(id, source ?? CorrelatedMessage.NewRoot()));
+                Raise(new AccountCreated(id));
             }
-            public void Credit(uint amount, CorrelatedMessage source) {
-                Raise(new AccountCredited(Id, amount, source));
+            public void Credit(uint amount)
+            {
+                Raise(new AccountCredited(Id, amount));
             }
         }
-        public class CreateAccount : Command {
+        public class CreateAccount : Command
+        {
             public readonly Guid AccountId;
-            public CreateAccount(Guid accountId, Command source) : this(accountId, source, null) { }
-            public CreateAccount(Guid accountId, CorrelatedMessage source, CancellationToken? token = null) : this(accountId, source.CorrelationId, source.SourceId, token) { }
-            public CreateAccount(Guid accountId, CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId, token) {
+            public CreateAccount(Guid accountId)
+            {
                 AccountId = accountId;
             }
         }
-        public class AccountCreated : Event {
+        public class AccountCreated : IMessage
+        {
+            public Guid MsgId { get; private set; }
             public readonly Guid AccountId;
-            public AccountCreated(Guid accountId, CorrelatedMessage source) : this(accountId, source.CorrelationId, source.SourceId) { }
-            [JsonConstructor]
-            public AccountCreated(Guid accountId, CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) {
+            public AccountCreated(Guid accountId)
+            {
+                MsgId = Guid.NewGuid();
                 AccountId = accountId;
             }
         }
-        public class CreditAccount : Command {
+        public class CreditAccount : Command
+        {
             public readonly Guid AccountId;
             public readonly uint Amount;
-            public CreditAccount(Guid accountId, uint amount, Command source) : this(accountId, amount, source, null) { }
-            public CreditAccount(Guid accountId, uint amount, CorrelatedMessage source, CancellationToken? token = null) : this(accountId, amount, source.CorrelationId, source.SourceId, token) { }
-            public CreditAccount(Guid accountId, uint amount, CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId, token) {
+            public CreditAccount(Guid accountId, uint amount)
+            {
                 AccountId = accountId;
                 Amount = amount;
             }
         }
-        public class AccountCredited : Event {
+        public class AccountCredited : IMessage
+        {
+            public Guid MsgId { get; private set; }
             public readonly Guid AccountId;
             public readonly uint Amount;
-            public AccountCredited(Guid accountId, uint amount, CorrelatedMessage source) : this(accountId, amount, source.CorrelationId, source.SourceId) { }
-            [JsonConstructor]
-            public AccountCredited(Guid accountId, uint amount, CorrelationId correlationId, SourceId sourceId) : base(correlationId, sourceId) {
+
+            public AccountCredited(Guid accountId, uint amount)
+            {
+                MsgId = Guid.NewGuid();
                 AccountId = accountId;
                 Amount = amount;
             }

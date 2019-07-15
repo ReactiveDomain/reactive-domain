@@ -195,7 +195,8 @@ namespace ReactiveDomain.Foundation.Tests {
             }
         }
         public class SnapReadModelTestAggregate : EventDrivenStateMachine { }
-        public class SnapReadModelTestEvent : Message {
+        public class SnapReadModelTestEvent : IMessage {
+            public Guid MsgId { get; private set; }
             public readonly int Number;
             public readonly int Value;
 
@@ -203,6 +204,7 @@ namespace ReactiveDomain.Foundation.Tests {
                 int number,
                 int value
             ) {
+                MsgId = Guid.NewGuid();
                 Number = number;
                 Value = value;
             }

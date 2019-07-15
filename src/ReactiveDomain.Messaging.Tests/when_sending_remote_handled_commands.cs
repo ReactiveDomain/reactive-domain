@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -20,8 +16,8 @@ namespace ReactiveDomain.Messaging.Tests {
         [Fact]
         public void can_handle_commands_from_either_bus() {
             using (_fixture.RemoteBus.Subscribe(new AdHocCommandHandler<TestCommands.RemoteHandled>(_ => true))) {
-                Assert.True(_fixture.LocalBus.TrySend(new TestCommands.RemoteHandled(CorrelatedMessage.NewRoot()), out _));
-                Assert.True(_fixture.RemoteBus.TrySend(new TestCommands.RemoteHandled(CorrelatedMessage.NewRoot()), out _));
+                Assert.True(_fixture.LocalBus.TrySend(new TestCommands.RemoteHandled(), out _));
+                Assert.True(_fixture.RemoteBus.TrySend(new TestCommands.RemoteHandled(), out _));
             }
 
         }
@@ -29,9 +25,9 @@ namespace ReactiveDomain.Messaging.Tests {
         [Fact]
         public void can_fail_commands_from_either_bus() {
             using (_fixture.RemoteBus.Subscribe(new AdHocCommandHandler<TestCommands.RemoteHandled>(_ => false))) {
-                Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteHandled(CorrelatedMessage.NewRoot()), out var response));
+                Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteHandled(), out var response));
                 Assert.IsType<Fail>(response);
-                Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteHandled(CorrelatedMessage.NewRoot()), out response));
+                Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteHandled(), out response));
                 Assert.IsType<Fail>(response);
             }
         }
@@ -44,10 +40,10 @@ namespace ReactiveDomain.Messaging.Tests {
                     ) 
             {
                 var ts = new CancellationTokenSource(5);
-                Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(CorrelatedMessage.NewRoot(), ts.Token), out var response));
+                Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts.Token), out var response));
                 Assert.IsType<Canceled>(response);
                 ts = new CancellationTokenSource(5);
-                Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(CorrelatedMessage.NewRoot(), ts.Token), out response));
+                Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts.Token), out response));
                 Assert.IsType<Canceled>(response);
             }
         }

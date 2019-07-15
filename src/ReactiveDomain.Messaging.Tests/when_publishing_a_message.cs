@@ -29,7 +29,7 @@ namespace ReactiveDomain.Messaging.Tests {
         [Fact]
         public void TestPublishSimpleMessage() {
             _bus.Subscribe<TestEvent>(this);
-            _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new TestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 1, msg: $"Expected 1 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 0, msg: $"Expected 0 got {_parentTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 0, msg: $"Expected 0 got {_childTestEventCount}");
@@ -41,7 +41,7 @@ namespace ReactiveDomain.Messaging.Tests {
             // When subscribing to ParentTest Event the appropriate handler will be invoked when
             //  child (descendant) message types are published.
             _bus.Subscribe<ParentTestEvent>(this);
-            var parentTestEvent = new ParentTestEvent(CorrelatedMessage.NewRoot());
+            var parentTestEvent = new ParentTestEvent();
             _bus.Publish(parentTestEvent);
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 1, msg: $"Expected 1 got {_parentTestEventCount}");
@@ -49,7 +49,7 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
 
             _bus.Subscribe<ChildTestEvent>(this);
-            var childTestEvent = new ChildTestEvent(parentTestEvent);
+            var childTestEvent = new ChildTestEvent();
             _bus.Publish(childTestEvent);
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 2, msg: $"Expected 2 got {_parentTestEventCount}");
@@ -57,7 +57,7 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
 
             _bus.Subscribe<GrandChildTestEvent>(this);
-            var grandChildTestEvent = new GrandChildTestEvent(childTestEvent);
+            var grandChildTestEvent = new GrandChildTestEvent();
             _bus.Publish(grandChildTestEvent);
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 3, msg: $"Expected 3 got {_parentTestEventCount}");
@@ -67,9 +67,9 @@ namespace ReactiveDomain.Messaging.Tests {
         [Fact]
         public void TestPublishSimpleMessageWithoutDerived() {
             _bus.Subscribe<ChildTestEvent>(this, false);
-            _bus.Publish(new ParentTestEvent(CorrelatedMessage.NewRoot()));
-            _bus.Publish(new ChildTestEvent(CorrelatedMessage.NewRoot()));
-            _bus.Publish(new GrandChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new ParentTestEvent());
+            _bus.Publish(new ChildTestEvent());
+            _bus.Publish(new GrandChildTestEvent()); ;
            
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 1 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 0, msg: $"Expected 0 got {_parentTestEventCount}");
@@ -79,12 +79,12 @@ namespace ReactiveDomain.Messaging.Tests {
         [Fact]
         public void TestUnsubscribeTestMessage() {
             _bus.Subscribe<ParentTestEvent>(this);
-            _bus.Publish(new ParentTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new ParentTestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 1, msg: $"Expected 1 got {_parentTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 0, msg: $"Expected 0 got {_childTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
-            _bus.Publish(new GrandChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new GrandChildTestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 2, msg: $"Expected 1 got {_parentTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 0, msg: $"Expected 0 got {_childTestEventCount}");
@@ -94,22 +94,22 @@ namespace ReactiveDomain.Messaging.Tests {
 
 
             _bus.Subscribe<ChildTestEvent>(this);
-            _bus.Publish(new ChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new ChildTestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             // Parent count should not have increased
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 2, msg: $"Expected 1 got {_parentTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 1, msg: $"Expected 1 got {_childTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
-            _bus.Publish(new GrandChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new GrandChildTestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             // Parent count should not have increased
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 2, msg: $"Expected 1 got {_parentTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _childTestEventCount == 2, msg: $"Expected 1 got {_childTestEventCount}");
             AssertEx.IsOrBecomesTrue(() => _grandChildTestEventCount == 0, msg: $"Expected 0 got {_grandChildTestEventCount}");
             _bus.Unsubscribe<ChildTestEvent>(this);
-            _bus.Publish(new ParentTestEvent(CorrelatedMessage.NewRoot()));
-            _bus.Publish(new ChildTestEvent(CorrelatedMessage.NewRoot()));
-            _bus.Publish(new GrandChildTestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new ParentTestEvent());
+            _bus.Publish(new ChildTestEvent());
+            _bus.Publish(new GrandChildTestEvent());
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
             // Parent count should not have increased
             AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 2, msg: $"Expected 1 got {_parentTestEventCount}");
@@ -132,14 +132,14 @@ namespace ReactiveDomain.Messaging.Tests {
 
             long gotAdHoc = 0;
             var sub2 = _bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref gotAdHoc)));
-            _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new TestEvent());
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
-            Assert.False(_bus.HasSubscriberFor<Message>());
-            Assert.True(_bus.HasSubscriberFor<Message>(true));
+            Assert.False(_bus.HasSubscriberFor<Message>()); //is anyone subscibed to message
+            Assert.True(_bus.HasSubscriberFor<Message>(true)); //is anyone subscried to a derived class of mesage
             AssertEx.IsOrBecomesTrue(() => gotAdHoc == 1);
 
             sub = _bus.Subscribe<TestEvent>(this);
-            _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new TestEvent());
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
@@ -147,7 +147,7 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 1);
 
             sub.Dispose();
-            _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new TestEvent());
             Assert.True(_bus.HasSubscriberFor<TestEvent>());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.True(_bus.HasSubscriberFor<Message>(true));
@@ -155,7 +155,7 @@ namespace ReactiveDomain.Messaging.Tests {
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 1);
 
             sub2.Dispose();
-            _bus.Publish(new TestEvent(CorrelatedMessage.NewRoot()));
+            _bus.Publish(new TestEvent());
             Assert.False(_bus.HasSubscriberFor<Message>());
             Assert.False(_bus.HasSubscriberFor<Message>(true));
             Assert.False(_bus.HasSubscriberFor<TestEvent>());
@@ -165,7 +165,7 @@ namespace ReactiveDomain.Messaging.Tests {
 
         [Fact]
         public void TestNoSubscriber() {
-            var testEvent = new TestEvent(CorrelatedMessage.NewRoot());
+            var testEvent = new TestEvent();
             _bus.Publish(testEvent);
             AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 0 got {_testEventCount}");
         }

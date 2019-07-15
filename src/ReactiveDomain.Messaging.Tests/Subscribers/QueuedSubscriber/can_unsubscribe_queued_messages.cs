@@ -11,7 +11,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
 
         private readonly IDispatcher _bus = new Dispatcher("test", 3);
         private int _msgCount = 20;
-        private readonly List<Message> _messages = new List<Message>();
+        private readonly List<IMessage> _messages = new List<IMessage>();
         private int _messageCount;
         private int _eventCount;
         private long _cmdCount;
@@ -21,14 +21,13 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
         }
 
         public can_unsubscribe_queued_messages() {
-            var source = CorrelatedMessage.NewRoot();
+           
             for (var i = 0; i < _msgCount; i++) {
                 _messages.Add(new CountedTestMessage(i));
-                var evt = new CountedEvent(i, source);
+                var evt = new CountedEvent(i);
                 _messages.Add(evt);
-                var cmd = new TestCommands.OrderedCommand(i, source);
-                _messages.Add(cmd);
-                source = evt;
+                var cmd = new TestCommands.OrderedCommand(i);
+                _messages.Add(cmd);              
             }
         }
         [Fact]

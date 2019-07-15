@@ -1,6 +1,7 @@
 // ReSharper disable MemberCanBePrivate.Global
 
 using System;
+using System.Reflection;
 using System.Xml;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -13,25 +14,30 @@ namespace ReactiveDomain.Messaging
 {
     public static class Json
     {
+        private static IContractResolver GetContractresolver() {
+            var resolver = new DefaultContractResolver();
+            resolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
+            return resolver;
+        }
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            ContractResolver = GetContractresolver(),
             DateFormatHandling = DateFormatHandling.IsoDateFormat,
             NullValueHandling = NullValueHandling.Ignore,
             DefaultValueHandling = DefaultValueHandling.Ignore,
             MissingMemberHandling = MissingMemberHandling.Ignore,
-            TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
+            TypeNameHandling = TypeNameHandling.Auto,
+            Converters = new JsonConverter[] { new StringEnumConverter() }
         };
         public static readonly JsonSerializerSettings JsonLoggingSettings = new JsonSerializerSettings
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            ContractResolver = GetContractresolver(),
             DateFormatHandling = DateFormatHandling.IsoDateFormat,
             NullValueHandling = NullValueHandling.Include,
             DefaultValueHandling = DefaultValueHandling.Include,
             MissingMemberHandling = MissingMemberHandling.Ignore,
-            TypeNameHandling = TypeNameHandling.None,
-            Converters = new JsonConverter[] { new StringEnumConverter(), new SourceId.SourceIdGuidConverter(), new CorrelationId.CorrelationIdGuidConverter() }
+            TypeNameHandling = TypeNameHandling.Auto,
+            Converters = new JsonConverter[] { new StringEnumConverter() }
         };
         public static byte[] ToJsonBytes(this object source)
         {

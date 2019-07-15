@@ -16,15 +16,15 @@ namespace ReactiveDomain.Foundation{
             _repository = new StreamStoreRepository(streamNameBuilder,streamStoreConnection,eventSerializer);
         }
         
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, CorrelatedMessage source) where TAggregate : CorrelatedEDSM, IEventSource {
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
             return TryGetById(id, int.MaxValue, out aggregate, source);
         }
 
-        public TAggregate GetById<TAggregate>(Guid id, CorrelatedMessage source) where TAggregate : CorrelatedEDSM, IEventSource {
+        public TAggregate GetById<TAggregate>(Guid id, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
            return GetById<TAggregate>(id, int.MaxValue, source);
         }
         
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate, CorrelatedMessage source) where TAggregate : CorrelatedEDSM, IEventSource {
+        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
             try {
                 aggregate = GetById<TAggregate>(id, version, source);
                 return true;
@@ -35,9 +35,9 @@ namespace ReactiveDomain.Foundation{
             }
         }
        
-        public TAggregate GetById<TAggregate>(Guid id, int version, CorrelatedMessage source) where TAggregate : CorrelatedEDSM, IEventSource {
+        public TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
             var agg = _repository.GetById<TAggregate>(id, version);
-            agg.ApplyNewSource(source);
+            ((ICorrelatedEventSource)agg).Source = source;
             return agg;
         }
        

@@ -6,11 +6,11 @@ namespace ReactiveDomain.Messaging.Bus
     {
         string HandlerName { get; }
         Type MessageType { get; }
-        bool TryHandle(Message message);
+        bool TryHandle(IMessage message);
         bool IsSame(Type messagesType, object handler);
     }
     
-    internal class MessageHandler<T> : IMessageHandler where T : Message
+    internal class MessageHandler<T> : IMessageHandler where T : class, IMessage
     {
         public string HandlerName { get; private set; }
 
@@ -27,7 +27,7 @@ namespace ReactiveDomain.Messaging.Bus
             MessageType = typeof(T);
         }
 
-        public bool TryHandle(Message message)
+        public bool TryHandle(IMessage message)
         {
             var msg = message as T;
             if (msg == null) return false;

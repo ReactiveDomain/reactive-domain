@@ -21,7 +21,7 @@ namespace ReactiveDomain.Testing.EventStore
         private long _count;
         private readonly int NUM_OF_EVENTS = 10;
         private readonly ITestOutputHelper _toh;
-        private Action<Event> _gotEvent;
+        private Action<IMessage> _gotEvent;
 
         public StreamReaderTests(ITestOutputHelper toh, StreamStoreConnectionFixture fixture)
         {
@@ -59,7 +59,7 @@ namespace ReactiveDomain.Testing.EventStore
             _toh.WriteLine(
                 $"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
 
-            var events = new Event[numEventsToBeSent];
+            var events = new IMessage[numEventsToBeSent];
             for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++)
             {
                 events[evtNumber] = new ReadTestEvent(evtNumber);
@@ -127,7 +127,7 @@ namespace ReactiveDomain.Testing.EventStore
 
 
         [Fact]
-        public void cannot_read_non_existing_stream()
+        public void no_read_returns_false()
         {
             foreach (var conn in _stores)
             {
@@ -135,7 +135,15 @@ namespace ReactiveDomain.Testing.EventStore
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
                 reader.EventStream.Subscribe<Event>(this);
 
-                Assert.Throws<ArgumentException>(() => { reader.Read("missing_stream"); });
+                Assert.False(reader.Read("missing_stream"));
+
+                var deleteStream = $"deleteStream-{Guid.NewGuid().ToString()}";
+                AppendEvents(1, conn, deleteStream);
+                conn.DeleteStream(deleteStream, ExpectedVersion.Any);
+                Assert.False(reader.Read(deleteStream));
+
+                Assert.False(reader.Read(_streamName, NUM_OF_EVENTS + 1, 1));
+
             }
         }
 
@@ -197,7 +205,7 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
-        // [Fact(Skip = "wip, not implemented yet")]
+        
         [Fact]
         public void can_read_stream_backward_multiple_slices()
         {
@@ -277,7 +285,7 @@ namespace ReactiveDomain.Testing.EventStore
                 _count = 0;
                 reader.Read(longStreamName, count: 10);
                 Assert.Equal(10, _count);
-                
+
                 // forward 2000
                 _count = 0;
                 reader.Read(longStreamName, count: 2 * ManyEvents);
@@ -290,9 +298,9 @@ namespace ReactiveDomain.Testing.EventStore
 
                 // last 10
                 _count = 0;
-                reader.Read(longStreamName, count:10, readBackwards: true);
+                reader.Read(longStreamName, count: 10, readBackwards: true);
                 Assert.Equal(10, _count);
-                
+
                 // last 2000 out of 1550
                 _count = 0;
                 reader.Read(longStreamName, count: 2 * ManyEvents, readBackwards: true);
@@ -337,8 +345,8 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(categoryStream, count: 2);
                 Assert.Equal(2, _count);
                 Assert.Equal(1, reader.Position);
-                
-                
+
+
                 // forward 2 from 12
                 _count = 0;
                 reader.Read(categoryStream, checkpoint: 12, count: 2);
@@ -366,23 +374,19 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
-
-
-        public void Handle(Event message)
-        {
-            //Thread.Sleep(new Random().Next(300)); // random event handling time
+        void Messaging.Bus.IHandle<Event>.Handle(Event message)
+        {            
             _gotEvent?.Invoke(message);
             Interlocked.Increment(ref _count);
         }
 
         public class ReadTestEvent : Event
-        {
+        {           
             public readonly int MessageNumber;
 
             public ReadTestEvent(
-                int messageNumber
-            ) : base(NewRoot())
-            {
+                int messageNumber)
+            {               
                 MessageNumber = messageNumber;
             }
         }

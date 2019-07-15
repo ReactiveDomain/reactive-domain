@@ -8,7 +8,7 @@ namespace ReactiveDomain.Messaging.Bus {
     public sealed class LaterService : IHandle<DelaySendEnvelope>, IDisposable {
         private readonly IPublisher _outbound;
         private readonly ITimeSource _timeSource;
-        private readonly SortedList<TimePosition, List<Message>> _pending;
+        private readonly SortedList<TimePosition, List<IMessage>> _pending;
         private readonly ConcurrentQueue<DelaySendEnvelope> _inbound;
         private const long True = 1;
         private const long False = 0;
@@ -23,7 +23,7 @@ namespace ReactiveDomain.Messaging.Bus {
             _timeSource = timeSource;
             _inbound = new ConcurrentQueue<DelaySendEnvelope>();
             //we can use a simple sorted list here because it is only accessed on the processing thread
-            _pending = new SortedList<TimePosition, List<Message>>();
+            _pending = new SortedList<TimePosition, List<IMessage>>();
             _processNext = new ManualResetEventSlim(true);
         }
 
@@ -81,7 +81,7 @@ namespace ReactiveDomain.Messaging.Bus {
             while (_inbound.TryDequeue(out var msg) && Interlocked.Read(ref _stop) == False) {
                 //place even expired items in the pending queue for consistent thread usage
                 if (!_pending.TryGetValue(msg.At, out var list)) {
-                    list = new List<Message>();
+                    list = new List<IMessage>();
                     _pending[msg.At] = list;
                 }
                 list.Add(msg.ToSend);

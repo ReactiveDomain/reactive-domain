@@ -32,7 +32,7 @@ namespace ReactiveDomain.Messaging.Tests {
 
         [Fact]
         public void send_cmd_msg_sequence_is_correct() {
-            Task.Run(() => _dispatcher.Send(new TestCommands.Command1(CorrelatedMessage.NewRoot())));
+            Task.Run(() => _dispatcher.Send(new TestCommands.Command1()));
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotAck) == 1);
             Assert.True(_commandHandleStarted == 0);
             Interlocked.Increment(ref _releaseAckHandler);
@@ -43,7 +43,7 @@ namespace ReactiveDomain.Messaging.Tests {
         }
         [Fact]
         public void send_async_cmd_msg_sequence_is_correct() {
-            _dispatcher.TrySendAsync(new TestCommands.Command1(CorrelatedMessage.NewRoot()));
+            _dispatcher.TrySendAsync(new TestCommands.Command1());
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotAck) == 1);
             Assert.True(_commandHandleStarted == 0);
             Interlocked.Increment(ref _releaseAckHandler);

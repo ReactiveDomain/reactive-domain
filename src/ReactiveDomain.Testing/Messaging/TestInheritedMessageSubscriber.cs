@@ -11,7 +11,7 @@ namespace ReactiveDomain.Testing
         IHandle<ParentTestEvent>,
         IHandle<ChildTestEvent>,
         IHandle<GrandChildTestEvent>,
-        IHandle<Message>
+        IHandle<IMessage>
     {
         public long TestDomainEventHandleCount;
         public long ParentTestDomainEventHandleCount;
@@ -57,7 +57,7 @@ namespace ReactiveDomain.Testing
             Interlocked.Increment(ref GrandChildTestDomainEventHandleCount);
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             Interlocked.Increment(ref MessageHandleCount);
         }

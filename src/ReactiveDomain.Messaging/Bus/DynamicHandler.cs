@@ -1,6 +1,6 @@
 ﻿namespace ReactiveDomain.Messaging.Bus
 {
-    public class DynamicHandler:IHandle<Message>
+    public class DynamicHandler:IHandle<IMessage>
     {
         private readonly dynamic _target;
 
@@ -9,7 +9,7 @@
             _target = target;
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             dynamic msg = message;
             _target.Handle(msg);

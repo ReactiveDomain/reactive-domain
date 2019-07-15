@@ -19,17 +19,17 @@ namespace ReactiveDomain.Messaging.Bus {
 
             if (idempotent)
                 _messageQueue = new QueuedHandler(
-                                        new IdempotentHandler<Message>(
-                                                new AdHocHandler<Message>(_internalBus.Publish)
+                                        new IdempotentHandler<IMessage>(
+                                                new AdHocHandler<IMessage>(_internalBus.Publish)
                                                 ),
                                         "SubscriptionQueue");
             else
                 _messageQueue = new QueuedHandler(
-                                        new AdHocHandler<Message>(_internalBus.Publish),
+                                        new AdHocHandler<IMessage>(_internalBus.Publish),
                                         "SubscriptionQueue");
             _messageQueue.Start();
         }
-        public IDisposable Subscribe<T>(IHandle<T> handler) where T : Message {
+        public IDisposable Subscribe<T>(IHandle<T> handler) where T : class,IMessage {
             var internalSub = _internalBus.Subscribe(handler);
             var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
             _subscriptions.Add(internalSub);
@@ -40,7 +40,7 @@ namespace ReactiveDomain.Messaging.Bus {
                 return Unit.Default;
             });
         }
-        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command {
+        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class,ICommand {
             var internalSub = _internalBus.Subscribe(new CommandHandler<T>(_externalBus, handler));
             var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
             _subscriptions.Add(internalSub);

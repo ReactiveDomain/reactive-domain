@@ -17,19 +17,19 @@ namespace ReactiveDomain.Messaging.Bus
     // ReSharper disable RedundantExtendsListEntry
     // ReSharper disable MemberCanBeProtected.Global
 
-    public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<Message>, IPublisher, IMonitoredQueue, IThreadSafePublisher
+    public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPublisher, IMonitoredQueue, IThreadSafePublisher
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         public int MessageCount { get { return _queue.Count; } }
         public string Name { get { return _queueStats.Name; } }
         public bool Idle => _starving;
-        private readonly IHandle<Message> _consumer;
+        private readonly IHandle<IMessage> _consumer;
 
         private readonly bool _watchSlowMsg;
         private readonly TimeSpan _slowMsgThreshold;
 
-        private readonly ConcurrentQueue<Message> _queue = new ConcurrentQueue<Message>();
+        private readonly ConcurrentQueue<IMessage> _queue = new ConcurrentQueue<IMessage>();
         private readonly ManualResetEventSlim _msgAddEvent = new ManualResetEventSlim(false);
 
         private Thread _thread;
@@ -41,7 +41,8 @@ namespace ReactiveDomain.Messaging.Bus
         private readonly QueueMonitor _queueMonitor;
         private readonly QueueStatsCollector _queueStats;
 
-        public QueuedHandlerDiscarding(IHandle<Message> consumer,
+        public QueuedHandlerDiscarding(
+                                 IHandle<IMessage> consumer,
                                  string name,
                                  bool watchSlowMsg = true,
                                  TimeSpan? slowMsgThreshold = null,
@@ -93,7 +94,7 @@ namespace ReactiveDomain.Messaging.Bus
 
             while (!_stop)
             {
-                Message msg = null;
+                IMessage msg = null;
                 try
                 {
                     if (!_queue.TryDequeue(out msg))
@@ -108,7 +109,7 @@ namespace ReactiveDomain.Messaging.Bus
                     }
                     else
                     {
-                        Message deadMessage;
+                        IMessage deadMessage;
                         while (_queue.TryDequeue(out deadMessage))
                         {
                             msg = deadMessage;
@@ -156,7 +157,7 @@ namespace ReactiveDomain.Messaging.Bus
             Thread.EndThreadAffinity();
         }
 
-        public void Publish(Message message)
+        public void Publish(IMessage message)
         {
             //Ensure.NotNull(message, "message");
             _queue.Enqueue(message);
@@ -164,7 +165,7 @@ namespace ReactiveDomain.Messaging.Bus
                 _msgAddEvent.Set();
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             Publish(message);
         }

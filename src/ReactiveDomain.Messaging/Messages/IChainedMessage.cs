@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace ReactiveDomain.Messaging.Messages {
-    public interface IChainedMessage {
-        Guid MsgId { get; }
-        SourceId SourceId { get; }
-        CorrelationId CorrelationId { get; }
+namespace ReactiveDomain.Messaging
+{
+    public interface IChainedMessage : ICorrelatedMessage
+    {
         Guid PrincipalId { get; }
     }
 }

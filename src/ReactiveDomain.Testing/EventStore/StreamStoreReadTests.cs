@@ -301,11 +301,12 @@ namespace ReactiveDomain.Testing.EventStore {
                 Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
             }
         }
-        public class ReadTestTestEvent : Event {
+        public class ReadTestTestEvent : IMessage {
+            public Guid MsgId { get; private set; }
             public readonly int MessageNumber;
             public ReadTestTestEvent(
-                int messageNumber
-            ) : base(NewRoot()) {
+                int messageNumber) {
+                MsgId = Guid.NewGuid();
                 MessageNumber = messageNumber;
             }
         }

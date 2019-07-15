@@ -15,12 +15,12 @@ namespace ReactiveDomain.Messaging.Bus {
         public BusConnector(IDispatcher left, IDispatcher right) {
             _left = left;
             _right = right;
-            _subscriptions.Add(_left.Subscribe(new AdHocHandler<Message>(FromLeft)));
-            _subscriptions.Add(_right.Subscribe(new AdHocHandler<Message>(FromRight)));
+            _subscriptions.Add(_left.SubscribeToAll(new AdHocHandler<IMessage>(FromLeft)));
+            _subscriptions.Add(_right.SubscribeToAll(new AdHocHandler<IMessage>(FromRight)));
 
         }
 
-        private void FromLeft(Message msg) {
+        private void FromLeft(IMessage msg) {
             lock (_fromRight) {
                 if (_fromRight.Contains(msg.MsgId)) {
                     _fromRight.Remove(msg.MsgId);
@@ -30,14 +30,14 @@ namespace ReactiveDomain.Messaging.Bus {
             lock (_fromLeft) {
                 _fromLeft.Add(msg.MsgId);
             }
-            if (msg is Command command) {
+            if (msg is ICommand command) {
                 _right.TrySendAsync(command);
             }
             else
                 _right.Publish(msg);
 
         }
-        private void FromRight(Message msg) {
+        private void FromRight(IMessage msg) {
             lock (_fromLeft) {
                 if (_fromLeft.Contains(msg.MsgId)) {
                     _fromLeft.Remove(msg.MsgId);
@@ -47,7 +47,7 @@ namespace ReactiveDomain.Messaging.Bus {
             lock (_fromRight) {
                 _fromRight.Add(msg.MsgId);
             }
-            if (msg is Command command) {
+            if (msg is ICommand command) {
                 _left.TrySendAsync(command);
             }
             else

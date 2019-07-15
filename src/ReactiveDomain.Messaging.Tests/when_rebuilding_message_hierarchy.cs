@@ -12,7 +12,13 @@ namespace ReactiveDomain.Messaging.Tests {
 
     // ReSharper disable InconsistentNaming
     public class when_rebuilding_message_hierarchy {
-        sealed class TestMsg : Message { }
+        sealed class TestMsg : IMessage {
+            public Guid MsgId { get; private set; }
+            public TestMsg()
+            {
+                MsgId = Guid.NewGuid();
+            }
+        }
         private Assembly GetDynamicAssembly() {
             var needed = new[] {
                 "mscorlib",

@@ -12,7 +12,7 @@
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private static readonly Encoding Encoding = Helper.UTF8NoBom;
 
-        public Message FromBytes(ArraySegment<byte> data) {
+        public IMessage FromBytes(ArraySegment<byte> data) {
             if (data.Array == null || data.Count < sizeof(int))
                 throw new ArgumentException($"ArraySegment null or too short, length: {data.Count}", nameof(data));
 
@@ -29,7 +29,7 @@
             return msg;
         }
 
-        public ArraySegment<byte> ToBytes(Message message) {
+        public ArraySegment<byte> ToBytes(IMessage message) {
             Ensure.NotNull(message, nameof(message));
             var messageType = message.GetType();
             Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + messageType.Name + " to be wrapped.");
@@ -53,9 +53,9 @@
             return data;
         }
 
-        protected virtual Message DeserializeMessage(string json, Type messageType) => (Message)JsonConvert.DeserializeObject(json, messageType, Json.JsonSettings);
+        protected virtual IMessage DeserializeMessage(string json, Type messageType) => (IMessage)JsonConvert.DeserializeObject(json, messageType, Json.JsonSettings);
 
-        protected virtual string SerializeMessage(Message message) => JsonConvert.SerializeObject(message, Json.JsonSettings);
+        protected virtual string SerializeMessage(IMessage message) => JsonConvert.SerializeObject(message, Json.JsonSettings);
 
         protected static int ReadBytes(byte[] source, int offset, out int destination) {
             destination = BitConverter.ToInt32(source, offset);

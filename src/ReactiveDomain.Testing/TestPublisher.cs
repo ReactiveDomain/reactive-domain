@@ -6,14 +6,14 @@ namespace ReactiveDomain.Testing
 {
 	public class TestPublisher : IPublisher
 	{
-		private readonly Action<Message> _publish;
+		private readonly Action<IMessage> _publish;
 
-		public TestPublisher(Action<Message> publish)
+		public TestPublisher(Action<IMessage> publish)
 		{
 			_publish = publish;
 		}
 
-		public void Publish(Message msg)
+		public void Publish(IMessage msg)
 		{
 			_publish(msg);
 		}

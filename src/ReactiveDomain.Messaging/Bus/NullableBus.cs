@@ -28,13 +28,13 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of ICommandPublisher
 
-        public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull || _target == null) return;
             _target.Send(command, exceptionMsg, responseTimeout, ackTimeout);
         }
 
-        public bool TrySend(Command command, out CommandResponse response, TimeSpan? responseTimeout = null,
+        public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull || _target == null)
@@ -45,7 +45,7 @@ namespace ReactiveDomain.Messaging.Bus
             return _target.TrySend(command, out response, responseTimeout, ackTimeout);
         }
 
-        public bool TrySendAsync(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+        public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (RedirectToNull) return true;
             return _target?.TrySendAsync(command, responseTimeout, ackTimeout) ?? false;
@@ -55,12 +55,12 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of ICommandSubscriber
 
-        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : Command
+        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
         {
             return _target?.Subscribe(handler);
         }
-
-        public void Unsubscribe<T>(IHandleCommand<T> handler) where T : Command
+        
+        public void Unsubscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
         {
             _target?.Unsubscribe(handler);
         }
@@ -69,7 +69,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of IPublisher
 
-        public void Publish(Message message)
+        public void Publish(IMessage message)
         {
             if (RedirectToNull) return;
             _target?.Publish(message);
@@ -79,19 +79,23 @@ namespace ReactiveDomain.Messaging.Bus
 
         #region Implementation of ISubscriber
 
-        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : Message
+        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class,IMessage
         {
 
             return _target?.Subscribe(handler);
         }
+        public IDisposable SubscribeToAll(IHandle<IMessage> handler)
+        {
+            return _target?.SubscribeToAll(handler);
+        }
 
-        public void Unsubscribe<T>(IHandle<T> handler) where T : Message
+        public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage
         {
 
             _target?.Unsubscribe(handler);
         }
 
-        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : Message
+        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage
         {
 
             return _target?.HasSubscriberFor<T>(includeDerived) ?? false;

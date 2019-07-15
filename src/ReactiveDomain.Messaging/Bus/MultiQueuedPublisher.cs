@@ -30,12 +30,12 @@ namespace ReactiveDomain.Messaging.Bus {
             if (queueCount > 0) {
                 _publishQueue = new MultiQueuedHandler(
                     (int)queueCount,
-                    i => new QueuedHandler(new AdHocHandler<Message>(bus.Publish)
+                    i => new QueuedHandler(new AdHocHandler<IMessage>(bus.Publish)
                     , nameof(MultiQueuedPublisher)));
                 _publishQueue.Start();
             }
         }
-        public void Publish(Message message) {
+        public void Publish(IMessage message) {
             if (_publishQueue == null) {
                 _bus.Publish(message);
             }
@@ -43,7 +43,7 @@ namespace ReactiveDomain.Messaging.Bus {
                 _publishQueue.Publish(message);
             }
         }
-        public void Send(Command command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+        public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
             if (command.IsCanceled) {
                 Publish(command.Canceled());
                 throw new CommandCanceledException(command);
@@ -58,7 +58,7 @@ namespace ReactiveDomain.Messaging.Bus {
             else
                 throw new CommandException(exceptionMsg ?? $"{command.GetType().Name}: Failed", command);
         }
-        public bool TrySend(Command command,
+        public bool TrySend(ICommand command,
             out CommandResponse response,
             TimeSpan? responseTimeout = null,
             TimeSpan? ackTimeout = null) {
@@ -76,7 +76,7 @@ namespace ReactiveDomain.Messaging.Bus {
             return response is Success;
         }
 
-        public bool TrySendAsync(Command command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+        public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
             try {
                 if (command.IsCanceled) {
                     var response = command.Canceled();
@@ -93,7 +93,7 @@ namespace ReactiveDomain.Messaging.Bus {
         }
 
         private void Execute(
-            Command command,
+            ICommand command,
             out CommandResponse response,
             bool blocking = true,
             TimeSpan? responseTimeout = null,

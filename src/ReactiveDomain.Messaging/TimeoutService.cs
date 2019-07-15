@@ -6,8 +6,12 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
 {
-    public class TimeoutMessage : Event
+    public class TimeoutMessage : ICorrelatedMessage
     {
+        public Guid MsgId { get; private set; }
+        public Guid CorrelationId { get; set; }
+        public Guid CausationId { get; set; }
+
         public Guid TargetId { get; private set; }
 
         /// <summary>
@@ -18,18 +22,20 @@ namespace ReactiveDomain.Messaging
         public TimeoutMessage(
                         Guid targetId,
                         long timeoutMs,
-                        CorrelatedMessage source)
-                        : base(source)
+                        ICorrelatedMessage source)
         {
+            MsgId = Guid.NewGuid();
             TargetId = targetId;
             TimeoutMs = timeoutMs;
+            CorrelationId = source.CorrelationId;
+            CausationId = source.MsgId;
         }
     }
 
     public class TimeoutRequestNode : PriorityQueueNode
     {
         public TimeoutRequestNode(
-                CorrelatedMessage source,
+                ICorrelatedMessage source,
                 Guid targetId,
                 long timeoutMs,
                 Action<TimeoutMessage> timeoutAction
@@ -40,7 +46,7 @@ namespace ReactiveDomain.Messaging
             TimeoutMs = timeoutMs;
             TimeoutAction = timeoutAction;
         }
-        public CorrelatedMessage Source { get; }
+        public ICorrelatedMessage Source { get; }
         public Guid TargetId { get; }
         public long TimeoutMs { get; }
         public Action<TimeoutMessage> TimeoutAction;
@@ -161,7 +167,7 @@ namespace ReactiveDomain.Messaging
             Thread.EndThreadAffinity();
         }
         public void PostTimeoutAfter(
-                            CorrelatedMessage source,
+                            ICorrelatedMessage source,
                             Guid targetId,
                             long timeoutMs,
                             Action<TimeoutMessage> timeoutAction)

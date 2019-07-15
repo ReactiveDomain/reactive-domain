@@ -22,11 +22,11 @@ namespace ReactiveDomain.Transport.Tests
             var prop1 = "prop1";
             var prop2 = string.Join("", Enumerable.Repeat("a", 16 * 1024));
             var port = 10000;
-            var tcs = new TaskCompletionSource<Message>();
+            var tcs = new TaskCompletionSource<IMessage>();
 
             // server side
             var serverInbound = new QueuedHandler(
-                new AdHocHandler<Message>(tcs.SetResult),
+                new AdHocHandler<IMessage>(tcs.SetResult),
                 "InboundMessageQueuedHandler",
                 true,
                 TimeSpan.FromMilliseconds(1000));

@@ -6,7 +6,7 @@ using ReactiveDomain.Logging;
 namespace ReactiveDomain.Messaging.Bus {
     public class CommandTracker : IDisposable {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-        private readonly Command _command;
+        private readonly ICommand _command;
         private readonly TaskCompletionSource<CommandResponse> _tcs;
         private readonly IPublisher _bus;
         private readonly Action _completionAction;
@@ -20,7 +20,7 @@ namespace ReactiveDomain.Messaging.Bus {
 
 
         public CommandTracker(
-            Command command,
+            ICommand command,
             TaskCompletionSource<CommandResponse> tcs,
             Action completionAction,
             Action cancelAction,
@@ -97,18 +97,22 @@ namespace ReactiveDomain.Messaging.Bus {
         }
     }
 
-    public class AckTimeout : Message {
+    public class AckTimeout : IMessage {
+        public Guid MsgId { get; private set; }
         public readonly Guid CommandId;
         public AckTimeout(
             Guid commandId) {
+            MsgId = Guid.NewGuid();
             CommandId = commandId;
         }
     }
 
-    public class CompletionTimeout : Message {
+    public class CompletionTimeout : IMessage {
+        public Guid MsgId { get; private set; }
         public readonly Guid CommandId;
         public CompletionTimeout(
             Guid commandId) {
+            MsgId = Guid.NewGuid();
             CommandId = commandId;
         }
     }

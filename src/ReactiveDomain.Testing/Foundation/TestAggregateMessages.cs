@@ -11,16 +11,16 @@ namespace ReactiveDomain.Testing
         public class NewAggregate : Event
         {
             public readonly Guid AggregateId;
-            public NewAggregate(Guid aggregateId):base(CorrelationId.NewId(),SourceId.NullSourceId())
+            public NewAggregate(Guid aggregateId)
             {
                 AggregateId = aggregateId;
             }
         }
         public class Increment : Event
-        {
+        {  
             public readonly Guid AggregateId;
             public readonly uint Amount;
-            public Increment(Guid aggregateId, uint amount):base(CorrelationId.NewId(),SourceId.NullSourceId())
+            public Increment(Guid aggregateId, uint amount)
             {
                 AggregateId = aggregateId;
                 Amount = amount;

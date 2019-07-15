@@ -7,7 +7,7 @@
         /// Does not block
         /// </summary>
         /// <param name="message">the message to publish</param>
-        void Publish(Message message);
+        void Publish(IMessage message);
     }
 
     /// <summary>

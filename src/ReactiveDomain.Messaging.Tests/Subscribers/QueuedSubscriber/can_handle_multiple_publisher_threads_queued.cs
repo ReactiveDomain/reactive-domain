@@ -20,7 +20,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
             using (var sub = new TestSubscriber(bus)) {
                 sub.Subscribe(
                     new AdHocHandler<CountedTestMessage>(_ => Interlocked.Increment(ref _msgCount)));
-                var messages = new Message[_count];
+                var messages = new IMessage[_count];
                 for (int i = 0; i < _count; i++) {
                     messages[i] = new CountedTestMessage(i);
                 }
@@ -48,7 +48,7 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber {
                     }));
                 var messages = new TestCommands.OrderedCommand[_count];
                 for (int i = 0; i < _count; i++) {
-                    messages[i] = new TestCommands.OrderedCommand(i, CorrelatedMessage.NewRoot());
+                    messages[i] = new TestCommands.OrderedCommand(i);
                 }
 
                 for (int i = 0; i < _count; i++) {

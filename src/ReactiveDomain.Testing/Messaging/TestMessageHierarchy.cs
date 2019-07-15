@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using ReactiveDomain.Messaging;
 using Xunit;
 
@@ -25,16 +26,17 @@ namespace ReactiveDomain.Testing {
         public void TestMessageAncestors() {
             var sut = typeof(Message);
             var ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
-            Assert.Single(ancestors);
-            Assert.Contains(typeof(Message), ancestors);
-
+            Assert.Collection(ancestors,
+                x => Assert.Equal( typeof(Message),x),
+                x => Assert.Equal( typeof(object),x)
+                );
+                
             sut = typeof(ParentTestEvent);
             ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
-            Assert.Equal(4, ancestors.Count());
+            Assert.Equal(3, ancestors.Count());
             Assert.Contains(typeof(ParentTestEvent), ancestors);
-            Assert.Contains(typeof(CorrelatedMessage), ancestors);
-            Assert.Contains(typeof(Event), ancestors);
             Assert.Contains(typeof(Message), ancestors);
+            Assert.Contains(typeof(object), ancestors);
         }
         [Fact]
         public void TestMessageDescendents() {

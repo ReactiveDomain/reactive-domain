@@ -6,19 +6,19 @@ namespace ReactiveDomain.Messaging.Bus {
     [Serializable]
     public class CommandException : Exception
     {
-        public readonly Command Command;
+        public readonly ICommand Command;
 
-        public CommandException(Command command) : base($"{command?.GetType().Name}: Failed")
+        public CommandException(ICommand command) : base($"{command?.GetType().Name}: Failed")
         {
             Command = command;
         }
 
-        public CommandException(string message, Command command) : base($"{command?.GetType().Name}: {message}")
+        public CommandException(string message, ICommand command) : base($"{command?.GetType().Name}: {message}")
         {
             Command = command;
         }
 
-        public CommandException(string message, Exception inner, Command command) : base($"{command?.GetType().Name}: {message}", inner)
+        public CommandException(string message, Exception inner, ICommand command) : base($"{command?.GetType().Name}: {message}", inner)
         {
             Command = command;
         }
@@ -34,15 +34,15 @@ namespace ReactiveDomain.Messaging.Bus {
     public class CommandCanceledException : CommandException
     {
 
-        public CommandCanceledException(Command command) : base(" canceled", command)
+        public CommandCanceledException(ICommand command) : base(" canceled", command)
         {
         }
 
-        public CommandCanceledException(string message, Command command) : base(message, command)
+        public CommandCanceledException(string message, ICommand command) : base(message, command)
         {
         }
 
-        public CommandCanceledException(string message, Exception inner, Command command) : base(message, inner, command)
+        public CommandCanceledException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
 
@@ -56,15 +56,15 @@ namespace ReactiveDomain.Messaging.Bus {
     public class CommandTimedOutException : CommandException
     {
 
-        public CommandTimedOutException(Command command) : base(" timed out", command)
+        public CommandTimedOutException(ICommand command) : base(" timed out", command)
         {
         }
 
-        public CommandTimedOutException(string message, Command command) : base(message, command)
+        public CommandTimedOutException(string message, ICommand command) : base(message, command)
         {
         }
 
-        public CommandTimedOutException(string message, Exception inner, Command command) : base(message, inner, command)
+        public CommandTimedOutException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
 
@@ -83,15 +83,15 @@ namespace ReactiveDomain.Messaging.Bus {
     public class CommandOversubscribedException : CommandException
     {
 
-        public CommandOversubscribedException(Command command) : base(" oversubscribed", command)
+        public CommandOversubscribedException(ICommand command) : base(" oversubscribed", command)
         {
         }
 
-        public CommandOversubscribedException(string message, Command command) : base(message, command)
+        public CommandOversubscribedException(string message, ICommand command) : base(message, command)
         {
         }
 
-        public CommandOversubscribedException(string message, Exception inner, Command command) : base(message, inner, command)
+        public CommandOversubscribedException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
 
@@ -105,15 +105,15 @@ namespace ReactiveDomain.Messaging.Bus {
 	public class CommandNotHandledException : CommandException
 	{
 
-		public CommandNotHandledException(Command command) : base(" not handled", command)
+		public CommandNotHandledException(ICommand command) : base(" not handled", command)
 		{
 		}
 
-		public CommandNotHandledException(string message, Command command) : base(message, command)
+		public CommandNotHandledException(string message, ICommand command) : base(message, command)
 		{
 		}
 
-		public CommandNotHandledException(string message, Exception inner, Command command) : base(message, inner, command)
+		public CommandNotHandledException(string message, Exception inner, ICommand command) : base(message, inner, command)
 		{
 		}
 

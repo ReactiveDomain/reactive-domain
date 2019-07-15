@@ -12,7 +12,7 @@ namespace ReactiveDomain.Transport
     /// TcpOutboundMessageHandler (which will immediatly get the message from the MessageBus)
     /// doesn't process the message (this would result in a feedback loop, which would be BAD). 
     /// </summary>
-    public class TcpInboundMessageHandler : IHandle<Message>
+    public class TcpInboundMessageHandler : IHandle<IMessage>
     {
         private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         protected readonly IDispatcher _mainBus;
@@ -33,7 +33,7 @@ namespace ReactiveDomain.Transport
         }
 
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             Type type1 = message.GetType();
             dynamic msg = message;

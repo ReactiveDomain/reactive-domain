@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace ReactiveDomain.Messaging.Messages
+namespace ReactiveDomain.Messaging
 {
-    public interface IEvent
+    //marker interface for events
+    public interface IEvent : IMessage
     {
-        Guid MsgId { get; }
     }
 }

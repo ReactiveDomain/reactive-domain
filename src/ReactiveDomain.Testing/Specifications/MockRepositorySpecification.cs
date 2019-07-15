@@ -20,7 +20,7 @@ namespace ReactiveDomain.Testing
             MockRepository = new StreamStoreRepository(streamNameBuilder, mockStreamStore, eventSerializer);
 
             var connectorBus = new InMemoryBus("connector");
-            mockStreamStore.SubscribeToAll(evt => connectorBus.Publish((Message)eventSerializer.Deserialize(evt)));
+            mockStreamStore.SubscribeToAll(evt => connectorBus.Publish((IMessage)eventSerializer.Deserialize(evt)));
             RepositoryEvents = new TestQueue(connectorBus,new []{typeof(Event) });
         }
 

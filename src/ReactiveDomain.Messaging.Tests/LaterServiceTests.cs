@@ -140,11 +140,13 @@ namespace ReactiveDomain.Messaging.Tests {
             Assert.True(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start <= 15000, $"elapsed {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start}");
         }
 
-        class TestMessage : Message {
+        class TestMessage : IMessage {
+            public Guid MsgId { get; private set; }
             public readonly long MessageNumber;
 
             public TestMessage(
                 long messageNumber = 0) {
+                MsgId = Guid.NewGuid();
                 MessageNumber = messageNumber;
             }
         }
