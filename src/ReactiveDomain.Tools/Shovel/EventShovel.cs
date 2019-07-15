@@ -24,8 +24,7 @@ namespace Shovel
         public void Run()
         {
             var streamPosition = Position.Start;
-            //var processedEvents = 0;
-            var maxCount = 1000;
+            var maxCount = int.Parse(Bootstrap.ReadSetting("readBatchSize"));
             while (true)
             {
                 var slice = _sourceConnection.ReadAllEventsForwardAsync(streamPosition, maxCount, false, _sourceCredentials).Result;

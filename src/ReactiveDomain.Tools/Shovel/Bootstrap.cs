@@ -32,7 +32,7 @@ namespace Shovel
             processing.Run();
         }
 
-        private static string ReadSetting(string key)
+        public static string ReadSetting(string key)
         {
             try
             {
