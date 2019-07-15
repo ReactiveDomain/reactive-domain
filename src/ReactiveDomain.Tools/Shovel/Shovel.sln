@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.452
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shovel", "Shovel.csproj", "{ECB6A5EA-D7DF-4F46-B4B1-FE9B0D6264AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ECB6A5EA-D7DF-4F46-B4B1-FE9B0D6264AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECB6A5EA-D7DF-4F46-B4B1-FE9B0D6264AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECB6A5EA-D7DF-4F46-B4B1-FE9B0D6264AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECB6A5EA-D7DF-4F46-B4B1-FE9B0D6264AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4AF701DC-BF40-498F-99CA-EAAA2E0C5089}
+	EndGlobalSection
+EndGlobal
