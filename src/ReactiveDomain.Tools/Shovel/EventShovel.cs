@@ -3,6 +3,8 @@ using System;
 
 namespace Shovel
 {
+    using System.Collections.Generic;
+
     public class EventShovel
     {
         private readonly EventShovelConfig _eventShovelConfig;
@@ -34,18 +36,34 @@ namespace Shovel
                         continue;
                     }
 
-                    ResolvedEvent transformedEvent = _eventShovelConfig.EventTransformer?.Transform(e) ?? e;
+                    if (_eventShovelConfig.EventTransformer == null)
+                    {
+                        ICollection<ResolvedEvent> transformedEvents = _eventShovelConfig.EventTransformer.Transform(e);
+                        foreach (var evt in transformedEvents)
+                        {
+                            var newEventData = new EventData(evt.Event.EventId,
+                                evt.Event.EventType,
+                                evt.Event.IsJson,
+                                evt.Event.Data,
+                                evt.Event.Metadata);
 
-                    var newEventData = new EventData(transformedEvent.Event.EventId,
-                                                     transformedEvent.Event.EventType,
-                                                     transformedEvent.Event.IsJson,
-                                                     transformedEvent.Event.Data,
-                                                     transformedEvent.Event.Metadata);
+                            _eventShovelConfig.TargetConnection.AppendToStreamAsync(evt.OriginalStreamId,
+                                ExpectedVersion.Any, _eventShovelConfig.TargetCredentials, newEventData);
+                            Console.WriteLine($"Append event {evt.Event.EventId} to the stream {evt.OriginalStreamId}");
+                        }
+                    }
+                    else
+                    {
+                        var newEventData = new EventData(e.Event.EventId,
+                            e.Event.EventType,
+                            e.Event.IsJson,
+                            e.Event.Data,
+                            e.Event.Metadata);
 
-                    _eventShovelConfig.TargetConnection.AppendToStreamAsync(transformedEvent.OriginalStreamId,
-                        ExpectedVersion.Any, _eventShovelConfig.TargetCredentials, newEventData);
-
-                    Console.WriteLine($"Append event {transformedEvent.Event.EventId} to the stream {transformedEvent.OriginalStreamId}");
+                        _eventShovelConfig.TargetConnection.AppendToStreamAsync(e.OriginalStreamId,
+                            ExpectedVersion.Any, _eventShovelConfig.TargetCredentials, newEventData);
+                        Console.WriteLine($"Append event {e.Event.EventId} to the stream {e.OriginalStreamId}");
+                    }
                 }
                 if (slice.IsEndOfStream)
                     break;

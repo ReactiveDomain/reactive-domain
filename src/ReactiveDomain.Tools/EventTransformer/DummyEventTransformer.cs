@@ -4,12 +4,14 @@ using System;
 
 namespace EventTransformer
 {
+    using System.Collections.Generic;
+
     public class DummyEventTransformer : IEventTransformer
     {
-        public ResolvedEvent Transform(ResolvedEvent sourceEvent)
+        public ICollection<ResolvedEvent> Transform(ResolvedEvent sourceEvent)
         {
             Console.WriteLine($"Doing dummy transformation for event {sourceEvent.Event.EventId}");
-            return sourceEvent;
+            return new List<ResolvedEvent>() {sourceEvent};
         }
     }
 }

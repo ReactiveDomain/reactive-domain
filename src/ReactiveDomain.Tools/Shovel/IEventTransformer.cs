@@ -1,9 +1,10 @@
 ﻿namespace Shovel
 {
+    using System.Collections.Generic;
     using EventStore.ClientAPI;
 
     public interface IEventTransformer
     {
-        ResolvedEvent Transform(ResolvedEvent sourceEvent);
+        ICollection<ResolvedEvent> Transform(ResolvedEvent sourceEvent);
     }
 }
