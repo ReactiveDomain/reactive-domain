@@ -43,15 +43,15 @@ namespace Shovel
             if (_transformerAssembly != null)
             {
                 var t = _transformerAssembly.GetType("EventTransformer.TransformerFactory");
-                var methodInfoStatic = t.GetMethod("GetEventTransformer");
-                if (methodInfoStatic == null)
+                var getEventTransformer = t.GetMethod("GetEventTransformer");
+                if (getEventTransformer == null)
                 {
                     throw new AccessViolationException("No such static method exists.");
                 }
 
                 var o = Activator.CreateInstance(t, null);
 
-                _eventShovelConfig.EventTransformer = methodInfoStatic.Invoke(o, null) as IEventTransformer;
+                _eventShovelConfig.EventTransformer = getEventTransformer.Invoke(o, null) as IEventTransformer;
             }
 
             var processing = new EventShovel(_eventShovelConfig);
