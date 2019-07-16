@@ -42,19 +42,16 @@ namespace Shovel
                         continue;
                     }
 
-                    ResolvedEvent transformedEvent = 
-                    if (_eventTransformer != null)
-                    {
+                    ResolvedEvent transformedEvent = _eventTransformer != null ? _eventTransformer.Trasnform(e) : e;
 
-                    }
-                    else
-                    {
-                        
-                    }
+                    var newEventData = new EventData(transformedEvent.Event.EventId,
+                                                     transformedEvent.Event.EventType,
+                                                     transformedEvent.Event.IsJson,
+                                                     transformedEvent.Event.Data,
+                                                     transformedEvent.Event.Metadata);
 
-                    var newEventData = new EventData(e.Event.EventId, e.Event.EventType, e.Event.IsJson, e.Event.Data, e.Event.Metadata);
-                    _targetConnection.AppendToStreamAsync(e.OriginalStreamId, ExpectedVersion.Any, _targetCredentials, newEventData);
-                    Console.WriteLine($"Append event {e.Event.EventId} to the stream {e.OriginalStreamId}");
+                    _targetConnection.AppendToStreamAsync(transformedEvent.OriginalStreamId, ExpectedVersion.Any, _targetCredentials, newEventData);
+                    Console.WriteLine($"Append event {transformedEvent.Event.EventId} to the stream {transformedEvent.OriginalStreamId}");
                 }
                 if (slice.IsEndOfStream)
                     break;

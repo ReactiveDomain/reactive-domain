@@ -5,6 +5,7 @@ using System.Net;
 
 namespace Shovel
 {
+    using System.IO;
     using System.Reflection;
     using EventStore.ClientAPI.SystemData;
 
@@ -25,7 +26,14 @@ namespace Shovel
             _sourceCredentials = new UserCredentials(ReadSetting("sourceUsername"), ReadSetting("sourcePassword"));
             _targetCredentials = new UserCredentials(ReadSetting("targetUsername"), ReadSetting("targetPassword"));
 
-           _transformerAssembly = Assembly.LoadFrom(@".\EventTransformer.dll");
+            try
+            {
+                _transformerAssembly = Assembly.LoadFrom(@".\EventTransformer.dll");
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("No transformer assembly found.");
+            }
 
             Loaded = true;
         }
@@ -36,7 +44,16 @@ namespace Shovel
 
             if (_transformerAssembly != null)
             {
+                var t = _transformerAssembly.GetType("EventTransformer.TransformerFactory");
+                var methodInfoStatic = t.GetMethod("GetEventTransformer");
+                if (methodInfoStatic == null)
+                {
+                    throw new AccessViolationException("No such static method exists.");
+                }
 
+                var o = Activator.CreateInstance(t, null);
+
+                transformer = methodInfoStatic.Invoke(o, null) as IEventTransformer;
             }
 
             var processing = new EventShovel(_sourceConnection, _targetConnection, _sourceCredentials, _targetCredentials, transformer);
