@@ -4,6 +4,6 @@
 
     public interface IEventTransformer
     {
-        ResolvedEvent Trasnform(ResolvedEvent sourceEvent);
+        ResolvedEvent Transform(ResolvedEvent sourceEvent);
     }
 }

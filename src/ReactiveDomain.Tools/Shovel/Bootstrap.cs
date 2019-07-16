@@ -1,30 +1,30 @@
 ﻿using EventStore.ClientAPI;
+using EventStore.ClientAPI.SystemData;
 using System;
 using System.Configuration;
+using System.IO;
 using System.Net;
+using System.Reflection;
 
 namespace Shovel
 {
-    using System.IO;
-    using System.Reflection;
-    using EventStore.ClientAPI.SystemData;
-
     public class Bootstrap
     {
-        private IEventStoreConnection _sourceConnection;
-        private IEventStoreConnection _targetConnection;
-        private UserCredentials _sourceCredentials;
-        private UserCredentials _targetCredentials;
+        private EventShovelConfig _eventShovelConfig = new EventShovelConfig();
         private Assembly _transformerAssembly;
 
         public bool Loaded { get; private set; }
 
         public void Load()
         {
-            _sourceConnection = ConnectToEventStore(ReadSetting("sourceTcpAddress"), int.Parse(ReadSetting("sourcePort")));
-            _targetConnection = ConnectToEventStore(ReadSetting("targetTcpAddress"), int.Parse(ReadSetting("targetPort")));
-            _sourceCredentials = new UserCredentials(ReadSetting("sourceUsername"), ReadSetting("sourcePassword"));
-            _targetCredentials = new UserCredentials(ReadSetting("targetUsername"), ReadSetting("targetPassword"));
+            _eventShovelConfig.SourceConnection =
+                ConnectToEventStore(ReadSetting("sourceTcpAddress"), int.Parse(ReadSetting("sourcePort")));
+            _eventShovelConfig.TargetConnection =
+                ConnectToEventStore(ReadSetting("targetTcpAddress"), int.Parse(ReadSetting("targetPort")));
+            _eventShovelConfig.SourceCredentials =
+                new UserCredentials(ReadSetting("sourceUsername"), ReadSetting("sourcePassword"));
+            _eventShovelConfig.TargetCredentials =
+                new UserCredentials(ReadSetting("targetUsername"), ReadSetting("targetPassword"));
 
             try
             {
@@ -40,8 +40,6 @@ namespace Shovel
 
         public void Run()
         {
-            IEventTransformer transformer = null;
-
             if (_transformerAssembly != null)
             {
                 var t = _transformerAssembly.GetType("EventTransformer.TransformerFactory");
@@ -53,10 +51,10 @@ namespace Shovel
 
                 var o = Activator.CreateInstance(t, null);
 
-                transformer = methodInfoStatic.Invoke(o, null) as IEventTransformer;
+                _eventShovelConfig.EventTransformer = methodInfoStatic.Invoke(o, null) as IEventTransformer;
             }
 
-            var processing = new EventShovel(_sourceConnection, _targetConnection, _sourceCredentials, _targetCredentials, transformer);
+            var processing = new EventShovel(_eventShovelConfig);
             processing.Run();
         }
 
@@ -84,6 +82,37 @@ namespace Shovel
             var connection = EventStoreConnection.Create(tcp);
             connection.ConnectAsync().Wait();
             return connection;
+        }
+
+        public void PrepareFilters(string[] args)
+        {
+            foreach (var argument in args)
+            {
+                var splitargument = argument.Split('=');
+                switch (splitargument[0])
+                {
+                    case "stream":
+                        if (splitargument[1].EndsWith("*"))
+                        {
+                            _eventShovelConfig.StreamWildcardFilter.Add(splitargument[1].Remove(splitargument[1].LastIndexOf("*")));
+                        }
+                        else
+                        {
+                            _eventShovelConfig.StreamFilter.Add(splitargument[1]);
+                        }
+                        break;
+                    case "eventtype":
+                        if (splitargument[1].EndsWith("*"))
+                        {
+                            _eventShovelConfig.EventTypeWildcardFilter.Add(splitargument[1].Remove(splitargument[1].LastIndexOf("*")));
+                        }
+                        else
+                        {
+                            _eventShovelConfig.EventTypeFilter.Add(splitargument[1]);
+                        }
+                        break;
+                }
+            }
         }
     }
 }
