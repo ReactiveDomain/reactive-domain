@@ -36,7 +36,7 @@ namespace Shovel
                         continue;
                     }
 
-                    if (_eventShovelConfig.EventTransformer == null)
+                    if (_eventShovelConfig.EventTransformer != null)
                     {
                         ICollection<ResolvedEvent> transformedEvents = _eventShovelConfig.EventTransformer.Transform(e);
                         foreach (var evt in transformedEvents)
@@ -86,64 +86,64 @@ namespace Shovel
                 return false;
             }
 
-            bool streamFiltered = false;
+            bool skipForStreamFilter = false;
             if (_eventShovelConfig.StreamFilter.Count != 0)
             {
-                streamFiltered = true;
+                skipForStreamFilter = true;
                 foreach (var filter in _eventShovelConfig.StreamFilter)
                 {
                     if (e.OriginalStreamId == filter)
                     {
-                        streamFiltered = false;
+                        skipForStreamFilter = false;
                         break;
                     }
                 }
             }
 
-            bool streamWildcardFiltered = streamFiltered;
+            bool skipForStreamWildcardFilter = skipForStreamFilter;
             if (_eventShovelConfig.StreamWildcardFilter.Count != 0)
             {
-                streamWildcardFiltered = true;
+                skipForStreamWildcardFilter = true;
                 foreach (var filter in _eventShovelConfig.StreamWildcardFilter)
                 {
                     if (e.OriginalStreamId.StartsWith(filter))
                     {
-                        streamWildcardFiltered = false;
+                        skipForStreamWildcardFilter = false;
                         break;
                     }
 
                 }
             }
 
-            bool eventFiltered = false;
+            bool skipForEventFilter = false;
             if (_eventShovelConfig.EventTypeFilter.Count != 0)
             {
-                eventFiltered = true;
+                skipForEventFilter = true;
                 foreach (var filter in _eventShovelConfig.EventTypeFilter)
                 {
                     if (e.Event.EventType == filter)
                     {
-                        eventFiltered = false;
+                        skipForEventFilter = false;
                         break;
                     }
                 }
             }
 
-            bool eventWildcardFiltered = eventFiltered;
+            bool skipForEventWildcardFilter = skipForEventFilter;
             if(_eventShovelConfig.EventTypeWildcardFilter.Count != 0)
             {
-                eventWildcardFiltered = true;
+                skipForEventWildcardFilter = true;
                 foreach (var filter in _eventShovelConfig.EventTypeWildcardFilter)
                 {
                     if (e.Event.EventType.StartsWith(filter))
                     {
-                        eventWildcardFiltered = false;
+                        skipForEventWildcardFilter = false;
                         break;
                     }
                 }
             }
 
-            return (streamFiltered && streamWildcardFiltered) || (eventFiltered && eventWildcardFiltered);
+            return (skipForStreamFilter && skipForStreamWildcardFilter) || (skipForEventFilter && skipForEventWildcardFilter);
         }
     }
 }
