@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ci.build.imports" />
+  <PropertyGroup>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>ReactiveDomain</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="EventStoreCatchUpSubscription.cs" />
+    <Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
+    <Compile Remove="StreamSubscription.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client" Version="5.0.1" Condition="" />
+    <PackageReference Include="EventStore.Client.Embedded" Version="5.0.1" Condition="'$(TargetFramework)'!='netstandard2.0'" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+  </ItemGroup>
+</Project>

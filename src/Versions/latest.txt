@@ -1,0 +1,378 @@
+[assembly: System.Runtime.Versioning.TargetFrameworkAttribute(".NETFramework,Version=v4.6.2", FrameworkDisplayName=".NET Framework 4.6.2")]
+
+namespace ReactiveDomain
+{
+    
+    public abstract class AggregateRootEntity : ReactiveDomain.IEventSource
+    {
+        protected AggregateRootEntity() { }
+        public System.Guid Id { get; set; }
+        protected void Raise(object @event) { }
+        protected void Register<TEvent>(System.Action<TEvent> route) { }
+        protected void Register(System.Type typeOfEvent, System.Action<object> route) { }
+    }
+    public class CommandEnvelope
+    {
+        public CommandEnvelope() { }
+        public object Command { get; }
+        public System.Guid CommandId { get; }
+        public System.Guid CorrelationId { get; }
+        public ReactiveDomain.Metadata Metadata { get; }
+        public System.Security.Claims.ClaimsPrincipal Principal { get; }
+        public System.Nullable<System.Guid> SourceId { get; }
+        public ReactiveDomain.CommandEnvelope SetCommand(object value) { }
+        public ReactiveDomain.CommandEnvelope SetCommandId(System.Guid value) { }
+        public ReactiveDomain.CommandEnvelope SetCorrelationId(System.Guid value) { }
+        public ReactiveDomain.CommandEnvelope SetMetadata(ReactiveDomain.Metadata value) { }
+        public ReactiveDomain.CommandEnvelope SetPrincipal(System.Security.Claims.ClaimsPrincipal value) { }
+        public ReactiveDomain.CommandEnvelope SetSourceId(System.Nullable<System.Guid> value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> TypedAs<TCommand>() { }
+    }
+    public class CommandEnvelope<TCommand>
+    
+    {
+        public TCommand Command { get; }
+        public System.Guid CommandId { get; }
+        public System.Guid CorrelationId { get; }
+        public ReactiveDomain.Metadata Metadata { get; }
+        public System.Security.Claims.ClaimsPrincipal Principal { get; }
+        public System.Nullable<System.Guid> SourceId { get; }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetCommand(TCommand value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetCommandId(System.Guid value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetCorrelationId(System.Guid value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetMetadata(ReactiveDomain.Metadata value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetPrincipal(System.Security.Claims.ClaimsPrincipal value) { }
+        public ReactiveDomain.CommandEnvelope<TCommand> SetSourceId(System.Nullable<System.Guid> value) { }
+    }
+    public class CommandHandler
+    {
+        public CommandHandler(System.Type command, System.Func<ReactiveDomain.CommandEnvelope, System.Threading.CancellationToken, System.Threading.Tasks.Task> handler) { }
+        public System.Type Command { get; }
+        public System.Func<ReactiveDomain.CommandEnvelope, System.Threading.CancellationToken, System.Threading.Tasks.Task> Handler { get; }
+    }
+    public class CommandHandlerBuilder<TCommand>
+    
+    {
+        public void Handle(System.Func<ReactiveDomain.CommandEnvelope<TCommand>, System.Threading.CancellationToken, System.Threading.Tasks.Task> handler) { }
+        public ReactiveDomain.CommandHandlerBuilder<TCommand> Pipe(System.Func<System.Func<ReactiveDomain.CommandEnvelope<TCommand>, System.Threading.CancellationToken, System.Threading.Tasks.Task>, System.Func<ReactiveDomain.CommandEnvelope<TCommand>, System.Threading.CancellationToken, System.Threading.Tasks.Task>> pipe) { }
+    }
+    public class CommandHandlerEnumerator : System.Collections.Generic.IEnumerator<ReactiveDomain.CommandHandler>, System.Collections.IEnumerator, System.IDisposable
+    {
+        public CommandHandlerEnumerator(ReactiveDomain.CommandHandler[] handlers) { }
+        public ReactiveDomain.CommandHandler Current { get; }
+        public void Dispose() { }
+        public bool MoveNext() { }
+        public void Reset() { }
+    }
+    public class CommandHandlerInvoker
+    {
+        public CommandHandlerInvoker(ReactiveDomain.CommandHandlerModule module) { }
+        public CommandHandlerInvoker(ReactiveDomain.CommandHandlerModule[] modules) { }
+        public System.Threading.Tasks.Task Invoke(ReactiveDomain.CommandEnvelope envelope, System.Threading.CancellationToken ct = null) { }
+    }
+    public abstract class CommandHandlerModule : System.Collections.Generic.IEnumerable<ReactiveDomain.CommandHandler>, System.Collections.IEnumerable
+    {
+        protected CommandHandlerModule() { }
+        public ReactiveDomain.CommandHandler[] Handlers { get; }
+        protected ReactiveDomain.CommandHandlerBuilder<TCommand> For<TCommand>() { }
+        public ReactiveDomain.CommandHandlerEnumerator GetEnumerator() { }
+        protected void Handle<TCommand>(System.Func<ReactiveDomain.CommandEnvelope<TCommand>, System.Threading.Tasks.Task> handler) { }
+        protected void Handle<TCommand>(System.Func<ReactiveDomain.CommandEnvelope<TCommand>, System.Threading.CancellationToken, System.Threading.Tasks.Task> handler) { }
+    }
+    public class EventRecorder
+    {
+        public EventRecorder() { }
+        public bool HasRecordedEvents { get; }
+        public object[] RecordedEvents { get; }
+        public void Record(object @event) { }
+        public void Reset() { }
+    }
+    public class EventRouter
+    {
+        public EventRouter() { }
+        public void RegisterRoute<TEvent>(System.Action<TEvent> route) { }
+        public void RegisterRoute(System.Type typeOfEvent, System.Action<object> route) { }
+        public void Route(object @event) { }
+    }
+    public class EventSourceChangeset
+    {
+        public EventSourceChangeset(ReactiveDomain.StreamName stream, long expectedVersion, System.Guid causation, System.Guid correlation, ReactiveDomain.Metadata metadata, object[] events) { }
+        public System.Guid Causation { get; }
+        public System.Guid Correlation { get; }
+        public object[] Events { get; }
+        public long ExpectedVersion { get; }
+        public ReactiveDomain.Metadata Metadata { get; }
+        public ReactiveDomain.StreamName Stream { get; }
+    }
+    public class EventSourceReader
+    {
+        public EventSourceReader(System.Func<ReactiveDomain.IEventSource> factory, EventStore.ClientAPI.IEventStoreConnection connection, ReactiveDomain.EventSourceReaderConfiguration configuration) { }
+        public ReactiveDomain.EventSourceReaderConfiguration Configuration { get; }
+        public EventStore.ClientAPI.IEventStoreConnection Connection { get; }
+        public System.Func<ReactiveDomain.IEventSource> Factory { get; }
+        public System.Threading.Tasks.Task<ReactiveDomain.ReadResult> ReadStreamAsync(ReactiveDomain.StreamName stream, System.Threading.CancellationToken ct = null) { }
+    }
+    public class EventSourceReaderConfiguration
+    {
+        public EventSourceReaderConfiguration(ReactiveDomain.StreamNameConverter converter, System.Func<ReactiveDomain.IStreamEventsSliceTranslator> translatorFactory, ReactiveDomain.SliceSize sliceSize) { }
+        public ReactiveDomain.StreamNameConverter Converter { get; }
+        public ReactiveDomain.SliceSize SliceSize { get; }
+        public System.Func<ReactiveDomain.IStreamEventsSliceTranslator> TranslatorFactory { get; }
+    }
+    public class EventSourceWriter
+    {
+        public EventSourceWriter(EventStore.ClientAPI.IEventStoreConnection connection, ReactiveDomain.EventSourceWriterConfiguration configuration) { }
+        public ReactiveDomain.EventSourceWriterConfiguration Configuration { get; }
+        public EventStore.ClientAPI.IEventStoreConnection Connection { get; }
+        public System.Threading.Tasks.Task<EventStore.ClientAPI.WriteResult> WriteStreamAsync(ReactiveDomain.StreamName stream, ReactiveDomain.IEventSource source, System.Guid causation, System.Guid correlation, ReactiveDomain.Metadata metadata = null, System.Threading.CancellationToken ct = null) { }
+    }
+    public class EventSourceWriterConfiguration
+    {
+        public EventSourceWriterConfiguration(ReactiveDomain.StreamNameConverter converter, ReactiveDomain.IEventSourceChangesetTranslator translator) { }
+        public ReactiveDomain.StreamNameConverter Converter { get; }
+        public ReactiveDomain.IEventSourceChangesetTranslator Translator { get; }
+    }
+    public class IdempotentEventIdGenerator
+    {
+        public static readonly System.Guid Namespace;
+        public IdempotentEventIdGenerator() { }
+        public System.Guid Generate(System.Guid command, long expectedVersion, string eventName, int eventIndex) { }
+    }
+    public interface IEventSource
+    {
+        long ExpectedVersion { get; set; }
+        System.Guid Id { get; }
+        void RestoreFromEvents(System.Collections.Generic.IEnumerable<object> events);
+        object[] TakeEvents();
+    }
+    public interface IEventSourceChangesetTranslator
+    {
+        System.Collections.Generic.IEnumerable<EventStore.ClientAPI.EventData> Translate(ReactiveDomain.EventSourceChangeset changeset);
+    }
+    public interface ISnapshotSource
+    {
+        void RestoreFromSnapshot(object snapshot);
+        object TakeSnapshot();
+    }
+    public interface IStreamEventsSliceTranslator
+    {
+        System.Collections.Generic.IEnumerable<object> Translate(EventStore.ClientAPI.StreamEventsSlice slice);
+    }
+    public class Metadata : System.Collections.Generic.IEnumerable<ReactiveDomain.Metadatum>, System.Collections.IEnumerable, System.IEquatable<ReactiveDomain.Metadata>
+    {
+        public static readonly ReactiveDomain.Metadata None;
+        public Metadata(ReactiveDomain.Metadatum[] metadata) { }
+        [System.ObsoleteAttribute("This method is obsolete and will be removed in a future version. Please use the M" +
+            "etadata.With(Metadatum metadatum) method instead.")]
+        public ReactiveDomain.Metadata Add(ReactiveDomain.Metadatum metadatum) { }
+        [System.ObsoleteAttribute("This method is obsolete and will be removed in a future version. Please use the M" +
+            "etadata.With(Metadatum[] metadata) method instead.")]
+        public ReactiveDomain.Metadata AddMany(ReactiveDomain.Metadatum[] metadata) { }
+        public bool Equals(ReactiveDomain.Metadata other) { }
+        public override bool Equals(object obj) { }
+        public System.Collections.Generic.IEnumerator<ReactiveDomain.Metadatum> GetEnumerator() { }
+        public override int GetHashCode() { }
+        public System.Collections.Generic.KeyValuePair<, >[] ToKeyValuePairs() { }
+        public ReactiveDomain.Metadata With(ReactiveDomain.Metadatum metadatum) { }
+        public ReactiveDomain.Metadata With(ReactiveDomain.Metadatum[] metadata) { }
+        public ReactiveDomain.Metadata With(string name, string value) { }
+        public ReactiveDomain.Metadata Without(ReactiveDomain.Metadatum metadatum) { }
+        public ReactiveDomain.Metadata Without(ReactiveDomain.Metadatum[] metadata) { }
+        public ReactiveDomain.Metadata Without(string name) { }
+    }
+    public struct Metadatum : System.IEquatable<ReactiveDomain.Metadatum>
+    {
+        public Metadatum(string name, string value) { }
+        public string Name { get; }
+        public string Value { get; }
+        public bool Equals(ReactiveDomain.Metadatum other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public System.Collections.Generic.KeyValuePair<string, string> ToKeyValuePair() { }
+    }
+    public class NameBasedGuidGenerator
+    {
+        public NameBasedGuidGenerator(System.Guid @namespace) { }
+        public System.Guid Create(byte[] input) { }
+    }
+    public class ReadResult
+    {
+        public static readonly ReactiveDomain.ReadResult Deleted;
+        public static readonly ReactiveDomain.ReadResult NotFound;
+        public ReactiveDomain.ReadResultState State { get; }
+        public ReactiveDomain.IEventSource Value { get; }
+        public override bool Equals(object obj) { }
+        public static ReactiveDomain.ReadResult Found(ReactiveDomain.IEventSource value) { }
+        public override int GetHashCode() { }
+    }
+    public enum ReadResultState
+    {
+        Found = 0,
+        NotFound = 1,
+        Deleted = 2,
+    }
+    public struct SliceSize : System.IEquatable<ReactiveDomain.SliceSize>
+    {
+        public SliceSize(int value) { }
+        public bool Equals(ReactiveDomain.SliceSize other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public int ToInt32() { }
+    }
+    public class StreamDeletedException : System.Exception
+    {
+        public StreamDeletedException(ReactiveDomain.StreamName stream) { }
+        public ReactiveDomain.StreamName Stream { get; }
+    }
+    public struct StreamName : System.IEquatable<ReactiveDomain.StreamName>
+    {
+        public StreamName(string value) { }
+        public bool EndsWith(string suffix) { }
+        public bool Equals(ReactiveDomain.StreamName other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public bool StartsWith(string prefix) { }
+        public override string ToString() { }
+        public ReactiveDomain.StreamName WithoutPrefix(string prefix) { }
+        public ReactiveDomain.StreamName WithoutSuffix(string suffix) { }
+        public ReactiveDomain.StreamName WithPrefix(string prefix) { }
+        public ReactiveDomain.StreamName WithSuffix(string suffix) { }
+    }
+    public class static StreamNameConversions
+    {
+        public static ReactiveDomain.StreamNameConverter PassThru { get; }
+        public static ReactiveDomain.StreamNameConverter WithoutPrefix(string prefix) { }
+        public static ReactiveDomain.StreamNameConverter WithoutSuffix(string suffix) { }
+        public static ReactiveDomain.StreamNameConverter WithPrefix(string prefix) { }
+        public static ReactiveDomain.StreamNameConverter WithSuffix(string suffix) { }
+    }
+    public delegate ReactiveDomain.StreamName StreamNameConverter(ReactiveDomain.StreamName name);
+    public class StreamNotFoundException : System.Exception
+    {
+        public StreamNotFoundException(ReactiveDomain.StreamName stream) { }
+        public ReactiveDomain.StreamName Stream { get; }
+    }
+}
+namespace ReactiveDomain.Testing
+{
+    
+    public class static Catch
+    {
+        public static System.Threading.Tasks.Task<System.Exception> Exception(System.Func<System.Threading.Tasks.Task> action) { }
+    }
+    public class ExpectEventsScenario
+    {
+        public ExpectEventsScenario(ReactiveDomain.Testing.RecordedEvent[] givens, object when, ReactiveDomain.Testing.RecordedEvent[] thens) { }
+        public ReactiveDomain.Testing.RecordedEvent[] Givens { get; }
+        public ReactiveDomain.Testing.RecordedEvent[] Thens { get; }
+        public object When { get; }
+        public ReactiveDomain.Testing.ScenarioExpectedEventsButRecordedOtherEvents ButRecordedOtherEvents(ReactiveDomain.Testing.RecordedEvent[] events) { }
+        public ReactiveDomain.Testing.ScenarioExpectedEventsButThrewException ButThrewException(System.Exception threw) { }
+        public ReactiveDomain.Testing.ExpectEventsScenarioPassed Pass() { }
+    }
+    public class ExpectEventsScenarioPassed
+    {
+        public ExpectEventsScenarioPassed(ReactiveDomain.Testing.ExpectEventsScenario scenario) { }
+        public ReactiveDomain.Testing.ExpectEventsScenario Scenario { get; }
+    }
+    public class ExpectExceptionScenario
+    {
+        public ExpectExceptionScenario(ReactiveDomain.Testing.RecordedEvent[] givens, object when, System.Exception throws) { }
+        public ReactiveDomain.Testing.RecordedEvent[] Givens { get; }
+        public System.Exception Throws { get; }
+        public object When { get; }
+        public ReactiveDomain.Testing.ScenarioExpectedExceptionButRecordedEvents ButRecordedEvents(ReactiveDomain.Testing.RecordedEvent[] events) { }
+        public ReactiveDomain.Testing.ScenarioExpectedExceptionButThrewOtherException ButThrewException(System.Exception threw) { }
+        public ReactiveDomain.Testing.ScenarioExpectedExceptionButThrewNoException ButThrewNoException() { }
+        public ReactiveDomain.Testing.ExpectExceptionScenarioPassed Pass() { }
+    }
+    public class ExpectExceptionScenarioPassed
+    {
+        public ExpectExceptionScenarioPassed(ReactiveDomain.Testing.ExpectExceptionScenario scenario) { }
+        public ReactiveDomain.Testing.ExpectExceptionScenario Scenario { get; }
+    }
+    public interface IExpectEventsScenarioBuilder
+    {
+        ReactiveDomain.Testing.ExpectEventsScenario Build();
+    }
+    public interface IExpectExceptionScenarioBuilder
+    {
+        ReactiveDomain.Testing.ExpectExceptionScenario Build();
+    }
+    public interface IScenarioGivenNoneStateBuilder
+    {
+        ReactiveDomain.Testing.IScenarioWhenStateBuilder When(object command);
+    }
+    public interface IScenarioGivenStateBuilder
+    {
+        ReactiveDomain.Testing.IScenarioGivenStateBuilder Given(System.Collections.Generic.IEnumerable<ReactiveDomain.Testing.RecordedEvent> events);
+        ReactiveDomain.Testing.IScenarioWhenStateBuilder When(object command);
+    }
+    public interface IScenarioInitialStateBuilder
+    {
+        ReactiveDomain.Testing.IScenarioGivenStateBuilder Given(System.Collections.Generic.IEnumerable<ReactiveDomain.Testing.RecordedEvent> events);
+        ReactiveDomain.Testing.IScenarioGivenNoneStateBuilder GivenNone();
+        ReactiveDomain.Testing.IScenarioWhenStateBuilder When(object command);
+    }
+    public interface IScenarioThenNoneStateBuilder : ReactiveDomain.Testing.IExpectEventsScenarioBuilder { }
+    public interface IScenarioThenStateBuilder : ReactiveDomain.Testing.IExpectEventsScenarioBuilder
+    {
+        ReactiveDomain.Testing.IScenarioThenStateBuilder Then(System.Collections.Generic.IEnumerable<ReactiveDomain.Testing.RecordedEvent> events);
+    }
+    public interface IScenarioThrowsStateBuilder : ReactiveDomain.Testing.IExpectExceptionScenarioBuilder { }
+    public interface IScenarioWhenStateBuilder
+    {
+        ReactiveDomain.Testing.IScenarioThenStateBuilder Then(System.Collections.Generic.IEnumerable<ReactiveDomain.Testing.RecordedEvent> events);
+        ReactiveDomain.Testing.IScenarioThenNoneStateBuilder ThenNone();
+        ReactiveDomain.Testing.IScenarioThrowsStateBuilder Throws(System.Exception exception);
+    }
+    public class RecordedEvent
+    {
+        public RecordedEvent(ReactiveDomain.StreamName stream, object @event) { }
+        public object Event { get; }
+        public ReactiveDomain.StreamName Stream { get; }
+    }
+    public class Scenario : ReactiveDomain.Testing.IScenarioInitialStateBuilder
+    {
+        public Scenario() { }
+        public ReactiveDomain.Testing.IScenarioGivenStateBuilder Given(System.Collections.Generic.IEnumerable<ReactiveDomain.Testing.RecordedEvent> events) { }
+        public ReactiveDomain.Testing.IScenarioGivenNoneStateBuilder GivenNone() { }
+        public ReactiveDomain.Testing.IScenarioWhenStateBuilder When(object command) { }
+    }
+    public class ScenarioExpectedEventsButRecordedOtherEvents
+    {
+        public ScenarioExpectedEventsButRecordedOtherEvents(ReactiveDomain.Testing.ExpectEventsScenario scenario, ReactiveDomain.Testing.RecordedEvent[] actual) { }
+        public ReactiveDomain.Testing.RecordedEvent[] Actual { get; }
+        public ReactiveDomain.Testing.ExpectEventsScenario Scenario { get; }
+    }
+    public class ScenarioExpectedEventsButThrewException
+    {
+        public ScenarioExpectedEventsButThrewException(ReactiveDomain.Testing.ExpectEventsScenario scenario, System.Exception actual) { }
+        public System.Exception Actual { get; }
+        public ReactiveDomain.Testing.ExpectEventsScenario Scenario { get; }
+    }
+    public class ScenarioExpectedExceptionButRecordedEvents
+    {
+        public ScenarioExpectedExceptionButRecordedEvents(ReactiveDomain.Testing.ExpectExceptionScenario scenario, ReactiveDomain.Testing.RecordedEvent[] actual) { }
+        public ReactiveDomain.Testing.RecordedEvent[] Actual { get; }
+        public ReactiveDomain.Testing.ExpectExceptionScenario Scenario { get; }
+    }
+    public class ScenarioExpectedExceptionButThrewNoException
+    {
+        public ScenarioExpectedExceptionButThrewNoException(ReactiveDomain.Testing.ExpectExceptionScenario scenario) { }
+        public ReactiveDomain.Testing.ExpectExceptionScenario Scenario { get; }
+    }
+    public class ScenarioExpectedExceptionButThrewOtherException
+    {
+        public ScenarioExpectedExceptionButThrewOtherException(ReactiveDomain.Testing.ExpectExceptionScenario scenario, System.Exception actual) { }
+        public System.Exception Actual { get; }
+        public ReactiveDomain.Testing.ExpectExceptionScenario Scenario { get; }
+    }
+    public class static ScenarioExtensions
+    {
+        public static ReactiveDomain.Testing.IScenarioGivenStateBuilder Given(this ReactiveDomain.Testing.IScenarioInitialStateBuilder builder, ReactiveDomain.StreamName stream, params object[] events) { }
+        public static ReactiveDomain.Testing.IScenarioGivenStateBuilder Given(this ReactiveDomain.Testing.IScenarioGivenStateBuilder builder, ReactiveDomain.StreamName stream, params object[] events) { }
+        public static ReactiveDomain.Testing.IScenarioThenStateBuilder Then(this ReactiveDomain.Testing.IScenarioWhenStateBuilder builder, ReactiveDomain.StreamName stream, params object[] events) { }
+        public static ReactiveDomain.Testing.IScenarioThenStateBuilder Then(this ReactiveDomain.Testing.IScenarioThenStateBuilder builder, ReactiveDomain.StreamName stream, params object[] events) { }
+    }
+}
