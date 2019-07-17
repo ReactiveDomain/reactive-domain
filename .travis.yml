@@ -1,8 +1,7 @@
 
-- echo Perkin Elmer reactive-domain travis build
-
 sudo: required
 language: csharp
+os: windows
 
 mono: none
 dotnet: 2.0.0
