@@ -11,12 +11,12 @@ script:
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
-  - dotnet nuget push ./packages/ReactiveDomain.Core.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.Foundation.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.Messaging.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.Persistence.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.PrivateLedger.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.Testing.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.Transport.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.UI.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
-  - dotnet nuget push ./packages/ReactiveDomain.UI.Testing.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"  
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Core.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Foundation.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Messaging.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Persistence.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.PrivateLedger.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Testing.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.Transport.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.UI.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
+  - dotnet nuget push ./src/../packages/ReactiveDomain.UI.Testing.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"  
