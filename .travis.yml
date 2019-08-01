@@ -7,11 +7,12 @@ dotnet: 2.0.0
 script: 
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
-  - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
-  - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
-  - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
-  - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
-  - find $TRAVIS_BUILD_DIR 
+  - if [[branch = master]]; then find $TRAVIS_BUILD_DIR; fi;  
+  
+#  - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
+#  - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
+#  - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
+#  - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
   
  # - dotnet nuget push ./src/../packages/ReactiveDomain.Core.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
  #  - dotnet nuget push ./src/../packages/ReactiveDomain.Foundation.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
