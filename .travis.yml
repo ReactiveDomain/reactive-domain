@@ -4,7 +4,12 @@ language: csharp
 mono: none
 dotnet: 2.0.0
 
-if: branch = "master"
+#if: branch = "master"
+
+branches:
+  only:
+    - master
+    - /.*/
 
 script: 
   - dotnet restore ./src/ReactiveDomain.sln
