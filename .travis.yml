@@ -11,6 +11,8 @@ script:
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
+  
+if: branch = master
   - find $TRAVIS_BUILD_DIR 
   
  # - dotnet nuget push ./src/../packages/ReactiveDomain.Core.1.0.0.nupkg -k $nugetApiKey -s "https://api.nuget.org/v3/index.json"
