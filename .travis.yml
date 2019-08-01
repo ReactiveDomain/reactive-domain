@@ -4,11 +4,15 @@ language: csharp
 mono: none
 dotnet: 2.0.0
 
-script: 
-  - if [[$TRAVIS_BRANCH = "publish-nuget-in-travis"]]; then find $TRAVIS_BUILD_DIR; fi;  
-#  - dotnet restore ./src/ReactiveDomain.sln
-#  - dotnet msbuild ./src/ReactiveDomain.sln
+#if: branch = master OR type = pull_request OR tag IS present
 
+if: branch = master 
+
+script: 
+  - dotnet restore ./src/ReactiveDomain.sln
+  - dotnet msbuild ./src/ReactiveDomain.sln
+
+ #- if [[$TRAVIS_BRANCH = "publish-nuget-in-travis"]]; then find $TRAVIS_BUILD_DIR; fi;  
   
 #  - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
 #  - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
