@@ -16,7 +16,7 @@ script:
   - dotnet msbuild ./src/ReactiveDomain.sln
 
 after_success:
-  - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "false" ]; then
+  - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
       find $TRAVIS_BUILD_DIR;
     fi
 
