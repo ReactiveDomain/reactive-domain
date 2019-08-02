@@ -14,6 +14,8 @@ branches:
 script: 
   - echo $TRAVIS_BRANCH
   - echo $TRAVIS_PULL_REQUEST
+  - echo $TRAVIS_PULL_REQUEST_BRANCH
+  - echo $TRAVIS_PULL_REQUEST_SHA
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
 
