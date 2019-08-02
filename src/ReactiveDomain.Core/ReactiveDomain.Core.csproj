@@ -10,6 +10,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="@echo off&#xD;&#xA;&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Build dir  is:  %2525TRAVIS_BUILD_DIR%2525&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Branch is:  %2525TRAVIS_BRANCH%2525&#xD;&#xA;echo .." />
+    <Exec Command="@echo off&#xD;&#xA;&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Build dir  is:  $(TRAVIS_BUILD_DIR)&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Branch is:  $(TRAVIS_BRANCH)&#xD;&#xA;" />
   </Target>
 </Project>
