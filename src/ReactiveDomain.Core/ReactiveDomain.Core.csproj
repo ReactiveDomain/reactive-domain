@@ -9,4 +9,7 @@
     <RootNamespace>ReactiveDomain</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="@echo off&#xD;&#xA;&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Build dir  is:  %25TRAVIS_BUILD_DIR%25&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Branch is:  %25TRAVIS_BRANCH%25&#xD;&#xA;echo .." />
+  </Target>
 </Project>
