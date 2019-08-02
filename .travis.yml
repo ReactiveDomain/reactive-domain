@@ -12,12 +12,14 @@ branches:
     - /.*/
 
 script: 
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_PULL_REQUEST
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
 
 after_success:
   - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
-      find $TRAVIS_BUILD_DIR;
+      echo $TRAVIS_BUILD_NUMBER;
     fi
 
 #if: branch = master OR type = pull_request OR tag IS present
