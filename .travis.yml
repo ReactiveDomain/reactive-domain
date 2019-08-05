@@ -18,11 +18,18 @@ script:
   - echo $TRAVIS_PULL_REQUEST_SHA
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
+  
+  
+deploy:
+  provider: script
+  script: deploy.sh
+  on:
+    condition: "$TRAVIS_BRANCH" == "master" && "$stable" == "true"
 
-after_success:
-  - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
-      echo $TRAVIS_BUILD_NUMBER;
-    fi
+#after_success:
+ # - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
+ #     echo $TRAVIS_BUILD_NUMBER;
+#    fi
 
 #if: branch = master OR type = pull_request OR tag IS present
 

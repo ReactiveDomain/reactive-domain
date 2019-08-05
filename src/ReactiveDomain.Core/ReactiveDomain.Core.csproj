@@ -10,6 +10,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="@echo off&#xD;&#xA;&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Build dir  is:  $(TRAVIS_BUILD_DIR)&#xD;&#xA;echo ..&#xD;&#xA;echo Perkin Elmer Branch is:  $(TRAVIS_BRANCH)&#xD;&#xA;&#xD;&#xA;echo Perkin Elmer Branch is:  $(TRAVIS_BRANCH)&#xD;&#xA;echo ..&#xD;&#xA;&#xD;&#xA;echo Continuous integration is:   $(CONTINUOUS_INTEGRATION)&#xD;&#xA;&#xD;&#xA;echo EVENT TYPE IS:   $(TRAVIS_EVENT_TYPE)&#xD;&#xA;&#xD;&#xA;echo Travis tag is: $(TRAVIS_TAG)&#xD;&#xA;&#xD;&#xA;echo Stability is: $(stable)&#xD;&#xA;&#xD;&#xA;echo..&#xD;&#xA;echo..&#xD;&#xA;&#xD;&#xA;" />
+    <Exec Command="@echo off&#xD;&#xA;&#xD;&#xA;echo ..&#xD;&#xA;echo Build dir is:    $(TRAVIS_BUILD_DIR)&#xD;&#xA;echo Branch is:    $(TRAVIS_BRANCH)&#xD;&#xA;echo Pull request:  $(TRAVIS_PULL_REQUEST)&#xD;&#xA;echo Continuous integration is:   $(CONTINUOUS_INTEGRATION)&#xD;&#xA;echo EVENT TYPE IS:   $(TRAVIS_EVENT_TYPE)&#xD;&#xA;echo Travis tag is: $(TRAVIS_TAG)&#xD;&#xA;echo Stability is: $(stable)&#xD;&#xA;echo pkiKey is: $(PkiApiKey)&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;set BRANCH=$(TRAVIS_BRANCH)&#xD;&#xA;set BUILDTYPE=$(TRAVIS_EVENT_TYPE)&#xD;&#xA;set ISSTABLE=$(stable)&#xD;&#xA;set PKIKEY=$(PkiApiKey)&#xD;&#xA;&#xD;&#xA;" />
   </Target>
 </Project>
