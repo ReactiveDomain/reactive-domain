@@ -20,11 +20,11 @@ script:
   - dotnet msbuild ./src/ReactiveDomain.sln
   
   
-deploy:
-  provider: script
-  script: deploy.sh
-  on:
-    condition: "$TRAVIS_BRANCH" == "master" && "$stable" == "true"
+#deploy:
+#  provider: script
+#  script: deploy.sh
+ # on:
+  #  condition: "$TRAVIS_BRANCH" == "master" && "$stable" == "true"
 
 #after_success:
  # - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
