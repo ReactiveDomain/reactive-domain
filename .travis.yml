@@ -19,10 +19,9 @@ script:
   - dotnet restore ./src/ReactiveDomain.sln
   - dotnet msbuild ./src/ReactiveDomain.sln
   
-  
-#deploy:
-#  provider: script
-#  script: deploy.sh
+deploy:
+  provider: script
+  script: deploy.sh
  # on:
   #  condition: "$TRAVIS_BRANCH" == "master" && "$stable" == "true"
 
