@@ -23,8 +23,8 @@ script:
 deploy:
   provider: script
   script: deploy.sh
-  on:
-    condition: "$TRAVIS_BRANCH" == "master" && "$STABLE" == "false"
+    on:
+      condition: "$TRAVIS_BRANCH" == "master" && "$STABLE" == "false"
 
 #after_success:
  # - if [ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "true" ]; then
