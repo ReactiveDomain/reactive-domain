@@ -10,11 +10,13 @@ namespace ReactiveDomain.Testing
         protected readonly IRepository MockRepository;
         public IRepository Repository => MockRepository;
         public readonly TestQueue RepositoryEvents;
+        public IStreamStoreConnection StreamStoreConnection { get; }
 
         public MockRepositorySpecification()
         {
             var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
             var mockStreamStore = new MockStreamStoreConnection("Test");
+            StreamStoreConnection = mockStreamStore;
             mockStreamStore.Connect();
             var eventSerializer = new JsonMessageSerializer();
             MockRepository = new StreamStoreRepository(streamNameBuilder, mockStreamStore, eventSerializer);
