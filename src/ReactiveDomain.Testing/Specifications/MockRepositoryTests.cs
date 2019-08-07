@@ -6,15 +6,14 @@ using Xunit;
 namespace ReactiveDomain.Testing
 {
     public sealed class MockRepositoryTests
-        : IClassFixture<MockRepositorySpecification>,
-          IDisposable,
+        : IDisposable,
           IHandleCommand<TestCommands.Command1>
     {
         private readonly MockRepositorySpecification _fixture;
 
-        public MockRepositoryTests(MockRepositorySpecification fixture)
+        public MockRepositoryTests()
         {
-            _fixture = fixture;
+            _fixture = new MockRepositorySpecification();
             _fixture.Dispatcher.Subscribe<TestCommands.Command1>(this);
         }
 
@@ -22,8 +21,6 @@ namespace ReactiveDomain.Testing
         {
             _fixture.Dispatcher.Unsubscribe<TestCommands.Command1>(this);
         }
-
-
 
         [Fact]
         public void can_get_repository_events()
