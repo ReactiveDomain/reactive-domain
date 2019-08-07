@@ -14,7 +14,7 @@ namespace ReactiveDomain.Testing
 
         public MockRepositorySpecification()
         {
-            var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+            var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
             StreamStoreConnection = new MockStreamStoreConnection("Test");
             StreamStoreConnection.Connect();
             var eventSerializer = new JsonMessageSerializer();
