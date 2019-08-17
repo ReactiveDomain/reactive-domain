@@ -10,18 +10,21 @@ namespace ReactiveDomain.Testing
         protected readonly IRepository MockRepository;
         public IRepository Repository => MockRepository;
         public readonly TestQueue RepositoryEvents;
+        public IStreamNameBuilder StreamNameBuilder { get; }
+        public IStreamStoreConnection StreamStoreConnection { get; }
+        public IEventSerializer EventSerializer { get; }
 
         public MockRepositorySpecification()
         {
-            var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            var mockStreamStore = new MockStreamStoreConnection("Test");
-            mockStreamStore.Connect();
-            var eventSerializer = new JsonMessageSerializer();
-            MockRepository = new StreamStoreRepository(streamNameBuilder, mockStreamStore, eventSerializer);
+            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
+            StreamStoreConnection = new MockStreamStoreConnection("Test");
+            StreamStoreConnection.Connect();
+            EventSerializer = new JsonMessageSerializer();
+            MockRepository = new StreamStoreRepository(StreamNameBuilder, StreamStoreConnection, EventSerializer);
 
             var connectorBus = new InMemoryBus("connector");
-            mockStreamStore.SubscribeToAll(evt => connectorBus.Publish((IMessage)eventSerializer.Deserialize(evt)));
-            RepositoryEvents = new TestQueue(connectorBus,new []{typeof(Event) });
+            StreamStoreConnection.SubscribeToAll(evt => connectorBus.Publish((IMessage)EventSerializer.Deserialize(evt)));
+            RepositoryEvents = new TestQueue(connectorBus, new[] { typeof(Event) });
         }
 
         public virtual void ClearQueues()
