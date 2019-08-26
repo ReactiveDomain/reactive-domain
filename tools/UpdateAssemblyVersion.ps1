@@ -45,4 +45,5 @@ $fileVersionNode.InnerText = $newAssemblyVersion
 
 $props.Save($buildProps)
 
+git init
 git add .
