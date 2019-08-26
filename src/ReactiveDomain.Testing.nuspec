@@ -7,7 +7,7 @@
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <description>Package includes all reactive domain assemblies</description>
+    <description>Package includes reactive domain assemblies needed for unit tests</description>
     <copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework=".NETFramework4.5.2">
