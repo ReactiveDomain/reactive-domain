@@ -7,7 +7,7 @@
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <description>Package includes all reactive domain UI assembly</description>
+    <description>Package includes all ReactiveDomain UI assembly</description>
     <copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework=".NETFramework4.5.2">
