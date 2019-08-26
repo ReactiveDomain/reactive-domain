@@ -26,8 +26,7 @@
       <group targetFramework=".NETStandard2.0">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.visualstudio" version="2.4.1" exclude="Build,Analyzers" />		
+        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />		
         <dependency id="ReactiveDomain" version="0.8.21.1" exclude="Build,Analyzers" />			
       </group>
     </dependencies>
