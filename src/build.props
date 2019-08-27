@@ -22,8 +22,8 @@
     <Company>PerkinElmer,Linedata</Company>
     <Copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</Copyright>
     <Description />
-    <AssemblyVersion>0.8.21.6</AssemblyVersion>
-    <FileVersion>0.8.21.6</FileVersion>
+    <AssemblyVersion>0.8.21.8</AssemblyVersion>
+    <FileVersion>0.8.21.8</FileVersion>
     <NeutralLanguage />
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <DebugSymbols>true</DebugSymbols>
