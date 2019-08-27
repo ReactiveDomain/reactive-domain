@@ -2,7 +2,7 @@
 #
 # This script will check the build.props file to get current assembly version of ReactiveDomain.Core.dll. 
 # This version number will be incremented by 1 before a build if build is off of the master branch
-#
+
 
 $branch = $env:TRAVIS_BRANCH
 
