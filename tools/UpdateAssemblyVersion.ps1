@@ -7,7 +7,7 @@
 $branch = $env:TRAVIS_BRANCH
 
 # Only update the assembly version on master branch for the sake of creating a new nuget package
-if ($branch -eq "master")  
+if ($branch -ne "pre-commit-hook")  
 {
   Write-Host ("Not a master branch. Assembly version will remain the same")   
   Exit
