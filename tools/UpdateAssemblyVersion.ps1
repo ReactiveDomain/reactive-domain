@@ -16,7 +16,7 @@ if ($branch -eq "master")
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
 $buildProps = $PSScriptRoot + "\..\src\build.props"
-$props = [xml] (get-content $buildProps)
+$props = [xml] (get-content $buildProps -Encoding UTF8)
 
 # Get the assemnbly and file version from build.props
 $assemblyVersionNode = $props.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion")
