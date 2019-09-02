@@ -5,6 +5,6 @@
 
     public interface IEventTransformer
     {
-        ICollection<ResolvedEvent> Transform(ResolvedEvent sourceEvent);
+        ICollection<EventData> Transform(ResolvedEvent sourceEvent);
     }
 }

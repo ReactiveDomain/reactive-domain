@@ -8,10 +8,16 @@ namespace EventTransformer
 
     public class DummyEventTransformer : IEventTransformer
     {
-        public ICollection<ResolvedEvent> Transform(ResolvedEvent sourceEvent)
+        public ICollection<EventData> Transform(ResolvedEvent sourceEvent)
         {
             Console.WriteLine($"Doing dummy transformation for event {sourceEvent.Event.EventId}");
-            return new List<ResolvedEvent>() {sourceEvent};
+            return new List<EventData> { new EventData(
+                sourceEvent.Event.EventId,
+                sourceEvent.Event.EventType,
+                sourceEvent.Event.IsJson,
+                sourceEvent.Event.Data,
+                sourceEvent.Event.Metadata)
+            };
         }
     }
 }
