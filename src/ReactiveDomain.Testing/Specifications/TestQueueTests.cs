@@ -178,7 +178,7 @@ namespace ReactiveDomain.Testing.Specifications
             }
         }
         [Fact]
-        public void can_wait_for_multiple_messages_not_yet_recieved()
+        public void can_wait_for_multiple_messages_not_yet_received()
         {
             using (var tq = new TestQueue(_dispatcher))
             {
@@ -210,6 +210,24 @@ namespace ReactiveDomain.Testing.Specifications
                 Assert.Throws<TimeoutException>(() => tq.WaitForMsgId(Guid.NewGuid(), TimeSpan.FromMilliseconds(100)));
 
                 tq.AssertNext<TestEvent>(evt.CorrelationId)
+                    .AssertEmpty();
+            }
+        }
+
+        [Fact]
+        public void can_wait_for_multiple_messages_of_a_type()
+        {
+            using (var tq = new TestQueue(_dispatcher))
+            {
+                var evt = new TestEvent();
+                var evt2 = new TestEvent();
+                _dispatcher.Publish(evt);
+                _dispatcher.Publish(evt2);
+
+                tq.WaitForMultiple<TestEvent>(2, TimeSpan.FromMilliseconds(100));
+                Assert.Throws<TimeoutException>(() => tq.WaitForMultiple<TestEvent>(3, TimeSpan.FromMilliseconds(100)));
+                tq.AssertNext<TestEvent>(evt.CorrelationId)
+                    .AssertNext<TestEvent>(evt2.CorrelationId)
                     .AssertEmpty();
             }
         }

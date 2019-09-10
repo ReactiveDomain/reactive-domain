@@ -23,8 +23,8 @@ namespace ReactiveDomain.Testing
         /// Contains the list of the Types of messages procesed since last time TestQueue was cleared.
         /// If Type tracking is disabled, returns an empty list.
         /// </summary>
-        public Type[] HandledTypes { get { return _handledTypes.ToArray(); } }
-        public readonly HashSet<Type> _handledTypes = new HashSet<Type>();
+        public Type[] HandledTypes => _handledTypes.ToArray();
+        private readonly HashSet<Type> _handledTypes = new HashSet<Type>();
         private readonly bool _trackTypes;
         private readonly ConcurrentDictionary<Guid, ManualResetEventSlim> _idWatchList = new ConcurrentDictionary<Guid, ManualResetEventSlim>();
 
@@ -115,6 +115,32 @@ namespace ReactiveDomain.Testing
             do
             {
                 if (SpinWait.SpinUntil(() => HandledTypes.Any(t => msgType.IsAssignableFrom(t)), 50))
+                {
+                    return;
+                }
+                if (DateTime.Now > deadline)
+                {
+                    throw new TimeoutException();
+                }
+                if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+
+            } while (true);
+        }
+
+        /// <summary>
+        /// Wait for some number of messages of type T to appear in the queue.
+        /// </summary>
+        /// <typeparam name="T">The type to wait for.</typeparam>
+        /// <param name="num">The number of messages of the given type to wait for.</param>
+        /// <param name="timeout">How long to wait before timing out.</param>
+        public void WaitForMultiple<T>(uint num, TimeSpan timeout) where T : IMessage
+        {
+            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
+            var deadline = DateTime.Now + timeout;
+            do
+            {
+                if (SpinWait.SpinUntil(() => Messages.OfType<T>().Count() == num, 50))
                 {
                     return;
                 }
