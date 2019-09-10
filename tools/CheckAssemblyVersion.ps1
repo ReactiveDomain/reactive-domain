@@ -61,13 +61,12 @@ if (($masterMajor -ne $major) -or ($masterMinor -ne $minor) -or ($masterBuild -n
   Exit
 }
 
-
 # If version has not been updated log it and exit with resturn code 2. This will cause build to fail in Travis
 # The write host stuff below will appear in the Travis console output
 Write-Host ("*******************************************************************************************************************") 
 Write-Host ("")
 Write-Host ("")
-Write-Host ("Assembly version not updated! Assembly number in build.props must be incremented before merging into master!!!!") 
+Write-Host ("		Assembly version not updated! Assembly number in build.props must be incremented before merging into master!!!!") 
 Write-Host ("")
 Write-Host ("")
 Write-Host ("*******************************************************************************************************************") 
