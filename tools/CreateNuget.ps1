@@ -8,10 +8,9 @@
 #       If build is stable, a stable (release) version will be pushed
 
 # branch must be master to create a nuget
-$masterString = "update-nuspec-for-builds"
+$masterString = "master"
 $branch = $env:TRAVIS_BRANCH
 $apikey = $env:NugetOrgApiKey
-$githubToken = $env:GithubApiToken
 
 # create and push nuget off of master branch ONLY
 if ($branch -ne $masterString)  
@@ -45,9 +44,10 @@ Write-Host ("Branch is file is " + $branch)
 
 & $nuget update -self
 
+# *******************************************************************************************************************************
 # Set the version string:
 #     If the Travis Build type is a push then that means its a build from a push from a feature branch (nuget should be beta)
-#     If Travis Build type is api then that means the build was manually triggered and string should be stable
+#     If Travis Build type is api then that means the build was manually triggered and string should be stable (no "-beta" suffix)
 $versionString = ""
 
 if ($buildType -eq "push" )
@@ -61,15 +61,17 @@ if ($buildType -eq "api" )
   $versionString = $RDVersion
   Write-Host ("This is a stable master build. pushing stable nuget version: " + $versionString)
 }
+# *******************************************************************************************************************************
 
-# Pack the nuspec files to create the .nupkg files using the set versionString
+# Pack the nuspec files to create the .nupkg files using the set versionString  *************************************************
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
 & $nuget pack $ReactiveDomainUINuspec -Version $versionString
 & $nuget pack $ReactiveDomainUITestingNuspec -Version $versionString
 
+# *******************************************************************************************************************************
 
-# Push the nuget packages to nuget.org
+# Push the nuget packages to nuget.org ******************************************************************************************
 $ReactiveDomainNupkg = $PSScriptRoot + "\..\ReactiveDomain." + $versionString + ".nupkg"
 $ReactiveDomainTestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.Testing." + $versionString + ".nupkg"
 $ReactiveDomainUINupkg = $PSScriptRoot + "\..\ReactiveDomain.UI." + $versionString + ".nupkg"
@@ -80,3 +82,4 @@ $ReactiveDomainUITestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.UI.Testing."
 & $nuget push $ReactiveDomainUINupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
 & $nuget push $ReactiveDomainUITestingNupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
 
+# *******************************************************************************************************************************
