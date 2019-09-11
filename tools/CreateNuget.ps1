@@ -1,8 +1,8 @@
 # CreateNuget.ps1
 #
 # This script will get the fileversion of ReactiveDomain.Core.dll. 
-# This version number will be used to create the corresponding nuget package 
-# The nuget is then pushed to nuget.org
+# This version number will be used to create the corresponding ReactiveDomain nuget packages 
+# The ReactiveDomain nugets are then pushed to nuget.org
 # 
 # Note: If build is unstable, a beta (pre release) version of the nuget will be pushed
 #       If build is stable, a stable (release) version will be pushed
