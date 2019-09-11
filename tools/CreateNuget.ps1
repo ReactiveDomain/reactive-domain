@@ -21,8 +21,14 @@ if ($branch -ne $masterString)
 
 # This changes when its a CI build or a manually triggered via the web UI
 # api --> means manual/stable build ;  push --> means CI/unstable build
-$buildType = $env:TRAVIS_EVENT_TYPE    
+# pull_request --> CI build triggered when opening a PR (do nothing here)
+$buildType = $env:TRAVIS_EVENT_TYPE 
 
+if ($buildType -eq "pull_request")  
+{
+  Write-Host ("Pull request build. Will not create nuget")   
+  Exit
+}   
 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
