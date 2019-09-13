@@ -40,7 +40,7 @@ $masterBuild = $masterAssemblyVersionNode.InnerText.Split('.')[2]
 $masterRevision = $masterAssemblyVersionNode.InnerText.Split('.')[3]
 
 
-# Get the assemnbly and file version from build.props on current branch
+# Get the assembly and file version from build.props on current branch
 $buildProps = $PSScriptRoot + "\..\src\build.props"
 $props = [xml] (get-content $buildProps -Encoding UTF8)
 $assemblyVersionNode = $props.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion")
@@ -54,20 +54,67 @@ $build = $assemblyVersionNode.InnerText.Split('.')[2]
 $revision = $assemblyVersionNode.InnerText.Split('.')[3]
 
 
-# If any of the version numbers are different from the master version then we are good and can exit successfully
-if (($masterMajor -ne $major) -or ($masterMinor -ne $minor) -or ($masterBuild -ne $build) -or ($masterRevision -ne $revision))  
+# Verify the assembly has been incremented from the assembly version on master branch
+if ($masterMajor -gt $major)
 {
-  Write-Host ("Assembly version already updated. Exiting script...")   
-  Exit
+    Write-Host ("*******************************************************************************************************************") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("		Invalid Assembly Version!!! Master version of assembly is less than version on master branch!!!") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("*******************************************************************************************************************")
+    Exit 2
 }
 
-# If version has not been updated log it and exit with resturn code 2. This will cause build to fail in Travis
-# The write host stuff below will appear in the Travis console output
-Write-Host ("*******************************************************************************************************************") 
-Write-Host ("")
-Write-Host ("")
-Write-Host ("		Assembly version not updated! Assembly number in build.props must be incremented before merging into master!!!!") 
-Write-Host ("")
-Write-Host ("")
-Write-Host ("*******************************************************************************************************************") 
-Exit 2
+if (($masterMajor -eq $major) -and ($masterMinor -gt $minor))
+{
+    Write-Host ("*******************************************************************************************************************") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("		Invalid Assembly Version!!! Minor version of assembly is less than version on master branch!!!") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("*******************************************************************************************************************")
+    Exit 2 
+}
+
+if (($masterMajor -eq $major) -and ($masterMinor -eq $minor) -and ($masterBuild -gt $build))
+{
+    Write-Host ("*******************************************************************************************************************") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("		Invalid Assembly Version!!! Build version of assembly is less than version on master branch!!!") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("*******************************************************************************************************************")
+    Exit 2 
+}  
+    
+if (($masterMajor -eq $major) -and ($masterMinor -eq $minor) -and ($masterBuild -eq $build) -and ($masterRevision -gt $revision))
+{
+    Write-Host ("*******************************************************************************************************************") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("		Invalid Assembly Version!!! Revision version of assembly is less than version on master branch!!!") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("*******************************************************************************************************************")
+    Exit 2 
+}    
+    
+if (($masterMajor -eq $major) -and ($masterMinor -eq $minor) -and ($masterBuild -eq $build) -and ($masterRevision -eq $revision))
+{
+    Write-Host ("*******************************************************************************************************************") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("		Assembly version not updated! Assembly number in build.props must be incremented before merging into master!!!!") 
+    Write-Host ("")
+    Write-Host ("")
+    Write-Host ("*******************************************************************************************************************")
+    Exit 2 
+}  
+
+Write-Host ("Assembly version updated correctly. Exiting script...")   
+Exit
+
