@@ -10,7 +10,7 @@ $wget = $PSScriptRoot + "\..\tools\wget.exe"
 $tempDir = $env:TEMP
 $masterbuildProps = $tempDir + "\build.props"
 
-# Master version is always used no need to check on master branch builds
+# Master branch's assembly version is always used no need to check on master branch builds
 if ($branch -eq "master")  
 {
   Write-Host ("Master branch. Skipping assembly check")   
