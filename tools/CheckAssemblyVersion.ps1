@@ -115,6 +115,6 @@ if (($masterMajor -eq $major) -and ($masterMinor -eq $minor) -and ($masterBuild 
     Exit 2 
 }  
 
-Write-Host ("Assembly version updated correctly. Exiting script...")   
+Write-Host ("Assembly version updated correctly. Build will proceed")   
 Exit
 
