@@ -1,13 +1,35 @@
 sudo: required
 language: csharp
-
+os: windows
 mono: none
-dotnet: 2.0.0
 
+branches:
+  only:
+    - master
+    - /.*/
+
+addons:
+  apt:
+    packages:
+      - powershell
+
+before_script:
+  - powershell -executionpolicy unrestricted -File ./tools/CheckAssemblyVersion.ps1
+  
 script: 
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_BUILD_DIR
+  - echo $TRAVIS_PULL_REQUEST
+  - echo $TRAVIS_PULL_REQUEST_BRANCH
+  - echo $TRAVIS_EVENT_TYPE
+  - echo $STABLE
   - dotnet restore ./src/ReactiveDomain.sln
-  - dotnet msbuild ./src/ReactiveDomain.sln
+  - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Debug
+  - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Release
   - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
+
+after_success:
+  - powershell -executionpolicy unrestricted -File ./tools/CreateNuget.ps1
