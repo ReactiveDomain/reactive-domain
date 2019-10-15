@@ -9,9 +9,9 @@ namespace ReactiveDomain.Testing
     public class AssertEx
     {
         /// <summary>
-        /// Verifies that an action that sends a command causes an exception of the specified type to be thrown.
+        /// Verifies that an action that sends a command throws a <see cref="CommandException"/> and the InnerException is of the correct type.
         /// </summary>
-        /// <typeparam name="T">The expected type of exception</typeparam>
+        /// <typeparam name="T">The expected type of the InnerException</typeparam>
         /// <param name="sendAction">An <see cref="Action"/> that sends a <see cref="Messaging.Command"/>.</param>
         public static void CommandThrows<T>(Action sendAction) where T : Exception
         {
@@ -39,8 +39,11 @@ namespace ReactiveDomain.Testing
         }
 
         /// <summary>
-        /// Checks whether a function returns false when evaluated.
-        /// Evaluates the function every 10 msec until it returns false or the timeout is reached.
+        /// Asserts the given function will return false before the timeout expires.
+        /// Repeatedly evaluates the function until false is returned or the timeout expires.
+        /// Will return immediatly when the condition is false.
+        /// Evaluates the timeout every 10 msec until expired.
+        /// Will not yield the thread by default, if yeilding is required to resolve deadlocks set yeildThread to true.
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
@@ -53,8 +56,11 @@ namespace ReactiveDomain.Testing
         }
 
         /// <summary>
-        /// Checks whether a function returns true when evaluated.
-        /// Evaluates the function every 10 msec until it returns true or the timeout is reached.
+        /// Asserts the given function will return true before the timeout expires.
+        /// Repeatedly evaluates the function until true is returned or the timeout expires.
+        /// Will return immediatly when the condition is true.
+        /// Evaluates the timeout every 10 msec until expired.
+        /// Will not yield the thread by default, if yeilding is required to resolve deadlocks set yeildThread to true.
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
@@ -66,12 +72,14 @@ namespace ReactiveDomain.Testing
             if (yieldThread) Thread.Sleep(0);
             if (!timeout.HasValue) timeout = 1000;
             var waitLoops = timeout / 10;
-            for (int i = 0; i < waitLoops; i++) {
-                SpinWait.SpinUntil(func, 10);
-                if (func()) break;
-                //DispatchOtherThings();
+            var result = false;
+            for (int i = 0; i < waitLoops; i++) {                
+                if (SpinWait.SpinUntil(func, 10)){
+                    result = true;
+                    break;
+                }
             }
-            Assert.True(func(), msg ?? "");
+            Assert.True(result, msg ?? "");
         }
     }
 }
