@@ -43,7 +43,7 @@ namespace ReactiveDomain.Testing
         /// Repeatedly evaluates the function until false is returned or the timeout expires.
         /// Will return immediatly when the condition is false.
         /// Evaluates the timeout every 10 msec until expired.
-        /// Will not yield the thread by default, if yeilding is required to resolve deadlocks set yeildThread to true.
+        /// Will not yield the thread by default, if yielding is required to resolve deadlocks set yieldThread to true.
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
@@ -60,7 +60,7 @@ namespace ReactiveDomain.Testing
         /// Repeatedly evaluates the function until true is returned or the timeout expires.
         /// Will return immediatly when the condition is true.
         /// Evaluates the timeout every 10 msec until expired.
-        /// Will not yield the thread by default, if yeilding is required to resolve deadlocks set yeildThread to true.
+        /// Will not yield the thread by default, if yielding is required to resolve deadlocks set yieldThread to true.
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
