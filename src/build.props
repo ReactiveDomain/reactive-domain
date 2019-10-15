@@ -20,10 +20,10 @@
         <Platforms>AnyCPU</Platforms>
         <Authors>PerkinElmer,Linedata</Authors>
         <Company>PerkinElmer,Linedata</Company>
-        <Copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</Copyright>
+        <Copyright>Copyright © 2014-2019 PerkinElmer Inc., Linedata Inc.</Copyright>
         <Description />
-        <AssemblyVersion>0.8.21.2</AssemblyVersion>
-        <FileVersion>0.8.21.2</FileVersion>
+        <AssemblyVersion>0.8.21.3</AssemblyVersion>
+        <FileVersion>0.8.21.3</FileVersion>
         <NeutralLanguage />
         <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
         <DebugSymbols>true</DebugSymbols>
