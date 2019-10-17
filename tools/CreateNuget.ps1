@@ -48,6 +48,26 @@ Write-Host ("ReactiveDomain.UI nuspec file is " + $ReactiveDomainUINuspec)
 Write-Host ("ReactiveDomain.UI.Testing nuspec file is " + $ReactiveDomainUITestingNuspec)
 Write-Host ("Branch is file is " + $branch)
 
+function UpdateDependencyVersions([string]$Nuspec)
+{
+
+    Write-Host "Updating dependency versions of: " $Nuspec
+
+    [xml]$xml = Get-Content -Path $Nuspec
+    $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
+
+    foreach($node in $dependencyNodes)
+    {
+        if ($node.id.Contains("ReactiveDomain"))
+        {
+            $node.version = $RDVersion
+        }
+    }
+    $xml.Save($Nuspec)
+
+   Write-Host "Updated dependency versions of: $Nuspec"
+}
+
 & $nuget update -self
 
 # *******************************************************************************************************************************
@@ -67,6 +87,14 @@ if ($buildType -eq "api" )
   $versionString = $RDVersion
   Write-Host ("This is a stable master build. pushing stable nuget version: " + $versionString)
 }
+# *******************************************************************************************************************************
+
+# Update the corresponding ReactiveDomain dependency versions in the nuspec files ***********************************************
+
+UpdateDependencyVersions($ReactiveDomainTestingNuspec)
+UpdateDependencyVersions($ReactiveDomainUINuspec)
+UpdateDependencyVersions($ReactiveDomainUITestingNuspec)
+
 # *******************************************************************************************************************************
 
 # Pack the nuspec files to create the .nupkg files using the set versionString  *************************************************
