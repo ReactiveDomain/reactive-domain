@@ -70,25 +70,6 @@ function UpdateDependencyVersions([string]$Nuspec)
 
 & $nuget update -self
 
-# *******************************************************************************************************************************
-# Set the version string:
-#     If the Travis Build type is a push then that means its a build from a push from a feature branch (nuget should be beta)
-#     If Travis Build type is api then that means the build was manually triggered and string should be stable (no "-beta" suffix)
-$versionString = ""
-
-if ($buildType -eq "push" )
-{
-  $versionString = $RDVersion + "-beta"
-  Write-Host ("This is an unstable master build. pushing unstable nuget version: " + $versionString)
-}
-
-if ($buildType -eq "api" )
-{
-  $versionString = $RDVersion
-  Write-Host ("This is a stable master build. pushing stable nuget version: " + $versionString)
-}
-# *******************************************************************************************************************************
-
 # Update the corresponding ReactiveDomain dependency versions in the nuspec files ***********************************************
 
 UpdateDependencyVersions($ReactiveDomainTestingNuspec)
@@ -98,6 +79,7 @@ UpdateDependencyVersions($ReactiveDomainUITestingNuspec)
 # *******************************************************************************************************************************
 
 # Pack the nuspec files to create the .nupkg files using the set versionString  *************************************************
+$versionString = $RDVersion
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
 & $nuget pack $ReactiveDomainUINuspec -Version $versionString
