@@ -16,7 +16,8 @@ namespace Shovel
 
         public void Run()
         {
-            var streamPosition = Position.Start;
+            long startPosition = long.Parse(Bootstrap.ReadSetting("startPosition"));
+            Position streamPosition = new Position(startPosition, 0);
             var maxCount = int.Parse(Bootstrap.ReadSetting("readBatchSize"));
             while (true)
             {
