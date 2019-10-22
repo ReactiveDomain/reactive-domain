@@ -1,5 +1,6 @@
 ﻿using EventStore.ClientAPI;
 using System;
+using System.Threading.Tasks;
 
 namespace Shovel
 {
@@ -57,11 +58,19 @@ namespace Shovel
                     }
                 }
 
-                foreach (string stream in eventsByStream.Keys) {
-                    var rslt = _eventShovelConfig.TargetConnection.AppendToStreamAsync(stream,
-                        ExpectedVersion.Any, _eventShovelConfig.TargetCredentials, eventsByStream[stream].ToArray()).Result;
-                    Console.WriteLine($"Appended {eventsByStream[stream].Count} events to the stream {stream}");
+                List<Task<WriteResult>> appendTaskList = new List<Task<WriteResult>>();
+                foreach (string stream in eventsByStream.Keys)
+                {
+                    // Populate publish task list
+                    appendTaskList.Add(_eventShovelConfig.TargetConnection.AppendToStreamAsync(stream,
+                        ExpectedVersion.Any, _eventShovelConfig.TargetCredentials,
+                        eventsByStream[stream].ToArray()));
+
+                    Console.WriteLine($"Appending {eventsByStream[stream].Count} events to the stream {stream}");
                 }
+                Console.WriteLine("Awaiting full batch publish");
+                Task.WhenAll(appendTaskList).Wait();
+
                 if (slice.IsEndOfStream)
                     break;
             }
