@@ -14,66 +14,43 @@ namespace ReactiveDomain.Foundation.StreamStore {
     ///
     /// Save failures will clear the aggregate from the cache and rethrow
     /// </summary>
-    public class CachingRepository : IDisposable {
+    public class CachingRepository : IDisposable
+    {
+        private readonly IAggregateCache _cache;
+        public CachingRepository(IRepository baseRepository, Func<IRepository,IAggregateCache> cacheFactory = null) {
+            if (cacheFactory == null) {
+                cacheFactory = repo => new ReadThroughAggregateCache(repo);
+            }
 
-        private readonly IRepository _baseRepository;
-        private readonly Dictionary<Guid, IEventSource> _knownAggregates = new Dictionary<Guid, IEventSource>();
-        public CachingRepository(IRepository baseRepository) {
-            _baseRepository = baseRepository;
+            _cache = cacheFactory(baseRepository);
         }
 
 
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
-            try {
-                aggregate = GetById<TAggregate>(id);
-                return true;
-            }
-            catch (Exception) {
-                aggregate = null;
-                return false;
-            }
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
+        {
+            return _cache.GetById(id, out aggregate);
         }
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
-            if (_knownAggregates.TryGetValue(id, out var aggregate)) {
-                try {
-                    _baseRepository.UpdateToCurrent(aggregate);
-                }
-                catch(InvalidOperationException ex) {
-                    throw new Exception("Persisted version changed with recorded events in aggregate.", ex);
-                }
-                catch (AggregateVersionException ex) {
-                    throw new Exception("Persisted version mismatch.", ex);
-                }
-                return aggregate as TAggregate;
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
+        {
+            if (!_cache.GetById(id, out TAggregate aggregate)) {
+                throw new AggregateNotFoundException(id,typeof(TAggregate));
             }
-
-            aggregate = _baseRepository.GetById<TAggregate>(id);
-            _knownAggregates.Add(id, aggregate);
-
-            return (TAggregate)aggregate;
+            return aggregate;
         }
-        public void Save(IEventSource aggregate) {
-            try {
-                _baseRepository.Save(aggregate);
-                if (!_knownAggregates.ContainsKey(aggregate.Id)) {
-                    _knownAggregates.Add(aggregate.Id, aggregate);
-                }
-            }
-            catch {
-                _knownAggregates.Remove(aggregate.Id);
-                throw;
-            }
+        public void Save(IEventSource aggregate)
+        {
+            _cache.Save(aggregate);
         }
         public bool ClearCache(Guid id) {
-            return _knownAggregates.Remove(id);
+            return _cache.Remove(id);
         }
         public void ClearCache() {
-            _knownAggregates.Clear();
+            _cache.Clear();
         }
 
         protected virtual void Dispose(bool disposing) {
             if (disposing) {
-                _knownAggregates.Clear();
+                _cache.Dispose();
             }
         }
         public void Dispose() {
