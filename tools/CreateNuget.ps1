@@ -101,7 +101,7 @@ function UpdateReactiveDomainDependencyVersions([string]$Nuspec)
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
 #         ConditionOperator - (the equality operator for a framework, == or !=)
-#         Framework - The framework this Packageref applies to: (net452, net457, netstandard2.0)
+#         Framework - The framework this Packageref applies to: (net452, net472, netstandard2.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
 {
