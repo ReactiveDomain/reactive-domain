@@ -68,33 +68,6 @@ class PackagRef
     [string]$Framework
 }
 
-# UpdateReactiveDomainDependencyVersions
-#
-#     Helper function that only updates the reactiveDomain dependency versions
-#     These are different becaused the version is determined by  
-#     the assembly build version of the ReactiveDomain.Core.dll
-#
-function UpdateReactiveDomainDependencyVersions([string]$Nuspec)
-{
-
-    Write-Host "Updating dependency versions of: " $Nuspec
-
-    [xml]$xml = Get-Content -Path $Nuspec
-    $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
-
-    foreach($node in $dependencyNodes)
-    {
-        if ($node.id.Contains("ReactiveDomain"))
-        {
-            $node.version = $RDVersion
-        }
-    }
-    $xml.Save($Nuspec)
-
-   Write-Host "Updated dependency versions of: $Nuspec"
-}
-
-
 # GetPackageRefFromProject
 #
 #     Helper function to get a specific PackageRef from a .csproj file
@@ -195,7 +168,11 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 
     foreach($refnode in $framework452Nodes)
     {
-        if ( $refnode.id -match "ReactiveDomain"){continue}
+        if ( $refnode.id -match "ReactiveDomain")
+        {
+            $refnode.version = $RDVersion
+            continue
+        }
 
         $pRef = GetPackageRefFromProject $refnode.id $CsProj "net452"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
@@ -209,7 +186,11 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 
     foreach($refnode in $framework472Nodes)
     {
-        if ( $refnode.id -match "ReactiveDomain") {continue}
+        if ( $refnode.id -match "ReactiveDomain")
+        {
+            $refnode.version = $RDVersion
+            continue
+        }
 
         $pRef = GetPackageRefFromProject $refnode.id $CsProj "net472"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
@@ -223,7 +204,11 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 
     foreach($refnode in $netstandard2Nodes)
     {
-        if ( $refnode.id -match "ReactiveDomain") {continue}
+        if ( $refnode.id -match "ReactiveDomain")
+        {
+            $refnode.version = $RDVersion
+            continue
+        }
         
         $pRef = GetPackageRefFromProject $refnode.id $CsProj "netstandard2.0"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
@@ -245,7 +230,7 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 # Update the dependency versions in the nuspec files ****************************************************
 
 # These all go into updating the main ReactiveDomain.nuspec
-UpdateReactiveDomainDependencyVersions($ReactiveDomainNuspec)
+#UpdateReactiveDomainDependencyVersions($ReactiveDomainNuspec)
 UpdateDependencyVersions $ReactiveDomainNuspec $RDFoundationProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDMessagingProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPersistenceProject 
@@ -253,15 +238,12 @@ UpdateDependencyVersions $ReactiveDomainNuspec $RDPrivateLedgerProject
 UpdateDependencyVersions $ReactiveDomainNuspec $RDTransportProject 
 
 # These go into updating the ReactiveDomainUI.nuspec
-UpdateReactiveDomainDependencyVersions($ReactiveDomainUINuspec)
 UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 
 
 # These go into updating the ReactiveDomainTesting.nuspec
-UpdateReactiveDomainDependencyVersions($ReactiveDomainTestingNuspec)
 UpdateDependencyVersions $ReactiveDomainTestingNuspec $ReactiveDomainTestingProject 
 
 # These go into updating the ReactiveDomain.UI.Testing.nuspec
-UpdateReactiveDomainDependencyVersions($ReactiveDomainUITestingNuspec)
 UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject 
 
 # *******************************************************************************************************
