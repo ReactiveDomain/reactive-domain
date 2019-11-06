@@ -230,7 +230,6 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 # Update the dependency versions in the nuspec files ****************************************************
 
 # These all go into updating the main ReactiveDomain.nuspec
-#UpdateReactiveDomainDependencyVersions($ReactiveDomainNuspec)
 UpdateDependencyVersions $ReactiveDomainNuspec $RDFoundationProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDMessagingProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPersistenceProject 
