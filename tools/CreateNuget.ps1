@@ -8,6 +8,8 @@
 #       If build is stable, a stable (release) version will be pushed
 
 # branch must be master to create a nuget
+$configuration = "Release"
+$nuspecExtension = ".nuspec"
 $masterString = "master"
 $branch = $env:TRAVIS_BRANCH
 $apikey = $env:NugetOrgApiKey
@@ -28,16 +30,24 @@ if ($buildType -eq "pull_request")
 {
   Write-Host ("Pull request build. Will not create nuget")   
   Exit
+}  
+
+if ($buildType -eq "debug")  
+{
+  Write-Host ("Debug build. Will create debug nuget") 
+  $configuration = "Debug" 
+  $nuspecExtension = ".Debug.nuspec" 
 }   
+ 
 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
-$ReactiveDomainDll = $PSScriptRoot + "\..\bld\Release\net472\ReactiveDomain.Core.dll"
+$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net472\ReactiveDomain.Core.dll"
 $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
-$ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.nuspec"
-$ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing.nuspec"
-$ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.nuspec"
-$ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing.nuspec"
+$ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
+$ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing" + $nuspecExtension
+$ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI" + $nuspecExtension
+$ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing" + $nuspecExtension
 $nuget = $PSScriptRoot + "\..\src\.nuget\nuget.exe"
 
 Write-Host ("Reactive Domain version is " + $RDVersion)
