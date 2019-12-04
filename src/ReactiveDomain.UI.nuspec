@@ -12,15 +12,15 @@
     <dependencies>
       <group targetFramework=".NETFramework4.5.2">
         <dependency id="ReactiveDomain" version="0.8.21.1" exclude="Build,Analyzers" />
-	<dependency id="ReactiveUI" version="7.4.0" exclude="Build,Analyzers" />		
+	<dependency id="reactiveui" version="7.4.0" exclude="Build,Analyzers" />		
       </group>
       <group targetFramework=".NETFramework4.7.2">
         <dependency id="ReactiveDomain" version="0.8.21.1" exclude="Build,Analyzers" />
-	<dependency id="ReactiveUI" version="8.7.2" exclude="Build,Analyzers" />			
+	<dependency id="reactiveui" version="8.7.2" exclude="Build,Analyzers" />			
       </group>
       <group targetFramework=".NETStandard2.0">
         <dependency id="ReactiveDomain" version="0.8.21.1" exclude="Build,Analyzers" />
-	<dependency id="ReactiveUI" version="8.7.2" exclude="Build,Analyzers" />			
+	<dependency id="reactiveui" version="8.7.2" exclude="Build,Analyzers" />			
       </group>
     </dependencies>
 	<references>
