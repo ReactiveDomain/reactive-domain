@@ -14,17 +14,17 @@ $masterString = "master"
 $branch = $env:TRAVIS_BRANCH
 $apikey = $env:NugetOrgApiKey
 
-# create and push nuget off of master branch ONLY
-if ($branch -ne $masterString)  
-{
-  Write-Host ("Not a master branch. Will not create nuget")   
-  Exit
-}
-
 # This changes when its a CI build or a manually triggered via the web UI
 # api --> means manual/stable build ;  push --> means CI/unstable build
 # pull_request --> CI build triggered when opening a PR (do nothing here)
 $buildType = $env:TRAVIS_EVENT_TYPE 
+
+# create and push nuget off of master branch ONLY
+if (($branch -ne $masterString) -and ($buildType -ne "debug"))  
+{
+  Write-Host ("Not a master branch. Will not create nuget")   
+  Exit
+}
 
 if ($buildType -eq "pull_request")  
 {
@@ -39,7 +39,6 @@ if ($buildType -eq "debug")
   $nuspecExtension = ".Debug.nuspec" 
 }   
  
-
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
 $ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net472\ReactiveDomain.Core.dll"
