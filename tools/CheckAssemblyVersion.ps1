@@ -1,58 +1,50 @@
-# CheckAssemblyVersion.ps1
+ # CheckAssemblyVersion.ps1
 #
-# This script will check the build.props file to get current assembly version on master branch
-# It will then compare to the assembly version of the local branch
-# If they are the same this script will exit with exitcode 2 therefore failing the travis build
+# This script will check the local build.props file to get current assembly version 
+# It will then compare to the latest version of the reactivedomain nuget
+# as listed on nuget.org
 #
 
+$masterString = "master"
 $branch = $env:TRAVIS_BRANCH
-$wget = $PSScriptRoot + "\..\tools\wget.exe"
-$tempDir = $env:TEMP
-$masterbuildProps = $tempDir + "\build.props"
+$buildType = $env:TRAVIS_EVENT_TYPE 
 
-# Master branch's assembly version is always used no need to check on master branch builds
-if ($branch -eq "master")  
+# create and push nuget off of master branch ONLY
+if ($branch -ne $masterString)  
 {
-  Write-Host ("Master branch. Skipping assembly check")   
+  Write-Host ("Not a master branch. Will not verify updated assembly version")   
   Exit
 }
 
-# Echo the location of script for debug purposes
-Write-Host ("Powershell script location is " + $PSScriptRoot)
-
-if (Test-Path $masterbuildProps) 
+if ($buildType -ne "api")  
 {
-  Remove-Item $masterbuildProps
+  Write-Host ("Not a manual travis api build. Will not verify updated assembly version")   
+  Exit
 }
 
-# Clone just the build.props from master and get the current assembly version
-& $wget https://raw.githubusercontent.com/ReactiveDomain/reactive-domain/master/src/build.props -P $tempDir
+Write-Host ("Check Assembly script location is " + $PSScriptRoot)
+$nuget = $PSScriptRoot + "\..\src\.nuget\nuget.exe"
 
-# Get the assembly and file version from build.props on the master branch
-$masterProps = [xml] (get-content $masterbuildProps -Encoding UTF8)
-$masterAssemblyVersionNode = $masterProps.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion")
+# Get the assembly and file version from build.props on current branch 
+$buildProps = $PSScriptRoot + "\..\src\build.props" 
+$props = [xml] (get-content $buildProps -Encoding UTF8) 
+$RDVersion = $props.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion") 
 
-Write-Host ("Master branch Assembly Version is " + $masterAssemblyVersionNode.InnerText )
+Write-Host ("Local Assembly Version node is " + $RDVersion.InnerText ) 
 
-$masterMajor = $masterAssemblyVersionNode.InnerText.Split('.')[0]
-$masterMinor = $masterAssemblyVersionNode.InnerText.Split('.')[1]
-$masterBuild = $masterAssemblyVersionNode.InnerText.Split('.')[2]
-$masterRevision = $masterAssemblyVersionNode.InnerText.Split('.')[3]
+$major = $RDVersion.InnerText.Split('.')[0]
+$minor = $RDVersion.InnerText.Split('.')[1]
+$build = $RDVersion.InnerText.Split('.')[2]
+$revision = $RDVersion.InnerText.Split('.')[3]
 
+&$nuget list packageid:ReactiveDomain -source https://api.nuget.org/v3/index.json | Tee-Object -Variable rdPackage
+$masterRDversion = ($rdPackage.Split(" "))[1]
+Write-Host "Latest ReactiveDomain nuget version is: " $masterRDversion
 
-# Get the assembly and file version from build.props on current branch
-$buildProps = $PSScriptRoot + "\..\src\build.props"
-$props = [xml] (get-content $buildProps -Encoding UTF8)
-$assemblyVersionNode = $props.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion")
-$fileVersionNode = $props.SelectSingleNode("//Project/PropertyGroup/FileVersion")
-
-Write-Host ("Local Assembly Version node is " + $assemblyVersionNode.InnerText )
-
-$major = $assemblyVersionNode.InnerText.Split('.')[0]
-$minor = $assemblyVersionNode.InnerText.Split('.')[1]
-$build = $assemblyVersionNode.InnerText.Split('.')[2]
-$revision = $assemblyVersionNode.InnerText.Split('.')[3]
-
+$masterMajor = $masterRDversion.Split('.')[0]
+$masterMinor = $masterRDversion.Split('.')[1]
+$masterBuild = $masterRDversion.Split('.')[2]
+$masterRevision = $masterRDversion.Split('.')[3]
 
 # Verify the assembly has been incremented from the assembly version on master branch
 if ($masterMajor -gt $major)

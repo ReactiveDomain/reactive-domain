@@ -8,49 +8,55 @@
 #       If build is stable, a stable (release) version will be pushed
 
 # branch must be master to create a nuget
+$configuration = "Release"
+$nuspecExtension = ".nuspec"
 $masterString = "master"
 $branch = $env:TRAVIS_BRANCH
 $apikey = $env:NugetOrgApiKey
-
-# create and push nuget off of master branch ONLY
-if ($branch -ne $masterString)  
-{
-  Write-Host ("Not a master branch. Will not create nuget")   
-  Exit
-}
 
 # This changes when its a CI build or a manually triggered via the web UI
 # api --> means manual/stable build ;  push --> means CI/unstable build
 # pull_request --> CI build triggered when opening a PR (do nothing here)
 $buildType = $env:TRAVIS_EVENT_TYPE 
 
+# create and push nuget off of master branch ONLY
+if (($branch -ne $masterString) -and ($buildType -ne "debug"))  
+{
+  Write-Host ("Not a master branch. Will not create nuget")   
+  Exit
+}
+
 if ($buildType -eq "pull_request")  
 {
   Write-Host ("Pull request build. Will not create nuget")   
   Exit
-}   
+}  
 
+if ($buildType -eq "debug")  
+{
+  Write-Host ("Debug build. Will create debug nuget") 
+  $configuration = "Debug" 
+  $nuspecExtension = ".Debug.nuspec" 
+}   
+ 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
-$ReactiveDomainDll = $PSScriptRoot + "\..\bld\Release\net472\ReactiveDomain.Core.dll"
+$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net472\ReactiveDomain.Core.dll"
 $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
+$ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
+$ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing" + $nuspecExtension
+$ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI" + $nuspecExtension
+$ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing" + $nuspecExtension
 
-$ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.nuspec"
 $RDFoundationProject = $PSScriptRoot + "\..\src\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj"
 $RDMessagingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj"
 $RDPersistenceProject = $PSScriptRoot + "\..\src\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj"
 $RDPrivateLedgerProject = $PSScriptRoot + "\..\src\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj"
 $RDTransportProject = $PSScriptRoot + "\..\src\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj"
 
-$ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing.nuspec"
 $ReactiveDomainTestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
-
-$ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.nuspec"
 $RDUIProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
-
-$ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing.nuspec"
 $RDUITestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
-
 $nuget = $PSScriptRoot + "\..\src\.nuget\nuget.exe"
 
 Write-Host ("Reactive Domain version is " + $RDVersion)
