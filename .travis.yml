@@ -16,9 +16,6 @@ addons:
 before_script:
   - powershell -executionpolicy unrestricted -File ./tools/CheckAssemblyVersion.ps1
   
-before_script:
-  - powershell -executionpolicy unrestricted -File ./tools/CheckAssemblyVersion.ps1  
-  
 script: 
   - echo $TRAVIS_BRANCH
   - echo $TRAVIS_BUILD_DIR
