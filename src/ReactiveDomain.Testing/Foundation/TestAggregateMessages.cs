@@ -16,6 +16,14 @@ namespace ReactiveDomain.Testing
                 AggregateId = aggregateId;
             }
         }
+        public class NewAggregate2 : Event
+        {
+            public readonly Guid AggregateId;
+            public NewAggregate2(Guid aggregateId)
+            {
+                AggregateId = aggregateId;
+            }
+        }
         public class Increment : Event
         {  
             public readonly Guid AggregateId;

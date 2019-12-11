@@ -37,5 +37,30 @@ namespace ReactiveDomain.Testing
 
         }
     }
+    public class TestAggregate2 : EventDrivenStateMachine
+    {
+
+        public TestAggregate2(Guid id)
+            : this()
+        {
+            if (id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id), id, "ID cannot be Guid.Empty");
+            Raise(new TestAggregateMessages.NewAggregate2(id));
+        }
+
+
+        private TestAggregate2()
+        {
+            RegisterEvents();
+        }
+
+        
+
+        
+        private void RegisterEvents()
+        {
+            Register<TestAggregateMessages.NewAggregate2>(e => Id = e.AggregateId);
+            
+        }
+    }
 }
 

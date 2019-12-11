@@ -7,32 +7,47 @@ using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing {
+namespace ReactiveDomain.Testing
+{
     // todo: separate stream connection tests and repo tests
     // ReSharper disable InconsistentNaming
-    public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture> {
+    public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture>
+    {
         private readonly List<IStreamStoreConnection> _streamStoreConnections = new List<IStreamStoreConnection>();
 
         private readonly List<IRepository> _repos = new List<IRepository>();
         private readonly IStreamNameBuilder _streamNameBuilder;
-        
-        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture) {
-         
+        private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _mockPair;
+        private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _fixturePair;
+
+
+        public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture)
+        {
+
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-            
-            var mockStreamStore = new MockStreamStoreConnection("Test");
+
+            var mockStreamStore = new MockStreamStoreConnection("MockStore");
             _streamStoreConnections.Add(mockStreamStore);
             mockStreamStore.Connect();
             _streamStoreConnections.Add(fixture.Connection);
 
-            _repos.Add(new StreamStoreRepository(_streamNameBuilder, mockStreamStore, new JsonMessageSerializer()));
+            var mock_repo =
+                new StreamStoreRepository(_streamNameBuilder, mockStreamStore, new JsonMessageSerializer());
+            _repos.Add(mock_repo);
 
-            _repos.Add(new StreamStoreRepository(_streamNameBuilder, fixture.Connection, new JsonMessageSerializer()));
+            var fixtureRepo =
+                new StreamStoreRepository(_streamNameBuilder, fixture.Connection, new JsonMessageSerializer());
+            _repos.Add(fixtureRepo);
+
+            _mockPair = new Tuple<IStreamStoreConnection, StreamStoreRepository>(mockStreamStore, mock_repo);
+            _fixturePair = new Tuple<IStreamStoreConnection, StreamStoreRepository>(fixture.Connection, fixtureRepo);
+
         }
-       
-        
+
+
         [Fact]
-        public void can_save_new_aggregate() {
+        public void can_save_new_aggregate()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -43,29 +58,31 @@ namespace ReactiveDomain.Testing {
             }
         }
         [Fact]
-        public void can_try_get_new_aggregate() {
+        public void can_try_get_new_aggregate()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 Assert.False(repo.TryGetById(id, out TestAggregate tAgg));
                 Assert.Null(tAgg);
                 tAgg = new TestAggregate(id);
                 repo.Save(tAgg);
-                
+
                 Assert.True(repo.TryGetById(id, out TestAggregate rAgg));
                 Assert.NotNull(rAgg);
                 Assert.Equal(tAgg.Id, rAgg.Id);
             }
         }
         [Fact]
-        public void can_try_get_new_aggregate_at_version() {
-           
+        public void can_try_get_new_aggregate_at_version()
+        {
+
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 Assert.False(repo.TryGetById(id, 1, out TestAggregate tAgg));
                 Assert.Null(tAgg);
                 tAgg = new TestAggregate(id);
                 repo.Save(tAgg);
-                
+
                 Assert.True(repo.TryGetById(id, 1, out TestAggregate rAgg));
                 Assert.NotNull(rAgg);
                 Assert.Equal(tAgg.Id, rAgg.Id);
@@ -73,7 +90,8 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void can_update_and_save_aggregate() {
+        public void can_update_and_save_aggregate()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -92,7 +110,8 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void throws_on_requesting_specific_version_higher_than_exists() {
+        public void throws_on_requesting_specific_version_higher_than_exists()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -106,7 +125,8 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void can_get_aggregate_at_version() {
+        public void can_get_aggregate_at_version()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 Assert.Throws<InvalidOperationException>(() => repo.GetById<TestAggregate>(id, 0));
@@ -128,7 +148,8 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void will_throw_concurrency_exception() {
+        public void will_throw_concurrency_exception()
+        {
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
                 var tAgg = new TestAggregate(id);
@@ -152,7 +173,8 @@ namespace ReactiveDomain.Testing {
         }
 
         [Fact]
-        public void can_multiple_update_and_save_multiple_aggregates() {
+        public void can_multiple_update_and_save_multiple_aggregates()
+        {
             foreach (var repo in _repos) {
                 var id1 = Guid.NewGuid();
                 var tAgg = new TestAggregate(id1);
@@ -173,11 +195,72 @@ namespace ReactiveDomain.Testing {
                 Assert.True(tAgg2.CurrentAmount() == loadedAgg2.CurrentAmount());
             }
         }
-        public class TestEvent : IMessage {
+
+        [Fact]
+        public void can_save_multiple_aggregate_types()
+        {
+
+            foreach (var repo in new[] { _mockPair }) {
+                var events = new List<RecordedEvent>();
+                repo.Item1.SubscribeToAll(events.Add);
+
+                var id1 = Guid.NewGuid();
+                repo.Item2.Save(new TestAggregate(id1));
+
+
+               
+
+
+                var agg1 = repo.Item2.GetById<TestAggregate>(id1);
+                Assert.NotNull(agg1);
+                Assert.Equal(id1, agg1.Id);
+
+                AssertEx.IsOrBecomesTrue(() => events.Count == 3);
+                Assert.Collection(events,
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate), re.EventType),
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate), re.EventType),
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate), re.EventType));
+
+                Assert.Collection(events,
+                    re => Assert.Equal(_streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id1),
+                        re.EventStreamId),
+                    re => Assert.Equal(_streamNameBuilder.GenerateForCategory(typeof(TestAggregate)),
+                        ((ProjectedEvent)re).ProjectedStream),
+                    re => Assert.Equal(_streamNameBuilder.GenerateForEventType(nameof(TestAggregateMessages.NewAggregate)),
+                        ((ProjectedEvent)re).ProjectedStream));
+                events.Clear();
+
+                var id2 = Guid.NewGuid();
+                repo.Item2.Save(new TestAggregate2(id2));
+
+                var agg2 = repo.Item2.GetById<TestAggregate2>(id2);
+                Assert.NotNull(agg2);
+                Assert.Equal(id2, agg2.Id);
+
+                AssertEx.IsOrBecomesTrue(() => events.Count == 3);
+                Assert.Collection(events,
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate2), re.EventType),
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate2), re.EventType),
+                    re => Assert.Equal(nameof(TestAggregateMessages.NewAggregate2), re.EventType));
+
+                Assert.Collection(events,
+                    re => Assert.Equal(_streamNameBuilder.GenerateForAggregate(typeof(TestAggregate2), id2),
+                        re.EventStreamId),
+                    re => Assert.Equal(_streamNameBuilder.GenerateForCategory(typeof(TestAggregate2)),
+                        ((ProjectedEvent)re).ProjectedStream),
+                    re => Assert.Equal(_streamNameBuilder.GenerateForEventType(nameof(TestAggregateMessages.NewAggregate2)),
+                        ((ProjectedEvent)re).ProjectedStream));
+            }
+        }
+
+
+        public class TestEvent : IMessage
+        {
             public Guid MsgId { get; private set; }
             public readonly int MessageNumber;
             public TestEvent(
-                int messageNumber) {
+                int messageNumber)
+            {
                 MsgId = Guid.NewGuid();
                 MessageNumber = messageNumber;
             }

@@ -1,33 +1,37 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using EventStore.ClientAPI.Exceptions;
 using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Testing.EventStore {
-    public class MockStreamStoreConnection : IStreamStoreConnection {
+namespace ReactiveDomain.Testing.EventStore
+{
+    public sealed class MockStreamStoreConnection : IStreamStoreConnection
+    {
         public const string CategoryStreamNamePrefix = @"$ce";
         public const string EventTypeStreamNamePrefix = @"$et";
         public const string AllStreamName = @"$All";
         private readonly Dictionary<string, List<RecordedEvent>> _store;
-        private List<RecordedEvent> All { get { lock (_store) { return _store[AllStreamName]; } } }
+        private readonly List<RecordedEvent> _allStream = new List<RecordedEvent>();
         private readonly QueuedHandler _inboundEventHandler;
         private readonly IBus _inboundEventBus;
         private readonly List<IDisposable> _subscriptions;
         private bool _connected;
         private bool _disposed;
 
-        public MockStreamStoreConnection(string name) {
+        public MockStreamStoreConnection(string name)
+        {
             _subscriptions = new List<IDisposable>();
 
             _store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
             _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
             _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByCategoryProjection)));
             _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByEventProjection)));
-            
+
             _inboundEventHandler = new QueuedHandler(
                 new AdHocHandler<IMessage>(_inboundEventBus.Publish),
                 nameof(_inboundEventHandler),
@@ -39,11 +43,13 @@ namespace ReactiveDomain.Testing.EventStore {
 
         public string ConnectionName { get; }
 
-        public void Connect() {
+        public void Connect()
+        {
             _connected = true;
         }
 
-        public void Close() {
+        public void Close()
+        {
             _connected = false;
             _subscriptions.ForEach(s => s?.Dispose());
         }
@@ -55,7 +61,8 @@ namespace ReactiveDomain.Testing.EventStore {
             string stream,
             long expectedVersion,
             UserCredentials credentials = null,
-            params EventData[] events) {
+            params EventData[] events)
+        {
 
             if (!_connected) throw new Exception("Not Connected");
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -103,10 +110,15 @@ namespace ReactiveDomain.Testing.EventStore {
                     events[i].IsJson,
                     created,
                     epochTime);
+                lock (_allStream) {
+                    _allStream.Add(recordedEvent);
+                    _inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
+
+                }
+
                 eventStream.Add(recordedEvent);
-                All.Add(recordedEvent);
                 _inboundEventHandler.Handle(new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber));
-               }
+            }
             return new WriteResult(eventStream.Count - 1);
 
         }
@@ -122,7 +134,8 @@ namespace ReactiveDomain.Testing.EventStore {
         /// <param name="event">Original event whose name is in the aggregate-GUID format</param>
         /// <param name="streamName">the generated name for the stream</param>
         /// <returns>categoryStreamName: string</returns>
-        private List<RecordedEvent> GetOrCreateCategoryStream(EventWritten @event, out string streamName) {
+        private List<RecordedEvent> GetOrCreateCategoryStream(EventWritten @event, out string streamName)
+        {
             var category = @event.StreamName.Split('-')[0];
             streamName = $"{CategoryStreamNamePrefix}-{category}";
             return GetOrCreateStream(streamName);
@@ -138,11 +151,13 @@ namespace ReactiveDomain.Testing.EventStore {
         /// <param name="event">Original event whose name is in the aggregate-GUID format</param>
         /// <param name="streamName">the generated name for the stream</param>
         /// <returns>eventStreamName: string</returns>
-        private List<RecordedEvent> GetOrCreateEventTypeStream(EventWritten @event, out string streamName) {
+        private List<RecordedEvent> GetOrCreateEventTypeStream(EventWritten @event, out string streamName)
+        {
             streamName = $"{EventTypeStreamNamePrefix}-{@event.Event.EventType}";
             return GetOrCreateStream(streamName);
         }
-        private List<RecordedEvent> GetOrCreateStream(string streamName) {
+        private List<RecordedEvent> GetOrCreateStream(string streamName)
+        {
             List<RecordedEvent> stream;
             lock (_store) {
                 if (!_store.TryGetValue(streamName, out stream)) {
@@ -156,7 +171,8 @@ namespace ReactiveDomain.Testing.EventStore {
                                     string streamName,
                                     long start,
                                     long count,
-                                    UserCredentials credentials = null) {
+                                    UserCredentials credentials = null)
+        {
             if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
             List<RecordedEvent> stream;
             lock (_store) {
@@ -169,7 +185,8 @@ namespace ReactiveDomain.Testing.EventStore {
                                     string streamName,
                                     long start,
                                     long count,
-                                    UserCredentials credentials = null) {
+                                    UserCredentials credentials = null)
+        {
             if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
             List<RecordedEvent> stream;
             lock (_store) {
@@ -183,7 +200,8 @@ namespace ReactiveDomain.Testing.EventStore {
                                     long start,
                                     long count,
                                     List<RecordedEvent> stream,
-                                    ReadDirection direction) {
+                                    ReadDirection direction)
+        {
             var result = new List<RecordedEvent>();
             var next = start == -1 ? stream.Count - 1 : (int)start;
             for (int i = 0; i < count; i++) {
@@ -227,9 +245,44 @@ namespace ReactiveDomain.Testing.EventStore {
             return slice;
         }
 
+        public sealed class AllStreamSubscription :
+            IHandle<EventCommitted>,
+            IDisposable
+        {
+            private long _position;
+            private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
+            private readonly Action<RecordedEvent> _eventAppeared;
+            public IDisposable BusSubscription;
+
+            public AllStreamSubscription(
+                long startPosition,
+                Action<SubscriptionDropReason, Exception> subscriptionDropped,
+                Action<RecordedEvent> eventAppeared)
+            {
+                _position = startPosition;
+                _subscriptionDropped = subscriptionDropped;
+                _eventAppeared = eventAppeared;
+            }
+            public void Handle(EventCommitted evt)
+            {
+                if (evt.RecordedPosition > _position) {
+                    _position = evt.RecordedPosition;
+                    _eventAppeared(evt.Event);
+                }
+            }
+            private bool _disposed;
+            public void Dispose()
+            {
+                if (_disposed) return;
+                _disposed = true;
+                _subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
+                BusSubscription?.Dispose();
+            }
+        }
         public sealed class Subscription :
             IHandle<EventWritten>,
-            IDisposable {
+            IDisposable
+        {
             private readonly string _streamName;
             private long _position;
             private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
@@ -240,13 +293,15 @@ namespace ReactiveDomain.Testing.EventStore {
                 string streamName,
                 long startPosition,
                 Action<SubscriptionDropReason, Exception> subscriptionDropped,
-                Action<RecordedEvent> eventAppeared) {
+                Action<RecordedEvent> eventAppeared)
+            {
                 _streamName = streamName;
                 _position = startPosition;
                 _subscriptionDropped = subscriptionDropped;
                 _eventAppeared = eventAppeared;
             }
-            public void Handle(EventWritten evt) {
+            public void Handle(EventWritten evt)
+            {
                 if (string.CompareOrdinal(_streamName, evt.StreamName) == 0 ||
                     string.CompareOrdinal(_streamName, AllStreamName) == 0) {
                     if (evt.RecordedPosition > _position) {
@@ -256,7 +311,8 @@ namespace ReactiveDomain.Testing.EventStore {
                 }
             }
             private bool _disposed;
-            public void Dispose() {
+            public void Dispose()
+            {
                 if (_disposed) return;
                 _disposed = true;
                 _subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
@@ -268,7 +324,8 @@ namespace ReactiveDomain.Testing.EventStore {
             string stream,
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null) {
+            UserCredentials userCredentials = null)
+        {
             long currentPos = 0;
             lock (_store) {
                 if (_store.ContainsKey(stream)) {
@@ -292,7 +349,8 @@ namespace ReactiveDomain.Testing.EventStore {
             Action<RecordedEvent> eventAppeared,
             Action<Unit> liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null) {
+            UserCredentials userCredentials = null)
+        {
 
             var start = (lastCheckpoint ?? -1) + 1;
             RecordedEvent[] curEvents = { };
@@ -323,45 +381,56 @@ namespace ReactiveDomain.Testing.EventStore {
 
         }
 
-       
+
 
 
         public IDisposable SubscribeToAllFrom(Position @from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
                                               Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                              UserCredentials userCredentials = null, bool resolveLinkTos = true) {
-            throw new NotImplementedException();
+                                              UserCredentials userCredentials = null, bool resolveLinkTos = true)
+        {
+            var current = (int)@from.CommitPosition;
+            var currentEvents = new RecordedEvent[] { };
+            lock (_allStream) {
+                if (@from == Position.End) {
+                    current = _allStream.Count - 1;
+                }
+
+                if (current < _allStream.Count - 1) {
+                    var events = new RecordedEvent[_allStream.Count - current];
+                    _allStream.CopyTo(events, current);
+                    currentEvents = events;
+                }
+            }
+
+            for (int i = 0; i < currentEvents.Length; i++) {
+                eventAppeared(currentEvents[i]);
+            }
+
+            var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
+            subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
+            _subscriptions.Add(subscription);
+            liveProcessingStarted?.Invoke();
+            return subscription;
+
         }
 
         public IDisposable SubscribeToAll(
                                 Action<RecordedEvent> eventAppeared,
                                 Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                UserCredentials userCredentials = null, 
-                                bool resolveLinkTos = true) {
-            return SubscribeToStream(
-                AllStreamName,
+                                UserCredentials userCredentials = null,
+                                bool resolveLinkTos = true)
+        {
+            return SubscribeToAllFrom(
+                Position.Start, 
                 eventAppeared,
-                subscriptionDropped,
-                userCredentials);}
-
-        public IDisposable SubscribeToAllFrom(
-            long? lastCheckpoint,
-            Action<RecordedEvent> eventAppeared,
-            Action<Unit> liveProcessingStarted = null,
-            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
-            bool resolveLinkTos = true) {
-            //n.b. the mock store does not support linkto events, so everything is always resolved events
-            return SubscribeToStreamFrom(
-                AllStreamName,
-                lastCheckpoint,
-                CatchUpSubscriptionSettings.Default, 
-                eventAppeared,
-                liveProcessingStarted,
+                null,
+                null,
                 subscriptionDropped,
                 userCredentials);
         }
 
-        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null) {
+        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
+        {
             if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
                stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
@@ -390,7 +459,8 @@ namespace ReactiveDomain.Testing.EventStore {
         /// The caller sets up the Category Stream, append the events."/>
         /// </remarks>
         /// <param name="event">Event to be written to the category stream</param>
-        private void WriteToByCategoryProjection(EventWritten @event) {
+        private void WriteToByCategoryProjection(EventWritten @event)
+        {
             if (!_connected || _disposed)
                 throw new Exception();
             if (@event.ProjectedEvent) { return; }
@@ -411,8 +481,13 @@ namespace ReactiveDomain.Testing.EventStore {
                     @event.Event.IsJson,
                     created,
                     epochTime);
+            lock (_allStream) {
+                _allStream.Add(projectedEvent);
+                _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
+            }
+
             stream.Add(projectedEvent);
-            All.Add(projectedEvent);
+
             _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
@@ -427,7 +502,8 @@ namespace ReactiveDomain.Testing.EventStore {
         /// The caller sets up the Event Stream, append the events."/>
         /// </remarks>
         /// <param name="event">Event to be written to the event stream</param>
-        private void WriteToByEventProjection(EventWritten @event) {
+        private void WriteToByEventProjection(EventWritten @event)
+        {
             if (!_connected || _disposed)
                 throw new Exception();
             if (@event.ProjectedEvent) { return; }
@@ -448,13 +524,17 @@ namespace ReactiveDomain.Testing.EventStore {
                 @event.Event.IsJson,
                 created,
                 epochTime);
+            lock (_allStream) {
+                _allStream.Add(projectedEvent);
+                _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
+            }
             stream.Add(projectedEvent);
-            All.Add(projectedEvent);
             _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
 
-        public void Dispose() {
+        public void Dispose()
+        {
             if (_disposed) return;
             _disposed = true;
             Close();
@@ -462,7 +542,8 @@ namespace ReactiveDomain.Testing.EventStore {
             _inboundEventHandler?.Stop();
         }
 
-        public class EventWritten : IMessage {
+        public class EventWritten : IMessage
+        {
             public Guid MsgId { get; private set; }
             public readonly string StreamName;
             public readonly RecordedEvent Event;
@@ -473,12 +554,28 @@ namespace ReactiveDomain.Testing.EventStore {
                 string streamName,
                 RecordedEvent @event,
                 bool projectedEvent,
-                long recordedPosition) {
+                long recordedPosition)
+            {
                 MsgId = Guid.NewGuid();
                 StreamName = streamName;
                 Event = @event;
                 ProjectedEvent = projectedEvent;
                 RecordedPosition = recordedPosition;
+            }
+        }
+        public class EventCommitted : IMessage
+        {
+            public Guid MsgId { get; private set; }
+            public readonly RecordedEvent Event;
+            public readonly long RecordedPosition;
+
+            public EventCommitted(
+                RecordedEvent @event,
+                long recordedPosition)
+            {
+                MsgId = Guid.NewGuid();
+                RecordedPosition = recordedPosition;
+                Event = @event;
             }
         }
     }
