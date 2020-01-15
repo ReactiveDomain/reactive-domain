@@ -42,7 +42,7 @@ namespace ReactiveDomain.EventStore {
                 tcpPort: 1113,
                 windowStyle: ProcessWindowStyle.Hidden,
                 opt: StartConflictOption.Connect,
-                additionalArgs);
+                additionalArgs:additionalArgs);
         }
         public void SetupEventStore(
                                 DirectoryInfo installPath,
