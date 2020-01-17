@@ -35,5 +35,12 @@ namespace ReactiveDomain.Testing
             RepositoryEvents.Clear();
             TestQueue.Clear();
         }
+
+        public IListener GetListener(string name) =>
+                            new QueuedStreamListener(
+                                name,
+                                StreamStoreConnection,
+                                StreamNameBuilder,
+                                EventSerializer);
     }
 }
