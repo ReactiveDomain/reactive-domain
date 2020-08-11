@@ -1,7 +1,6 @@
 ﻿using ReactiveDomain.Foundation;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
 using Xunit;
@@ -13,11 +12,13 @@ namespace ReactiveDomain.Testing
     // ReSharper disable InconsistentNaming
     public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture>
     {
+        // ReSharper disable once CollectionNeverQueried.Local
         private readonly List<IStreamStoreConnection> _streamStoreConnections = new List<IStreamStoreConnection>();
 
         private readonly List<IRepository> _repos = new List<IRepository>();
         private readonly IStreamNameBuilder _streamNameBuilder;
         private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _mockPair;
+        // ReSharper disable once NotAccessedField.Local
         private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _fixturePair;
 
 
@@ -78,12 +79,12 @@ namespace ReactiveDomain.Testing
 
             foreach (var repo in _repos) {
                 var id = Guid.NewGuid();
-                Assert.False(repo.TryGetById(id, 1, out TestAggregate tAgg));
+                Assert.False(repo.TryGetById(id,  out TestAggregate tAgg,1));
                 Assert.Null(tAgg);
                 tAgg = new TestAggregate(id);
                 repo.Save(tAgg);
 
-                Assert.True(repo.TryGetById(id, 1, out TestAggregate rAgg));
+                Assert.True(repo.TryGetById(id,  out TestAggregate rAgg, 1));
                 Assert.NotNull(rAgg);
                 Assert.Equal(tAgg.Id, rAgg.Id);
             }

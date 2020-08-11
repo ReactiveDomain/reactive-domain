@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
-namespace ReactiveDomain.Foundation.StreamStore {
+namespace ReactiveDomain.Foundation.StreamStore
+{
     /// <summary>
     /// This implementation assumes that the cached aggregate may have changes since it was last seen
     ///
@@ -14,47 +16,81 @@ namespace ReactiveDomain.Foundation.StreamStore {
     ///
     /// Save failures will clear the aggregate from the cache and return false
     /// </summary>
-    public class ReadThroughAggregateCache :IAggregateCache, IDisposable {
+    public class ReadThroughAggregateCache : IAggregateCache, IDisposable
+    {
 
         private readonly IRepository _baseRepository;
         private readonly Dictionary<Guid, IEventSource> _knownAggregates = new Dictionary<Guid, IEventSource>();
         public ReadThroughAggregateCache(IRepository baseRepository) {
             _baseRepository = baseRepository;
         }
-
-
-        public bool GetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
             try {
-                aggregate = GetById<TAggregate>(id);
+                aggregate = GetById<TAggregate>(id, version);
                 return true;
             }
             catch (Exception) {
                 aggregate = null;
+                Remove(id);
                 return false;
             }
         }
-        private TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
-            if (_knownAggregates.TryGetValue(id, out var aggregate)) {
-                try {
-                    _baseRepository.UpdateToCurrent(aggregate);
-                }
-                catch(InvalidOperationException ex) {
-                    _knownAggregates.Remove(aggregate.Id);
-                    throw new Exception("Persisted version changed with recorded events in aggregate.", ex);
-                }
-                catch (AggregateVersionException ex) {
-                    _knownAggregates.Remove(aggregate.Id);
-                    throw new Exception("Persisted version mismatch.", ex);
-                }
-                return aggregate as TAggregate;
+
+        public TAggregate GetById<TAggregate>(Guid id, int version = int.MaxValue) where TAggregate : class, IEventSource {
+            if (_knownAggregates.TryGetValue(id, out var cached)) {
+                var agg = (TAggregate) cached;
+                Update(ref agg, version);
+                return (TAggregate)cached;
+            }
+            
+            var aggregate = _baseRepository.GetById<TAggregate>(id, version);
+            _knownAggregates.Add(id, aggregate);
+            return aggregate;
+        }
+
+        public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
+            if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
+            if (aggregate.ExpectedVersion == version) return;
+
+            _knownAggregates.TryGetValue(aggregate.Id, out var cached);
+            
+            if (cached == null) {
+                _baseRepository.Update(ref aggregate, version);
+                UpdateCache(aggregate);
+                return;
             }
 
-            aggregate = _baseRepository.GetById<TAggregate>(id);
-            _knownAggregates.Add(id, aggregate);
+            if (cached.ExpectedVersion == version) {
+                aggregate = (TAggregate)cached;
+                return;
+            }
 
-            return (TAggregate)aggregate;
+            if (cached.ExpectedVersion > version) { 
+                //cache is ahead of requested version, we need to get it fresh from repo
+                _baseRepository.Update(ref aggregate, version);
+                //don't regress the cache, just return
+                return;
+            }
+            //cache is ahead of item, but behind requested version
+            aggregate = (TAggregate)cached;
+            _baseRepository.Update(ref aggregate, version);
+            UpdateCache(aggregate);
         }
-        public bool Save(IEventSource aggregate) {
+
+
+
+        private void UpdateCache(IEventSource aggregate) {
+            if (_knownAggregates.TryGetValue(aggregate.Id, out var cached)) {
+                if (cached.ExpectedVersion < aggregate.ExpectedVersion) {
+                    _knownAggregates[aggregate.Id] = aggregate;
+                }
+            }
+            else {
+                _knownAggregates.Add(aggregate.Id, aggregate);
+            }
+        }
+
+        public void Save(IEventSource aggregate) {
             try {
                 _baseRepository.Save(aggregate);
                 if (!_knownAggregates.ContainsKey(aggregate.Id)) {
@@ -63,15 +99,12 @@ namespace ReactiveDomain.Foundation.StreamStore {
                 else {
                     _knownAggregates[aggregate.Id] = aggregate;
                 }
-
-                return true;
             }
             catch {
                 _knownAggregates.Remove(aggregate.Id);
-                return false;
             }
 
-            
+
         }
         public bool Remove(Guid id) {
             return _knownAggregates.Remove(id);

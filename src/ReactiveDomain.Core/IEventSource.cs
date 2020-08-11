@@ -27,7 +27,16 @@ namespace ReactiveDomain
         /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="events"/> is <c>null</c>.</exception>
         /// <exception cref="System.InvalidOperationException">Thrown when this instance has already recorded events.</exception>
         void RestoreFromEvents(IEnumerable<object> events);
-        
+
+        /// <summary>
+        /// Updates this instance with historical events.
+        /// </summary>
+        /// <param name="events">The events to apply.</param>
+        /// <param name="expectedVersion">The expected version prior to applying events</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="events"/> is <c>null</c>.</exception>
+        /// <exception cref="System.InvalidOperationException">Thrown when this instance does not have historical events or expected version mismatch</exception>
+        void UpdateWithEvents(IEnumerable<object> events, long expectedVersion);
+
         /// <summary>
         /// Takes the recorded history of events from this instance (CQS violation, beware).
         /// </summary>

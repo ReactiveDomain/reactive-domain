@@ -44,6 +44,20 @@ namespace ReactiveDomain {
                 _router.Route(@event);
             }
         }
+        public void UpdateWithEvents(IEnumerable<object> events, long expectedVersion) {
+            if (events == null)
+                throw new ArgumentNullException(nameof(events));
+            if (_version < 0)
+                throw new InvalidOperationException("Updating with events is not possible when an instance has no historical events.");
+            if ( _version != expectedVersion) {
+                throw  new InvalidOperationException("Expected version mismatch when updating ");
+            }
+
+            foreach (var @event in events) {
+                _version++;
+                _router.Route(@event);
+            }
+        }
 
         /// <summary>
         /// Returns all events from the EventRecorder since state was loaded or the last time TakeEvents was called

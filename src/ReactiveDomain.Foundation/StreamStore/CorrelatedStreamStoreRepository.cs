@@ -7,7 +7,7 @@ namespace ReactiveDomain.Foundation {
     public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposable
     {
         private readonly IRepository _repository;
-        private readonly IAggregateCache _cache = null;
+        private readonly IAggregateCache _cache;
         public CorrelatedStreamStoreRepository(
             IRepository repository,
             Func<IRepository, IAggregateCache> cacheFactory = null) {
@@ -48,14 +48,18 @@ namespace ReactiveDomain.Foundation {
         }
 
         public TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
-            TAggregate agg = null;
-            _cache?.GetById(id, out agg);
+            TAggregate agg = _cache?.GetById<TAggregate>(id, version);
 
             if (agg == null || agg.Version > version) {
                 agg = _repository.GetById<TAggregate>(id, version);
+                if (agg != null) {
+                    _cache?.Save(agg);
+                }
             }
 
-            ((ICorrelatedEventSource)agg).Source = source;
+            if (agg != null) {
+                ((ICorrelatedEventSource) agg).Source = source;
+            }
             return agg;
         }
 
