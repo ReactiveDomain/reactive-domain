@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace ReactiveDomain.Foundation.StreamStore {
     /// <summary>
@@ -21,24 +20,15 @@ namespace ReactiveDomain.Foundation.StreamStore {
             if (cacheFactory == null) {
                 cacheFactory = repo => new ReadThroughAggregateCache(repo);
             }
-
             _cache = cacheFactory(baseRepository);
         }
-
-
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource
-        {
-            return _cache.GetById(id, out aggregate);
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
+            return _cache.TryGetById(id, out aggregate);
         }
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource
-        {
-            if (!_cache.GetById(id, out TAggregate aggregate)) {
-                throw new AggregateNotFoundException(id,typeof(TAggregate));
-            }
-            return aggregate;
+        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
+            return _cache.GetById<TAggregate>(id);
         }
-        public void Save(IEventSource aggregate)
-        {
+        public void Save(IEventSource aggregate) {
             _cache.Save(aggregate);
         }
         public bool ClearCache(Guid id) {

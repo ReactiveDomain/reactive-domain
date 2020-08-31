@@ -24,16 +24,8 @@ namespace ReactiveDomain.Foundation {
             _streamStoreConnection = eventStoreConnection;
             _eventSerializer = eventSerializer;
         }
-
-        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
-            return TryGetById(id, int.MaxValue, out aggregate);
-        }
-
-        public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
-            return GetById<TAggregate>(id, int.MaxValue);
-        }
-
-        public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate) where TAggregate : class, IEventSource {
+        
+        public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
             try {
                 aggregate = GetById<TAggregate>(id, version);
                 return true;
@@ -43,8 +35,8 @@ namespace ReactiveDomain.Foundation {
                 return false;
             }
         }
-
-        public TAggregate GetById<TAggregate>(Guid id, int version) where TAggregate : class, IEventSource {
+        public TAggregate GetById<TAggregate>(Guid id, int version = int.MaxValue) where TAggregate : class, IEventSource {
+            
             if (version <= 0)
                 throw new InvalidOperationException("Cannot get version <= 0");
 
@@ -57,8 +49,8 @@ namespace ReactiveDomain.Foundation {
             var appliedEventCount = 0;
             do {
                 long sliceCount = sliceStart + ReadPageSize <= version
-                                    ? ReadPageSize
-                                    : version - sliceStart;
+                    ? ReadPageSize
+                    : version - sliceStart;
 
                 currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, (int)sliceCount);
 
@@ -82,34 +74,45 @@ namespace ReactiveDomain.Foundation {
                 throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
             return aggregate;
+        }
+        public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource
+        {
+            if (aggregate == null || aggregate?.Id == Guid.Empty) throw new ArgumentNullException(nameof(aggregate));
+            if(  version == aggregate.ExpectedVersion) return;
+            if (version <= 0)
+                throw new InvalidOperationException("Cannot get version <= 0");
+            if (version < aggregate.ExpectedVersion) {
+                throw new InvalidOperationException("Aggregate is ahead of version");
+            }
 
+            var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), aggregate.Id);
+            long sliceStart = aggregate.ExpectedVersion + 1;
+            StreamEventsSlice currentSlice;
+            do {
+                long sliceCount = sliceStart + ReadPageSize <= version
+                                    ? ReadPageSize
+                                    : version - sliceStart;
+
+                currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, (int)sliceCount);
+
+                if (currentSlice is StreamNotFoundSlice)
+                    throw new AggregateNotFoundException(aggregate.Id, typeof(TAggregate));
+
+                if (currentSlice is StreamDeletedSlice)
+                    throw new AggregateDeletedException(aggregate.Id, typeof(TAggregate));
+
+                sliceStart = currentSlice.NextEventNumber;
+                
+                aggregate.UpdateWithEvents(currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)), aggregate.ExpectedVersion);
+
+            } while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
+            
+            if (version != int.MaxValue && aggregate.ExpectedVersion != version - 1)
+                throw new AggregateVersionException(aggregate.Id, typeof(TAggregate), version, aggregate.ExpectedVersion);
         }
 
         private static TAggregate ConstructAggregate<TAggregate>() {
             return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
-        }
-
-        public void UpdateToCurrent(IEventSource aggregate) {
-            long start = aggregate.ExpectedVersion + 1;
-            var id = aggregate.Id;
-            if (start <= 0)
-                throw new InvalidOperationException("Cannot get version <= 0");
-            string streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), id);
-
-            StreamEventsSlice streamEventsSlice;
-            do {
-                streamEventsSlice = _streamStoreConnection.ReadStreamForward(streamName, start, ReadPageSize);
-                if (streamEventsSlice is StreamNotFoundSlice)
-                    throw new AggregateNotFoundException(id, aggregate.GetType());
-                if (streamEventsSlice is StreamDeletedSlice)
-                    throw new AggregateDeletedException(id, aggregate.GetType());
-                start = streamEventsSlice.NextEventNumber;
-                var events = streamEventsSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)).ToArray();
-                if (events.Any()) {
-                    aggregate.RestoreFromEvents(events);
-                }
-            }
-            while (!streamEventsSlice.IsEndOfStream);
         }
 
         public void Save(IEventSource aggregate) {
