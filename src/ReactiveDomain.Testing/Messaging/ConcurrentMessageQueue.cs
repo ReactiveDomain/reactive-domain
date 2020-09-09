@@ -60,7 +60,7 @@ namespace ReactiveDomain.Testing
             if (!IsEmpty)
             {
                 var msg = this.ElementAt(0);
-                throw new Exception($" {_name} Queue not Empty. Instead {msg.GetType()} is next");
+                throw new Exception($"{_name} Queue is not Empty. Instead {msg.GetType()} is next.");
             }
         }
 
