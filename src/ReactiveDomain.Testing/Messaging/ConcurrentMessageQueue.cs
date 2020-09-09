@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using ReactiveDomain.Messaging;
 using Xunit;
 
@@ -58,7 +59,7 @@ namespace ReactiveDomain.Testing
         {
             if (!IsEmpty)
             {
-                var msg = this.DequeueNext<T>();
+                var msg = this.ElementAt(0);
                 throw new Exception($" {_name} Queue not Empty. Instead {msg.GetType()} is next");
             }
         }
