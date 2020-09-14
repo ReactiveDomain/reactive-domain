@@ -57,9 +57,10 @@ namespace ReactiveDomain.Testing
         public void AssertEmpty()
         {
             if (IsEmpty) return;
-            if( TryPeek(out var msg))
-                throw new Exception($"{_name} Queue is not Empty. Instead {msg.GetType()} is next.");
-            throw new Exception($"{_name} Queue is not Empty.");
+            var errMsg = $"{_name} Queue is not Empty.";
+            if (TryPeek(out var msg))
+                errMsg += $" Instead {msg.GetType()} is next.";
+            throw new Exception(errMsg);
         }
 
         // JUST INHERITING EVERYTHING
