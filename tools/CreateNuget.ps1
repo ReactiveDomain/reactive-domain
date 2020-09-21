@@ -7,6 +7,7 @@
 # Note: If build is unstable, a beta (pre release) version of the nuget will be pushed
 #       If build is stable, a stable (release) version will be pushed
 
+
 # branch must be master to create a nuget
 $configuration = "Release"
 $nuspecExtension = ".nuspec"
@@ -18,6 +19,8 @@ $apikey = $env:NugetOrgApiKey
 # api --> means manual/stable build ;  push --> means CI/unstable build
 # pull_request --> CI build triggered when opening a PR (do nothing here)
 $buildType = $env:TRAVIS_EVENT_TYPE 
+
+Write-Host ("*********************   Begin Create NUget script   **************************************")   
 
 # create and push nuget off of master branch ONLY
 if (($branch -ne $masterString) -and ($buildType -ne "debug"))  
