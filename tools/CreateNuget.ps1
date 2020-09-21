@@ -6,8 +6,6 @@
 # 
 # Note: If build is unstable, a beta (pre release) version of the nuget will be pushed
 #       If build is stable, a stable (release) version will be pushed
-
-
 # branch must be master to create a nuget
 $configuration = "Release"
 $nuspecExtension = ".nuspec"
