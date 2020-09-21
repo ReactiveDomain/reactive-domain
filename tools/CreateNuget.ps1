@@ -234,6 +234,7 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 }
 
 # Make the nuget.exe update itself (We must be at least at nuget 5.0 for this all to work) **************
+Write-Host "Update nuget.exe"
 & $nuget update -self
 
 # Update the dependency versions in the nuspec files ****************************************************
@@ -257,6 +258,7 @@ UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject
 # *******************************************************************************************************
 
 # Pack the nuspec files to create the .nupkg files using the set versionString  *************************
+Write-Host "Packing reactivedomain nuget packages"
 $versionString = $RDVersion
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
@@ -266,6 +268,7 @@ $versionString = $RDVersion
 # *******************************************************************************************************************************
 
 # Push the nuget packages to nuget.org ******************************************************************************************
+Write-Host "Push nuget packages to nuget.org"
 $ReactiveDomainNupkg = $PSScriptRoot + "\..\ReactiveDomain." + $versionString + ".nupkg"
 $ReactiveDomainTestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.Testing." + $versionString + ".nupkg"
 $ReactiveDomainUINupkg = $PSScriptRoot + "\..\ReactiveDomain.UI." + $versionString + ".nupkg"
