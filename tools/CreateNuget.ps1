@@ -6,7 +6,6 @@
 # 
 # Note: If build is unstable, a beta (pre release) version of the nuget will be pushed
 #       If build is stable, a stable (release) version will be pushed
-
 # branch must be master to create a nuget
 $configuration = "Release"
 $nuspecExtension = ".nuspec"
@@ -18,6 +17,8 @@ $apikey = $env:NugetOrgApiKey
 # api --> means manual/stable build ;  push --> means CI/unstable build
 # pull_request --> CI build triggered when opening a PR (do nothing here)
 $buildType = $env:TRAVIS_EVENT_TYPE 
+
+Write-Host ("*********************   Begin Create NUget script   **************************************")   
 
 # create and push nuget off of master branch ONLY
 if (($branch -ne $masterString) -and ($buildType -ne "debug"))  
@@ -231,6 +232,7 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 }
 
 # Make the nuget.exe update itself (We must be at least at nuget 5.0 for this all to work) **************
+Write-Host "Update nuget.exe"
 & $nuget update -self
 
 # Update the dependency versions in the nuspec files ****************************************************
@@ -254,6 +256,7 @@ UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject
 # *******************************************************************************************************
 
 # Pack the nuspec files to create the .nupkg files using the set versionString  *************************
+Write-Host "Packing reactivedomain nuget packages"
 $versionString = $RDVersion
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
@@ -263,6 +266,7 @@ $versionString = $RDVersion
 # *******************************************************************************************************************************
 
 # Push the nuget packages to nuget.org ******************************************************************************************
+Write-Host "Push nuget packages to nuget.org"
 $ReactiveDomainNupkg = $PSScriptRoot + "\..\ReactiveDomain." + $versionString + ".nupkg"
 $ReactiveDomainTestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.Testing." + $versionString + ".nupkg"
 $ReactiveDomainUINupkg = $PSScriptRoot + "\..\ReactiveDomain.UI." + $versionString + ".nupkg"
