@@ -47,6 +47,8 @@ namespace ReactiveDomain.Foundation
         /// <param name="streamNameBuilder">The source for correct stream names based on aggregates and events</param>
         /// <param name="serializer"></param>
         /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
+        /// <param name="liveProcessingStarted">An Action to invoke when live processing starts</param>
+        /// <param name="subscriptionDropped">An Action to invoke if a subscription is dropped</param>
         public StreamListener(
                 string listenerName,
                 IStreamStoreConnection streamStoreConnection,
@@ -72,7 +74,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="tMessage"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
+        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
         public void Start(
             Type tMessage,
             long? checkpoint = null,
@@ -96,7 +98,7 @@ namespace ReactiveDomain.Foundation
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
+        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
         public void Start<TAggregate>(
                         long? checkpoint = null,
                         bool blockUntilLive = false,
@@ -118,7 +120,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="id"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
+        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
         public void Start<TAggregate>(
                         Guid id,
                         long? checkpoint = null,
@@ -139,7 +141,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="streamName"></param>
         /// <param name="checkpoint"></param>
         /// <param name="blockUntilLive"></param>
-        /// <param name="waitToken">Cancelation token to cancel waiting if blockUntilLive is true</param>
+        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
         public virtual void Start(
                             string streamName,
                             long? checkpoint = null,
