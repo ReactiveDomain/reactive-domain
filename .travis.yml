@@ -3,6 +3,9 @@ language: csharp
 os: windows
 mono: none
 
+env:
+  - MSBUILD_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
+
 branches:
   only:
     - master
@@ -14,6 +17,7 @@ addons:
       - powershell
 
 before_script:
+  - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
   - powershell -executionpolicy unrestricted -File ./tools/CheckAssemblyVersion.ps1
   
 script: 
