@@ -76,7 +76,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) {
+        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) {
             if (_getReader != null) {
                 using (var reader = _getReader()) {
                     reader.EventStream.SubscribeToAll(_queue);
@@ -96,7 +96,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
+        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource {
             if (_getReader != null) {
                 using (var reader = _getReader()) {
                     reader.EventStream.SubscribeToAll(_queue);
@@ -115,7 +115,7 @@ namespace ReactiveDomain.Foundation {
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
+        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource {
             if (_getReader != null) {
                 using (var reader = _getReader()) {
                     reader.EventStream.SubscribeToAll(_queue);

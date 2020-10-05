@@ -17,7 +17,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default);
+        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken));
 
         /// <summary>
         /// Starts listening on an aggregate root stream
@@ -27,7 +27,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource;
 
         /// <summary>
         /// Starts listening on a Aggregate Category Stream
@@ -36,6 +36,6 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource;
     }
 }
