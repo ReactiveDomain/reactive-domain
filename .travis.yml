@@ -29,8 +29,9 @@ script:
   - echo $TRAVIS_EVENT_TYPE
   - echo $STABLE
   - dotnet restore ./src/ReactiveDomain.sln
-  - $MSBUILD_EXE ./src/ReactiveDomain.sln -p:Configuration=Debug
-  - $MSBUILD_EXE ./src/ReactiveDomain.sln -p:Configuration=Release
+  - echo $MSBUILD_EXE
+  - "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MsBuild.exe" ./src/ReactiveDomain.sln -p:Configuration=Debug
+  - "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MsBuild.exe" ./src/ReactiveDomain.sln -p:Configuration=Release
   - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
