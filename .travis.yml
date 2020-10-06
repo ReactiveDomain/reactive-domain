@@ -5,6 +5,7 @@ mono: none
 
 env:
   - MSBUILD_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
+  - MSBUILD_EXE="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MsBuild.exe"
 
 branches:
   only:
@@ -28,8 +29,8 @@ script:
   - echo $TRAVIS_EVENT_TYPE
   - echo $STABLE
   - dotnet restore ./src/ReactiveDomain.sln
-  - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Debug
-  - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Release
+  - $MSBUILD_EXE ./src/ReactiveDomain.sln -p:Configuration=Debug
+  - $MSBUILD_EXE ./src/ReactiveDomain.sln -p:Configuration=Release
   - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.PrivateLedger.Tests/ReactiveDomain.PrivateLedger.Tests.csproj
