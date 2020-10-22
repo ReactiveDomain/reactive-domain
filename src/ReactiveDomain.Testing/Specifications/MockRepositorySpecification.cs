@@ -13,14 +13,18 @@ namespace ReactiveDomain.Testing
         public IStreamNameBuilder StreamNameBuilder { get; }
         public IStreamStoreConnection StreamStoreConnection { get; }
         public IEventSerializer EventSerializer { get; }
+        public IConfiguredConnection ConfiguredConnection { get; }
+        public string Schema { get; set; } = "Test";
 
         public MockRepositorySpecification()
         {
-            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-            StreamStoreConnection = new MockStreamStoreConnection("Test");
+            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(Schema);
+            StreamStoreConnection = new MockStreamStoreConnection(Schema);
             StreamStoreConnection.Connect();
             EventSerializer = new JsonMessageSerializer();
             MockRepository = new StreamStoreRepository(StreamNameBuilder, StreamStoreConnection, EventSerializer);
+
+            ConfiguredConnection = new ConfiguredConnection(StreamStoreConnection, StreamNameBuilder, EventSerializer);
 
             var connectorBus = new InMemoryBus("connector");
             StreamStoreConnection.SubscribeToAll(evt => {

@@ -2,48 +2,29 @@
 <package>
   <metadata>
     <id>ReactiveDomain.UI.Testing</id>
-    <version>0.8.21.1</version>
+    <version>0.8.22.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain UI assemblies for unit testing</description>
-    <copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</copyright>
+    <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
     <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
+      <group targetFramework="net472">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.Testing" version="0.8.21.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.8.21.1" exclude="Build,Analyzers" />			
-      </group>
-      <group targetFramework=".NETFramework4.7.2">
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.Testing" version="0.8.21.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.8.21.1" exclude="Build,Analyzers" />		
-      </group>
-      <group targetFramework=".NETStandard2.0">	
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.Testing" version="0.8.21.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.8.21.1" exclude="Build,Analyzers" />			
+        <dependency id="ReactiveDomain.Testing" version="0.8.22.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.UI" version="0.8.22.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
-	<references>
-		<group targetFramework=".NETFramework4.5.2">
-			<reference file="ReactiveDomain.UI.Testing.dll" />				
-		</group>
-		<group targetFramework=".NETFramework4.7.2">
-			<reference file="ReactiveDomain.UI.Testing.dll" />						
-		</group>
-		<group targetFramework=".NETStandard2.0">
-			<reference file="ReactiveDomain.UI.Testing.dll" />						
-		</group>	
-	</references>  	
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0" />
-    </frameworkAssemblies>	
+    <references>     
+      <group targetFramework="net472">
+        <reference file="ReactiveDomain.UI.Testing.dll" />
+      </group>
+    </references>   
   </metadata>
   <files>
-    <file src="..\bld\Release\net452\ReactiveDomain.UI.Testing.dll" target="lib\net452" />	
-    <file src="..\bld\Release\net472\ReactiveDomain.UI.Testing.dll" target="lib\net472" />		
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.UI.Testing.dll" target="lib\netstandard2.0" />
-  </files>  
+    <file src="..\bld\Release\net472\ReactiveDomain.UI.Testing.dll" target="lib\net472" />
+    <file src="..\bld\Release\net472\ReactiveDomain.UI.Testing.dll" target="ref\net472" />
+    <file src="..\bld\Release\net472\ReactiveDomain.UI.Testing.pdb" target="lib\net472" />
+  </files>
 </package>

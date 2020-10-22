@@ -2,58 +2,30 @@
 <package>
   <metadata>
     <id>ReactiveDomain.Testing</id>
-    <version>0.8.21.1</version>
+    <version>0.8.22.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes ReactiveDomain assemblies needed for unit testing</description>
-    <copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</copyright>
-    <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
-        <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.visualstudio" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain" version="0.8.21.8" exclude="Build,Analyzers" />
-      </group>
-      <group targetFramework=".NETFramework4.7.2">
+    <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
+    <dependencies>      
+      <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.visualstudio" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain" version="0.8.21.8" exclude="Build,Analyzers" />
-      </group>
-      <group targetFramework=".NETStandard2.0">
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
-        <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain" version="0.8.21.8" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
-    <references>
-      <group targetFramework=".NETFramework4.5.2">
+    <references>     
+      <group targetFramework="netstandard2.0">
         <reference file="ReactiveDomain.Testing.dll" />
-        <reference file="ReactiveDomain.Testing.pdb" />
       </group>
-      <group targetFramework=".NETFramework4.7.2">
-        <reference file="ReactiveDomain.Testing.dll" />
-        <reference file="ReactiveDomain.Testing.pdb" />
-      </group>
-      <group targetFramework=".NETStandard2.0">
-        <reference file="ReactiveDomain.Testing.dll" />
-        <reference file="ReactiveDomain.Testing.pdb" />
-      </group>
-    </references>
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0" />
-    </frameworkAssemblies>
+    </references>   
   </metadata>
   <files>
-    <file src="..\bld\Debug\net452\ReactiveDomain.Testing.dll" target="lib\net452" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Testing.dll" target="lib\net472" />
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Testing.pdb" target="lib\net452" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Testing.pdb" target="lib\net472" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.dll" target="ref\netstandard2.0" />
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.pdb" target="lib\netstandard2.0" />
   </files>
 </package>

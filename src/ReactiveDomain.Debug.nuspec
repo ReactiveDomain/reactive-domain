@@ -2,111 +2,64 @@
 <package>
   <metadata>
     <id>ReactiveDomain</id>
-    <version>0.8.21.1</version>
+    <version>0.8.22.0</version>
     <authors>PerkinElmer,Linedata</authors>
-    <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Core assemblies</description>
-    <copyright>Copyright © 2014-2019 PerkinElmer, Linedata Inc.</copyright>
     <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
-        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
-        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />	  
-        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
-        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />		
-      </group>
-      <group targetFramework=".NETFramework4.7.2">
-        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
-        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />	  
-        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
-        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />		
-      </group>
-      <group targetFramework=".NETStandard2.0">
-        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
-        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />	  
-        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
-        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />		
+      <group targetFramework="netstandard2.0">
+        <dependency id="EventStore.Client" version="5.0.9" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client.Embedded" version="5.0.9" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.1" exclude="Build,Analyzers" />
+        <dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices" version="5.0.0" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices.AccountManagement" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.PerformanceCounter" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
+        <dependency id="DynamicData" version="7.1.17" exclude="Build,Analyzers" />
       </group>
     </dependencies>
-	<references>
-		<group targetFramework=".NETFramework4.5.2">
-			<reference file="ReactiveDomain.Core.dll" />
-			<reference file="ReactiveDomain.Foundation.dll" />
-			<reference file="ReactiveDomain.Messaging.dll" />
-			<reference file="ReactiveDomain.Persistence.dll" />
-			<reference file="ReactiveDomain.PrivateLedger.dll" />		
-			<reference file="ReactiveDomain.Transport.dll" />
-			<reference file="ReactiveDomain.Core.pdb" />
-			<reference file="ReactiveDomain.Foundation.pdb" />
-			<reference file="ReactiveDomain.Messaging.pdb" />
-			<reference file="ReactiveDomain.Persistence.pdb" />
-			<reference file="ReactiveDomain.PrivateLedger.pdb" />		
-			<reference file="ReactiveDomain.Transport.pdb" />		
-		</group>
-		<group targetFramework=".NETFramework4.7.2">
-			<reference file="ReactiveDomain.Core.dll" />
-			<reference file="ReactiveDomain.Foundation.dll" />
-			<reference file="ReactiveDomain.Messaging.dll" />
-			<reference file="ReactiveDomain.Persistence.dll" />
-			<reference file="ReactiveDomain.PrivateLedger.dll" />		
-			<reference file="ReactiveDomain.Transport.dll" />
-			<reference file="ReactiveDomain.Core.pdb" />
-			<reference file="ReactiveDomain.Foundation.pdb" />
-			<reference file="ReactiveDomain.Messaging.pdb" />
-			<reference file="ReactiveDomain.Persistence.pdb" />
-			<reference file="ReactiveDomain.PrivateLedger.pdb" />		
-			<reference file="ReactiveDomain.Transport.pdb" />				
-		</group>
-		<group targetFramework=".NETStandard2.0">
-			<reference file="ReactiveDomain.Core.dll" />
-			<reference file="ReactiveDomain.Foundation.dll" />
-			<reference file="ReactiveDomain.Messaging.dll" />
-			<reference file="ReactiveDomain.Persistence.dll" />
-			<reference file="ReactiveDomain.PrivateLedger.dll" />		
-			<reference file="ReactiveDomain.Transport.dll" />
-			<reference file="ReactiveDomain.Core.pdb" />
-			<reference file="ReactiveDomain.Foundation.pdb" />
-			<reference file="ReactiveDomain.Messaging.pdb" />
-			<reference file="ReactiveDomain.Persistence.pdb" />
-			<reference file="ReactiveDomain.PrivateLedger.pdb" />		
-			<reference file="ReactiveDomain.Transport.pdb" />			
-		</group>	
-	</references>  	
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0" />
-    </frameworkAssemblies>	
+    <references>
+      <group targetFramework="netstandard2.0">
+        <reference file="ReactiveDomain.Core.dll" />
+        <reference file="ReactiveDomain.Foundation.dll" />
+        <reference file="ReactiveDomain.Identity.dll" />
+        <reference file="ReactiveDomain.Messaging.dll" />
+        <reference file="ReactiveDomain.Persistence.dll" />
+        <reference file="ReactiveDomain.Policy.dll" />
+        <reference file="ReactiveDomain.Transport.dll" />
+        <reference file="ReactiveDomain.Users.dll" />      
+      </group>
+    </references>
   </metadata>
   <files>
-    <file src="..\bld\Debug\net452\ReactiveDomain.Core.dll" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Foundation.dll" target="lib\net452" />  
-    <file src="..\bld\Debug\net452\ReactiveDomain.Messaging.dll" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Persistence.dll" target="lib\net452" />	
-    <file src="..\bld\Debug\net452\ReactiveDomain.PrivateLedger.dll" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Transport.dll" target="lib\net452" />		
-    <file src="..\bld\Debug\net472\ReactiveDomain.Core.dll" target="lib\net472" />	
-    <file src="..\bld\Debug\net472\ReactiveDomain.Foundation.dll" target="lib\net472" />  
-    <file src="..\bld\Debug\net472\ReactiveDomain.Messaging.dll" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Persistence.dll" target="lib\net472" />	
-    <file src="..\bld\Debug\net472\ReactiveDomain.PrivateLedger.dll" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Transport.dll" target="lib\net472" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Core.pdb" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Foundation.pdb" target="lib\net452" />  
-    <file src="..\bld\Debug\net452\ReactiveDomain.Messaging.pdb" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Persistence.pdb" target="lib\net452" />	
-    <file src="..\bld\Debug\net452\ReactiveDomain.PrivateLedger.pdb" target="lib\net452" />
-    <file src="..\bld\Debug\net452\ReactiveDomain.Transport.pdb" target="lib\net452" />		
-    <file src="..\bld\Debug\net472\ReactiveDomain.Core.pdb" target="lib\net472" />	
-    <file src="..\bld\Debug\net472\ReactiveDomain.Foundation.pdb" target="lib\net472" />  
-    <file src="..\bld\Debug\net472\ReactiveDomain.Messaging.pdb" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Persistence.pdb" target="lib\net472" />	
-    <file src="..\bld\Debug\net472\ReactiveDomain.PrivateLedger.pdb" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.Transport.pdb" target="lib\net472" />	
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Core.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Foundation.dll" target="lib\netstandard2.0" />  
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Foundation.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Identity.dll" target="lib\netstandard2.0" />
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Messaging.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Persistence.dll" target="lib\netstandard2.0" />	
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.PrivateLedger.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Transport.dll" target="lib\netstandard2.0" />	
-  </files>  
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Persistence.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Transport.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Users.dll" target="lib\netstandard2.0" />
+    
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Core.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Foundation.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Identity.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Messaging.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Persistence.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Transport.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Users.dll" target="ref\netstandard2.0" />
+    
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Core.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Foundation.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Identity.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Messaging.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Persistence.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Transport.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Users.pdb" target="lib\netstandard2.0" />
+  </files>
 </package>

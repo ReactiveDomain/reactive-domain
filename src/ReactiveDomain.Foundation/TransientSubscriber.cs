@@ -24,9 +24,15 @@ namespace ReactiveDomain.Foundation
         {
             _eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
         }
+        protected TransientSubscriber(ICommandSubscriber subscriber)
+        {
+            _commandSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+        }
 
         protected void Subscribe<T>(IHandle<T> handler) where T : class, IMessage
         {
+            if (_eventSubscriber == null) throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with EventBus to register on.");
+
             _subscriptions.Add(_eventSubscriber.Subscribe<T>(handler));
         }
 

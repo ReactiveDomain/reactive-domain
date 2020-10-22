@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ci.build.imports" />
+  <PropertyGroup>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <Version>0.8.23-beta58</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4.Storage" Version="4.1.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.DirectoryServices" Version="5.0.0" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="5.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
+  </ItemGroup>
+</Project>
