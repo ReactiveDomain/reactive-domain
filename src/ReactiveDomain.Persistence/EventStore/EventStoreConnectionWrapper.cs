@@ -17,8 +17,8 @@ namespace ReactiveDomain.EventStore
         {
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
             EsConnection = eventStoreConnection;
-            EsConnection.Connected += ConnOnConnected;
-            EsConnection.Disconnected += ConnOnDisconnected;
+            //EsConnection.Connected += ConnOnConnected;
+            //EsConnection.Disconnected += ConnOnDisconnected;
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
@@ -34,11 +34,13 @@ namespace ReactiveDomain.EventStore
         }
 
         public string ConnectionName => EsConnection.ConnectionName;
-
+        private bool _connected;
         public void Connect()
         {
+            if(_connected){ return;}
             try {
                 EsConnection.ConnectAsync().Wait();
+                _connected = true;
             }
             catch (AggregateException aggregate) {
                 if (aggregate.InnerException is CannotEstablishConnectionException) {

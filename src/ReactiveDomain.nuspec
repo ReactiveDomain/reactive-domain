@@ -4,7 +4,6 @@
     <id>ReactiveDomain</id>
     <version>0.8.23.0</version>
     <authors>PerkinElmer,Linedata</authors>
-    <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Core assemblies</description>

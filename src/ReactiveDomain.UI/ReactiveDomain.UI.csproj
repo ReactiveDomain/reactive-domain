@@ -1,26 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
  
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
-    <PackageReference Include="reactiveui" Version="9.22.1" Condition="'$(TargetFramework)'=='net472'" />
-    <PackageReference Include="reactiveui" Version="9.22.1" Condition="'$(TargetFramework)'=='netstandard2.0'" />
+    <PackageReference Include="reactiveui" Version="9.22.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
-    <Compile Remove="ViewObjects\Threading.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="">
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net452'" />
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net472'" />
+  <ItemGroup>    
+    <Reference Include="PresentationFramework"/>
   </ItemGroup>
 </Project>

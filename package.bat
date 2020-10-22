@@ -1,3 +1,5 @@
-REM Update the versions in ./src/build.props and here then run this
-msbuild src\ReactiveDomain.sln /p:"PackageVersion=0.8.21" /t:"Restore;Build"
+del .\nupkgs\*.* /q
+dotnet restore .\src\ReactiveDomain.sln
+dotnet build .\src\ReactiveDomain.sln -c Debug
+powershell -Command "& {.\tools\CreateDebugNuget.ps1 -beta246}"
 

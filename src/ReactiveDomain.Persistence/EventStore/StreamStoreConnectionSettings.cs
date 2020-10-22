@@ -4,6 +4,7 @@ using System.Net;
 using EventStore.ClientAPI;
 using ReactiveDomain.Util;
 using ReactiveDomain.Logging;
+using System;
 
 namespace ReactiveDomain.EventStore
 {
@@ -43,12 +44,16 @@ namespace ReactiveDomain.EventStore
 
         /// <summary>
         /// The host name of the server expected on the TLS certificate.
+        /// Deprecated and will be removed in future release
         /// </summary>
+        [Obsolete]
         public readonly string TargetHost;
 
         /// <summary>
         /// Whether to validate the server TLS certificate.
+        /// Deprecated and will be removed in future release
         /// </summary>
+        [Obsolete]
         public readonly bool ValidateServer;
 
         /// <summary>

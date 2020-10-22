@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PolicyTool": {
+      "commandName": "Project",
+      "commandLineArgs": "add-app --app-name PolicyManager --secret ChangeIt"
+    }
+  }
+}

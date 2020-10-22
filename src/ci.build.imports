@@ -1,4 +1,3 @@
 <Project>
     <Import Project="build.props" Condition="$(BuildPropsImported) == ''" />
-    <Import Project="build.targets" Condition="$(BuildTargetsImported) == ''" />    
 </Project>
