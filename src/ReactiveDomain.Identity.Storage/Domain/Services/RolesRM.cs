@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using Splat;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// Represents all of the configured roles.
@@ -22,10 +22,10 @@ namespace Elbe.Domain
         /// <summary>
         /// Represents all of the configured roles.
         /// </summary>
-        public RolesRM()
+        public RolesRM(Func<string, IListener> getListener)
             : base(
                 nameof(RolesRM),
-                () => Locator.Current.GetService<Func<string, IListener>>().Invoke(nameof(RolesRM)))
+                () => getListener(nameof(RolesRM)))
         {
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);

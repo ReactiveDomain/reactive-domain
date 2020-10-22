@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using Splat;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// A read model that contains a list of existing users. 
@@ -25,10 +25,10 @@ namespace Elbe.Domain
         /// <summary>
         /// Create a read model for getting information about existing users.
         /// </summary>
-        public UsersRM()
+        public UsersRM(Func<string, IListener> getListener)
             : base(
                 nameof(UsersRM),
-                () => Locator.Current.GetService<Func<string, IListener>>().Invoke(nameof(UsersRM)))
+                () => getListener(nameof(UsersRM)))
         {
             EventStream.Subscribe<UserMsgs.UserCreated>(this);
             EventStream.Subscribe<UserMsgs.UserMigrated>(this);

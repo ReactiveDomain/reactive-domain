@@ -1,10 +1,9 @@
 ﻿using System;
-using Elbe.Messages;
-using ReactiveDomain;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Aggregates
 {
     /// <summary>
     /// Aggregate for a Role.

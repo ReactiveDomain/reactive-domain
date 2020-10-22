@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Security.Claims;
 
-namespace Elbe.STS
+namespace ReactiveDomain.Identity.Storage.STS
 {
     public class User
     {

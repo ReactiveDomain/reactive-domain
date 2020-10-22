@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using Splat;
 
-namespace Elbe.Domain
+
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// A read model that contains a list of existing applications. 
     /// </summary>
-    public class ApplicationsRM :
-        ReadModelBase,
+    public class ApplicationsRM : ReadModelBase, 
         IHandle<ApplicationMsgs.ApplicationRegistered>
     {
         private List<ApplicationModel> Applications { get; } = new List<ApplicationModel>();
@@ -20,10 +20,10 @@ namespace Elbe.Domain
         /// <summary>
         /// Create a read model for getting information about existing applications.
         /// </summary>
-        public ApplicationsRM()
+        public ApplicationsRM(Func<string, IListener> getListener)
             : base(
                 nameof(ApplicationsRM),
-                () => Locator.Current.GetService<Func<string, IListener>>().Invoke(nameof(ApplicationsRM)))
+                () => getListener(nameof(ApplicationsRM)))
         {
 
             // ReSharper disable once RedundantTypeArgumentsOfMethod

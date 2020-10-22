@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 
-namespace Elbe
+namespace ReactiveDomain.Identity.Storage
 {
     public static class ActiveDirectoryUserSearch
     {

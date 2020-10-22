@@ -1,11 +1,12 @@
 ﻿using System;
-using Elbe.Messages;
-using NLog;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// The service that fronts the Application aggregate.
@@ -24,13 +25,15 @@ namespace Elbe.Domain
         /// </summary>
         /// <param name="repo">The repository for interacting with the EventStore.</param>
         /// <param name="bus">The dispatcher.</param>
+        /// <param name="getListener">the listener source for the contained read models</param>
         public ApplicationSvc(
             IRepository repo,
-            IDispatcher bus)
+            IDispatcher bus,
+            Func<string, IListener> getListener)
             : base(bus)
         {
             _repo = new CorrelatedStreamStoreRepository(repo);
-            _applicationsRm = new ApplicationsRM();
+            _applicationsRm = new ApplicationsRM(getListener);
 
             Subscribe<ApplicationMsgs.RegisterApplication>(this);
             

@@ -1,11 +1,11 @@
-﻿
-using Elbe.Messages;
+﻿using System;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// The service that fronts the role aggregate.
@@ -21,11 +21,12 @@ namespace Elbe.Domain
         /// Create a service to act on Role aggregates.
         /// </summary>
         public RoleSvc(IRepository repo,
-            IDispatcher bus)
+            IDispatcher bus,
+            Func<string, IListener> getListener)
             : base(bus)
         {
             _repo = new CorrelatedStreamStoreRepository(repo);
-            _rolesRM = new RolesRM();
+            _rolesRM = new RolesRM(getListener);
 
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<RoleMsgs.CreateRole>(this);

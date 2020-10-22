@@ -1,14 +1,11 @@
 ﻿using System;
-using Elbe.Domain;
-using NLog;
-using ReactiveDomain;
-using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging.Bus;
-using Splat;
 using System.Reflection;
+using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Services;
+using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Logging;
 
-
-namespace Elbe
+namespace ReactiveDomain.Identity.Storage
 {
     /// <summary>
     /// The bootstrapper for Elbe. Use this to configure Elbe as a library or to run it as an application.
@@ -17,7 +14,7 @@ namespace Elbe
     {
         internal const string LogName = "PKI-Elbe";
         private static string _assemblyName;
-        private static readonly NLog.ILogger Log = LogManager.GetLogger(LogName);
+        private static readonly ILogger Log = LogManager.GetLogger(LogName);
 
         private static IStreamStoreConnection _esConnection;
         private static StreamStoreRepository _repo;
@@ -27,6 +24,7 @@ namespace Elbe
         private static ApplicationSvc _applicationSvc;
         private static ApplicationConfigurationSvc _applicationConfigurationSvc;
         public static string Schema = "pki_elbe";
+        public static Func<string, IListener> _getListener;
 
         /// <summary>
         /// Create an Elbe Bootstrap instance.
@@ -63,18 +61,18 @@ namespace Elbe
                             new PrefixedCamelCaseStreamNameBuilder(Schema),
                             esConnection,
                             new JsonMessageSerializer());
-            Locator.CurrentMutable.RegisterConstant(esConnection, typeof(IStreamStoreConnection));
+            
 
-            IListener Listner(string s) => new QueuedStreamListener(nameof(s), 
-                                        (IStreamStoreConnection) Locator.Current.GetService(typeof(IStreamStoreConnection)),
+            _getListener = (string s) => new QueuedStreamListener(nameof(s), 
+                                        _esConnection,
                                         new PrefixedCamelCaseStreamNameBuilder(Schema),
                                         new JsonMessageSerializer());
-            Locator.CurrentMutable.RegisterConstant((Func <string, IListener>) Listner, typeof(Func<string, IListener>));
+            
            
-            _userSvc = new UserSvc(_repo, bus);
-            _roleSvc = new RoleSvc(_repo, bus);
-            _applicationSvc = new ApplicationSvc(_repo, bus);
-            _applicationConfigurationSvc = new ApplicationConfigurationSvc(bus);
+            _userSvc = new UserSvc(_repo, bus,_getListener);
+            _roleSvc = new RoleSvc(_repo, bus,_getListener);
+            _applicationSvc = new ApplicationSvc(_repo, bus,_getListener);
+            _applicationConfigurationSvc = new ApplicationConfigurationSvc(bus,_getListener);
         }
 
        

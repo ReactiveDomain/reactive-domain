@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Elbe
+﻿namespace ReactiveDomain.Identity.Storage
 {
     /// <summary>
     /// The class which has constant defined. Contansts defined in this class can be used in different projects which are using Elbe.

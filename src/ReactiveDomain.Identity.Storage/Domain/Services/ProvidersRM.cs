@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using Splat;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     public class ProvidersRM :
         ReadModelBase,
         IHandle<ExternalProviderMsgs.ProviderCreated>
     {
         private string _stream => new PrefixedCamelCaseStreamNameBuilder(Bootstrap.Schema).GenerateForEventType(nameof(ExternalProviderMsgs.ProviderCreated));
-        public ProvidersRM()
+        public ProvidersRM(Func<string, IListener> getListener)
             : base(
                 nameof(ProvidersRM),
-                () => Locator.Current.GetService<Func<string, IListener>>().Invoke(nameof(UsersRM)))
+                () => getListener(nameof(UsersRM)))
         {
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             EventStream.Subscribe<ExternalProviderMsgs.ProviderCreated>(this);

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
-using Elbe.Messages;
-using NLog;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Messages;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// The service that handles ApplicationMsgs.ConfigureApplication.
@@ -18,6 +18,7 @@ namespace Elbe.Domain
         private static readonly ILogger Log = LogManager.GetLogger(Bootstrap.LogName);
         private readonly UsersRM _usersRm;
         private readonly IDispatcher _bus;
+        private readonly Func<string, IListener> _getListener;
         private readonly ApplicationsRM _applicationsRm;
 
         /// <summary>
@@ -25,12 +26,14 @@ namespace Elbe.Domain
         /// </summary>
         /// <param name="bus">The dispatcher.</param>
         public ApplicationConfigurationSvc(
-            IDispatcher bus)
+            IDispatcher bus,
+            Func<string, IListener> getListener)
             : base(bus)
         {
-            _usersRm = new UsersRM();
+            _usersRm = new UsersRM(getListener);
             _bus = bus;
-            _applicationsRm = new ApplicationsRM();
+            _getListener = getListener;
+            _applicationsRm = new ApplicationsRM(_getListener);
             Subscribe<ApplicationMsgs.ConfigureApplication>(this);
         }
 
@@ -63,16 +66,16 @@ namespace Elbe.Domain
             }
             if (_applicationsRm.ApplicationExists(command.Name)) return command.Succeed();
             RegisterApplication(_bus, command);
-            CreateRoles(_bus, command);
+            CreateRoles(_bus, command, _getListener);
             var validUserSid = ActiveDirectoryUserSearch.TryFindUserSid(command.DefaultUser, command.DefaultDomain,
                 out var userSidFromAuthProvider);
-            var userId = CreateUser(_bus, command, userSidFromAuthProvider);
+            var userId = CreateUser(_bus, command, userSidFromAuthProvider,_getListener);
             ActivateUser(_bus, userId);
-            AssignRoleToUser(_bus, command.SecAdminRole, command.Name, userId);
+            AssignRoleToUser(_bus, command.SecAdminRole, command.Name, userId, _getListener);
             if (command.OneRolePerUser) return command.Succeed();
             foreach (var role in command.DefaultUserRoles.Where(u => u != command.SecAdminRole))
             {
-                AssignRoleToUser(_bus, role, command.Name, userId);
+                AssignRoleToUser(_bus, role, command.Name, userId, _getListener);
             }
 
             if (command.AuthProvider == Constants.AuthenticationProviderAD && !validUserSid)
@@ -98,10 +101,10 @@ namespace Elbe.Domain
                 responseTimeout: TimeSpan.FromSeconds(60));
 
         }
-        private static Guid CreateUser(IDispatcher bus, ApplicationMsgs.ConfigureApplication command,string userSid)
+        private static Guid CreateUser(IDispatcher bus, ApplicationMsgs.ConfigureApplication command,string userSid,Func<string, IListener> getListener)
         {
             Guid userId;
-            using (var usersRM = new UsersRM())
+            using (var usersRM = new UsersRM(getListener))
             {
                 // Create only if user doesn't exist.
                 if (usersRM.TryGetUserId(command.AuthProvider, command.DefaultDomain, command.DefaultUser, string.Empty,
@@ -137,9 +140,9 @@ namespace Elbe.Domain
                 responseTimeout: TimeSpan.FromSeconds(60));
         }
 
-        private static void AssignRoleToUser(IDispatcher bus, string role, string application, Guid userId)
+        private static void AssignRoleToUser(IDispatcher bus, string role, string application, Guid userId,Func<string, IListener> getListener)
         {
-            using (var rolesRM = new Elbe.Domain.RolesRM())
+            using (var rolesRM = new RolesRM(getListener))
             {
                 if (rolesRM.TryGetRoleId(role, application, out var roleId))
                 {
@@ -151,9 +154,9 @@ namespace Elbe.Domain
                 }
             }
         }
-        private static void CreateRoles(IDispatcher bus, ApplicationMsgs.ConfigureApplication command)
+        private static void CreateRoles(IDispatcher bus, ApplicationMsgs.ConfigureApplication command,Func<string, IListener> getListener)
         {
-            using (var rolesRM = new Elbe.Domain.RolesRM())
+            using (var rolesRM = new RolesRM(getListener))
             {
                 foreach (var role in command.Roles)
                 {

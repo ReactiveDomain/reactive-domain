@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Elbe
+namespace ReactiveDomain.Identity.Storage
 {
     /// <summary>
     /// Throw this exception when a user lookup returns no results.

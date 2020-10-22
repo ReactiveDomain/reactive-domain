@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Mail;
-using Elbe.Messages;
-using NLog.LayoutRenderers;
-using ReactiveDomain;
+using ReactiveDomain.Identity.Storage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Aggregates
 {
     /// <summary>
     /// Aggregate for a User.

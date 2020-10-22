@@ -1,7 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 
-namespace Elbe.Messages
+namespace ReactiveDomain.Identity.Storage.Messages
 {
     /// <summary>
     /// Messages for the Role domain.

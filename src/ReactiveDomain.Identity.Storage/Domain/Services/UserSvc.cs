@@ -1,11 +1,12 @@
 ﻿using System;
-using Elbe.Messages;
-using NLog;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Storage.Domain.Aggregates;
+using ReactiveDomain.Identity.Storage.Messages;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain.Services
 {
     /// <summary>
     /// The service that fronts the User aggregate.
@@ -44,12 +45,13 @@ namespace Elbe.Domain
         /// <param name="bus">The dispatcher.</param>
         public UserSvc(
             IRepository repo,
-            IDispatcher bus)
+            IDispatcher bus,
+            Func<string, IListener> getListener)
             : base(bus)
         {
             _repo = new CorrelatedStreamStoreRepository(repo);
-            _usersRm = new UsersRM();
-            _providersRM = new ProvidersRM();
+            _usersRm = new UsersRM(getListener);
+            _providersRM = new ProvidersRM(getListener);
 
             Subscribe<UserMsgs.CreateUser>(this);
             Subscribe<IdentityMsgs.UserAuthenticated>(this);

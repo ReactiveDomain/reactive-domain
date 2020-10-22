@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 
-namespace Elbe
+namespace ReactiveDomain.Identity.Storage
 {
     /// <summary>
     /// The class provides the methods to enumerate domains. Methods defined in this class can be used in different projects which are using Elbe.

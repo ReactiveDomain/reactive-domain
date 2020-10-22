@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Identity.Storage.Domain
 {
     /// <summary>
     /// An attempt was made to add a duplicate user to the system.
