@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI", "Reacti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI.Testing", "ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj", "{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Identity.Storage", "ReactiveDomain.Identity.Storage\ReactiveDomain.Identity.Storage.csproj", "{C51EECE1-EC21-4BFF-9EC0-050D3CD8A4E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C51EECE1-EC21-4BFF-9EC0-050D3CD8A4E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C51EECE1-EC21-4BFF-9EC0-050D3CD8A4E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C51EECE1-EC21-4BFF-9EC0-050D3CD8A4E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C51EECE1-EC21-4BFF-9EC0-050D3CD8A4E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
