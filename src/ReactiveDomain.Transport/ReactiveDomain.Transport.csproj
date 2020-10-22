@@ -1,15 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <BuildWithNet40>true</BuildWithNet40>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">  
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" Condition="'$(TargetFramework)'!='net40'" />
-    <Reference Include="Microsoft.CSharp" Condition="'$(TargetFramework)'=='net40'" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
     <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>

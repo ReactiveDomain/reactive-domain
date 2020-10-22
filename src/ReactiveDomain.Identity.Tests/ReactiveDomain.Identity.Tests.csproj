@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../ci.build.imports" />
+    <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+      <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Remove="Helpers\**" />
+      <Compile Remove="Logging\**" />
+      <Compile Remove="PolicyBuilder\**" />
+      <EmbeddedResource Remove="Helpers\**" />
+      <EmbeddedResource Remove="Logging\**" />
+      <EmbeddedResource Remove="PolicyBuilder\**" />
+      <None Remove="Helpers\**" />
+      <None Remove="Logging\**" />
+      <None Remove="PolicyBuilder\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="ApplicationAggregateTests.cs" />
+      <Compile Remove="ApplicationServiceTests.cs" />
+      <Compile Remove="ExternalProviderAggregateTests.cs" />
+      <Compile Remove="RoleAggregateTests.cs" />
+      <Compile Remove="RoleServiceTests.cs" />
+      <Compile Remove="UserAggregateTests.cs" />
+      <Compile Remove="UserEntitlementRMTests.cs" />
+      <Compile Remove="UserServiceTests.cs" />
+      <Compile Remove="UsersRMTests.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+      <PackageReference Include="xunit" Version="2.4.1" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
+      <PackageReference Include="xunit.runner.console" Version="2.4.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" Condition="'$(TargetFramework)'!='netstandard2.1'">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    </ItemGroup>
+  </Project>

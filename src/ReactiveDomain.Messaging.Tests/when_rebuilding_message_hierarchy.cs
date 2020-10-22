@@ -1,17 +1,17 @@
 ﻿using System;
-using System.CodeDom.Compiler;
+using System.IO;
 using System.Linq;
-using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests {
 
-#if !(NETCOREAPP2_0 || NETSTANDARD2_0)    
-
     // ReSharper disable InconsistentNaming
-    public class when_rebuilding_message_hierarchy {
+    public sealed class when_rebuilding_message_hierarchy:IDisposable {
+        private string _filePath;
         sealed class TestMsg : IMessage {
             public Guid MsgId { get; private set; }
             public TestMsg()
@@ -19,9 +19,10 @@ namespace ReactiveDomain.Messaging.Tests {
                 MsgId = Guid.NewGuid();
             }
         }
-        private Assembly GetDynamicAssembly() {
+        private void LoadDynamicAssembly() {
             var needed = new[] {
                 "mscorlib",
+                "netstandard",
                 "Newtonsoft.Json",
                 "System",
                 "System.Core",
@@ -29,24 +30,38 @@ namespace ReactiveDomain.Messaging.Tests {
                 "ReactiveDomain.Messaging",
                 "ReactiveDomain.Core",
                 "System.Numerics",
-                "System.Xml"};
+                "System.Xml"
+            };
         
             var assemblies = (AppDomain.CurrentDomain
                 .GetAssemblies()
-                .Where(a => needed.Contains(a.GetName().Name,StringComparer.OrdinalIgnoreCase))
-                .Select(a => a.Location)).ToArray();
-            CompilerParameters parameters = new CompilerParameters {
-                OutputAssembly = $"TestDynamicAssembly.dll"};
+                .Where(reference => needed.Contains(reference.GetName().Name,StringComparer.OrdinalIgnoreCase))
+                .Select(reference => reference.Location)).Select(file => (MetadataReference)MetadataReference.CreateFromFile(file)).ToArray();
 
-            parameters.ReferencedAssemblies.AddRange(assemblies);
+            var compilation = CSharpCompilation.Create("TestDynamicAssembly")
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                .AddReferences(assemblies)
+                .AddSyntaxTrees(CSharpSyntaxTree.ParseText(
+                    @"using ReactiveDomain.Messaging; namespace SimpleMsg { public class DynamicMessage : Message { } }"));
 
-            var code = @"using ReactiveDomain.Messaging; namespace SimpleMsg { public class DynamicMessage : Message { } }";
-            CompilerResults r = CodeDomProvider.CreateProvider("CSharp").CompileAssemblyFromSource(parameters, code);
-            return r.CompiledAssembly;
+            _filePath =  AppDomain.CurrentDomain.BaseDirectory + $"\\TestDynamicAssembly{Guid.NewGuid()}.dll";
+
+            var emitResult =compilation.Emit(_filePath);
+            if(!emitResult.Success)
+            {
+                foreach(var diagnostic in emitResult.Diagnostics)
+                {
+                    Console.WriteLine(diagnostic.ToString());
+                }
+            }
+
+            AppDomain.CurrentDomain.Load("TestDynamicAssembly");
         }
+#if(NET48)
         [Fact]
-        public void can_dynamicly_add_types_without_clearing_handlers() {
-            
+        public void can_dynamically_add_types_without_clearing_handlers()
+        {
+
             var bus = InMemoryBus.CreateTest();
 
             var fired = false;
@@ -54,19 +69,27 @@ namespace ReactiveDomain.Messaging.Tests {
 
             bus.Publish(new TestMsg());
             Assert.True(fired);
-            
-            AppDomain.CurrentDomain.Load(GetDynamicAssembly().GetName());
+
+            LoadDynamicAssembly();
             var messageType = MessageHierarchy.GetTypeByName("DynamicMessage");
             Assert.Equal("DynamicMessage", messageType[0].Name);
             Assert.True(messageType.Count == 1);
-           
+
             fired = false;
             bus.Publish(new TestMsg());
-            AssertEx.IsOrBecomesTrue(()=> fired);
-
-
+            AssertEx.IsOrBecomesTrue(() => fired);
+        }
+#endif
+        public void Dispose() {
+            if (!File.Exists(_filePath)) return;
+            try {
+                File.Delete(_filePath);
+            }
+            catch {
+                // ignored
+            }
         }
     }
     // ReSharper restore InconsistentNaming
-#endif
+
 }

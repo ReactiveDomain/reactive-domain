@@ -42,18 +42,22 @@ if ($buildType -eq "debug")
  
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
-$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net472\ReactiveDomain.Core.dll"
+$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\netstandard2.0\ReactiveDomain.Core.dll"
 $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
 $ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
 $ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing" + $nuspecExtension
 $ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI" + $nuspecExtension
 $ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing" + $nuspecExtension
 
+$RDCoreProject = $PSScriptRoot + "\..\src\ReactiveDomain.Core\ReactiveDomain.Core.csproj"
 $RDFoundationProject = $PSScriptRoot + "\..\src\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj"
+$RDIdentityProject = $PSScriptRoot + "\..\src\ReactiveDomain.Identity\ReactiveDomain.Identity.csproj"
 $RDMessagingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj"
-$RDPersistenceProject = $PSScriptRoot + "\..\src\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj"
+$RDPolicyProject = $PSScriptRoot + "\..\src\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj"
 $RDPrivateLedgerProject = $PSScriptRoot + "\..\src\ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj"
+$RDPersistenceProject = $PSScriptRoot + "\..\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
 $RDTransportProject = $PSScriptRoot + "\..\src\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj"
+$RDUsersProject = $PSScriptRoot + "\..\src\ReactiveDomain.User\ReactiveDomain.Users.csproj"
 
 $ReactiveDomainTestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
 $RDUIProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
@@ -125,11 +129,7 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     {
         $compOperator = "!="
     }
-
-    if ($currentCondition -match "net452")
-    {
-        $currentFramework = "net452"
-    }
+       
 
     if ($currentCondition -match "net472")
     {
@@ -162,34 +162,13 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
-
-
-    $f452 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='.NETFramework4.5.2']"
-    $framework452Nodes = $f452.Node.ChildNodes
-
-    $f472 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='.NETFramework4.7.2']"
+        
+    $f472 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net472']"
     $framework472Nodes = $f472.Node.ChildNodes
 
-    $netstandard2 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='.NETStandard2.0']"
+    $netstandard2 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='netstandard2.0']"
     $netstandard2Nodes = $netstandard2.Node.ChildNodes
-
-    foreach($refnode in $framework452Nodes)
-    {
-        if ( $refnode.id -match "ReactiveDomain")
-        {
-            $refnode.version = $RDVersion
-            continue
-        }
-
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net452"
-        if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net452") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net452")) -and
-            ($pRef.version -ne ""))
-        {
-            $refnode.version = $pRef.Version
-        }       
-    }
+       
 
     foreach($refnode in $framework472Nodes)
     {
@@ -238,11 +217,15 @@ Write-Host "Update nuget.exe"
 # Update the dependency versions in the nuspec files ****************************************************
 
 # These all go into updating the main ReactiveDomain.nuspec
+UpdateDependencyVersions $ReactiveDomainNuspec $RDCoreProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDFoundationProject  
+UpdateDependencyVersions $ReactiveDomainNuspec $RDIdentityProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDMessagingProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPersistenceProject 
+UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyProject 
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPrivateLedgerProject 
 UpdateDependencyVersions $ReactiveDomainNuspec $RDTransportProject 
+UpdateDependencyVersions $ReactiveDomainNuspec $RDUsersProject
 
 # These go into updating the ReactiveDomainUI.nuspec
 UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 

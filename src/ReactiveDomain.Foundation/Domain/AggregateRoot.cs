@@ -1,19 +1,28 @@
 ﻿using System;
+using ReactiveDomain.Foundation.Domain;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain
 {
     public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventSource
     {
-        public AggregateRoot() { }
-        public AggregateRoot(ICorrelatedMessage source = null)
+        protected AggregateRoot() { }
+
+        protected AggregateRoot(ICorrelatedMessage source = null)
         {
             if (source == null) { return; }
             _correlationId = source.CorrelationId;
             _causationId = source.MsgId;
         }
-        
+
+        internal void RegisterChild(ChildEntity childAggregate, out Action<object> raise, out EventRouter router) {
+            Ensure.NotNull(childAggregate, nameof(childAggregate));
+            raise = Raise;
+            router = Router;
+        }
+
         private Guid _correlationId;
         private Guid _causationId;
         ICorrelatedMessage ICorrelatedEventSource.Source

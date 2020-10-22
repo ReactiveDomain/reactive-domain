@@ -14,7 +14,8 @@ namespace ReactiveDomain.Foundation
     {
 
         public static readonly JsonSerializerSettings StandardSerializerSettings;
-        public JsonSerializerSettings SerializerSettings {
+        public JsonSerializerSettings SerializerSettings
+        {
             get => _serializerSettings ?? StandardSerializerSettings;
             set => _serializerSettings = value;
         }
@@ -25,12 +26,14 @@ namespace ReactiveDomain.Foundation
         public Assembly AssemblyOverride { get; set; }
         public bool ThrowOnTypeNotFound { get; set; }
 
-        static JsonMessageSerializer() {
+        static JsonMessageSerializer()
+        {
             var contractResolver = new DefaultContractResolver();
 #pragma warning disable 618
             contractResolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
 #pragma warning restore 618
-            StandardSerializerSettings = new JsonSerializerSettings() {
+            StandardSerializerSettings = new JsonSerializerSettings()
+            {
                 ContractResolver = contractResolver,
                 TypeNameHandling = TypeNameHandling.Auto,
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
@@ -38,7 +41,7 @@ namespace ReactiveDomain.Foundation
                 DefaultValueHandling = DefaultValueHandling.Ignore,
                 MissingMemberHandling = MissingMemberHandling.Ignore,
                 Converters = new JsonConverter[] { new StringEnumConverter() }
-            };
+            };           
         }
 
         /// <summary>
@@ -46,24 +49,28 @@ namespace ReactiveDomain.Foundation
         /// streams in EventStore. consumers are urged to create dedicated serializers that implement IEventSerializer
         /// for any custom needs, such as seamless event upgrades
         /// </summary>
-        public JsonMessageSerializer(JsonMessageSerializerSettings messageSerializerSettings = null) {
+        public JsonMessageSerializer(JsonMessageSerializerSettings messageSerializerSettings = null)
+        {
             if (messageSerializerSettings == null) { messageSerializerSettings = new JsonMessageSerializerSettings(); }
             FullyQualify = messageSerializerSettings.FullyQualify;
             AssemblyOverride = messageSerializerSettings.AssemblyOverride;
             ThrowOnTypeNotFound = messageSerializerSettings.ThrowOnTypeNotFound;
         }
-        public EventData Serialize(object @event, IDictionary<string, object> headers = null) {
+        public EventData Serialize(object @event, IDictionary<string, object> headers = null)
+        {
             if (headers == null) { headers = new Dictionary<string, object>(); }
 
 
-            if (!headers.ContainsKey(EventClrTypeHeader)) {
+            if (!headers.ContainsKey(EventClrTypeHeader))
+            {
                 headers.Add(EventClrTypeHeader, @event.GetType().Name);
             }
 
-            if (!headers.ContainsKey(EventClrQualifiedTypeHeader)) {
-                var qualifiedName = FullyQualify
-                    ? @event.GetType().AssemblyQualifiedName
-                    : $"{@event.GetType().FullName},{@event.GetType().Assembly.GetName()}";
+            if (!headers.ContainsKey(EventClrQualifiedTypeHeader))
+            {
+                string qualifiedName;
+                if (FullyQualify) { qualifiedName = @event.GetType().AssemblyQualifiedName; }
+                else { qualifiedName = $"{@event.GetType().FullName},{@event.GetType().Assembly.GetName()}"; }
                 headers.Add(EventClrQualifiedTypeHeader, qualifiedName);
             }
 
@@ -75,50 +82,64 @@ namespace ReactiveDomain.Foundation
             return new EventData(Guid.NewGuid(), typeName, true, data, metadata);
         }
 
-        public object Deserialize(IEventData @event) {
+        public object Deserialize(IEventData @event)
+        {
             var clrQualifiedName = (string)JObject.Parse(Encoding.UTF8.GetString(@event.Metadata))
                                                     .Property(EventClrQualifiedTypeHeader).Value;
             return Deserialize(@event, clrQualifiedName);
         }
 
-        public object Deserialize(IEventData @event, string fullyQualifiedName) {
-            if (string.IsNullOrWhiteSpace(fullyQualifiedName)) {
+        public object Deserialize(IEventData @event, string fullyQualifiedName)
+        {
+            return Deserialize(@event, FindType(fullyQualifiedName));
+        }
+        public Type FindType(string fullyQualifiedName)
+        {
+            if (string.IsNullOrWhiteSpace(fullyQualifiedName))
+            {
                 throw new ArgumentNullException(nameof(fullyQualifiedName), $"{fullyQualifiedName} cannot be null, empty, or whitespace");
             }
             var nameParts = fullyQualifiedName.Split(',');
             var fullName = nameParts[0];
             var assemblyName = nameParts[1];
             Type targetType;
-            if (AssemblyOverride != null) {
+            if (AssemblyOverride != null)
+            {
                 targetType = AssemblyOverride.GetType(fullName);
-                if (ThrowOnTypeNotFound && targetType == null) {
+                if (ThrowOnTypeNotFound && targetType == null)
+                {
                     throw new InvalidOperationException($"Type not found for {fullName} in overridden assembly {AssemblyOverride.FullName}");
                 }
-                return Deserialize(@event, targetType);
+                return targetType;
             }
-            if (FullyQualify) {
+            if (FullyQualify)
+            {
                 targetType = Type.GetType(fullyQualifiedName);
-                if (ThrowOnTypeNotFound && targetType == null) {
+                if (ThrowOnTypeNotFound && targetType == null)
+                {
                     throw new InvalidOperationException($"Type not found for {fullyQualifiedName}");
                 }
-                return Deserialize(@event, targetType);
+                return targetType;
             }
 
             var partialQualifiedName = $"{fullName},{assemblyName}";
             targetType = Type.GetType(partialQualifiedName);
-            if (ThrowOnTypeNotFound && targetType == null) {
+            if (ThrowOnTypeNotFound && targetType == null)
+            {
                 throw new InvalidOperationException($"Type not found for {partialQualifiedName}");
             }
-            return Deserialize(@event, targetType);
+            return targetType;
         }
 
-        public object Deserialize(IEventData @event, Type type) {
+        public object Deserialize(IEventData @event, Type type)
+        {
             return JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(@event.Data),
                 type,
                 SerializerSettings);
         }
-        public TEvent Deserialize<TEvent>(IEventData @event) {
+        public TEvent Deserialize<TEvent>(IEventData @event)
+        {
             return (TEvent)JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(@event.Data),
                 typeof(TEvent),
