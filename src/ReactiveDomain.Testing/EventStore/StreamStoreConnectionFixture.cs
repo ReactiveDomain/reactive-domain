@@ -6,7 +6,7 @@ using System.Threading;
 using ReactiveDomain.Util;
 using ReactiveDomain.EventStore;
 using EventStore.ClientAPI;
-#if !(NETCOREAPP2_0 || NETSTANDARD2_0 || NET452)
+#if !(NETCOREAPP2_1 || NETSTANDARD2_1 || NET452)
 using EventStore.ClientAPI.Embedded;
 using EventStore.Common.Options;
 #endif
@@ -28,7 +28,7 @@ namespace ReactiveDomain.Testing {
             return;
 #endif
 
-#if NETCOREAPP2_0 || NETSTANDARD2_0 || NET452
+#if NETCOREAPP2_1 || NETSTANDARD2_1 || NET452
 
             Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
             Connection.Connect();
