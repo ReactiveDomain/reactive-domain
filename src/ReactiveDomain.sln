@@ -13,10 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Transport", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Transport.Tests", "ReactiveDomain.Transport.Tests\ReactiveDomain.Transport.Tests.csproj", "{64019A5E-C83F-45C4-BD31-76E344DBB65D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger", "ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj", "{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger.Tests", "ReactiveDomain.PrivateLedger.Tests\ReactiveDomain.PrivateLedger.Tests.csproj", "{C39A595E-7D1A-44B4-B341-3BC7300544E7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation.Tests", "ReactiveDomain.Foundation.Tests\ReactiveDomain.Foundation.Tests.csproj", "{7BC72991-F211-4487-8BF4-364A12CF4CC2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation", "ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj", "{836CEAAF-B5AE-42B8-9DE7-C4B12B66F716}"
@@ -32,6 +28,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Users", "ReactiveDomain.Users\ReactiveDomain.Users.csproj", "{76D9FAF1-0DAC-489B-8ADA-15DCEDC30CE9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Users.Tests", "ReactiveDomain.Users.Tests\ReactiveDomain.Users.Tests.csproj", "{F8F45ABF-9DA6-47E3-AD5C-3263538DC83C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elbe", "Elbe", "{754EE0C8-3D40-424B-8319-A30F844633D6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elbe", "..\..\..\PKI\user-role-mgmt\Elbe\Elbe\Elbe.csproj", "{73303ADA-8043-425E-954D-9520CA243CF1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elbe.STS", "..\..\..\PKI\user-role-mgmt\Elbe\Elbe.STS\Elbe.STS.csproj", "{1CE9BF42-D34B-408B-9470-77AA29AA2611}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.IdentityServer4.Storage", "ReactiveDomain.IdentityServer4.Storage\ReactiveDomain.IdentityServer4.Storage.csproj", "{E6C1DD03-7D9E-4D8E-B080-3CDF8ACEBF89}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elbe.WPF", "..\..\..\PKI\user-role-mgmt\Elbe\Elbe.WPF\Elbe.WPF.csproj", "{1FA5199E-711D-4787-A8BB-45C810E78D3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,14 +65,6 @@ Global
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -99,9 +97,27 @@ Global
 		{F8F45ABF-9DA6-47E3-AD5C-3263538DC83C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8F45ABF-9DA6-47E3-AD5C-3263538DC83C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8F45ABF-9DA6-47E3-AD5C-3263538DC83C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73303ADA-8043-425E-954D-9520CA243CF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73303ADA-8043-425E-954D-9520CA243CF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73303ADA-8043-425E-954D-9520CA243CF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CE9BF42-D34B-408B-9470-77AA29AA2611}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CE9BF42-D34B-408B-9470-77AA29AA2611}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CE9BF42-D34B-408B-9470-77AA29AA2611}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6C1DD03-7D9E-4D8E-B080-3CDF8ACEBF89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6C1DD03-7D9E-4D8E-B080-3CDF8ACEBF89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6C1DD03-7D9E-4D8E-B080-3CDF8ACEBF89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6C1DD03-7D9E-4D8E-B080-3CDF8ACEBF89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FA5199E-711D-4787-A8BB-45C810E78D3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FA5199E-711D-4787-A8BB-45C810E78D3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FA5199E-711D-4787-A8BB-45C810E78D3A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{73303ADA-8043-425E-954D-9520CA243CF1} = {754EE0C8-3D40-424B-8319-A30F844633D6}
+		{1CE9BF42-D34B-408B-9470-77AA29AA2611} = {754EE0C8-3D40-424B-8319-A30F844633D6}
+		{1FA5199E-711D-4787-A8BB-45C810E78D3A} = {754EE0C8-3D40-424B-8319-A30F844633D6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A26933AD-7714-40D1-99F2-0523BBF3182F}

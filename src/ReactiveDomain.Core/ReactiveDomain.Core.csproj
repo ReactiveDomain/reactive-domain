@@ -1,8 +1,5 @@
 
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <BuildWithNet40>true</BuildWithNet40>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">  
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>

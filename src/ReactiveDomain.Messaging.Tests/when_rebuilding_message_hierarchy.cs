@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests {
 
-#if !(NETCOREAPP2_1 || NETSTANDARD2_1)    
+#if !(NETCOREAPP3_1 || NETSTANDARD2_1 || NETSTANDARD2_1)    
 
     // ReSharper disable InconsistentNaming
     public class when_rebuilding_message_hierarchy {
