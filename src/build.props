@@ -54,7 +54,7 @@
       <When Condition="$(OS) == 'WINDOWS_NT'">
         <PropertyGroup>
           <LibTargetFrameworks>netstandard2.1;net48</LibTargetFrameworks>
-          <TestTargetFrameworks>netcoreapp3.1;net48</TestTargetFrameworks>
+          <TestTargetFrameworks>netcoreapp2.1;net48</TestTargetFrameworks>
         </PropertyGroup>
       </When>
       <When Condition=" $(OS) != 'WINDOWS_NT'">
