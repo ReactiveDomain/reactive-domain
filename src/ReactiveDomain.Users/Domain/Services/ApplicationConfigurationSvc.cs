@@ -18,6 +18,7 @@ namespace Elbe.Domain
         private readonly UsersRM _usersRm;
         private readonly Func<IListener> _getListener;
         private readonly IDispatcher _bus;
+        private readonly string _adAuthprovider;
         private readonly ApplicationsRM _applicationsRm;
 
         /// <summary>
@@ -26,12 +27,14 @@ namespace Elbe.Domain
         /// <param name="bus">The dispatcher.</param>
         public ApplicationConfigurationSvc(
             Func<IListener> getListener,
-            IDispatcher bus)
+            IDispatcher bus,
+            string AdAuthprovider)
             : base(bus)
         {
             _usersRm = new UsersRM(getListener);
             _getListener = getListener;
             _bus = bus;
+            _adAuthprovider = AdAuthprovider;
             _applicationsRm = new ApplicationsRM(getListener);
             Subscribe<ApplicationMsgs.ConfigureApplication>(this);
         }
@@ -77,7 +80,7 @@ namespace Elbe.Domain
                 AssignRoleToUser(_getListener,_bus, role, command.Name, userId);
             }
 
-            if (command.AuthProvider == Constants.AuthenticationProviderAD && !validUserSid)
+            if (command.AuthProvider == _adAuthprovider && !validUserSid)
             {
                 return command.Fail(new Exception(
                     $"User: {command.DefaultUser} doesn't exist in domain: {command.DefaultDomain}. Please create the user before logging-in."));

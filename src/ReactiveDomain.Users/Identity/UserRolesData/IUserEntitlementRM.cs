@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PKIStsServer.UserRolesData
+namespace ReactiveDomain.Users.Identity.UserRolesData
 {
     public interface IUserEntitlementRM
     {

@@ -7,7 +7,7 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users;
 
-namespace PKIStsServer.UserRolesData
+namespace ReactiveDomain.Users.Identity.UserRolesData
 {
     /// <summary>
     /// A read model that contains a list of users and their respective roles.
@@ -29,7 +29,7 @@ namespace PKIStsServer.UserRolesData
 
         private List<UserModel> Users { get; } = new List<UserModel>();
         private List<RoleModel> Roles { get; } = new List<RoleModel>();
-        private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(Elbe.Domain.User));
+        private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
         private string _roleStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(Role));
 
         /// <summary>
