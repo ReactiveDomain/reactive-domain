@@ -46,7 +46,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Services
 
             }
         }
-        private async Task<ClaimsPrincipal> GetClaimsAsync(string clientId, IdentityUser user)
+        private async Task<ClaimsPrincipal> GetClaimsAsync(string clientId, SubjectDTO user)
         {
             if (user == null)
             {
@@ -64,7 +64,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Services
             });
         }
 
-        private List<Claim> GetClaimsForUser(string clientId, IdentityUser user)
+        private List<Claim> GetClaimsForUser(string clientId, SubjectDTO user)
         {
             var claims = new List<Claim>();
             try
@@ -85,9 +85,9 @@ namespace ReactiveDomain.IdentityServer4.Storage.Services
                 //Logger.LogInformation(unEx.Message);
             }
             // Add other claims to the list
-            if (user.Claims != null)
+            if (user.Roles != null)
             {
-                claims.AddRange(user.Claims);
+                claims.AddRange(user.Roles);
             }
             return claims;
         }

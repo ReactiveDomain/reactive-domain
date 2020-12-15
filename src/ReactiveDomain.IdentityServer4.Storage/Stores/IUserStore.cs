@@ -10,9 +10,9 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
     {
         CredentialValidationResult ValidateCredentials(string domain, string username, string password);
 
-        Task<IdentityUser> FindBySubjectId(string subjectId);
+        Task<SubjectDTO> FindBySubjectId(string subjectId);
 
-        IdentityUser FindByUsername(string domain, string username);
+        SubjectDTO FindByUsername(string domain, string username);
 
         // Summary:
         //     Finds the user by external provider.
@@ -23,10 +23,10 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
         //
         //   userId:
         //     The user identifier.
-        IdentityUser FindByExternalProvider(string provider, string userId);
+        SubjectDTO FindByExternalProvider(string provider, string userId);
 
         int GetUserCount();
-        IdentityUser AutoProvisionUser(string provider, string providerUserId, List<Claim> list);
+        SubjectDTO AutoProvisionUser(string provider, string providerUserId, List<Claim> list);
         bool AddEventClaims(string subjectId, List<Claim> list);
 
     }

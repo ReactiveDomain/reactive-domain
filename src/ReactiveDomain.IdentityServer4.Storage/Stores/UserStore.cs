@@ -13,7 +13,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
     public class UserStore : IUserStore
     {
         
-        readonly List<IdentityUser> _users = new List<IdentityUser>();
+        readonly List<SubjectDTO> _users = new List<SubjectDTO>();
 
         
         public CredentialValidationResult ValidateCredentials(string domainName, string userName, string password)
@@ -42,7 +42,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
                             bool authSucceeded = principalContext.ValidateCredentials(userName, password, options);
                             if (authSucceeded)
                             {
-                                IdentityUser newUser = GetPKIStsUserFromUserPrincipal(domainName, userPrincipal);
+                                SubjectDTO newUser = GetPKIStsUserFromUserPrincipal(domainName, userPrincipal);
                                 if (newUser != null)
                                 {
                                     // refresh our list with the user we just got.
@@ -85,7 +85,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
             return credentialValidationResult;
         }
 
-        private IdentityUser GetPKIStsUserFromUserPrincipal(string domainName, UserPrincipal user)
+        private SubjectDTO GetPKIStsUserFromUserPrincipal(string domainName, UserPrincipal user)
         {
             string userName = domainName != null ? $"{domainName}\\{user.SamAccountName}" : user.SamAccountName;
             string firstName = user.GivenName;
@@ -93,7 +93,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
             string displayName = user.DisplayName;
             string email = user.EmailAddress;
 
-            var pkiStsUser = new IdentityUser
+            var pkiStsUser = new SubjectDTO
             {
                 SubjectId = user.Sid.ToString(),
                 Username = user.SamAccountName,
@@ -102,11 +102,11 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
                 ProviderSubjectId = user.Context.ConnectedServer,
                 Claims = new List<Claim>()
             };
-            pkiStsUser.Claims.Add(new Claim(JwtClaimTypes.Name, userName));
-            pkiStsUser.Claims.Add(new Claim(JwtClaimTypes.GivenName, firstName ?? string.Empty));
-            pkiStsUser.Claims.Add(new Claim(JwtClaimTypes.FamilyName, lastName ?? string.Empty));
-            pkiStsUser.Claims.Add(new Claim(JwtClaimTypes.PreferredUserName, displayName ?? string.Empty));
-            pkiStsUser.Claims.Add(new Claim(JwtClaimTypes.Email, email ?? string.Empty));
+            pkiStsUser.Roles.Add(new Claim(JwtClaimTypes.Name, userName));
+            pkiStsUser.Roles.Add(new Claim(JwtClaimTypes.GivenName, firstName ?? string.Empty));
+            pkiStsUser.Roles.Add(new Claim(JwtClaimTypes.FamilyName, lastName ?? string.Empty));
+            pkiStsUser.Roles.Add(new Claim(JwtClaimTypes.PreferredUserName, displayName ?? string.Empty));
+            pkiStsUser.Roles.Add(new Claim(JwtClaimTypes.Email, email ?? string.Empty));
             return pkiStsUser;
         }
 
@@ -114,22 +114,22 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
         {
             return _users.Count;
         }
-        public async Task<IdentityUser> FindBySubjectId(string subjectId)
+        public async Task<SubjectDTO> FindBySubjectId(string subjectId)
         {
             return await Task.Factory.StartNew(() =>
             {
                 return _users.FirstOrDefault(x => x.SubjectId == subjectId);
             });
         }
-        public IdentityUser FindByUsername(string domain, string userName)
+        public SubjectDTO FindByUsername(string domain, string userName)
         {
             var contextType = string.IsNullOrEmpty(domain) || domain.Equals(Environment.MachineName, StringComparison.CurrentCultureIgnoreCase) ? ContextType.Machine : ContextType.Domain;
-            IdentityUser user = FindUserBySamAccountName(userName, domain, contextType);
+            SubjectDTO user = FindUserBySamAccountName(userName, domain, contextType);
             return user;
         }
-        private IdentityUser FindUserBySamAccountName(string userName, string domainName, ContextType contextType)
+        private SubjectDTO FindUserBySamAccountName(string userName, string domainName, ContextType contextType)
         {
-            IdentityUser user = null;
+            SubjectDTO user = null;
             using (var context = new PrincipalContext(contextType))
             {
                 var userPrincipal = ActiveDirectoryUserSearch.FindUserPrincipal(userName, context).FirstOrDefault() as UserPrincipal;
@@ -141,18 +141,18 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
             return user;
         }
 
-        public IdentityUser FindByExternalProvider(string provider, string userId)
+        public SubjectDTO FindByExternalProvider(string provider, string userId)
         {
             return _users.FirstOrDefault(x => x.ProviderName == provider && x.SubjectId == userId);
         }
 
-        public IdentityUser AutoProvisionUser(string provider, string providerUserId, List<Claim> claims)
+        public SubjectDTO AutoProvisionUser(string provider, string providerUserId, List<Claim> claims)
         {
             var nameClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Name);
             var userName = nameClaim == null ? string.Empty : provider != null ? $"{provider}\\{nameClaim.Value}" : nameClaim.Value;
             var emailClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Email);
             var userEmail = emailClaim == null ? string.Empty : emailClaim.Value;
-            var user = new IdentityUser
+            var user = new SubjectDTO
             {
                 Username = userEmail,
                 DomainName = provider,
@@ -163,7 +163,7 @@ namespace ReactiveDomain.IdentityServer4.Storage.Stores
             };
             if (nameClaim != null)
             {
-                user.Claims[user.Claims.IndexOf(nameClaim)] = new Claim(JwtClaimTypes.Name, userName);
+                user.Roles[user.Roles.IndexOf(nameClaim)] = new Claim(JwtClaimTypes.Name, userName);
             }
             var existingUser = _users.FirstOrDefault(x => x.SubjectId == user.SubjectId);
             if (existingUser != null)

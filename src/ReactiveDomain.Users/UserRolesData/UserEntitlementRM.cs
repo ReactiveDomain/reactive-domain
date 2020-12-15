@@ -5,7 +5,6 @@ using Elbe.Domain;
 using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users;
 
 namespace ReactiveDomain.Users.Identity.UserRolesData
 {
