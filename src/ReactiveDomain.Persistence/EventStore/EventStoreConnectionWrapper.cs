@@ -17,8 +17,8 @@ namespace ReactiveDomain.EventStore
         {
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
             EsConnection = eventStoreConnection;
-            EsConnection.Connected += ConnOnConnected;
-            EsConnection.Disconnected += ConnOnDisconnected;
+            //EsConnection.Connected += ConnOnConnected;
+            //EsConnection.Disconnected += ConnOnDisconnected;
         }
 
         public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
