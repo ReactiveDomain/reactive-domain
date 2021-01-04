@@ -1,3 +1,4 @@
 REM Update the versions in ./src/build.props and here then run this
-msbuild src\ReactiveDomain.sln /p:"PackageVersion=0.8.22" /t:"Restore;Build"
+del .\nupkgs\*.*
+dotnet pack .\src\ReactiveDomain.sln -o nupkgs -p:PackageVersion=0.8.23-beta-2 -c Debug --include-symbols
 
