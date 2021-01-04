@@ -28,13 +28,13 @@
       <group targetFramework=".NETFramework4.7.2">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETStandard2.1">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
     </references>
   </metadata>
   <files>
     <file src="..\bld\Release\net48\ReactiveDomain.Testing.dll" target="lib\net48" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Testing.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Testing.dll" target="lib\netstandard2.1" />
   </files>
 </package>

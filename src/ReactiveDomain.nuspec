@@ -11,13 +11,13 @@
     <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework=".NETFramework4.8">
-        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client" version="5.0.9" exclude="Build,Analyzers" />
         <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
         <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
       </group>
-      <group targetFramework=".NETStandard2.0">
-        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+      <group targetFramework=".NETStandard2.1">
+        <dependency id="EventStore.Client" version="5.0.9" exclude="Build,Analyzers" />
         <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
         <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
@@ -29,15 +29,13 @@
         <reference file="ReactiveDomain.Foundation.dll" />
         <reference file="ReactiveDomain.Messaging.dll" />
         <reference file="ReactiveDomain.Persistence.dll" />
-        <reference file="ReactiveDomain.PrivateLedger.dll" />
         <reference file="ReactiveDomain.Transport.dll" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETStandard2.1">
         <reference file="ReactiveDomain.Core.dll" />
         <reference file="ReactiveDomain.Foundation.dll" />
         <reference file="ReactiveDomain.Messaging.dll" />
         <reference file="ReactiveDomain.Persistence.dll" />
-        <reference file="ReactiveDomain.PrivateLedger.dll" />
         <reference file="ReactiveDomain.Transport.dll" />
       </group>
     </references>
@@ -47,13 +45,11 @@
     <file src="..\bld\Release\net48\ReactiveDomain.Foundation.dll" target="lib\net48" />
     <file src="..\bld\Release\net48\ReactiveDomain.Messaging.dll" target="lib\net48" />
     <file src="..\bld\Release\net48\ReactiveDomain.Persistence.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.PrivateLedger.dll" target="lib\net48" />
     <file src="..\bld\Release\net48\ReactiveDomain.Transport.dll" target="lib\net48" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Core.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Foundation.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Messaging.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Persistence.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.PrivateLedger.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.Transport.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Core.dll" target="lib\netstandard2.1" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Foundation.dll" target="lib\netstandard2.1" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Messaging.dll" target="lib\netstandard2.1" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Persistence.dll" target="lib\netstandard2.1" />
+    <file src="..\bld\Release\netstandard2.1\ReactiveDomain.Transport.dll" target="lib\netstandard2.1" />
   </files>
 </package>

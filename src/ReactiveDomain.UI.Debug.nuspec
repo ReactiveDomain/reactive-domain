@@ -14,7 +14,7 @@
         <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="8.7.2" exclude="Build,Analyzers" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETStandard2.1">
         <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="8.7.2" exclude="Build,Analyzers" />
       </group>
@@ -24,7 +24,7 @@
         <reference file="ReactiveDomain.UI.dll" />
         <reference file="ReactiveDomain.UI.pdb" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETStandard2.1">
         <reference file="ReactiveDomain.UI.dll" />
         <reference file="ReactiveDomain.UI.pdb" />
       </group>
@@ -32,8 +32,8 @@
   </metadata>
   <files>
     <file src="..\bld\Debug\net48\ReactiveDomain.UI.dll" target="lib\net48" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.UI.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.UI.dll" target="lib\netstandard2.1" />
     <file src="..\bld\Debug\net48\ReactiveDomain.UI.pdb" target="lib\net48" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.UI.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.UI.pdb" target="lib\netstandard2.1" />
   </files>
 </package>
