@@ -25,7 +25,7 @@
       </group>
     </dependencies>
     <references>
-      <group targetFramework=".NETFramework4.7.2">
+      <group targetFramework=".NETFramework4.8">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
       <group targetFramework=".NETStandard2.1">

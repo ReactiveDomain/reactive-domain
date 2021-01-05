@@ -1,0 +1,59 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ReactiveDomain.IdentityStorage</id>
+    <version>0.8.22.0</version>
+    <authors>PerkinElmer,Linedata</authors>
+    <owners>PerkinElmer,Linedata</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>Package includes all ReactiveDomain Core assemblies</description>
+    <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
+    <dependencies>
+      <group targetFramework="netcoreapp3.1">
+        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
+        <dependency id="IdentityServer4" version="4.1.1" exclude="Build,Analyzers" />
+        <dependency id="IdentityServer4.Storage" version="4.1.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <references>
+      <!--TODO: Just reference the ReactiveDomain NuGet instead of pulling all these in again-->
+      <group targetFramework="netcoreapp3.1">
+        <reference file="ReactiveDomain.Core.dll" />
+        <reference file="ReactiveDomain.Foundation.dll" />
+        <reference file="ReactiveDomain.Messaging.dll" />
+        <reference file="ReactiveDomain.Persistence.dll" />
+        <reference file="ReactiveDomain.Transport.dll" />
+        <reference file="ReactiveDomain.Users.dll" />
+        <reference file="ReactiveDomain.IdentityServer4.Storage.dll" />
+        <reference file="ReactiveDomain.Core.pdb" />
+        <reference file="ReactiveDomain.Foundation.pdb" />
+        <reference file="ReactiveDomain.Messaging.pdb" />
+        <reference file="ReactiveDomain.Persistence.pdb" />
+        <reference file="ReactiveDomain.Transport.pdb" />
+        <reference file="ReactiveDomain.Users.pdb" />
+        <reference file="ReactiveDomain.IdentityServer4.Storage.pdb" />
+      </group>
+    </references>
+  </metadata>
+  <files>
+    <!--TODO: Just reference the ReactiveDomain NuGet instead of pulling all these in again-->
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Core.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Foundation.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Messaging.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Persistence.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Transport.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.IdentityServer4.Storage.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Core.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Foundation.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Messaging.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Persistence.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Transport.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.IdentityServer4.Storage.pdb" target="lib\netcoreapp3.1" />
+  </files>
+</package>
