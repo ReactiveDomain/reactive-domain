@@ -14,6 +14,7 @@ namespace ReactiveDomain.IdentityServer4.Storage {
         public ResourcesStore()
         {
             _resources.IdentityResources.Add(new IdentityResources.OpenId());
+            _resources.IdentityResources.Add(new IdentityResources.Profile());
             _resources.ApiScopes.Add(new ApiScope("api1", "My API"));
             _resources.ApiScopes.Add(new ApiScope("api2", "My Other API"));
         }
