@@ -18,8 +18,8 @@ namespace Elbe.Messages
             public readonly string AuthDomain;
             /// <summary>The username of the authenticated user.</summary>
             public readonly string UserName;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
+            /// <summary>The unique ID from the auth provider (e.g. Sub claim) of the authenticated user.</summary>
+            public readonly string SubjectId;
             /// <summary>The IP address of the host asking for authentication.</summary>
             public readonly string HostIPAddress;
 
@@ -29,19 +29,19 @@ namespace Elbe.Messages
             /// <param name="authProvider">The authentication provider.</param>
             /// <param name="authDomain">The domain in which the username exists.</param>
             /// <param name="userName">The username of the authenticated user.</param>
-            /// <param name="userSidFromAuthProvider">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>
+            /// <param name="subjectId">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>
             /// <param name="hostIPAddress">The IP address of the host asking for authentication.</param>
             public UserAuthenticated(
                 string authProvider,
                 string authDomain,
                 string userName,
-                string userSidFromAuthProvider,
+                string subjectId,
                 string hostIPAddress)
             {
                 UserName = userName;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
+                SubjectId = subjectId;
                 HostIPAddress = hostIPAddress;
             }
         }

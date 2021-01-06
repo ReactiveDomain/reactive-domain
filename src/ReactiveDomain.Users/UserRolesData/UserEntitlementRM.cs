@@ -21,7 +21,6 @@ namespace ReactiveDomain.Users.Identity.UserRolesData
         IHandle<UserMsgs.RoleAssigned>,
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
-        IHandle<UserMsgs.UserSidFromAuthProviderUpdated>,
         IHandle<UserMsgs.RoleUnassigned>, IUserEntitlementRM
     {
         public List<UserModel> ActivatedUsers => Users.FindAll(x => x.IsActivated);
@@ -47,7 +46,6 @@ namespace ReactiveDomain.Users.Identity.UserRolesData
             EventStream.Subscribe<UserMsgs.RoleUnassigned>(this);
             EventStream.Subscribe<UserMsgs.AuthDomainUpdated>(this);
             EventStream.Subscribe<UserMsgs.UserNameUpdated>(this);
-            EventStream.Subscribe<UserMsgs.UserSidFromAuthProviderUpdated>(this);
             Start(_roleStream, blockUntilLive: true);
             Start(_userStream, blockUntilLive: true);
         }
@@ -125,7 +123,7 @@ namespace ReactiveDomain.Users.Identity.UserRolesData
             Users.Add(new UserModel(
                             message.Id,
                             message.UserName,
-                            message.UserSidFromAuthProvider,
+                            message.SubjectId,
                             message.AuthDomain));
         }
 
@@ -191,14 +189,6 @@ namespace ReactiveDomain.Users.Identity.UserRolesData
             if (user != null)
             {
                 user.UserName = message.UserName;
-            }
-        }
-        public void Handle(UserMsgs.UserSidFromAuthProviderUpdated message)
-        {
-            var user = Users.FirstOrDefault(x => x.UserId == message.UserId);
-            if (user != null)
-            {
-                user.UserSidFromAuthProvider = message.UserSidFromAuthProvider;
             }
         }
     }

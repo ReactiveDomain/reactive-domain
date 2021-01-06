@@ -15,8 +15,8 @@ namespace Elbe.Messages
         {
             /// <summary>The unique ID of the new user.</summary>
             public readonly Guid Id;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
+            /// <summary>The unique ID from the auth provider (e.g. Sub claim) of the authenticated user.</summary>
+            public readonly string SubjectId;
             /// <summary>The identity provider.</summary>
             public readonly string AuthProvider;
             /// <summary>The user's domain.</summary>
@@ -36,7 +36,7 @@ namespace Elbe.Messages
             /// Create a new user.
             /// </summary>
             /// <param name="id">The unique ID of the new user.</param>
-            /// <param name="userSidFromAuthProvider">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>
+            /// <param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
             /// <param name="authProvider">The identity provider.</param>
             /// <param name="authDomain">The user's domain.</param>
             /// <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>
@@ -46,7 +46,7 @@ namespace Elbe.Messages
             /// <param name="fullName">user full name.</param>
             public CreateUser(
                 Guid id,
-                string userSidFromAuthProvider,
+                string subjectId,
                 string authProvider,
                 string authDomain,
                 string userName,
@@ -57,7 +57,7 @@ namespace Elbe.Messages
                 )
             {
                 Id = id;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
+                SubjectId = subjectId;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
                 UserName = userName;
@@ -76,8 +76,8 @@ namespace Elbe.Messages
         {
             /// <summary>The unique ID of the new user.</summary>
             public readonly Guid Id;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
+            /// <summary>The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</summary>
+            public readonly string SubjectId;
             /// <summary>The identity provider.</summary>
             public readonly string AuthProvider;
             /// <summary>The user's domain.</summary>
@@ -96,7 +96,7 @@ namespace Elbe.Messages
             /// A new user was created.
             /// </summary>
             /// <param name="id">The unique ID of the new user.</param>
-            ///<param name="userSidFromAuthProvider">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>
+            ///<param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
             /// <param name="authProvider">The identity provider.</param>
             /// <param name="authDomain">The user's domain.</param>
             /// <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>
@@ -106,7 +106,7 @@ namespace Elbe.Messages
             /// <param name="fullName">user full name.</param>
             public UserCreated(
                 Guid id,
-                string userSidFromAuthProvider,
+                string subjectId,
                 string authProvider,
                 string authDomain,
                 string userName,
@@ -117,7 +117,7 @@ namespace Elbe.Messages
                 )
             {
                 Id = id;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
+                SubjectId = subjectId;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
                 UserName = userName;
@@ -135,8 +135,8 @@ namespace Elbe.Messages
         {
             /// <summary>The unique ID of the user.</summary>
             public readonly Guid Id;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
+            /// <summary>The unique ID from the auth provider (e.g. Sub claim) of the authenticated user.</summary>
+            public readonly string SubjectId;
             /// <summary>The identity provider.</summary>
             public readonly string AuthProvider;
             /// <summary>The user's domain.</summary>
@@ -160,7 +160,7 @@ namespace Elbe.Messages
             /// User data was migrated.
             /// </summary>
             /// <param name="id">The unique ID of the new user.</param>
-            ///<param name="userSidFromAuthProvider">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>
+            ///<param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
             /// <param name="authProvider">The identity provider.</param>
             /// <param name="authDomain">The user's domain.</param>
             /// <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>
@@ -172,7 +172,7 @@ namespace Elbe.Messages
             ///<param name="eventCount">The number of Events migrated.</param>
             public UserMigrated(
                 Guid id,
-                string userSidFromAuthProvider,
+                string subjectId,
                 string authProvider,
                 string authDomain,
                 string userName,
@@ -184,7 +184,7 @@ namespace Elbe.Messages
                 int eventCount)
             {
                 Id = id;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
+                SubjectId = subjectId;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
                 UserName = userName;
@@ -656,48 +656,7 @@ namespace Elbe.Messages
                 Email = email;
             }
         }
-        /// <summary>
-        /// Update a user's UserSidFromAuthProvider.
-        /// </summary>
-        public class UpdateUserSidFromAuthProvider : Command
-        {
-            /// <summary>The unique ID of the user.</summary>
-            public readonly Guid UserId;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
-
-            /// <summary>
-            /// Modify a user's given name.
-            /// </summary>
-            /// <param name="userId">The unique ID of the user.</param>            
-            /// <param name="userSidFromAuthProvider">The user's UserSidFromAuthProvider.</param>           
-            public UpdateUserSidFromAuthProvider(Guid userId, string userSidFromAuthProvider)
-            {
-                UserId = userId;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
-            }
-        }
-
-        /// <summary>
-        /// UserSidFromAuthProvider of a user was updated.
-        /// </summary>
-        public class UserSidFromAuthProviderUpdated : Event
-        {
-            /// <summary>The unique ID of the user.</summary>
-            public readonly Guid UserId;
-            /// <summary>The unique ID from the auth provider (e.g. SID) of the authenticated user.</summary>
-            public readonly string UserSidFromAuthProvider;
-            /// <summary>
-            /// Give name of a user was modified.
-            /// </summary>
-            /// <param name="userId">The unique ID of the user.</param>           
-            /// <param name="UserSidFromAuthProvider">The unique ID from the auth provider (e.g. SID) of the authenticated user.</param>            
-            public UserSidFromAuthProviderUpdated(Guid userId, string userSidFromAuthProvider)
-            {
-                UserId = userId;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
-            }
-        }
+        
         /// <summary>
         /// Update a user's AuthDomain.
         /// </summary>

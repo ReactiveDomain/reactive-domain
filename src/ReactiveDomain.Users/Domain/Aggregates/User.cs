@@ -53,7 +53,7 @@ namespace Elbe.Domain
         /// </summary>
         public User(
             Guid id,
-            string userSidFromAuthProvider,
+            string subjectId,
             string authProvider,
             string authDomain,
             string userName,
@@ -68,6 +68,7 @@ namespace Elbe.Domain
             Ensure.NotNullOrEmpty(authProvider, nameof(authProvider));
             Ensure.NotNullOrEmpty(authDomain, nameof(authDomain));
             Ensure.NotNullOrEmpty(userName, nameof(userName));
+            Ensure.NotNullOrEmpty(subjectId, nameof(subjectId));
 
             // ReSharper disable once ObjectCreationAsStatement
             if (!string.IsNullOrEmpty(email))
@@ -81,7 +82,7 @@ namespace Elbe.Domain
             ((ICorrelatedEventSource)this).Source = source;
             Raise(new UserMsgs.UserCreated(
                          id,
-                         userSidFromAuthProvider,
+                         subjectId,
                          authProvider,
                          authDomain,
                          userName,
@@ -220,16 +221,7 @@ namespace Elbe.Domain
                         Id,
                         email));
         }
-        /// <summary>
-        /// Log the fact that a user's UserSidFromAuthProvider has been updated.
-        /// </summary>
-        public void UpdateUserSidFromAuthProvider(string userSidFromAuthProvider)
-        {
-            Ensure.NotNullOrEmpty(userSidFromAuthProvider, nameof(userSidFromAuthProvider));
-            Raise(new UserMsgs.UserSidFromAuthProviderUpdated(
-                        Id,
-                        userSidFromAuthProvider));
-        }
+       
         /// <summary>
         /// Log the fact that a user's AuthDomain has been updated.
         /// </summary>

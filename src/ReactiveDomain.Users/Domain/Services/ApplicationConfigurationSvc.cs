@@ -112,8 +112,11 @@ namespace Elbe.Domain
             Guid userId;
             using (var usersRM = new UsersRM(getListener))
             {
+                //todo:clc- address challenge with finding user without sub Claim
+                // do we need to do this?
+
                 // Create only if user doesn't exist.
-                if (usersRM.TryGetUserId(command.AuthProvider, command.DefaultDomain, command.DefaultUser, string.Empty,
+                if (usersRM.TryGetUserId(command.AuthProvider, command.DefaultDomain, command.DefaultUser, 
                     out userId)) return userId;
                 
                 userId = Guid.NewGuid();

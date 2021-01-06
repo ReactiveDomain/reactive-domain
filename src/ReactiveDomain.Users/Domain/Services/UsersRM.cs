@@ -4,6 +4,7 @@ using System.Linq;
 using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Util;
 
 namespace Elbe.Domain
 {
@@ -14,8 +15,7 @@ namespace Elbe.Domain
         ReadModelBase,
         IHandle<UserMsgs.UserCreated>,
         IHandle<UserMsgs.UserMigrated>,
-        IHandle<UserMsgs.UserNameUpdated>,
-        IHandle<UserMsgs.UserSidFromAuthProviderUpdated>
+        IHandle<UserMsgs.UserNameUpdated>
     {
         private Dictionary<Guid, UserModel> Users { get; } = new Dictionary<Guid, UserModel>();
         private readonly Dictionary<AuthDomain, HashSet<UserModel>> _userLookup = new Dictionary<AuthDomain, HashSet<UserModel>>();
@@ -30,7 +30,6 @@ namespace Elbe.Domain
             EventStream.Subscribe<UserMsgs.UserCreated>(this);
             EventStream.Subscribe<UserMsgs.UserMigrated>(this);
             EventStream.Subscribe<UserMsgs.UserNameUpdated>(this);
-            EventStream.Subscribe<UserMsgs.UserSidFromAuthProviderUpdated>(this);
             Start<User>(blockUntilLive: true);
         }
 
@@ -43,7 +42,7 @@ namespace Elbe.Domain
                 message.Id,
                 new AuthDomain(message.AuthProvider, message.AuthDomain),
                 message.UserName,
-                message.UserSidFromAuthProvider);
+                message.SubjectId);
 
             AddUser(model);
         }
@@ -57,7 +56,7 @@ namespace Elbe.Domain
                 message.Id,
                 new AuthDomain(message.AuthProvider, message.AuthDomain),
                 message.UserName,
-                message.UserSidFromAuthProvider);
+                message.SubjectId);
 
             AddUser(model);
         }
@@ -87,15 +86,7 @@ namespace Elbe.Domain
             if (!Users.TryGetValue(message.UserId, out var model)) { return; } //todo: what cases could this happen in?
             model.UserName = message.UserName;
         }
-        /// <summary>
-        /// Handle a UserMsgs.UserCreated event.
-        /// </summary>
-        public void Handle(UserMsgs.UserSidFromAuthProviderUpdated message)
-        {
-            if (!Users.TryGetValue(message.UserId, out var model)) { return; } //todo: what cases could this happen in?
-            model.UserName = message.UserSidFromAuthProvider;
-        }
-
+      
         /// <summary>
         /// Checks whether the specified user is known to the system.
         /// </summary>
@@ -111,16 +102,15 @@ namespace Elbe.Domain
         /// </summary>
         /// <param name="authProvider">The identity provider.</param>
         /// <param name="authDomain">The user's domain.</param>
-        /// <param name="userName">The user's unique username.</param>
-        /// <param name="userSidFromAuthProvider">The user's unique userSidFromAuthProvider.</param>
+        /// <param name="subjectId">The user's unique userSidFromAuthProvider.</param>
         /// <returns></returns>
         public bool UserExists(
             string authProvider,
             string authDomain,
-            string userName,
-            string userSidFromAuthProvider)
+            string subjectId,
+            out Guid userId)
         {
-            return TryGetUserId(authProvider, authDomain, userName, userSidFromAuthProvider, out _);
+            return TryGetUserId(authProvider, authDomain,  subjectId, out userId);
         }
 
         /// <summary>
@@ -128,17 +118,16 @@ namespace Elbe.Domain
         /// </summary>
         /// <param name="authProvider">The identity provider.</param>
         /// <param name="authDomain">The user's domain.</param>
-        /// <param name="userName">The user's unique username.</param>
-        /// <param name="userSidFromAuthProvider">The user's unique userSidFromAuthProvider.</param>
+        /// <param name="subjectId">The user's unique userSidFromAuthProvider.</param>
         /// <param name="id">The unique ID of the user.</param>
         /// <returns>True if a user with matching properties was found, otherwise false.</returns>
         public bool TryGetUserId(
             string authProvider,
             string authDomain,
-            string userName,
-            string userSidFromAuthProvider,
+            string subjectId,
             out Guid id)
         {
+            Ensure.NotNullOrEmpty(subjectId, nameof(subjectId));
             id = Guid.Empty;
             try
             {
@@ -148,10 +137,10 @@ namespace Elbe.Domain
                     return false;
                 }
 
-                if (!string.IsNullOrWhiteSpace(userSidFromAuthProvider))
+                if (!string.IsNullOrWhiteSpace(subjectId))
                 {
                     var user = users.FirstOrDefault(
-                            usr => string.Equals(usr.UserSidFromAuthProvider, userSidFromAuthProvider,
+                            usr => string.Equals(usr.SubjectId, subjectId,
                         StringComparison.OrdinalIgnoreCase));
                     if (user == null)
                     {
@@ -160,20 +149,6 @@ namespace Elbe.Domain
                     id = user.Id;
                     return true;
                 }
-
-                if (!string.IsNullOrWhiteSpace(userName))
-                {
-                    var name = userName.ToUpper();
-                    var user = users.FirstOrDefault(
-                        usr => string.Equals(usr.UserName, name, StringComparison.OrdinalIgnoreCase));
-                    if (user == null)
-                    {
-                        return false;
-                    }
-                    id = user.Id;
-                    return true;
-                }
-
                 return false;
             }
             catch (Exception)
@@ -194,18 +169,18 @@ namespace Elbe.Domain
                 set => _userName = value.ToUpper();
             }
 
-            public string UserSidFromAuthProvider { get; set; }
+            public string SubjectId { get; set; }
 
             public UserModel(
                 Guid id,
                 AuthDomain domain,
                 string userName,
-                string userSidFromAuthProvider)
+                string subjectId)
             {
                 Id = id;
                 Domain = domain;
                 UserName = userName;
-                UserSidFromAuthProvider = userSidFromAuthProvider;
+                SubjectId = subjectId;
             }
         }
 

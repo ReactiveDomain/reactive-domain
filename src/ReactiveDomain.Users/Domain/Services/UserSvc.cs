@@ -26,7 +26,6 @@ namespace Elbe.Domain
         IHandleCommand<UserMsgs.UpdateSurname>,
         IHandleCommand<UserMsgs.UpdateFullName>,
         IHandleCommand<UserMsgs.UpdateEmail>,
-        IHandleCommand<UserMsgs.UpdateUserSidFromAuthProvider>,
         IHandleCommand<UserMsgs.UpdateAuthDomain>,
         IHandleCommand<UserMsgs.UpdateUserName>
     {
@@ -66,7 +65,6 @@ namespace Elbe.Domain
             Subscribe<UserMsgs.UpdateSurname>(this);
             Subscribe<UserMsgs.UpdateFullName>(this);
             Subscribe<UserMsgs.UpdateEmail>(this);
-            Subscribe<UserMsgs.UpdateUserSidFromAuthProvider>(this);
             Subscribe<UserMsgs.UpdateAuthDomain>(this);
             Subscribe<UserMsgs.UpdateUserName>(this);
         }
@@ -94,8 +92,8 @@ namespace Elbe.Domain
             if (_usersRm.UserExists(
                             command.AuthProvider,
                             command.AuthDomain,
-                            command.UserName,
-                            command.UserSidFromAuthProvider))
+                            command.SubjectId,
+                            out _))
             {
                 throw new DuplicateUserException(
                             command.AuthProvider,
@@ -104,7 +102,7 @@ namespace Elbe.Domain
             }
             var user = new User(
                             command.Id,
-                            command.UserSidFromAuthProvider,
+                            command.SubjectId,
                             command.AuthProvider,
                             command.AuthDomain,
                             command.UserName,
@@ -123,7 +121,7 @@ namespace Elbe.Domain
         public void Handle(IdentityMsgs.UserAuthenticated message)
         {
             User user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, message.UserSidFromAuthProvider, out var id))
+            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain,  message.SubjectId, out var id))
             {
                 user = _repo.GetById<User>(id, message);
             }
@@ -131,7 +129,7 @@ namespace Elbe.Domain
             {
                 user = new User(
                             Guid.NewGuid(),
-                            message.UserSidFromAuthProvider,
+                            message.SubjectId,
                             message.AuthProvider,
                             message.AuthDomain,
                             message.UserName,
@@ -149,8 +147,11 @@ namespace Elbe.Domain
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticationFailed message)
         {
+            //todo:clc- address challenge with finding user without sub Claim
+            // do we need to do this?
+
             User user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, string.Empty, out var id))
+            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
                 user = _repo.GetById<User>(id, message);
             }
@@ -176,8 +177,10 @@ namespace Elbe.Domain
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticationFailedAccountLocked message)
         {
+            //todo:clc- address challenge with finding user without sub Claim
+            // do we need to do this?
             User user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, string.Empty, out var id))
+            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName,  out var id))
             {
                 user = _repo.GetById<User>(id, message);
             }
@@ -203,8 +206,11 @@ namespace Elbe.Domain
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticationFailedAccountDisabled message)
         {
+            //todo:clc- address challenge with finding user without sub Claim
+            // do we need to do this?
+
             User user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, string.Empty, out var id))
+            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
                 user = _repo.GetById<User>(id, message);
             }
@@ -230,8 +236,11 @@ namespace Elbe.Domain
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticationFailedInvalidCredentials message)
         {
+            //todo:clc- address challenge with finding user without sub Claim
+            // do we need to do this?
+
             User user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, string.Empty, out var id))
+            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
                 user = _repo.GetById<User>(id, message);
             }
@@ -347,16 +356,7 @@ namespace Elbe.Domain
             _repo.Save(user);
             return command.Succeed();
         }
-        /// <summary>
-        /// Handle a UserMsgs.UpdateUserSidFromAuthProvider command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateUserSidFromAuthProvider command)
-        {
-            var user = _repo.GetById<User>(command.UserId, command);
-            user.UpdateUserSidFromAuthProvider(command.UserSidFromAuthProvider);
-            _repo.Save(user);
-            return command.Succeed();
-        }
+        
         /// <summary>
         /// Handle a UserMsgs.UpdateAuthDomain command.
         /// </summary>
