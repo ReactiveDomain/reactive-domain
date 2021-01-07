@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Identity;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Users.Identity
 {
     /// <summary>
     /// A read model that contains a list of existing Subjects. 

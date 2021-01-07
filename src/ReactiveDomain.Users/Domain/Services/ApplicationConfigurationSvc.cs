@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users;
+using ReactiveDomain.Users.Messages;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Users.Domain.Services
 {
     /// <summary>
     /// The service that handles ApplicationMsgs.ConfigureApplication.
@@ -153,7 +152,7 @@ namespace Elbe.Domain
             Func<IListener> getListener,
             IDispatcher bus, string role, string application, Guid userId)
         {
-            using (var rolesRM = new Elbe.Domain.RolesRM(getListener))
+            using (var rolesRM = new RolesRM(getListener))
             {
                 if (rolesRM.TryGetRoleId(role, application, out var roleId))
                 {
@@ -169,7 +168,7 @@ namespace Elbe.Domain
             Func<IListener> getListener,
             IDispatcher bus, ApplicationMsgs.ConfigureApplication command)
         {
-            using (var rolesRM = new Elbe.Domain.RolesRM(getListener))
+            using (var rolesRM = new RolesRM(getListener))
             {
                 foreach (var role in command.Roles)
                 {

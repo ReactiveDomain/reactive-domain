@@ -1,10 +1,11 @@
 ﻿using System;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Domain.Aggregates;
+using ReactiveDomain.Users.Messages;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Users.Domain.Services
 {
     /// <summary>
     /// The service that fronts the User aggregate.

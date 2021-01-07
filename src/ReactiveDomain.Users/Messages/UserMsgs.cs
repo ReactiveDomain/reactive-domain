@@ -1,7 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 
-namespace Elbe.Messages
+namespace ReactiveDomain.Users.Messages
 {
     /// <summary>
     /// Messages for the User domain.

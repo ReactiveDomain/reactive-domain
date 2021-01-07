@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ReactiveDomain.Users.Identity.UserRolesData
+namespace ReactiveDomain.Users.UserRolesData
 {
     public interface IUserEntitlementRM
     {

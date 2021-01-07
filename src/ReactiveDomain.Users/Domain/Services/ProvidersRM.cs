@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Messages;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Users.Domain.Services
 {
     public class ProvidersRM :
         ReadModelBase,

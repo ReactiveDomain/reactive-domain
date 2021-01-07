@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Domain.Aggregates;
+using ReactiveDomain.Users.Messages;
 
-namespace Elbe.Domain
+namespace ReactiveDomain.Users.Domain.Services
 {
     /// <summary>
     /// Represents all of the configured roles.

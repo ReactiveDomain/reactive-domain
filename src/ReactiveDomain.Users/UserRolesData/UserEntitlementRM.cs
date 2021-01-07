@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elbe.Domain;
-using Elbe.Messages;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Domain.Aggregates;
+using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.Identity.UserRolesData
+namespace ReactiveDomain.Users.UserRolesData
 {
     /// <summary>
     /// A read model that contains a list of users and their respective roles.

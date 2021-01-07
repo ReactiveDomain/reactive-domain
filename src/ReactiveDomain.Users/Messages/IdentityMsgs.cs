@@ -1,6 +1,6 @@
 ﻿using ReactiveDomain.Messaging;
 
-namespace Elbe.Messages
+namespace ReactiveDomain.Users.Messages
 {
     /// <summary>
     /// Messages produced by the injected authentication module.
