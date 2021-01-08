@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../ci.build.imports" />
     <PropertyGroup>
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
@@ -8,10 +8,6 @@
       <Compile Remove="Logging\**" />
       <EmbeddedResource Remove="Logging\**" />
       <None Remove="Logging\**" />
-    </ItemGroup>
-    <ItemGroup>
-      <Compile Remove="Domain\MetadataTests.cs" />
-      <Compile Remove="Domain\MetadatumTests.cs" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
@@ -28,6 +24,7 @@
       <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
     </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />

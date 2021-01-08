@@ -33,8 +33,8 @@ namespace ReactiveDomain.Users.UserRolesData
         /// <summary>
         /// Create a read model that contains a list of users and their respective roles.
         /// </summary>
-        public UserEntitlementRM(Func<IListener> getListener)
-            : base(nameof(UserEntitlementRM), getListener)
+        public UserEntitlementRM(Func<string, IListener> getListener)
+            : base(nameof(UserEntitlementRM), () => getListener(nameof(UserEntitlementRM)))
         {
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             EventStream.Subscribe<UserMsgs.UserCreated>(this);
