@@ -99,5 +99,8 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             }
             Raise(new RoleMsgs.RoleRemoved(Id));
         }
+        public class Role {
+            //todo: do we need to implement this to model correct role invariants?
+        }
     }
 }

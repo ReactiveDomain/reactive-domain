@@ -65,7 +65,7 @@ namespace ReactiveDomain.Users.Messages
         /// <summary>
         /// Add an existing role as child role to the parent
         /// </summary>
-        public class AddChildRole : Event
+        public class AddChildRole : Command
         {
             /// <summary>The Id of the parent role.</summary>
             public readonly Guid ParentRoleId;
@@ -115,7 +115,59 @@ namespace ReactiveDomain.Users.Messages
             }
 
         }
+        /// <summary>
+        /// Add a permission to the role
+        /// </summary>
+        public class AddPermission : Command
+        {
+            /// <summary>The Id of the role.</summary>
+            public readonly Guid RoleId;
+            /// <summary>The type name of the permission.</summary>
+            public readonly string PermissionName;
+            /// <summary>The application these role apply to.</summary>
+            public readonly Guid ApplicationId;
 
+            /// <summary>
+            /// Add a permission to the role
+            /// </summary>
+            public AddPermission(
+                Guid roleId,
+                string permissionName,
+                Guid applicationId)
+            {
+                RoleId = roleId;
+                PermissionName = permissionName;
+                ApplicationId = applicationId;
+            }
+
+        }
+
+        /// <summary>
+        /// Permission added to a role
+        /// </summary>
+        public class PermissionAdded : Event
+        {
+            /// <summary>The Id of the role.</summary>
+            public readonly Guid RoleId;
+            /// <summary>The type name of the permission.</summary>
+            public readonly string PermissionName;
+            /// <summary>The application these role apply to.</summary>
+            public readonly Guid ApplicationId;
+
+            /// <summary>
+            /// Permission added to a role
+            /// </summary>
+            public PermissionAdded(
+                Guid roleId,
+                string permissionName,
+                Guid applicationId)
+            {
+                RoleId = roleId;
+                PermissionName = permissionName;
+                ApplicationId = applicationId;
+            }
+
+        }
         //todo: fix migration to match the new model
         /// <summary>
         /// Role data was migrated.

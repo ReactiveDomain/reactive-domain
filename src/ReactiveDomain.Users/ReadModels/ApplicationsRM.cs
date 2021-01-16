@@ -8,6 +8,8 @@ using ReactiveDomain.Users.Messages;
 
 namespace ReactiveDomain.Users.ReadModels
 {
+    //todo: we likely need a version of this that loads just a single application by name and version
+    // for use in applications enforcing security policy
     /// <summary>
     /// A read model that contains a list of existing applications. 
     /// </summary>
@@ -24,16 +26,17 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
         IHandle<UserMsgs.RoleUnassigned>, 
+        IHandle<RoleMsgs.ChildRoleAdded>,
+        IHandle<RoleMsgs.PermissionAdded>,
         IUserEntitlementRM
     {
         public List<UserModel> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
 
-        private readonly Dictionary<Guid, RoleModel> _roles = new Dictionary<Guid, RoleModel>();
+        private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, ApplicationModel> _applications = new Dictionary<Guid, ApplicationModel>();
         private readonly Dictionary<Guid, UserModel> _users = new Dictionary<Guid, UserModel>();
       
         private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
-        private string _roleStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(Role));
         /// <summary>
         /// Create a read model for getting information about existing applications.
         /// </summary>
@@ -45,8 +48,8 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
             EventStream.Subscribe<RoleMsgs.RoleRemoved>(this);
-            Start<Role>(blockUntilLive: true);
             Start<Application>(blockUntilLive: true);
+            //todo: subscribe to user stream
         }
         
         /// <summary>
@@ -134,7 +137,7 @@ namespace ReactiveDomain.Users.ReadModels
             
             _roles.Add(
                 @event.RoleId,
-                new RoleModel(
+                new Role(
                     @event.RoleId,
                     @event.Name,
                     app));
@@ -159,6 +162,17 @@ namespace ReactiveDomain.Users.ReadModels
             */
         }
 
+        public void Handle(RoleMsgs.ChildRoleAdded @event) {
+            if(!_roles.ContainsKey(@event.ParentRoleId)) return;
+            if(!_roles.ContainsKey(@event.ChildRoleId)) return;
+
+             _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
+        }
+
+        public void Handle(RoleMsgs.PermissionAdded @event) {
+            if(!_roles.ContainsKey(@event.RoleId)) return;
+            _roles[@event.RoleId].AddPermission(@event.PermissionName);
+        }
         /// <summary>
         /// Given the role created event, adds a new role to the collection of roles.
         /// </summary>
@@ -218,7 +232,7 @@ namespace ReactiveDomain.Users.ReadModels
             if (!_users.ContainsKey(@event.UserId)) return;
             _users[@event.UserId].UserName = @event.UserName;
         }
-        public List<RoleModel> RolesForUser(
+        public List<Role> RolesForUser(
             string subjectId,
             string userName,
             string authDomain,

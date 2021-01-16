@@ -8,7 +8,7 @@ namespace ReactiveDomain.Users.ReadModels {
         public string UserName { get; set; }
         public string SubjectId { get; set; }
         public string AuthDomain { get; set; }
-        public List<RoleModel> Roles { get; } = new List<RoleModel>();
+        public List<Role> Roles { get; } = new List<Role>();
         public bool IsActivated { get; set; } = true;
 
 
