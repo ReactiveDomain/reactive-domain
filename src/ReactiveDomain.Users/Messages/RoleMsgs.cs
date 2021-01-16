@@ -18,7 +18,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The name of the role.</summary>
             public readonly string Name;
             /// <summary>The application this role applies to.</summary>
-            public readonly string Application;
+            public readonly Guid ApplicationId;
 
 
             /// <summary>
@@ -27,11 +27,11 @@ namespace ReactiveDomain.Users.Messages
             public CreateRole(
                 Guid roleId,
                 string name,
-                string application)
+                Guid applicationId)
             {
                 RoleId = roleId;
                 Name = name;
-                Application = application;
+                ApplicationId = applicationId;
             }
 
         }
@@ -46,7 +46,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The name of the role.</summary>
             public readonly string Name;
             /// <summary>The application this role applies to.</summary>
-            public readonly string Application;
+            public readonly Guid ApplicationId;
 
             /// <summary>
             /// A new role was created.
@@ -54,14 +54,16 @@ namespace ReactiveDomain.Users.Messages
             public RoleCreated(
                 Guid roleId,
                 string name,
-                string application)
+                Guid applicationId)
             {
                 RoleId = roleId;
                 Name = name;
-                Application = application;
+                ApplicationId = applicationId;
             }
 
         }
+
+        //todo: fix migration to match the new model
         /// <summary>
         /// Role data was migrated.
         /// </summary>

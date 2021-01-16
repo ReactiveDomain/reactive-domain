@@ -10,112 +10,60 @@ namespace ReactiveDomain.Users.Messages
     public class ApplicationMsgs
     {
         /// <summary>
-        /// Register a new application.
+        /// Create a new application aggregate.
         /// </summary>
-        public class RegisterApplication : Command
+        public class CreateApplication : Command
         {
             /// <summary>The unique ID of the new application.</summary>
             public readonly Guid Id;
             /// <summary> Application name</summary>
             public readonly string Name;
-            /// <summary> does this application demand one role per user?</summary>
-            public bool OneRolePerUser { get; }
-            /// <summary> List of roles available for this application </summary>
-            public List<string> Roles { get; }
-            /// <summary> SecAdminRole name, this must exists in Roles list</summary>
-            public string SecAdminRole { get; }
-            /// <summary> Default user name</summary>
-            public readonly string DefaultUser;
-            /// <summary> Default user's domain name</summary>
-            public readonly string DefaultDomain;
-            /// <summary> Roles which default user would be assigned.This list must be a subset of Roles</summary>
-            public List<string> DefaultUserRoles { get; }
-
-
+            /// <summary> Application name</summary>
+            public readonly string Version;
+            
             /// <summary>
             /// Register a new application.
             /// </summary>
             /// <param name="id">The unique ID of the new application.</param>
             /// <param name="name">application name.</param>
-            /// <param name="oneRolePerUser">does this application demand one role per user?</param>
-            /// <param name="roles">List of roles available for this application</param>
-            /// <param name="secAdminRole">SecAdminRole name, this must exists in Roles list</param>
-            /// <param name="defaultUser">Default user name</param>
-            /// <param name="defaultDomain">Default user's domain name</param>
-            /// <param name="defaultUserRoles">Roles which default user would be assigned.This list must be a subset of Roles</param>
-            public RegisterApplication(
+            /// <param name="version">application version</param>
+            public CreateApplication(
                 Guid id,
                 string name,
-                bool oneRolePerUser,
-                List<string> roles,
-                string secAdminRole,
-                string defaultUser,
-                string defaultDomain,
-                List<string> defaultUserRoles)
+                string version)
             {
                 Id = id;
                 Name = name;
-                OneRolePerUser = oneRolePerUser;
-                SecAdminRole = secAdminRole;
-                DefaultUser = defaultUser;
-                Roles = roles;
-                DefaultDomain = defaultDomain;
-                DefaultUserRoles = defaultUserRoles;
+                Version = version;
             }
         }
 
         /// <summary>
-        /// A new application was registered.
+        /// Application Created.
         /// </summary>
-        public class ApplicationRegistered : Event
+        public class ApplicationCreated  : Event
         {
             /// <summary>The unique ID of the new application.</summary>
-            public readonly Guid Id;
-
-            /// <summary> Application name </summary>
+            public readonly Guid ApplicationId;
+            /// <summary> Application name</summary>
             public readonly string Name;
-            /// <summary> does this application demand one role per user?</summary>
-            public readonly bool OneRolePerUser;
-            /// <summary> List of roles available for this application </summary>
-            public List<string> Roles { get; }
-            /// <summary> SecAdminRole name, this must exists in Roles list</summary>
-            public string SecAdminRole { get; }
-            /// <summary> Default user name</summary>
-            public readonly string DefaultUser;
-            /// <summary> Default user's domain name</summary>
-            public readonly string DefaultDomain;
-            /// <summary> Roles which default user would be assigned.This list must be a subset of Roles</summary>
-            public List<string> DefaultUserRoles { get; }
-
+            /// <summary> Application name</summary>
+            public readonly string ApplicationVersion;
+            
             /// <summary>
-            /// A new application was registered.
+            /// Register a new application.
             /// </summary>
-            /// <param name="id">The unique ID of the new application.</param>
+            /// <param name="applicationId">The unique ID of the new application.</param>
             /// <param name="name">application name.</param>
-            /// <param name="oneRolePerUser">does this application demand one role per user?</param>
-            /// <param name="roles">List of roles available for this application</param>
-            /// <param name="secAdminRole">SecAdminRole name, this must exists in Roles list</param>
-            /// <param name="defaultUser">Default user name</param>
-            /// <param name="defaultDomain">Default user's domain name</param>
-            /// <param name="defaultUserRoles">Roles which default user would be assigned.This list must be a subset of Roles</param>
-            public ApplicationRegistered(
-                Guid id,
+            /// <param name="version">application version</param>
+            public ApplicationCreated(
+                Guid applicationId,
                 string name,
-                bool oneRolePerUser,
-                List<string> roles,
-                string secAdminRole,
-                string defaultUser,
-                string defaultDomain,
-                List<string> defaultUserRoles)
+                string version)
             {
-                Id = id;
+                ApplicationId = applicationId;
                 Name = name;
-                OneRolePerUser = oneRolePerUser;
-                SecAdminRole = secAdminRole;
-                DefaultUser = defaultUser;
-                Roles = roles;
-                DefaultDomain = defaultDomain;
-                DefaultUserRoles = defaultUserRoles;
+                ApplicationVersion = version;
             }
         }
 
@@ -128,6 +76,8 @@ namespace ReactiveDomain.Users.Messages
             public readonly Guid Id;
             /// <summary> Application name</summary>
             public readonly string Name;
+            /// <summary> Application version</summary>
+            public readonly string Version;
             /// <summary> does this application demand one role per user?</summary>
             public bool OneRolePerUser { get; }
             /// <summary> List of roles available for this application </summary>
@@ -148,6 +98,7 @@ namespace ReactiveDomain.Users.Messages
             /// </summary>
             /// <param name="id">The unique ID of the new application.</param>
             /// <param name="name">application name</param>
+            /// <param name="version">application version</param>
             /// <param name="oneRolePerUser">does this application demand one role per user?</param>
             /// <param name="roles">List of roles available for this application</param>
             /// <param name="secAdminRole">SecAdminRole name, this must exists in Roles list</param>
@@ -158,6 +109,7 @@ namespace ReactiveDomain.Users.Messages
             public ConfigureApplication(
                 Guid id,
                 string name,
+                string version,
                 bool oneRolePerUser,
                 List<string> roles,
                 string secAdminRole,
@@ -168,6 +120,7 @@ namespace ReactiveDomain.Users.Messages
             {
                 Id = id;
                 Name = name;
+                Version = version;
                 OneRolePerUser = oneRolePerUser;
                 SecAdminRole = secAdminRole;
                 DefaultUser = defaultUser;

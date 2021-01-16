@@ -5,7 +5,7 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.Domain.Services
+namespace ReactiveDomain.Users.ReadModels
 {
     public class ProvidersRM :
         ReadModelBase,

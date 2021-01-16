@@ -4,6 +4,7 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Users.Domain.Services
 {
@@ -90,15 +91,10 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             bus.Send(
                 MessageBuilder.New(()
-                    => new ApplicationMsgs.RegisterApplication(
+                    => new ApplicationMsgs.CreateApplication(
                         Guid.NewGuid(),
                         command.Name,
-                        command.OneRolePerUser,
-                        command.Roles,
-                        command.SecAdminRole,
-                        command.DefaultUser,
-                        command.DefaultDomain,
-                        command.DefaultUserRoles)),
+                        command.v)),
                 responseTimeout: TimeSpan.FromSeconds(60));
 
         }
@@ -152,9 +148,8 @@ namespace ReactiveDomain.Users.Domain.Services
             Func<IListener> getListener,
             IDispatcher bus, string role, string application, Guid userId)
         {
-            using (var rolesRM = new RolesRM(getListener))
-            {
-                if (rolesRM.TryGetRoleId(role, application, out var roleId))
+          
+                if (_applicationsRm.TryGetRoleId(role, application, out var roleId))
                 {
                     bus.Send(MessageBuilder.New(
                             () => new UserMsgs.AssignRole(
@@ -162,7 +157,7 @@ namespace ReactiveDomain.Users.Domain.Services
                                 roleId)),
                         responseTimeout: TimeSpan.FromSeconds(60));
                 }
-            }
+           
         }
         private static void CreateRoles(
             Func<IListener> getListener,

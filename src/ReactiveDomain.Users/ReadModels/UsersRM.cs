@@ -7,7 +7,7 @@ using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Domain.Services
+namespace ReactiveDomain.Users.ReadModels
 {
     /// <summary>
     /// A read model that contains a list of existing users. 

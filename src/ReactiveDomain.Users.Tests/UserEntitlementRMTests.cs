@@ -6,7 +6,6 @@ using ReactiveDomain.Testing;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.Tests.Helpers;
-using ReactiveDomain.Users.UserRolesData;
 using Xunit;
 
 namespace ReactiveDomain.Users.Tests
