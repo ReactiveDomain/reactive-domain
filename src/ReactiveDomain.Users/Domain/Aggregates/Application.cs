@@ -23,7 +23,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Register<ApplicationMsgs.ApplicationCreated>(Apply);
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
-            Register<RoleMsgs.ChildRoleAdded>(Apply);
+            Register<RoleMsgs.ChildRoleAssigned>(Apply);
             Register<RoleMsgs.PermissionAdded>(Apply);
             Register<RoleMsgs.PermissionAssigned>(Apply);
 
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         private void Apply(ApplicationMsgs.ApplicationCreated evt) => Id = evt.ApplicationId;
         private void Apply(RoleMsgs.RoleCreated evt) => _roles.Add(evt.RoleId, evt.Name);
         private void Apply(RoleMsgs.RoleMigrated evt) => _roles.Add(evt.RoleId, evt.Name);
-        private void Apply(RoleMsgs.ChildRoleAdded evt) { /*todo:do we need to track this? see contained role class*/}
+        private void Apply(RoleMsgs.ChildRoleAssigned evt) { /*todo:do we need to track this? see contained role class*/}
         private void Apply(RoleMsgs.PermissionAdded evt) => _permissions.Add(evt.PermissionId, evt.PermissionName);
         private void Apply(RoleMsgs.PermissionAssigned evt) { /*todo:do we need to track this? see contained role class */}
 
@@ -74,9 +74,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 Id));
         }
         /// <summary>
-        /// Add a new role.
+        /// assign a child role
         /// </summary>
-        public void AddChildRole(
+        public void AssignChildRole(
             Guid parentRoleId,
             Guid childRoleId)
         {
@@ -85,7 +85,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 throw new InvalidOperationException($"Cannot add child role, role not found Parent Role: {parentRoleId} Child Role: {childRoleId}");
             }
             //todo: need some sort of check here, do we need a child domain entity for role to track this?
-            Raise(new RoleMsgs.ChildRoleAdded(
+            Raise(new RoleMsgs.ChildRoleAssigned(
                 parentRoleId,
                 childRoleId,
                 Id));

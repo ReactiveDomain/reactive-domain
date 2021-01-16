@@ -25,7 +25,7 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
         IHandle<UserMsgs.RoleUnassigned>, 
-        IHandle<RoleMsgs.ChildRoleAdded>,
+        IHandle<RoleMsgs.ChildRoleAssigned>,
         IHandle<RoleMsgs.PermissionAdded>,
         IHandle<RoleMsgs.PermissionAssigned>,
         IUserEntitlementRM
@@ -162,7 +162,7 @@ namespace ReactiveDomain.Users.ReadModels
             */
         }
 
-        public void Handle(RoleMsgs.ChildRoleAdded @event) {
+        public void Handle(RoleMsgs.ChildRoleAssigned @event) {
             if(!_roles.ContainsKey(@event.ParentRoleId)) return;
             if(!_roles.ContainsKey(@event.ChildRoleId)) return;
 

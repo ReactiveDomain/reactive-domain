@@ -15,7 +15,7 @@ namespace ReactiveDomain.Users.Domain.Services
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication>,
         IHandleCommand<RoleMsgs.CreateRole>,
-        IHandleCommand<RoleMsgs.AddChildRole>,
+        IHandleCommand<RoleMsgs.AssignChildRole>,
         IHandleCommand<RoleMsgs.AddPermission>,
         IHandleCommand<RoleMsgs.AssignPermission>
         //todo: handle other role commands
@@ -81,9 +81,9 @@ namespace ReactiveDomain.Users.Domain.Services
             return cmd.Succeed();
         }
 
-        public CommandResponse Handle(RoleMsgs.AddChildRole cmd) {
+        public CommandResponse Handle(RoleMsgs.AssignChildRole cmd) {
             var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
-            application.AddChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
+            application.AssignChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
             _repo.Save(application);
             return cmd.Succeed();
         }

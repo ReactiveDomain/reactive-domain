@@ -65,7 +65,7 @@ namespace ReactiveDomain.Users.Messages
         /// <summary>
         /// Add an existing role as child role to the parent
         /// </summary>
-        public class AddChildRole : Command
+        public class AssignChildRole : Command
         {
             /// <summary>The Id of the parent role.</summary>
             public readonly Guid ParentRoleId;
@@ -77,7 +77,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// Add an existing role as child role to the parent
             /// </summary>
-            public AddChildRole(
+            public AssignChildRole(
                 Guid parentRoleId,
                 Guid childRoleId,
                 Guid applicationId)
@@ -92,7 +92,7 @@ namespace ReactiveDomain.Users.Messages
         /// <summary>
         /// An existing role was added as child role to the parent
         /// </summary>
-        public class ChildRoleAdded : Event
+        public class ChildRoleAssigned : Event
         {
             /// <summary>The Id of the parent role.</summary>
             public readonly Guid ParentRoleId;
@@ -104,7 +104,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// An existing role was added as child role to the parent
             /// </summary>
-            public ChildRoleAdded(
+            public ChildRoleAssigned(
                 Guid parentRoleId,
                 Guid childRoleId,
                 Guid applicationId)
