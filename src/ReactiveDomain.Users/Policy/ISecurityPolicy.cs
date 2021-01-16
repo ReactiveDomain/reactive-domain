@@ -6,10 +6,10 @@ using ReactiveDomain.Users.ReadModels;
 namespace ReactiveDomain.Users.Policy
 {
     public interface ISecurityPolicy {
-        public  string ApplicationName { get; }
-        public  string ApplicationVersion { get;  }
-        public  IReadOnlyList<Role> GetUserRoles(Guid userId);
-        public  IReadOnlyList<Permission> GetUserPermissions(Guid userId);
-        public  void ConfigurePolicy(IEventStoreConnection conn);
+        string ApplicationName { get; }
+        string ApplicationVersion { get;  }
+        IReadOnlyList<Role> GetUserRoles(Guid userId);
+        IReadOnlyList<Permission> GetUserPermissions(Guid userId);
+        void ConfigurePolicy(IEventStoreConnection conn);
     }
 }

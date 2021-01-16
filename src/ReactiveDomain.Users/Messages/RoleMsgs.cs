@@ -116,26 +116,25 @@ namespace ReactiveDomain.Users.Messages
 
         }
         /// <summary>
-        /// Add a permission to the role
+        /// Add a permission
         /// </summary>
         public class AddPermission : Command
         {
-            /// <summary>The Id of the role.</summary>
-            public readonly Guid RoleId;
+            /// <summary>The Id of the permission.</summary>
+            public readonly Guid PermissionId;
             /// <summary>The type name of the permission.</summary>
             public readonly string PermissionName;
             /// <summary>The application these role apply to.</summary>
             public readonly Guid ApplicationId;
 
             /// <summary>
-            /// Add a permission to the role
+            /// Add a permission
             /// </summary>
             public AddPermission(
-                Guid roleId,
+                Guid permissionId,
                 string permissionName,
-                Guid applicationId)
-            {
-                RoleId = roleId;
+                Guid applicationId) {
+                PermissionId = permissionId;
                 PermissionName = permissionName;
                 ApplicationId = applicationId;
             }
@@ -143,31 +142,85 @@ namespace ReactiveDomain.Users.Messages
         }
 
         /// <summary>
-        /// Permission added to a role
+        /// Permission added
         /// </summary>
         public class PermissionAdded : Event
         {
-            /// <summary>The Id of the role.</summary>
-            public readonly Guid RoleId;
+            /// <summary>The Id of the permission.</summary>
+            public readonly Guid PermissionId;
             /// <summary>The type name of the permission.</summary>
             public readonly string PermissionName;
             /// <summary>The application these role apply to.</summary>
             public readonly Guid ApplicationId;
 
             /// <summary>
-            /// Permission added to a role
+            /// Permission added
             /// </summary>
             public PermissionAdded(
-                Guid roleId,
+                Guid permissionId,
                 string permissionName,
                 Guid applicationId)
             {
-                RoleId = roleId;
+                PermissionId = permissionId;
                 PermissionName = permissionName;
                 ApplicationId = applicationId;
             }
 
         }
+        /// <summary>
+        /// Assign a permission to a role
+        /// </summary>
+        public class AssignPermission : Command
+        {
+            /// <summary>The Id of the role.</summary>
+            public readonly Guid RoleId;
+            /// <summary>The Id of the permission.</summary>
+            public readonly Guid PermissionId;
+            /// <summary>The application these role apply to.</summary>
+            public readonly Guid ApplicationId;
+
+            /// <summary>
+            /// Add a permission to the role
+            /// </summary>
+            public AssignPermission(
+                Guid roleId,
+                Guid permissionId,
+                Guid applicationId)
+            {
+                RoleId = roleId;
+                PermissionId = permissionId;
+                ApplicationId = applicationId;
+            }
+
+        }
+
+        /// <summary>
+        /// Permission Assigned to a role
+        /// </summary>
+        public class PermissionAssigned : Event
+        {
+            /// <summary>The Id of the role.</summary>
+            public readonly Guid RoleId;
+            /// <summary>The Id of the permission.</summary>
+            public readonly Guid PermissionId;
+            /// <summary>The application these role apply to.</summary>
+            public readonly Guid ApplicationId;
+
+            /// <summary>
+            /// Permission added to a role
+            /// </summary>
+            public PermissionAssigned(
+                Guid roleId,
+                Guid permissionId,
+                Guid applicationId)
+            {
+                RoleId = roleId;
+                PermissionId = permissionId;
+                ApplicationId = applicationId;
+            }
+
+        }
+
         //todo: fix migration to match the new model
         /// <summary>
         /// Role data was migrated.

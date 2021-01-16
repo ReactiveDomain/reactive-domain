@@ -11,7 +11,8 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     public class Application : AggregateRoot
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
-         
+        private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
+
         private Application()
         {
             RegisterEvents();
@@ -87,17 +88,32 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 Id));
         }
 
-        //todo: do we need this capability? it opens a lot of edges around re-adding roles, for little apparent gain
-        /// <summary>
-        /// Remove a role.
-        /// </summary>
-        public void RemoveRole(Guid roleId)
-        {
-            if (!_roles.ContainsKey(roleId))
+        public void AddPermission(Guid permissionId, string name) {
+            Ensure.NotEmptyGuid(permissionId, nameof(permissionId));
+            Ensure.NotNullOrEmpty(name, nameof(name));
+            if (_roles.ContainsValue(name) || _roles.ContainsKey(permissionId))
             {
-                throw new InvalidOperationException($"Unknown RoleId {roleId}");
+                throw new InvalidOperationException($"Cannot add duplicate permission. Name: {name} Id:{permissionId}");
             }
-            Raise(new RoleMsgs.RoleRemoved(Id));
+
+            Raise(new RoleMsgs.RoleCreated(
+                permissionId,
+                name,
+                Id));
+        }
+        public void AssignPermission(
+            Guid roleId,
+            Guid permissionId)
+        {
+            if (!_roles.ContainsKey(roleId) || !_permissions.ContainsKey(permissionId))
+            {
+                throw new InvalidOperationException($"Cannot assign permission role, role or permission not found Role: {roleId} Permission: {permissionId}");
+            }
+            //todo: need some sort of check here, do we need a child domain entity for role to track this?
+            Raise(new RoleMsgs.PermissionAssigned(
+                roleId,
+                permissionId,
+                Id));
         }
         public class Role {
             //todo: do we need to implement this to model correct role invariants?

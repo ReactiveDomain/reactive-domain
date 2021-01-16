@@ -21,8 +21,8 @@ namespace ReactiveDomain.Users.ReadModels {
         /// </summary>
         public ApplicationModel Application { get; }
 
-        private readonly HashSet<string> _permissions = new HashSet<string>();
-        public IReadOnlyList<string> Permissions => _permissions.ToList().AsReadOnly();
+        private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
+        public IReadOnlyList<Permission> Permissions => _permissions.ToList().AsReadOnly();
         private readonly HashSet<Role> _parentRoles = new HashSet<Role>();
         private readonly HashSet<Role> _childRoles = new HashSet<Role>();
         public IReadOnlyList<Role> ChildRoles => _childRoles.ToList().AsReadOnly();
@@ -39,7 +39,7 @@ namespace ReactiveDomain.Users.ReadModels {
             Application = application;
         }
 
-        public void AddPermission(string permission) {
+        public void AddPermission(Permission permission) {
             _permissions.Add(permission);
             foreach (var parentRole in _parentRoles) {
                 parentRole.AddPermission(permission);

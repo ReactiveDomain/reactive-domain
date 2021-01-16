@@ -1,12 +1,26 @@
-﻿
-namespace ReactiveDomain.Users.Policy
+﻿using System;
+
+namespace ReactiveDomain.Users.ReadModels
 {
-    public abstract class Permission {
+    public class Permission {
         /// <summary>
-        /// Unique name of the permission, often the derived class name
-        /// Used to serialize and restore the permission 
+        /// The permission ID.
         /// </summary>
-        public abstract string PermissionName { get; } //return the derived class type name property 
-        //todo: add equality by PermissionName
+        public Guid Id { get; }
+        /// <summary>
+        /// The permission name.
+        /// </summary>
+        public string Name { get; }
+        /// <summary>
+        /// The application defining the roles.
+        /// </summary>
+        public ApplicationModel Application { get; }
+
+        public Permission(Guid id, string name, ApplicationModel application) {
+            Id = id;
+            Name = name;
+            Application = application;
+        }
+      
     }
 }
