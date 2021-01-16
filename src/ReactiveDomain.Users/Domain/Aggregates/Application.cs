@@ -23,12 +23,14 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
             Register<RoleMsgs.RoleRemoved>(Apply);
+            Register<RoleMsgs.ChildRoleAdded>(Apply);
         }
 
         private void Apply(ApplicationMsgs.ApplicationCreated evt) => Id = evt.ApplicationId;
         private void Apply(RoleMsgs.RoleCreated evt) => _roles.Add(evt.RoleId, evt.Name);
         private void Apply(RoleMsgs.RoleMigrated evt) => _roles.Add(evt.RoleId, evt.Name);
         private void Apply(RoleMsgs.RoleRemoved evt) => _roles.Remove(evt.RoleId);
+        private void Apply(RoleMsgs.ChildRoleAdded evt) { /*todo:do we need to track this? */}
 
         /// <summary>
         /// Create a new Application.
@@ -52,8 +54,8 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// Add a new role.
         /// </summary>
         public void AddRole(
-                Guid roleId,
-                string roleName)
+            Guid roleId,
+            string roleName)
         {
             Ensure.NotEmptyGuid(roleId, nameof(roleId));
             Ensure.NotNullOrEmpty(roleName, nameof(roleName));
@@ -67,6 +69,24 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 roleName,
                 Id));
         }
+        /// <summary>
+        /// Add a new role.
+        /// </summary>
+        public void AddChildRole(
+            Guid parentRoleId,
+            Guid childRoleId)
+        {
+            if (!_roles.ContainsKey(parentRoleId) || !_roles.ContainsKey(childRoleId))
+            {
+                throw new InvalidOperationException($"Cannot add child role, role not found Parent Role: {parentRoleId} Child Role: {childRoleId}");
+            }
+            //todo: need some sort of check here, do we need a child domain entity for role to track this?
+            Raise(new RoleMsgs.ChildRoleAdded(
+                parentRoleId,
+                childRoleId,
+                Id));
+        }
+
         //todo: do we need this capability? it opens a lot of edges around re-adding roles, for little apparent gain
         /// <summary>
         /// Remove a role.
