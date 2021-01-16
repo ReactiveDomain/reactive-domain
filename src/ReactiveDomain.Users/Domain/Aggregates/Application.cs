@@ -23,15 +23,18 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Register<ApplicationMsgs.ApplicationCreated>(Apply);
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
-            Register<RoleMsgs.RoleRemoved>(Apply);
             Register<RoleMsgs.ChildRoleAdded>(Apply);
+            Register<RoleMsgs.PermissionAdded>(Apply);
+            Register<RoleMsgs.PermissionAssigned>(Apply);
+
         }
 
         private void Apply(ApplicationMsgs.ApplicationCreated evt) => Id = evt.ApplicationId;
         private void Apply(RoleMsgs.RoleCreated evt) => _roles.Add(evt.RoleId, evt.Name);
         private void Apply(RoleMsgs.RoleMigrated evt) => _roles.Add(evt.RoleId, evt.Name);
-        private void Apply(RoleMsgs.RoleRemoved evt) => _roles.Remove(evt.RoleId);
-        private void Apply(RoleMsgs.ChildRoleAdded evt) { /*todo:do we need to track this? */}
+        private void Apply(RoleMsgs.ChildRoleAdded evt) { /*todo:do we need to track this? see contained role class*/}
+        private void Apply(RoleMsgs.PermissionAdded evt) => _permissions.Add(evt.PermissionId, evt.PermissionName);
+        private void Apply(RoleMsgs.PermissionAssigned evt) { /*todo:do we need to track this? see contained role class */}
 
         /// <summary>
         /// Create a new Application.
@@ -115,7 +118,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 permissionId,
                 Id));
         }
-        public class Role {
+        private class Role {
             //todo: do we need to implement this to model correct role invariants?
         }
     }

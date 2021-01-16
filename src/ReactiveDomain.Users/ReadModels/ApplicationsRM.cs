@@ -18,7 +18,6 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<ApplicationMsgs.ApplicationCreated>,
         IHandle<RoleMsgs.RoleCreated>,
         IHandle<RoleMsgs.RoleMigrated>,
-        IHandle<RoleMsgs.RoleRemoved>,
         IHandle<UserMsgs.UserCreated>,
         IHandle<UserMsgs.Deactivated>,
         IHandle<UserMsgs.Activated>,
@@ -49,7 +48,6 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-            EventStream.Subscribe<RoleMsgs.RoleRemoved>(this);
             Start<Application>(blockUntilLive: true);
             //todo: subscribe to user stream
         }
@@ -181,14 +179,7 @@ namespace ReactiveDomain.Users.ReadModels
             if(!_permissions.ContainsKey(@event.PermissionId)) return; //todo: log this error
             _roles[@event.RoleId].AddPermission(_permissions[@event.PermissionId]);
         }
-        /// <summary>
-        /// Given the role created event, adds a new role to the collection of roles.
-        /// </summary>
-        public void Handle(RoleMsgs.RoleRemoved @event)
-        {
-            if(!_roles.ContainsKey(@event.RoleId)) return;
-            _roles.Remove(@event.RoleId);
-        }
+        
         
         /// <summary>
         /// Handle a UserMsgs.UserCreated event.

@@ -14,11 +14,11 @@ namespace ReactiveDomain.Users.Domain.Services
     public class ApplicationSvc :
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication>,
-        //todo: handle other application commands
-        //IHandleCommand<ApplicationMsgs.ConfigureApplication>
-        IHandleCommand<RoleMsgs.CreateRole>
+        IHandleCommand<RoleMsgs.CreateRole>,
+        IHandleCommand<RoleMsgs.AddChildRole>,
+        IHandleCommand<RoleMsgs.AddPermission>,
+        IHandleCommand<RoleMsgs.AssignPermission>
         //todo: handle other role commands
-        //IHandleCommand<RoleMsgs.RemoveRole>
         //IHandleCommand<RoleMsgs.RoleMigrated>
     {
         
@@ -77,6 +77,27 @@ namespace ReactiveDomain.Users.Domain.Services
 
             var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
             application.AddRole(cmd.RoleId, cmd.Name);
+            _repo.Save(application);
+            return cmd.Succeed();
+        }
+
+        public CommandResponse Handle(RoleMsgs.AddChildRole cmd) {
+            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            application.AddChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
+            _repo.Save(application);
+            return cmd.Succeed();
+        }
+
+        public CommandResponse Handle(RoleMsgs.AddPermission cmd) {
+            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            application.AddPermission(cmd.PermissionId, cmd.PermissionName);
+            _repo.Save(application);
+            return cmd.Succeed();
+        }
+
+        public CommandResponse Handle(RoleMsgs.AssignPermission cmd) {
+            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            application.AssignPermission(cmd.RoleId, cmd.PermissionId);
             _repo.Save(application);
             return cmd.Succeed();
         }

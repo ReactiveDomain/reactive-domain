@@ -256,40 +256,7 @@ namespace ReactiveDomain.Users.Messages
             }
 
         }
-        /// <summary>
-        /// Remove a role.
-        /// </summary>
-        public class RemoveRole : Command
-        {
-            /// <summary>The unique ID of the role.</summary>
-            public readonly Guid RoleId;
-
-            /// <summary>
-            /// Remove a role.
-            /// </summary>
-            public RemoveRole(Guid roleId)
-            {
-                RoleId = roleId;
-            }
-
-        }
-
-        /// <summary>
-        /// Role was removed.
-        /// </summary>
-        public class RoleRemoved : Event
-        {
-            /// <summary>The unique ID of the role.</summary>
-            public readonly Guid RoleId;
-
-            /// <summary>
-            /// Role was removed.
-            /// </summary>
-            public RoleRemoved(Guid roleId)
-            {
-                RoleId = roleId;
-            }
-        }
+      
         /// <summary>
         /// Role data migrated.
         /// </summary>
