@@ -55,6 +55,23 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         }
 
         /// <summary>
+        /// Retire an application that is no longer in use.
+        /// </summary>
+        public void Retire()
+        {
+            // Event should be idempotent in RMs, so no validation necessary.
+            Raise(new ApplicationMsgs.ApplicationRetired(Id));
+        }
+
+        /// <summary>
+        /// Re-activate a retired application that is being put back into use.
+        /// </summary>
+        public void Unretire() {
+            // Event should be idempotent in RMs, so no validation necessary.
+            Raise(new ApplicationMsgs.ApplicationUnretired(Id));
+        }
+
+        /// <summary>
         /// Add a new role.
         /// </summary>
         public void AddRole(

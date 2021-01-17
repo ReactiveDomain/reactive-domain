@@ -130,5 +130,77 @@ namespace ReactiveDomain.Users.Messages
                 AuthProvider = authProvider;
             }
         }
+
+        /// <summary>
+        /// Indicate that an application is no longer in use.
+        /// </summary>
+        public class RetireApplication : Command
+        {
+            /// <summary>The unique ID of the application to be retired.</summary>
+            public Guid Id;
+
+            /// <summary>
+            /// Indicate that an application is no longer in use.
+            /// </summary>
+            /// <param name="id">The unique ID of the application to be retired.</param>
+            public RetireApplication(Guid id)
+            {
+                Id = id;
+            }
+        }
+
+        /// <summary>
+        /// Indicates that an application is no longer in use.
+        /// </summary>
+        public class ApplicationRetired : Event
+        {
+            /// <summary>The unique ID of the application that has been retired.</summary>
+            public Guid Id;
+
+            /// <summary>
+            /// Indicates that an application is no longer in use.
+            /// </summary>
+            /// <param name="id">The unique ID of the application that has been retired.</param>
+            public ApplicationRetired(Guid id)
+            {
+                Id = id;
+            }
+        }
+
+        /// <summary>
+        /// Put a retired application back in use.
+        /// </summary>
+        public class UnretireApplication : Command
+        {
+            /// <summary>The unique ID of the application to be returned to use.</summary>
+            public Guid Id;
+
+            /// <summary>
+            /// Put a retired application back in use.
+            /// </summary>
+            /// <param name="id">The unique ID of the application to be returned to use.</param>
+            public UnretireApplication(Guid id)
+            {
+                Id = id;
+            }
+        }
+
+        /// <summary>
+        /// Indicates that an application has been returned to use.
+        /// </summary>
+        public class ApplicationUnretired : Event
+        {
+            /// <summary>The unique ID of the application that has been returned to use.</summary>
+            public Guid Id;
+
+            /// <summary>
+            /// Indicates that an application has been returned to use.
+            /// </summary>
+            /// <param name="id">The unique ID of the application that has been returned to use.</param>
+            public ApplicationUnretired(Guid id)
+            {
+                Id = id;
+            }
+        }
     }
 }

@@ -14,6 +14,8 @@ namespace ReactiveDomain.Users.Domain.Services
     public class ApplicationSvc :
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication>,
+        IHandleCommand<ApplicationMsgs.RetireApplication>,
+        IHandleCommand<ApplicationMsgs.UnretireApplication>,
         IHandleCommand<RoleMsgs.CreateRole>,
         IHandleCommand<RoleMsgs.AssignChildRole>,
         IHandleCommand<RoleMsgs.AddPermission>,
@@ -41,8 +43,12 @@ namespace ReactiveDomain.Users.Domain.Services
             _applicationsRm = new ApplicationsRM(getListener);
 
             Subscribe<ApplicationMsgs.CreateApplication>(this);
+            Subscribe<ApplicationMsgs.RetireApplication>(this);
+            Subscribe<ApplicationMsgs.UnretireApplication>(this);
             Subscribe<RoleMsgs.CreateRole>(this);
-            
+            Subscribe<RoleMsgs.AssignChildRole>(this);
+            Subscribe<RoleMsgs.AddPermission>(this);
+            Subscribe<RoleMsgs.AssignPermission>(this);
         }
 
         private bool _disposed;
@@ -70,6 +76,23 @@ namespace ReactiveDomain.Users.Domain.Services
             _repo.Save(application); //n.b. this will throw on duplicate application due to optimistic stream concurrency checks in the event store
             return command.Succeed();
         }
+
+        public CommandResponse Handle(ApplicationMsgs.RetireApplication command)
+        {
+            var application = _repo.GetById<Application>(command.Id, command);
+            application.Retire();
+            _repo.Save(application);
+            return command.Succeed();
+        }
+
+        public CommandResponse Handle(ApplicationMsgs.UnretireApplication command)
+        {
+            var application = _repo.GetById<Application>(command.Id, command);
+            application.Unretire();
+            _repo.Save(application);
+            return command.Succeed();
+        }
+
         /// <summary>
         /// Given the create role command, creates a role created event.
         /// </summary>
