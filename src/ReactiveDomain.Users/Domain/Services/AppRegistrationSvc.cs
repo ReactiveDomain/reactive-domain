@@ -17,6 +17,7 @@ namespace ReactiveDomain.Users.Domain.Services
     /// </summary>
     public class AppRegistrationSvc : IConfigureSecurity
     {
+        //todo: Use main bus or is this full isolated? ??
         private readonly IDispatcher _bus = new Dispatcher("App Registration Bus");
 
         /// <summary>
@@ -25,43 +26,27 @@ namespace ReactiveDomain.Users.Domain.Services
         /// <param name="definition">The policy definition of the application version to be configured.</param>
         /// <param name="conn">A connection to the ES where the policy streams are stored.</param>
         /// <exception cref="Exception">Throws if the application version has already been configured.</exception> // TODO: typed exception
-        public void Configure(IPolicyDefinition definition, IStreamStoreConnection conn)
+        public void Configure(ISecurityPolicy policy, IStreamStoreConnection conn)
         {
-            IListener GetListener() => new QueuedStreamListener(
-                                            "ConfigureApplication",
+            IConfiguredConnection confConn  = new ConfiguredConnection(
                                             conn,
                                             new PrefixedCamelCaseStreamNameBuilder(),
                                             new JsonMessageSerializer());
-            var appRM = new RegisteredApplicationsRM(GetListener);
+
+            
             var appSvc = new ApplicationSvc(
                                 new StreamStoreRepository(
                                         new PrefixedCamelCaseStreamNameBuilder(),
                                         conn,
                                         new JsonMessageSerializer()),
-                                GetListener,
+                                ()=>confConn.GetListener(nameof(ApplicationSvc)),
                                 _bus);
+            //n.b. not a pure read model
 
-            if (appRM.Applications.Contains(x => x.Name == definition.ApplicationName && x.Version == definition.ApplicationVersion))
-                throw new Exception($"The application {definition.ApplicationName}, version {definition.ApplicationVersion} has already been configured.");
-
-            var appId = Guid.NewGuid();
-            var cmd = MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(appId, definition.ApplicationName, definition.ApplicationVersion));
-            _bus.Send(cmd);
-
-            // Add all roles
-            var roleIds = new Dictionary<string, Guid>();
-            foreach (var role in definition.UserRoles)
-            {
-                var roleId = Guid.NewGuid();
-                roleIds.Add(role.Name, roleId);
-                _bus.Send(MessageBuilder
-                              .From(cmd)
-                              .Build(() => new RoleMsgs.CreateRole(
-                                                roleId,
-                                                role.Name,
-                                                appId)));
-            }
-
+            //todo:sort out the ISecurityPolicy interface, we don't want add the internal methods to the public interface 
+            //and this direct cast is dangerous
+            var securityRM = new SecurityPolicyRM((SecurityPolicy)policy,confConn,_bus);
+/*
             // Add all permissions
             var permissionIds = new Dictionary<string, Guid>();
             foreach (var permission in definition.Permissions)
@@ -106,6 +91,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
             appRM.Dispose();
             appSvc.Dispose();
+*/
         }
     }
 }

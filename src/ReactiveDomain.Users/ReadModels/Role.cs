@@ -11,7 +11,7 @@ namespace ReactiveDomain.Users.ReadModels {
         /// <summary>
         /// The role ID.
         /// </summary>
-        public Guid RoleId { get; }
+        public Guid RoleId { get; private set; }
         /// <summary>
         /// The role name.
         /// </summary>
@@ -49,6 +49,12 @@ namespace ReactiveDomain.Users.ReadModels {
             _childRoles.Add(role);
             _permissions.UnionWith(role._permissions);
             role._parentRoles.Add(this);
+        }
+
+        internal void SetRoleId(Guid id) {
+            if(id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id),"Cannot set roleId to guid.empty");
+            if(RoleId != Guid.Empty) throw new InvalidOperationException("cannot change RoleID ");
+            RoleId = id;
         }
     }
 }
