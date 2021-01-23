@@ -8,12 +8,12 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     /// <summary>
     /// Aggregate for a Application.
     /// </summary>
-    public class Application : AggregateRoot
+    public class ApplicationRoot : AggregateRoot
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
         private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
 
-        private Application()
+        private ApplicationRoot()
         {
             RegisterEvents();
         }
@@ -39,7 +39,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// <summary>
         /// Create a new Application.
         /// </summary>
-        public Application(
+        public ApplicationRoot(
             Guid id,
             string name,
             string version)

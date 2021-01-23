@@ -19,7 +19,7 @@ namespace ReactiveDomain.Users.ReadModels {
         /// <summary>
         /// The application defining the roles.
         /// </summary>
-        public ApplicationModel Application { get; }
+        public Application Application { get; }
 
         private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
         public IReadOnlyList<Permission> Permissions => _permissions.ToList().AsReadOnly();
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Users.ReadModels {
         public Role(
             Guid roleId,
             string name,
-            ApplicationModel application)
+            Application application)
         {
             RoleId = roleId;
             Name = name;

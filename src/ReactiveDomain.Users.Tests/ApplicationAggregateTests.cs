@@ -24,7 +24,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_create_new_clientapplication()
         {
-            var application = new Application(
+            var application = new ApplicationRoot(
                             _id,
                             Application,
                             OneRolePerUser,
@@ -63,7 +63,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_application_with_empty_id()
         {
             Assert.Throws<ArgumentException>(
-                () => new Application(
+                () => new ApplicationRoot(
                     Guid.Empty, 
                     Application,
                     OneRolePerUser,
@@ -79,7 +79,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_application_with_empty_name()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new Application(
+                () => new ApplicationRoot(
                     _id,
                     string.Empty,
                     OneRolePerUser,
@@ -95,7 +95,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_application_with_empty_roles()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new Application(
+                () => new ApplicationRoot(
                     _id,
                     Application,
                     OneRolePerUser,
@@ -111,7 +111,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_application_with_empty_defaultusername()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new Application(
+                () => new ApplicationRoot(
                     _id,
                     Application,
                     OneRolePerUser,
@@ -126,7 +126,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_application_with_empty_secadminrole()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new Application(
+                () => new ApplicationRoot(
                     _id,
                     Application,
                     OneRolePerUser,

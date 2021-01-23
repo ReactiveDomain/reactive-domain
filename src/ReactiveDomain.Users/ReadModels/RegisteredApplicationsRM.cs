@@ -15,15 +15,15 @@ namespace ReactiveDomain.Users.ReadModels
             : base(nameof(RegisteredApplicationsRM), getListener)
         {
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
-            Start<Application>();
+            Start<ApplicationRoot>();
         }
 
-        public IReadOnlyList<ApplicationModel> Applications => _applications.AsReadOnly();
-        private readonly List<ApplicationModel> _applications = new List<ApplicationModel>();
+        public IReadOnlyList<Application> Applications => _applications.AsReadOnly();
+        private readonly List<Application> _applications = new List<Application>();
 
         public void Handle(ApplicationMsgs.ApplicationCreated message)
         {
-            _applications.Add(new ApplicationModel(message.ApplicationId, message.Name, message.ApplicationVersion));
+            _applications.Add(new Application(message.ApplicationId, message.Name, message.ApplicationVersion));
         }
     }
 }

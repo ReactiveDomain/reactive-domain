@@ -34,7 +34,7 @@ namespace ReactiveDomain.Users.ReadModels
 
         private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
-        private readonly Dictionary<Guid, ApplicationModel> _applications = new Dictionary<Guid, ApplicationModel>();
+        private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
         private readonly Dictionary<Guid, UserModel> _users = new Dictionary<Guid, UserModel>();
       
         private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
@@ -48,7 +48,7 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-            Start<Application>(blockUntilLive: true);
+            Start<ApplicationRoot>(blockUntilLive: true);
             //todo: subscribe to user stream
         }
         
@@ -120,7 +120,7 @@ namespace ReactiveDomain.Users.ReadModels
 
             _applications.Add(
                 @event.ApplicationId, 
-                new ApplicationModel(
+                new Application(
                     @event.ApplicationId,
                     @event.Name,
                     @event.ApplicationVersion
@@ -235,7 +235,7 @@ namespace ReactiveDomain.Users.ReadModels
             string subjectId,
             string userName,
             string authDomain,
-            ApplicationModel application)
+            Application application)
         {
             var user = _users.Values.FirstOrDefault(x =>
                 x.AuthDomain.Equals(authDomain, StringComparison.CurrentCultureIgnoreCase)

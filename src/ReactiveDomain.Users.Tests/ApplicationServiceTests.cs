@@ -101,7 +101,7 @@ namespace ReactiveDomain.Users.Tests
                     DefaultUser,
                     DefaultDomain,
                     _defaultUserRoles));
-            var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(Application), _id);
+            var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(ApplicationRoot), _id);
             _fixture.StreamStoreConnection.AppendToStream(
                 stream,
                 ExpectedVersion.Any,

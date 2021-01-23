@@ -69,7 +69,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// <exception cref="DuplicateApplicationException"></exception>
         public CommandResponse Handle(ApplicationMsgs.CreateApplication command)
         {
-            var application = new Application(
+            var application = new ApplicationRoot(
                 command.Id,
                 command.Name,
                 command.Version);
@@ -79,7 +79,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(ApplicationMsgs.RetireApplication command)
         {
-            var application = _repo.GetById<Application>(command.Id, command);
+            var application = _repo.GetById<ApplicationRoot>(command.Id, command);
             application.Retire();
             _repo.Save(application);
             return command.Succeed();
@@ -87,7 +87,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(ApplicationMsgs.UnretireApplication command)
         {
-            var application = _repo.GetById<Application>(command.Id, command);
+            var application = _repo.GetById<ApplicationRoot>(command.Id, command);
             application.Unretire();
             _repo.Save(application);
             return command.Succeed();
@@ -98,28 +98,28 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(RoleMsgs.CreateRole cmd) {
 
-            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
             application.AddRole(cmd.RoleId, cmd.Name);
             _repo.Save(application);
             return cmd.Succeed();
         }
 
         public CommandResponse Handle(RoleMsgs.AssignChildRole cmd) {
-            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
             application.AssignChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
             _repo.Save(application);
             return cmd.Succeed();
         }
 
         public CommandResponse Handle(RoleMsgs.AddPermission cmd) {
-            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
             application.AddPermission(cmd.PermissionId, cmd.PermissionName);
             _repo.Save(application);
             return cmd.Succeed();
         }
 
         public CommandResponse Handle(RoleMsgs.AssignPermission cmd) {
-            var application = _repo.GetById<Application>(cmd.ApplicationId,cmd);
+            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
             application.AssignPermission(cmd.RoleId, cmd.PermissionId);
             _repo.Save(application);
             return cmd.Succeed();

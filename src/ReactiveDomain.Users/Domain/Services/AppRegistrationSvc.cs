@@ -81,9 +81,9 @@ namespace ReactiveDomain.Users.Domain.Services
             {
                 var roleId = roleIds[role.Name];
                 if (role.ChildRoles.Any())
-                    foreach (var childRole in role.ChildRoles)
+                    foreach (var childRole in role.ChildRoles) //todo: check for circles in the relationships
                     {
-                        if (!roleIds.ContainsKey(childRole)) continue;
+                        if (!roleIds.ContainsKey(childRole)) continue; //todo: should this check be earlier?
                         _bus.Send(MessageBuilder
                                       .From(cmd)
                                       .Build(() => new RoleMsgs.AssignChildRole(

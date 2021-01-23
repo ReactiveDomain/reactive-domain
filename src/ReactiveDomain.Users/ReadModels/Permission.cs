@@ -14,9 +14,9 @@ namespace ReactiveDomain.Users.ReadModels
         /// <summary>
         /// The application defining the roles.
         /// </summary>
-        public ApplicationModel Application { get; }
+        public Application Application { get; }
 
-        public Permission(Guid id, string name, ApplicationModel application) {
+        public Permission(Guid id, string name, Application application) {
             Id = id;
             Name = name;
             Application = application;
