@@ -1,5 +1,6 @@
 ﻿namespace ReactiveDomain.Users.Policy {
     public interface IConfigureSecurity {
-        void Configure(ISecurityPolicy policy, IStreamStoreConnection conn);
+        ISecurityPolicy GetBasePolicy();
+        void SynchronizePolicy(ISecurityPolicy policy, IStreamStoreConnection conn);
     }
 }

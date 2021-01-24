@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
@@ -24,23 +23,20 @@ namespace ReactiveDomain.Users.Domain.Services
         //IHandleCommand<RoleMsgs.RoleMigrated>
     {
         
-        private readonly CorrelatedStreamStoreRepository _repo;
+        private readonly ICorrelatedRepository _repo;
         private readonly ApplicationsRM _applicationsRm;
 
         /// <summary>
         /// Create a service to act on Application aggregates.
         /// </summary>
-        /// <param name="repo">The repository for interacting with the EventStore.</param>
-        /// <param name="getListener">Function for getting a Listener from the EventStore Repo.</param>
-        /// <param name="bus">The dispatcher.</param>
+        /// <param name="conn">A configured connection for interacting with the EventStore.</param>
+        /// <param name="cmdSource">The dispatcher to subscribe to.</param>
         public ApplicationSvc(
-            IRepository repo,
-            Func<IListener> getListener,
-            IDispatcher bus)
-            : base(bus)
-        {
-            _repo = new CorrelatedStreamStoreRepository(repo);
-            _applicationsRm = new ApplicationsRM(getListener);
+            IConfiguredConnection conn,
+            ICommandSubscriber cmdSource)
+            : base(cmdSource) {
+            _repo = conn.GetCorrelatedRepository(caching:true);
+            _applicationsRm = new ApplicationsRM(conn);
 
             Subscribe<ApplicationMsgs.CreateApplication>(this);
             Subscribe<ApplicationMsgs.RetireApplication>(this);
@@ -72,7 +68,9 @@ namespace ReactiveDomain.Users.Domain.Services
             var application = new ApplicationRoot(
                 command.Id,
                 command.Name,
-                command.Version);
+                command.Version,
+                command);
+            
             _repo.Save(application); //n.b. this will throw on duplicate application due to optimistic stream concurrency checks in the event store
             return command.Succeed();
         }

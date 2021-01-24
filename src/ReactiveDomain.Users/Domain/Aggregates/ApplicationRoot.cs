@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
@@ -42,12 +43,15 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         public ApplicationRoot(
             Guid id,
             string name,
-            string version)
-            : this()
+            string version,
+            ICorrelatedMessage source)
+            : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
             Ensure.NotNullOrEmpty(name, nameof(name));
             Ensure.NotNullOrEmpty(version, nameof(version));
+            Ensure.NotEmptyGuid(source.CorrelationId,nameof(source));
+            RegisterEvents();
             Raise(new ApplicationMsgs.ApplicationCreated(
                          id,
                          name,

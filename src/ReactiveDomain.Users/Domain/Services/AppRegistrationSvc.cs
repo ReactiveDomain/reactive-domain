@@ -15,7 +15,7 @@ namespace ReactiveDomain.Users.Domain.Services
     /// <summary>
     /// Registers application policies with the domain.
     /// </summary>
-    public class AppRegistrationSvc : IConfigureSecurity
+    public class AppRegistrationSvc
     {
         //todo: Use main bus or is this full isolated? ??
         private readonly IDispatcher _bus = new Dispatcher("App Registration Bus");
@@ -34,13 +34,7 @@ namespace ReactiveDomain.Users.Domain.Services
                                             new JsonMessageSerializer());
 
             
-            var appSvc = new ApplicationSvc(
-                                new StreamStoreRepository(
-                                        new PrefixedCamelCaseStreamNameBuilder(),
-                                        conn,
-                                        new JsonMessageSerializer()),
-                                ()=>confConn.GetListener(nameof(ApplicationSvc)),
-                                _bus);
+            var appSvc = new ApplicationSvc(confConn, _bus);
             //n.b. not a pure read model
 
             //todo:sort out the ISecurityPolicy interface, we don't want add the internal methods to the public interface 

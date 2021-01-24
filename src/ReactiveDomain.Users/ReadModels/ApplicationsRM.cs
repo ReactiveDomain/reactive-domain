@@ -24,7 +24,7 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.RoleAssigned>,
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
-        IHandle<UserMsgs.RoleUnassigned>, 
+        IHandle<UserMsgs.RoleUnassigned>,
         IHandle<RoleMsgs.ChildRoleAssigned>,
         IHandle<RoleMsgs.PermissionAdded>,
         IHandle<RoleMsgs.PermissionAssigned>,
@@ -36,13 +36,13 @@ namespace ReactiveDomain.Users.ReadModels
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
         private readonly Dictionary<Guid, UserModel> _users = new Dictionary<Guid, UserModel>();
-      
+
         private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
         /// <summary>
         /// Create a read model for getting information about existing applications.
         /// </summary>
-        public ApplicationsRM(Func<IListener> getListener)
-            : base(nameof(ApplicationsRM), getListener)
+        public ApplicationsRM(IConfiguredConnection conn)
+            : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(ApplicationsRM)))
         {
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
@@ -51,13 +51,14 @@ namespace ReactiveDomain.Users.ReadModels
             Start<ApplicationRoot>(blockUntilLive: true);
             //todo: subscribe to user stream
         }
-        
+
         /// <summary>
         /// Checks whether the specified application is known to the system.
         /// </summary>
         /// <param name="id">The unique ID of the application.</param>
         /// <returns>True if the user exists.</returns>
-        public bool ApplicationExists(Guid id) {
+        public bool ApplicationExists(Guid id)
+        {
             return _applications.ContainsKey(id);
         }
 
@@ -87,7 +88,8 @@ namespace ReactiveDomain.Users.ReadModels
         /// </summary>
         public bool RoleExists(
             string name,
-            Guid applicationId) {
+            Guid applicationId)
+        {
             return TryGetRoleId(name, applicationId, out _);
         }
 
@@ -114,12 +116,13 @@ namespace ReactiveDomain.Users.ReadModels
         /// <summary>
         /// Given the application created event, adds a new application to the collection of roles.
         /// </summary>
-        public void Handle(ApplicationMsgs.ApplicationCreated @event) {
-            
+        public void Handle(ApplicationMsgs.ApplicationCreated @event)
+        {
+
             if (_applications.ContainsKey(@event.ApplicationId)) return;
 
             _applications.Add(
-                @event.ApplicationId, 
+                @event.ApplicationId,
                 new Application(
                     @event.ApplicationId,
                     @event.Name,
@@ -131,10 +134,10 @@ namespace ReactiveDomain.Users.ReadModels
         /// </summary>
         public void Handle(RoleMsgs.RoleCreated @event)
         {
-            if(_roles.ContainsKey(@event.RoleId)) return;
-            if(!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
+            if (_roles.ContainsKey(@event.RoleId)) return;
+            if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
             var app = _applications[@event.ApplicationId];
-            
+
             _roles.Add(
                 @event.RoleId,
                 new Role(
@@ -162,29 +165,33 @@ namespace ReactiveDomain.Users.ReadModels
             */
         }
 
-        public void Handle(RoleMsgs.ChildRoleAssigned @event) {
-            if(!_roles.ContainsKey(@event.ParentRoleId)) return;
-            if(!_roles.ContainsKey(@event.ChildRoleId)) return;
+        public void Handle(RoleMsgs.ChildRoleAssigned @event)
+        {
+            if (!_roles.ContainsKey(@event.ParentRoleId)) return;
+            if (!_roles.ContainsKey(@event.ChildRoleId)) return;
 
-             _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
+            _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
         }
-        public void Handle(RoleMsgs.PermissionAdded @event) {
-            if(_permissions.ContainsKey(@event.PermissionId)) return;
+        public void Handle(RoleMsgs.PermissionAdded @event)
+        {
+            if (_permissions.ContainsKey(@event.PermissionId)) return;
             if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log this error
             var app = _applications[@event.ApplicationId];
-            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId,@event.PermissionName,app));
+            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, app));
         }
-        public void Handle(RoleMsgs.PermissionAssigned @event) {
-            if(!_roles.ContainsKey(@event.RoleId)) return; //todo: log this error
-            if(!_permissions.ContainsKey(@event.PermissionId)) return; //todo: log this error
+        public void Handle(RoleMsgs.PermissionAssigned @event)
+        {
+            if (!_roles.ContainsKey(@event.RoleId)) return; //todo: log this error
+            if (!_permissions.ContainsKey(@event.PermissionId)) return; //todo: log this error
             _roles[@event.RoleId].AddPermission(_permissions[@event.PermissionId]);
         }
-        
-        
+
+
         /// <summary>
         /// Handle a UserMsgs.UserCreated event.
         /// </summary>
-        public void Handle(UserMsgs.UserCreated @event) {
+        public void Handle(UserMsgs.UserCreated @event)
+        {
             if (_users.ContainsKey(@event.Id)) return;
             _users.Add(
                 @event.Id,
@@ -210,15 +217,15 @@ namespace ReactiveDomain.Users.ReadModels
         {
             if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
             var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if( role != null) return;
+            if (role != null) return;
             _users[@event.UserId].Roles.Add(_roles[@event.RoleId]);
         }
 
         public void Handle(UserMsgs.RoleUnassigned @event)
         {
-            if (!_users.ContainsKey(@event.UserId)|| !_roles.ContainsKey(@event.RoleId)) return;
+            if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
             var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if( role == null) return;
+            if (role == null) return;
             _users[@event.UserId].Roles.Remove(role);
         }
         public void Handle(UserMsgs.AuthDomainUpdated @event)
@@ -255,6 +262,6 @@ namespace ReactiveDomain.Users.ReadModels
             }
             return user.Roles.FindAll(x => x.Application == application);
         }
-       
+
     }
 }

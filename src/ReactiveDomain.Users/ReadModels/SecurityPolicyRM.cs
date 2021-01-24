@@ -62,7 +62,10 @@ namespace ReactiveDomain.Users.ReadModels
             if (dbApp == null)
             {
                 appId = Guid.NewGuid();
-                dispatcher.Send(new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion));
+                var cmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName,
+                    Policy.ApplicationVersion);
+                cmd.CorrelationId = cmd.Id;
+                dispatcher.Send(cmd);
                 //at this point we know the created app in the db matches the base policy, so no reason to read it 
             }
             else {
