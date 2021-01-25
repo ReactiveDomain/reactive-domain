@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
@@ -58,7 +59,7 @@ namespace ReactiveDomain.Users.ReadModels
             Guid appId;
             var dbApp = _applications.Values.FirstOrDefault(
                 app =>  string.CompareOrdinal(app.Name, Policy.ApplicationName) == 0 &&
-                                string.CompareOrdinal(app.Version, Policy.ApplicationVersion) == 0);
+                                string.CompareOrdinal(app.ApplicationVersion, Policy.ApplicationVersion) == 0);
             if (dbApp == null)
             {
                 appId = Guid.NewGuid();
@@ -72,16 +73,25 @@ namespace ReactiveDomain.Users.ReadModels
                 appId = dbApp.Id;
             }
             Policy.App.UpdateApplicationDetails(appId);
-            using (var appReader = conn.GetReader("AppReader"))
+            using (var appReader = conn.GetReader("RoleReader"))
             {
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
                 //todo: subscribe to permissions
                 //todo: subscribe role child mappings
                 appReader.Read<ApplicationRoot>(appId);
             }
-
+            //enrich db with roles from the base policy, if any are missing
+            foreach (var role in Policy.Roles) {
+                if (_roles.Values.All(r =>  !r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase))) {
+                    var roleId = Guid.NewGuid();
+                    var cmd = new RoleMsgs.CreateRole(roleId, role.Name, appId) {CorrelationId = appId};
+                    dispatcher.Send(cmd);
+                }
+            }
+            //sync all roles on the Policy with Ids from the DB
+            //and add any missing roles from the db
             foreach (var role in _roles.Values) {
-                var baseRole = Policy.Roles.FirstOrDefault(r => r.Name == role.Name);
+                var baseRole = Policy.Roles.FirstOrDefault(r => r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase));
                 if (baseRole == null) {
                     Policy.AddRole(role);
                 }
@@ -89,6 +99,8 @@ namespace ReactiveDomain.Users.ReadModels
                     baseRole.SetRoleId( role.RoleId);
                 }
             }
+
+            
 
             
             //todo: subscribe to user assignments
