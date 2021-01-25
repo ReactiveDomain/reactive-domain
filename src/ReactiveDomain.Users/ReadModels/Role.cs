@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ReactiveDomain.Users.ReadModels {
+namespace ReactiveDomain.Users.ReadModels
+{
     /// <summary>
     /// Houses the role data populated by the role created handler.
     /// </summary>
@@ -22,7 +23,10 @@ namespace ReactiveDomain.Users.ReadModels {
         public Application Application { get; }
 
         private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
-        public IReadOnlyList<Permission> Permissions => _permissions.ToList().AsReadOnly();
+        private readonly HashSet<Permission> _effectivePermissions = new HashSet<Permission>();
+        public IReadOnlyList<Permission> DirectPermissions => _permissions.ToList().AsReadOnly();
+
+        public IReadOnlyList<Permission> Permissions => _effectivePermissions.ToList().AsReadOnly();
         private readonly HashSet<Role> _parentRoles = new HashSet<Role>();
         private readonly HashSet<Role> _childRoles = new HashSet<Role>();
         public IReadOnlyList<Role> ChildRoles => _childRoles.ToList().AsReadOnly();
@@ -39,21 +43,35 @@ namespace ReactiveDomain.Users.ReadModels {
             Application = application;
         }
 
-        public void AddPermission(Permission permission) {
+        public void AddPermission(Permission permission)
+        {
             _permissions.Add(permission);
-            foreach (var parentRole in _parentRoles) {
-                parentRole.AddPermission(permission);
+            _effectivePermissions.Add(permission);
+            foreach (var parentRole in _parentRoles)
+            {
+                parentRole.AddInherited(permission);
             }
         }
-        public void AddChildRole(Role role) {
+        public void AddInherited(Permission permission)
+        {
+            _effectivePermissions.Add(permission);
+            foreach (var parentRole in _parentRoles)
+            {
+                parentRole.AddInherited(permission);
+            }
+        }
+        public void AddChildRole(Role role)
+        {
             _childRoles.Add(role);
-            _permissions.UnionWith(role._permissions);
+            _effectivePermissions.UnionWith(role._permissions);
             role._parentRoles.Add(this);
         }
 
-        internal void SetRoleId(Guid id) {
-            if(id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id),"Cannot set roleId to guid.empty");
-            if(RoleId != Guid.Empty) throw new InvalidOperationException("cannot change RoleID ");
+        internal void SetRoleId(Guid id)
+        {
+            if (id == RoleId) return;
+            if (id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id), "Cannot set roleId to guid.empty");
+            if (RoleId != Guid.Empty) throw new InvalidOperationException("cannot change RoleID ");
             RoleId = id;
         }
     }

@@ -115,12 +115,12 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         public void AddPermission(Guid permissionId, string name) {
             Ensure.NotEmptyGuid(permissionId, nameof(permissionId));
             Ensure.NotNullOrEmpty(name, nameof(name));
-            if (_roles.ContainsValue(name) || _roles.ContainsKey(permissionId))
+            if (_permissions.ContainsValue(name) || _permissions.ContainsKey(permissionId))
             {
                 throw new InvalidOperationException($"Cannot add duplicate permission. Name: {name} Id:{permissionId}");
             }
 
-            Raise(new RoleMsgs.RoleCreated(
+            Raise(new RoleMsgs.PermissionAdded(
                 permissionId,
                 name,
                 Id));

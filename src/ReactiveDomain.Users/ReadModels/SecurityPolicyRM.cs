@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
@@ -58,8 +57,8 @@ namespace ReactiveDomain.Users.ReadModels
             }
             Guid appId;
             var dbApp = _applications.Values.FirstOrDefault(
-                app =>  string.CompareOrdinal(app.Name, Policy.ApplicationName) == 0 &&
-                                string.CompareOrdinal(app.ApplicationVersion, Policy.ApplicationVersion) == 0);
+                app => string.CompareOrdinal(app.Name, Policy.ApplicationName) == 0 &&
+                                string.CompareOrdinal(app.Version, Policy.ApplicationVersion) == 0);
             if (dbApp == null)
             {
                 appId = Guid.NewGuid();
@@ -67,42 +66,131 @@ namespace ReactiveDomain.Users.ReadModels
                     Policy.ApplicationVersion);
                 cmd.CorrelationId = cmd.Id;
                 dispatcher.Send(cmd);
-                //at this point we know the created app in the db matches the base policy, so no reason to read it 
+                dbApp = Policy.App;
             }
-            else {
+            else
+            {
                 appId = dbApp.Id;
             }
             Policy.App.UpdateApplicationDetails(appId);
             using (var appReader = conn.GetReader("RoleReader"))
             {
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
-                //todo: subscribe to permissions
-                //todo: subscribe role child mappings
+                appReader.EventStream.Subscribe<RoleMsgs.PermissionAdded>(this);
+                appReader.EventStream.Subscribe<RoleMsgs.PermissionAssigned>(this);
+                appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
+                
                 appReader.Read<ApplicationRoot>(appId);
             }
             //enrich db with roles from the base policy, if any are missing
-            foreach (var role in Policy.Roles) {
-                if (_roles.Values.All(r =>  !r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase))) {
+            foreach (var role in Policy.Roles)
+            {
+                if (_roles.Values.All(r => !r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase)))
+                {
                     var roleId = Guid.NewGuid();
-                    var cmd = new RoleMsgs.CreateRole(roleId, role.Name, appId) {CorrelationId = appId};
+                    var cmd = new RoleMsgs.CreateRole(roleId, role.Name, appId) { CorrelationId = appId };
                     dispatcher.Send(cmd);
+                    role.SetRoleId(roleId);
+                    _roles.Add(roleId, new Role(roleId, role.Name, role.Application));
                 }
             }
             //sync all roles on the Policy with Ids from the DB
             //and add any missing roles from the db
-            foreach (var role in _roles.Values) {
+            foreach (var role in _roles.Values)
+            {
                 var baseRole = Policy.Roles.FirstOrDefault(r => r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase));
-                if (baseRole == null) {
+                if (baseRole == null)
+                {
                     Policy.AddRole(role);
                 }
-                else {
-                    baseRole.SetRoleId( role.RoleId);
+                else
+                {
+                    baseRole.SetRoleId(role.RoleId);
                 }
             }
+            //enrich db with permissions from the base policy, if any are missing
+            foreach (var permission in Policy.Permissions) {
+                var dbPerm = _permissions.Values.FirstOrDefault(p =>
+                    p.Name.Equals(permission.Name, StringComparison.OrdinalIgnoreCase));
+                if (dbPerm == null)
+                {
+                    var permissionId = Guid.NewGuid();
+                    var cmd = new RoleMsgs.AddPermission(permissionId, permission.Name, appId) { CorrelationId = appId };
+                    dispatcher.Send(cmd);
+                    permission.SetPermissionId(permissionId);
+                    _permissions.Add(permissionId, permission);
+                }
+                else {
+                    permission.SetPermissionId(dbPerm.Id);
+                }
 
-            
-
-            
+            }
+            //sync all permissions on the Policy with Ids from the DB
+            //and add any missing permissions from the db
+            foreach (var permission in _permissions.Values)
+            {
+                var basePermission = Policy.Permissions.FirstOrDefault(p => p.Name.Equals(permission.Name, StringComparison.OrdinalIgnoreCase));
+                if (basePermission == null)
+                {
+                    Policy.AddPermission(permission);
+                }
+                else
+                {
+                    basePermission.SetPermissionId(permission.Id);
+                }
+            }
+            //enrich db with permission assignments from the base policy, if any are missing
+            foreach (var role in Policy.Roles)
+            {
+                var dbRole = _roles[role.RoleId];
+                foreach (var permission in role.DirectPermissions) {
+                    var dbPermission = dbRole.DirectPermissions.FirstOrDefault(p => p.Id == permission.Id);
+                    if (dbPermission == null)
+                    {
+                        var cmd = new RoleMsgs.AssignPermission(dbRole.RoleId, permission.Id, appId) { CorrelationId = appId };
+                        dispatcher.Send(cmd);
+                        dbRole.AddPermission(permission);
+                    }
+                }
+            }
+            //sync db permission assignments into the base policy, if any are missing
+            foreach (var role in _roles.Values)
+            {
+                var baseRole = Policy.Roles.First(r => r.RoleId == role.RoleId);
+                foreach (var permission in role.DirectPermissions)
+                {
+                    if (baseRole.DirectPermissions.All(p => p.Id != permission.Id))
+                    {
+                        baseRole.AddPermission(permission);
+                    }
+                }
+            }
+            //enrich db with child role assignments from the base policy, if any are missing
+            foreach (var role in Policy.Roles)
+            {
+                var dbRole = _roles[role.RoleId];
+                foreach (var childRole in role.ChildRoles) {
+                    var dbChildRole = dbRole.ChildRoles.FirstOrDefault(cr => cr.RoleId == childRole.RoleId);
+                    if (dbChildRole == null)
+                    {
+                        var cmd = new RoleMsgs.AssignChildRole(dbRole.RoleId, childRole.RoleId, appId) { CorrelationId = appId };
+                        dispatcher.Send(cmd);
+                        dbRole.AddChildRole(childRole);
+                    }
+                }
+            }
+            //sync db child role assignments into the base policy, if any are missing
+            foreach (var role in _roles.Values)
+            {
+                var baseRole = Policy.Roles.First(r => r.RoleId == role.RoleId);
+                foreach (var childRole in role.ChildRoles)
+                {
+                    if (baseRole.ChildRoles.All(cr => cr.RoleId != childRole.RoleId))
+                    {
+                        baseRole.AddChildRole(childRole);
+                    }
+                }
+            }
             //todo: subscribe to user assignments
 
             //todo: subscribe to user stream???

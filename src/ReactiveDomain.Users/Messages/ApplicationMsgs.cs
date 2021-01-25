@@ -55,15 +55,15 @@ namespace ReactiveDomain.Users.Messages
             /// </summary>
             /// <param name="applicationId">The unique ID of the new application.</param>
             /// <param name="name">application name.</param>
-            /// <param name="version">application version</param>
+            /// <param name="applicationVersion">application version</param>
             public ApplicationCreated(
                 Guid applicationId,
                 string name,
-                string version)
+                string applicationVersion)
             {
                 ApplicationId = applicationId;
                 Name = name;
-                ApplicationVersion = version;
+                ApplicationVersion = applicationVersion;
             }
         }
 

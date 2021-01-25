@@ -6,7 +6,7 @@ namespace ReactiveDomain.Users.ReadModels
         /// <summary>
         /// The permission ID.
         /// </summary>
-        public Guid Id { get; }
+        public Guid Id { get; private set; }
         /// <summary>
         /// The permission name.
         /// </summary>
@@ -21,6 +21,12 @@ namespace ReactiveDomain.Users.ReadModels
             Name = name;
             Application = application;
         }
-      
+
+        public void SetPermissionId(Guid id) {
+            if(id == Id) return;
+            if(id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id),"Cannot set permissionId to guid.empty");
+            if(Id != Guid.Empty) throw new InvalidOperationException("cannot change PermissionId ");
+            Id = id;
+        }
     }
 }
