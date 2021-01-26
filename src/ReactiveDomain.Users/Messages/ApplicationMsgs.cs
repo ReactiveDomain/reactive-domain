@@ -202,5 +202,35 @@ namespace ReactiveDomain.Users.Messages
                 Id = id;
             }
         }
+
+        public class CreatePolicy : Command {
+            public readonly Guid PolicyId;
+            public readonly string PolicyName;
+            public readonly Guid ApplicationId;
+
+            public CreatePolicy(
+                Guid policyId,
+                string policyName,
+                Guid applicationId) {
+                PolicyId = policyId;
+                PolicyName = policyName;
+                ApplicationId = applicationId;
+            }
+        }
+
+        public class PolicyCreated : Event {
+            public readonly Guid PolicyId;
+            public readonly string PolicyName;
+            public readonly Guid ApplicationId;
+
+            public PolicyCreated(
+                Guid policyId,
+                string policyName,
+                Guid applicationId) {
+                PolicyId = policyId;
+                PolicyName = policyName;
+                ApplicationId = applicationId;
+            }
+        }
     }
 }

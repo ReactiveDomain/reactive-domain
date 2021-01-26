@@ -22,8 +22,8 @@ namespace ReactiveDomain.Users.Domain
         /// <summary>
         /// An attempt was made to add a duplicate role to the system.
         /// </summary>
-        public DuplicateRoleException(string roleName, string application)
-            : base($"Role {roleName} for {application} already exists.")
+        public DuplicateRoleException(string roleName, string policy)
+            : base($"Role {roleName} for {policy} already exists.")
         { }
     }
     /// <summary>

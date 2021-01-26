@@ -1,21 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.Users.Policy
 {
+    
     public class Application
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
         public string Version { get; private set; }
+        private readonly List<SecurityPolicy> _polices;
+        public IReadOnlyList<SecurityPolicy> Policies => _polices.AsReadOnly();
 
         public Application(
             Guid id,
             string name,
-            string version)
+            string version,
+            IEnumerable<SecurityPolicy> policies = null)
         {
             Id = id;
             Name = name;
             Version = version;
+            _polices = policies?.ToList() ?? new List<SecurityPolicy>();
         }
         /// <summary>
         /// Used when syncing with the backing db
@@ -31,6 +38,16 @@ namespace ReactiveDomain.Users.ReadModels
             if (id.HasValue &&  id.Value != Guid.Empty) { Id = id.Value; }
             if (!string.IsNullOrWhiteSpace(name)) { Name = name; }
             if (!string.IsNullOrWhiteSpace(version)) { Version = version; }
+        }
+
+        public void AddPolicy(SecurityPolicy policy) {
+            //don't add duplicates, but the ID might be Guid.Empty if db sync hasn't happened
+            var existingPolicy = _polices.FirstOrDefault(p =>
+                p.PolicyId == policy.PolicyId || p.PolicyName.Equals(policy.PolicyName));
+            if (existingPolicy == null) {
+                _polices.Add(policy);
+            }
+            //return idempotent success
         }
     }
 }

@@ -5,17 +5,18 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.ReadModels;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.Users.Policy
 {
     // for use in applications enforcing security policy
     /// <summary>
     /// A read model that contains a synchronized security policy for the application. 
     /// </summary>
-    public class SecurityPolicyRM :
+    public class SecurityPolicySyncService :
         ReadModelBase,
         IHandle<ApplicationMsgs.ApplicationCreated>,
+        IHandle<ApplicationMsgs.PolicyCreated>,
         IHandle<RoleMsgs.RoleCreated>,
         IHandle<RoleMsgs.RoleMigrated>,
         //IHandle<UserMsgs.UserCreated>,
@@ -35,44 +36,49 @@ namespace ReactiveDomain.Users.ReadModels
         private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
-        // private readonly Dictionary<Guid, UserModel> _users = new Dictionary<Guid, UserModel>();
-        //public List<UserModel> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
-
-        //private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
+       
+       
         /// <summary>
         /// Create a read model for a synchronized Security Policy.
         /// </summary>
-        public SecurityPolicyRM(
+        public SecurityPolicySyncService(
             SecurityPolicy basePolicy,
             IConfiguredConnection conn,
             IDispatcher dispatcher)
-            : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(SecurityPolicyRM)))
+            : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(SecurityPolicySyncService)))
         {
             Policy = basePolicy ?? new SecurityPolicyBuilder().Build();
 
             using (var appReader = conn.GetReader("AppReader"))
             {
                 appReader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
+                appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
+
                 appReader.Read(typeof(ApplicationMsgs.ApplicationCreated));
             }
             Guid appId;
+            Guid correlationId = Guid.NewGuid();
             var dbApp = _applications.Values.FirstOrDefault(
                 app => string.CompareOrdinal(app.Name, Policy.ApplicationName) == 0 &&
                                 string.CompareOrdinal(app.Version, Policy.ApplicationVersion) == 0);
             if (dbApp == null)
             {
                 appId = Guid.NewGuid();
-                var cmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName,
-                    Policy.ApplicationVersion);
-                cmd.CorrelationId = cmd.Id;
-                dispatcher.Send(cmd);
-                dbApp = Policy.App;
+                var appCmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion) {CorrelationId = correlationId};
+                dispatcher.Send(appCmd);
+                var policyId = new Guid();
+                var polCmd = new ApplicationMsgs.CreatePolicy(policyId, Policy.PolicyName, appId) {CorrelationId = correlationId};
+                dispatcher.Send(polCmd);
+                Policy.OwningApplication.UpdateApplicationDetails(appId);
+                Policy.PolicyId = policyId;
             }
             else
             {
-                appId = dbApp.Id;
+                Policy.OwningApplication.UpdateApplicationDetails(dbApp.Id);
+                Policy.PolicyId = dbApp.Policies.First( p => p.PolicyName.Equals(Policy.PolicyName)).PolicyId;
             }
-            Policy.App.UpdateApplicationDetails(appId);
+
+            //appId = Policy.OwningApplication.Id;
             using (var appReader = conn.GetReader("RoleReader"))
             {
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
@@ -80,7 +86,7 @@ namespace ReactiveDomain.Users.ReadModels
                 appReader.EventStream.Subscribe<RoleMsgs.PermissionAssigned>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
                 
-                appReader.Read<ApplicationRoot>(appId);
+                appReader.Read<SecuredApplicationAgg>(Policy.OwningApplication.Id);
             }
             //enrich db with roles from the base policy, if any are missing
             foreach (var role in Policy.Roles)
@@ -88,10 +94,10 @@ namespace ReactiveDomain.Users.ReadModels
                 if (_roles.Values.All(r => !r.Name.Equals(role.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     var roleId = Guid.NewGuid();
-                    var cmd = new RoleMsgs.CreateRole(roleId, role.Name, appId) { CorrelationId = appId };
+                    var cmd = new RoleMsgs.CreateRole(roleId, role.Name, Policy.PolicyId) { CorrelationId = correlationId };
                     dispatcher.Send(cmd);
                     role.SetRoleId(roleId);
-                    _roles.Add(roleId, new Role(roleId, role.Name, role.Application));
+                    _roles.Add(roleId, new Role(roleId, role.Name, role.PolicyId));
                 }
             }
             //sync all roles on the Policy with Ids from the DB
@@ -115,7 +121,7 @@ namespace ReactiveDomain.Users.ReadModels
                 if (dbPerm == null)
                 {
                     var permissionId = Guid.NewGuid();
-                    var cmd = new RoleMsgs.AddPermission(permissionId, permission.Name, appId) { CorrelationId = appId };
+                    var cmd = new RoleMsgs.AddPermission(permissionId, permission.Name, Policy.PolicyId) { CorrelationId = correlationId };
                     dispatcher.Send(cmd);
                     permission.SetPermissionId(permissionId);
                     _permissions.Add(permissionId, permission);
@@ -147,7 +153,7 @@ namespace ReactiveDomain.Users.ReadModels
                     var dbPermission = dbRole.DirectPermissions.FirstOrDefault(p => p.Id == permission.Id);
                     if (dbPermission == null)
                     {
-                        var cmd = new RoleMsgs.AssignPermission(dbRole.RoleId, permission.Id, appId) { CorrelationId = appId };
+                        var cmd = new RoleMsgs.AssignPermission(dbRole.RoleId, permission.Id, Policy.PolicyId) { CorrelationId = correlationId };
                         dispatcher.Send(cmd);
                         dbRole.AddPermission(permission);
                     }
@@ -173,12 +179,13 @@ namespace ReactiveDomain.Users.ReadModels
                     var dbChildRole = dbRole.ChildRoles.FirstOrDefault(cr => cr.RoleId == childRole.RoleId);
                     if (dbChildRole == null)
                     {
-                        var cmd = new RoleMsgs.AssignChildRole(dbRole.RoleId, childRole.RoleId, appId) { CorrelationId = appId };
+                        var cmd = new RoleMsgs.AssignChildRole(dbRole.RoleId, childRole.RoleId, Policy.PolicyId) { CorrelationId = correlationId };
                         dispatcher.Send(cmd);
                         dbRole.AddChildRole(childRole);
                     }
                 }
             }
+
             //sync db child role assignments into the base policy, if any are missing
             foreach (var role in _roles.Values)
             {
@@ -196,71 +203,7 @@ namespace ReactiveDomain.Users.ReadModels
             //todo: subscribe to user stream???
             //Start<ApplicationRoot>(appId, blockUntilLive: true);
         }
-
-        /// <summary>
-        /// Checks whether the specified application is known to the system.
-        /// </summary>
-        /// <param name="id">The unique ID of the application.</param>
-        /// <returns>True if the user exists.</returns>
-        public bool ApplicationExists(Guid id)
-        {
-            return _applications.ContainsKey(id);
-        }
-
-        /// <summary>
-        /// Checks whether the specified application is known to the system.
-        /// </summary>
-        /// <param name="name">The application name.</param>
-        /// <returns></returns>
-        public bool ApplicationExists(string name)
-        {
-            return _applications.Values.Any(x => x.Name == name);
-        }
-
-        /// <summary>
-        /// Gets the unique ID of the specified application.
-        /// </summary>
-        /// <param name="name">The application name.</param>
-        /// <returns>Application guid if a application with matching properties was found, otherwise empty guid.</returns>
-        public Guid GetApplicationId(string name)
-        {
-            var app = _applications.Values.FirstOrDefault(x => x.Name == name);
-            return app?.Id ?? Guid.Empty;
-        }
-
-        /// <summary>
-        /// Given the name of the role and the application, returns whether the role exists or not.
-        /// </summary>
-        public bool RoleExists(
-            string name,
-            Guid applicationId)
-        {
-            return TryGetRoleId(name, applicationId, out _);
-        }
-
-        /// <summary>
-        /// Gets the unique ID of the specified role.
-        /// </summary>
-        /// <param name="name">The of the role.</param>
-        /// <param name="applicationId">The application for which this role is defined.</param>        
-        /// <param name="id">The unique ID of the role. This is the out parameter</param>
-        /// <returns>True if a role with matching properties was found, otherwise false.</returns>
-        public bool TryGetRoleId(
-            string name,
-            Guid applicationId,
-            out Guid? id)
-        {
-            id = null;
-            var role = _roles.Values.FirstOrDefault(r => r.Application.Id == applicationId && string.CompareOrdinal(r.Name, name) == 0);
-            if (role != null)
-                id = role.RoleId;
-            return id != null;
-        }
-
-
-        /// <summary>
-        /// Given the application created event, adds a new application to the collection of roles.
-        /// </summary>
+        
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
 
@@ -274,21 +217,28 @@ namespace ReactiveDomain.Users.ReadModels
                     @event.ApplicationVersion
                 ));
         }
+
+        
+        public void Handle(ApplicationMsgs.PolicyCreated @event)
+        {
+
+            if (!_applications.ContainsKey(@event.ApplicationId)) return;
+            var app = _applications[@event.ApplicationId];
+            app.AddPolicy(new SecurityPolicy(@event.PolicyName, @event.PolicyId, app));
+        }
+
         /// <summary>
         /// Given the role created event, adds a new role to the collection of roles.
         /// </summary>
         public void Handle(RoleMsgs.RoleCreated @event)
         {
             if (_roles.ContainsKey(@event.RoleId)) return;
-            if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
-            var app = _applications[@event.ApplicationId];
-
             _roles.Add(
                 @event.RoleId,
                 new Role(
                     @event.RoleId,
                     @event.Name,
-                    app));
+                    Policy.PolicyId));
         }
         //todo: handle migration events
         /// <summary>
@@ -320,9 +270,7 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(RoleMsgs.PermissionAdded @event)
         {
             if (_permissions.ContainsKey(@event.PermissionId)) return;
-            if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log this error
-            var app = _applications[@event.ApplicationId];
-            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, app));
+            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, Policy.PolicyId));
         }
         public void Handle(RoleMsgs.PermissionAssigned @event)
         {

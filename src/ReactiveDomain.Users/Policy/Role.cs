@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.Users.Policy
 {
     /// <summary>
     /// Houses the role data populated by the role created handler.
@@ -18,9 +18,9 @@ namespace ReactiveDomain.Users.ReadModels
         /// </summary>
         public string Name { get; }
         /// <summary>
-        /// The application defining the roles.
+        /// The Id of the policy defining the roles.
         /// </summary>
-        public Application Application { get; }
+        public Guid PolicyId { get; internal set; }
 
         private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
         private readonly HashSet<Permission> _effectivePermissions = new HashSet<Permission>();
@@ -36,11 +36,11 @@ namespace ReactiveDomain.Users.ReadModels
         public Role(
             Guid roleId,
             string name,
-            Application application)
+            Guid policyId)
         {
             RoleId = roleId;
             Name = name;
-            Application = application;
+            PolicyId = policyId;
         }
 
         public void AddPermission(Permission permission)

@@ -5,6 +5,8 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.Policy;
+using User = ReactiveDomain.Users.Policy.User;
 
 namespace ReactiveDomain.Users.ReadModels
 {
@@ -30,14 +32,13 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<RoleMsgs.PermissionAssigned>,
         IUserEntitlementRM
     {
-        public List<UserModel> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
+        public List<User> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
 
         private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
-        private readonly Dictionary<Guid, UserModel> _users = new Dictionary<Guid, UserModel>();
+        private readonly Dictionary<Guid, User> _users = new Dictionary<Guid, User>();
 
-        private string _userStream => new PrefixedCamelCaseStreamNameBuilder("pki_elbe").GenerateForCategory(typeof(User));
         /// <summary>
         /// Create a read model for getting information about existing applications.
         /// </summary>
@@ -48,7 +49,7 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-            Start<ApplicationRoot>(blockUntilLive: true);
+            Start<SecuredApplicationAgg>(blockUntilLive: true);
             //todo: subscribe to user stream
         }
 
@@ -106,7 +107,7 @@ namespace ReactiveDomain.Users.ReadModels
             out Guid? id)
         {
             id = null;
-            var role = _roles.Values.FirstOrDefault(r => r.Application.Id == applicationId && string.CompareOrdinal(r.Name, name) == 0);
+            var role = _roles.Values.FirstOrDefault(r => r.PolicyId == applicationId && string.CompareOrdinal(r.Name, name) == 0);
             if (role != null)
                 id = role.RoleId;
             return id != null;
@@ -135,15 +136,13 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(RoleMsgs.RoleCreated @event)
         {
             if (_roles.ContainsKey(@event.RoleId)) return;
-            if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
-            var app = _applications[@event.ApplicationId];
-
+           
             _roles.Add(
                 @event.RoleId,
                 new Role(
                     @event.RoleId,
                     @event.Name,
-                    app));
+                    @event.PolicyId));
         }
         //todo: handle migration events
         /// <summary>
@@ -175,9 +174,8 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(RoleMsgs.PermissionAdded @event)
         {
             if (_permissions.ContainsKey(@event.PermissionId)) return;
-            if (!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log this error
-            var app = _applications[@event.ApplicationId];
-            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, app));
+            
+            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, @event.PolicyId));
         }
         public void Handle(RoleMsgs.PermissionAssigned @event)
         {
@@ -195,7 +193,7 @@ namespace ReactiveDomain.Users.ReadModels
             if (_users.ContainsKey(@event.Id)) return;
             _users.Add(
                 @event.Id,
-                new UserModel(
+                new User(
                     @event.Id,
                     @event.UserName,
                     @event.SubjectId,
@@ -242,7 +240,7 @@ namespace ReactiveDomain.Users.ReadModels
             string subjectId,
             string userName,
             string authDomain,
-            Application application)
+            Guid policyId)
         {
             var user = _users.Values.FirstOrDefault(x =>
                 x.AuthDomain.Equals(authDomain, StringComparison.CurrentCultureIgnoreCase)
@@ -260,7 +258,7 @@ namespace ReactiveDomain.Users.ReadModels
             {
                 throw new UserDeactivatedException("UserId = " + subjectId + ", authDomain = " + authDomain);
             }
-            return user.Roles.FindAll(x => x.Application == application);
+            return user.Roles.FindAll(x => x.PolicyId == policyId);
         }
 
     }

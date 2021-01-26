@@ -39,7 +39,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
             //todo:sort out the ISecurityPolicy interface, we don't want add the internal methods to the public interface 
             //and this direct cast is dangerous
-            var securityRM = new SecurityPolicyRM((SecurityPolicy)policy,confConn,_bus);
+            var securityRM = new SecurityPolicySyncService((SecurityPolicy)policy,confConn,_bus);
 /*
             // Add all permissions
             var permissionIds = new Dictionary<string, Guid>();

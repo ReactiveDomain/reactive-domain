@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.Users.Policy
 {
     public class Permission {
         /// <summary>
@@ -12,14 +12,14 @@ namespace ReactiveDomain.Users.ReadModels
         /// </summary>
         public string Name { get; }
         /// <summary>
-        /// The application defining the roles.
+        /// The PolicyId defining the roles.
         /// </summary>
-        public Application Application { get; }
+        public Guid PolicyId { get; }
 
-        public Permission(Guid id, string name, Application application) {
+        public Permission(Guid id, string name, Guid policyId) {
             Id = id;
             Name = name;
-            Application = application;
+            PolicyId = policyId;
         }
 
         public void SetPermissionId(Guid id) {

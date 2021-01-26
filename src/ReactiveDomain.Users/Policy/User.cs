@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace ReactiveDomain.Users.ReadModels {
-    public class UserModel
+namespace ReactiveDomain.Users.Policy {
+    public class User
     {
         public Guid UserId { get; }
         public string UserName { get; set; }
@@ -12,7 +12,7 @@ namespace ReactiveDomain.Users.ReadModels {
         public bool IsActivated { get; set; } = true;
 
 
-        public UserModel(
+        public User(
             Guid userId,
             string userName,
             string subjectId,

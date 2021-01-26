@@ -24,11 +24,11 @@ namespace ReactiveDomain.Users.Tests.PolicyBuilder
             var policy = builder.Build();
 
             //application
-            Assert.Equal("foo", policy.App.Name);
-            Assert.Equal(version.ToString(), policy.App.Version);
+            Assert.Equal("foo", policy.OwningApplication.Name);
+            Assert.Equal(version.ToString(), policy.OwningApplication.Version);
 
             //all empty ids
-            Assert.Equal(Guid.Empty, policy.App.Id);
+            Assert.Equal(Guid.Empty, policy.OwningApplication.Id);
             Assert.True(policy.Permissions.All(p => p.Id == Guid.Empty));
             Assert.True(policy.Roles.All(r => r.RoleId == Guid.Empty));
 

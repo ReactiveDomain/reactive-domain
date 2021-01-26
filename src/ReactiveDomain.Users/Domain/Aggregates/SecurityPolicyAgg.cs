@@ -1,80 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Messaging;
+using System.Text;
+using ReactiveDomain.Foundation.Domain;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Users.Domain.Aggregates
 {
-    /// <summary>
-    /// Aggregate for a Application.
-    /// </summary>
-    public class ApplicationRoot : AggregateRoot
+
+    public class SecurityPolicyAgg : ChildAggregate
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
         private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
 
-        private ApplicationRoot()
-        {
-            RegisterEvents();
-        }
+        public readonly string PolicyName;
 
-        private void RegisterEvents()
-        {
-            Register<ApplicationMsgs.ApplicationCreated>(Apply);
+        public SecurityPolicyAgg(
+            Guid policyId, 
+            string policyName,
+            SecuredApplicationAgg root)
+            : base(policyId, root) {
+            PolicyName = policyName;
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
             Register<RoleMsgs.ChildRoleAssigned>(Apply);
             Register<RoleMsgs.PermissionAdded>(Apply);
             Register<RoleMsgs.PermissionAssigned>(Apply);
-
         }
 
-        private void Apply(ApplicationMsgs.ApplicationCreated evt) => Id = evt.ApplicationId;
-        private void Apply(RoleMsgs.RoleCreated evt) => _roles.Add(evt.RoleId, evt.Name);
-        private void Apply(RoleMsgs.RoleMigrated evt) => _roles.Add(evt.RoleId, evt.Name);
-        private void Apply(RoleMsgs.ChildRoleAssigned evt) { /*todo:do we need to track this? see contained role class*/}
-        private void Apply(RoleMsgs.PermissionAdded evt) => _permissions.Add(evt.PermissionId, evt.PermissionName);
-        private void Apply(RoleMsgs.PermissionAssigned evt) { /*todo:do we need to track this? see contained role class */}
+        //Apply State
+        private void Apply(RoleMsgs.RoleCreated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
+        private void Apply(RoleMsgs.RoleMigrated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
+        private void Apply(RoleMsgs.ChildRoleAssigned @event) { /*todo:do we need to track this? see contained role class*/}
+        private void Apply(RoleMsgs.PermissionAdded @event) { if (@event.PolicyId == Id) _permissions.Add(@event.PermissionId, @event.PermissionName); }
+        private void Apply(RoleMsgs.PermissionAssigned @event) { /*todo:do we need to track this? see contained role class */}
 
-        /// <summary>
-        /// Create a new Application.
-        /// </summary>
-        public ApplicationRoot(
-            Guid id,
-            string name,
-            string version,
-            ICorrelatedMessage source)
-            : base(source)
-        {
-            Ensure.NotEmptyGuid(id, nameof(id));
-            Ensure.NotNullOrEmpty(name, nameof(name));
-            Ensure.NotNullOrEmpty(version, nameof(version));
-            Ensure.NotEmptyGuid(source.CorrelationId,nameof(source));
-            RegisterEvents();
-            Raise(new ApplicationMsgs.ApplicationCreated(
-                         id,
-                         name,
-                         version));
-        }
-
-        /// <summary>
-        /// Retire an application that is no longer in use.
-        /// </summary>
-        public void Retire()
-        {
-            // Event should be idempotent in RMs, so no validation necessary.
-            Raise(new ApplicationMsgs.ApplicationRetired(Id));
-        }
-
-        /// <summary>
-        /// Re-activate a retired application that is being put back into use.
-        /// </summary>
-        public void Unretire() {
-            // Event should be idempotent in RMs, so no validation necessary.
-            Raise(new ApplicationMsgs.ApplicationUnretired(Id));
-        }
-
+        //Public methods
         /// <summary>
         /// Add a new role.
         /// </summary>
@@ -112,7 +73,8 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 Id));
         }
 
-        public void AddPermission(Guid permissionId, string name) {
+        public void AddPermission(Guid permissionId, string name)
+        {
             Ensure.NotEmptyGuid(permissionId, nameof(permissionId));
             Ensure.NotNullOrEmpty(name, nameof(name));
             if (_permissions.ContainsValue(name) || _permissions.ContainsKey(permissionId))
@@ -139,8 +101,10 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 permissionId,
                 Id));
         }
-        private class Role {
+        private class Role
+        {
             //todo: do we need to implement this to model correct role invariants?
         }
     }
+
 }

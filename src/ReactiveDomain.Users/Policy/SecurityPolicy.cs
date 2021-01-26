@@ -4,23 +4,29 @@ using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Users.Policy
 {
-    public class SecurityPolicy: ISecurityPolicy
-    {
+    public class SecurityPolicy: ISecurityPolicy {
+        public readonly string PolicyName;
+        public  Guid PolicyId { get; internal set; }
         private readonly List<Role> _roles;
         private readonly List<Permission> _permissions;
-        public Application App { get; }
+        
+        public Application OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
         public IReadOnlyList<Permission> Permissions => _permissions.AsReadOnly();
-        public string ApplicationName => App.Name;
-        public string ApplicationVersion => App.Version;
+        public string ApplicationName => OwningApplication.Name;
+        public string ApplicationVersion => OwningApplication.Version;
         
         public SecurityPolicy(
-            Application app,
-            List<Role> roles,
-            List<Permission> permissions) {
-            App = app;
-            _roles = roles;
-            _permissions = permissions;
+            string policyName,
+            Guid policyId,
+            Application owningApplication,
+            List<Role> roles = null,
+            List<Permission> permissions = null) {
+            PolicyName = policyName;
+            PolicyId = policyId;
+            OwningApplication = owningApplication;
+            _roles = roles ?? new List<Role>();
+            _permissions = permissions ?? new List<Permission>();
         }
 
         public IReadOnlyList<Role> ListUserRoles(Guid userId) {

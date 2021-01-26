@@ -14,13 +14,7 @@ namespace ReactiveDomain.Users.Domain.Services
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication>,
         IHandleCommand<ApplicationMsgs.RetireApplication>,
-        IHandleCommand<ApplicationMsgs.UnretireApplication>,
-        IHandleCommand<RoleMsgs.CreateRole>,
-        IHandleCommand<RoleMsgs.AssignChildRole>,
-        IHandleCommand<RoleMsgs.AddPermission>,
-        IHandleCommand<RoleMsgs.AssignPermission>
-        //todo: handle other role commands
-        //IHandleCommand<RoleMsgs.RoleMigrated>
+        IHandleCommand<ApplicationMsgs.UnretireApplication> 
     {
         
         private readonly ICorrelatedRepository _repo;
@@ -41,10 +35,6 @@ namespace ReactiveDomain.Users.Domain.Services
             Subscribe<ApplicationMsgs.CreateApplication>(this);
             Subscribe<ApplicationMsgs.RetireApplication>(this);
             Subscribe<ApplicationMsgs.UnretireApplication>(this);
-            Subscribe<RoleMsgs.CreateRole>(this);
-            Subscribe<RoleMsgs.AssignChildRole>(this);
-            Subscribe<RoleMsgs.AddPermission>(this);
-            Subscribe<RoleMsgs.AssignPermission>(this);
         }
 
         private bool _disposed;
@@ -65,7 +55,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// <exception cref="DuplicateApplicationException"></exception>
         public CommandResponse Handle(ApplicationMsgs.CreateApplication command)
         {
-            var application = new ApplicationRoot(
+            var application = new SecuredApplicationAgg(
                 command.Id,
                 command.Name,
                 command.Version,
@@ -77,7 +67,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(ApplicationMsgs.RetireApplication command)
         {
-            var application = _repo.GetById<ApplicationRoot>(command.Id, command);
+            var application = _repo.GetById<SecuredApplicationAgg>(command.Id, command);
             application.Retire();
             _repo.Save(application);
             return command.Succeed();
@@ -85,42 +75,10 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(ApplicationMsgs.UnretireApplication command)
         {
-            var application = _repo.GetById<ApplicationRoot>(command.Id, command);
+            var application = _repo.GetById<SecuredApplicationAgg>(command.Id, command);
             application.Unretire();
             _repo.Save(application);
             return command.Succeed();
-        }
-
-        /// <summary>
-        /// Given the create role command, creates a role created event.
-        /// </summary>
-        public CommandResponse Handle(RoleMsgs.CreateRole cmd) {
-
-            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
-            application.AddRole(cmd.RoleId, cmd.Name);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
-
-        public CommandResponse Handle(RoleMsgs.AssignChildRole cmd) {
-            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
-            application.AssignChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
-
-        public CommandResponse Handle(RoleMsgs.AddPermission cmd) {
-            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
-            application.AddPermission(cmd.PermissionId, cmd.PermissionName);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
-
-        public CommandResponse Handle(RoleMsgs.AssignPermission cmd) {
-            var application = _repo.GetById<ApplicationRoot>(cmd.ApplicationId,cmd);
-            application.AssignPermission(cmd.RoleId, cmd.PermissionId);
-            _repo.Save(application);
-            return cmd.Succeed();
         }
     }
 }

@@ -5,6 +5,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
+using User = ReactiveDomain.Users.Domain.Aggregates.User;
 
 namespace ReactiveDomain.Users.Domain.Services
 {

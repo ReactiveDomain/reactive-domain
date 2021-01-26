@@ -17,8 +17,8 @@ namespace ReactiveDomain.Users.Messages
             public readonly Guid RoleId;
             /// <summary>The name of the role.</summary>
             public readonly string Name;
-            /// <summary>The application this role applies to.</summary>
-            public readonly Guid ApplicationId;
+            /// <summary>The policy this role applies to.</summary>
+            public readonly Guid PolicyId;
 
 
             /// <summary>
@@ -27,11 +27,11 @@ namespace ReactiveDomain.Users.Messages
             public CreateRole(
                 Guid roleId,
                 string name,
-                Guid applicationId)
+                Guid policyId)
             {
                 RoleId = roleId;
                 Name = name;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -45,8 +45,8 @@ namespace ReactiveDomain.Users.Messages
             public readonly Guid RoleId;
             /// <summary>The name of the role.</summary>
             public readonly string Name;
-            /// <summary>The application this role applies to.</summary>
-            public readonly Guid ApplicationId;
+            /// <summary>The policy this role applies to.</summary>
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// A new role was created.
@@ -54,11 +54,11 @@ namespace ReactiveDomain.Users.Messages
             public RoleCreated(
                 Guid roleId,
                 string name,
-                Guid applicationId)
+                Guid policyId)
             {
                 RoleId = roleId;
                 Name = name;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -71,8 +71,8 @@ namespace ReactiveDomain.Users.Messages
             public readonly Guid ParentRoleId;
             /// <summary>The Id of the child role.</summary>
             public readonly Guid ChildRoleId;
-            /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            /// <summary>The Policy these role apply to.</summary>
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// Add an existing role as child role to the parent
@@ -80,11 +80,11 @@ namespace ReactiveDomain.Users.Messages
             public AssignChildRole(
                 Guid parentRoleId,
                 Guid childRoleId,
-                Guid applicationId)
+                Guid policyId)
             {
                 ParentRoleId = parentRoleId;
                 ChildRoleId = childRoleId;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -99,7 +99,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The Id of the child role.</summary>
             public readonly Guid ChildRoleId;
             /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// An existing role was added as child role to the parent
@@ -107,11 +107,11 @@ namespace ReactiveDomain.Users.Messages
             public ChildRoleAssigned(
                 Guid parentRoleId,
                 Guid childRoleId,
-                Guid applicationId)
+                Guid policyId)
             {
                 ParentRoleId = parentRoleId;
                 ChildRoleId = childRoleId;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -125,7 +125,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The type name of the permission.</summary>
             public readonly string PermissionName;
             /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// Add a permission
@@ -133,10 +133,10 @@ namespace ReactiveDomain.Users.Messages
             public AddPermission(
                 Guid permissionId,
                 string permissionName,
-                Guid applicationId) {
+                Guid policyId) {
                 PermissionId = permissionId;
                 PermissionName = permissionName;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -151,7 +151,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The type name of the permission.</summary>
             public readonly string PermissionName;
             /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// Permission added
@@ -159,11 +159,11 @@ namespace ReactiveDomain.Users.Messages
             public PermissionAdded(
                 Guid permissionId,
                 string permissionName,
-                Guid applicationId)
+                Guid policyId)
             {
                 PermissionId = permissionId;
                 PermissionName = permissionName;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -177,7 +177,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The Id of the permission.</summary>
             public readonly Guid PermissionId;
             /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// Add a permission to the role
@@ -185,11 +185,11 @@ namespace ReactiveDomain.Users.Messages
             public AssignPermission(
                 Guid roleId,
                 Guid permissionId,
-                Guid applicationId)
+                Guid policyId)
             {
                 RoleId = roleId;
                 PermissionId = permissionId;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -204,7 +204,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The Id of the permission.</summary>
             public readonly Guid PermissionId;
             /// <summary>The application these role apply to.</summary>
-            public readonly Guid ApplicationId;
+            public readonly Guid PolicyId;
 
             /// <summary>
             /// Permission added to a role
@@ -212,11 +212,11 @@ namespace ReactiveDomain.Users.Messages
             public PermissionAssigned(
                 Guid roleId,
                 Guid permissionId,
-                Guid applicationId)
+                Guid policyId)
             {
                 RoleId = roleId;
                 PermissionId = permissionId;
-                ApplicationId = applicationId;
+                PolicyId = policyId;
             }
 
         }
@@ -232,7 +232,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The name of the role.</summary>
             public readonly string Name;
             /// <summary>The application this role applies to.</summary>
-            public readonly string Application;
+            public readonly Guid PolicyId;
             /// <summary>The source stream.</summary>
             public readonly string Source;
             /// <summary> The number of Events migrated.</summary>
@@ -244,13 +244,13 @@ namespace ReactiveDomain.Users.Messages
             public RoleMigrated( 
                 Guid roleId,
                 string name,
-                string application,
+                Guid policyId,
                 string source, 
                 int eventCount)
             {
                 RoleId = roleId;
                 Name = name;
-                Application = application;
+                PolicyId = policyId;
                 Source = source;
                 EventCount = eventCount;
             }
