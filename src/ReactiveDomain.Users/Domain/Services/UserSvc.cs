@@ -5,7 +5,6 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
-using User = ReactiveDomain.Users.Domain.Aggregates.User;
 
 namespace ReactiveDomain.Users.Domain.Services
 {
@@ -103,7 +102,7 @@ namespace ReactiveDomain.Users.Domain.Services
                             command.AuthDomain,
                             command.UserName);
             }
-            var user = new User(
+            var user = new UserAgg(
                             command.Id,
                             command.SubjectId,
                             command.AuthProvider,
@@ -123,14 +122,14 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticated message)
         {
-            User user;
+            UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain,  message.SubjectId, out var id))
             {
-                user = _repo.GetById<User>(id, message);
+                user = _repo.GetById<UserAgg>(id, message);
             }
             else
             {
-                user = new User(
+                user = new UserAgg(
                             Guid.NewGuid(),
                             message.SubjectId,
                             message.AuthProvider,
@@ -153,14 +152,14 @@ namespace ReactiveDomain.Users.Domain.Services
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
 
-            User user;
+            UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
-                user = _repo.GetById<User>(id, message);
+                user = _repo.GetById<UserAgg>(id, message);
             }
             else
             {
-                user = new User(
+                user = new UserAgg(
                             Guid.NewGuid(),
                             string.Empty,
                             message.AuthProvider,
@@ -182,14 +181,14 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
-            User user;
+            UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName,  out var id))
             {
-                user = _repo.GetById<User>(id, message);
+                user = _repo.GetById<UserAgg>(id, message);
             }
             else
             {
-                user = new User(
+                user = new UserAgg(
                             Guid.NewGuid(),
                             string.Empty,
                             message.AuthProvider,
@@ -212,14 +211,14 @@ namespace ReactiveDomain.Users.Domain.Services
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
 
-            User user;
+            UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
-                user = _repo.GetById<User>(id, message);
+                user = _repo.GetById<UserAgg>(id, message);
             }
             else
             {
-                user = new User(
+                user = new UserAgg(
                             Guid.NewGuid(),
                             string.Empty,
                             message.AuthProvider,
@@ -242,14 +241,14 @@ namespace ReactiveDomain.Users.Domain.Services
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
 
-            User user;
+            UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
-                user = _repo.GetById<User>(id, message);
+                user = _repo.GetById<UserAgg>(id, message);
             }
             else
             {
-                user = new User(
+                user = new UserAgg(
                             Guid.NewGuid(),
                             string.Empty,
                             message.AuthProvider,
@@ -288,7 +287,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(UserMsgs.AssignRole command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.AssignRole(command.RoleId);
             _repo.Save(user);
             return command.Succeed();
@@ -296,7 +295,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(UserMsgs.UnassignRole command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UnassignRole(command.RoleId);
             _repo.Save(user);
             return command.Succeed();
@@ -304,7 +303,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(UserMsgs.Deactivate command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.Deactivate();
             _repo.Save(user);
             return command.Succeed();
@@ -312,7 +311,7 @@ namespace ReactiveDomain.Users.Domain.Services
 
         public CommandResponse Handle(UserMsgs.Activate command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.Reactivate();
             _repo.Save(user);
             return command.Succeed();
@@ -322,7 +321,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateGivenName command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateGivenName(command.GivenName);
             _repo.Save(user);
             return command.Succeed();
@@ -332,7 +331,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateSurname command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateSurname(command.Surname);
             _repo.Save(user);
             return command.Succeed();
@@ -343,7 +342,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateFullName command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateFullName(command.FullName);
             _repo.Save(user);
             return command.Succeed();
@@ -354,7 +353,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateEmail command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateEmail(command.Email);
             _repo.Save(user);
             return command.Succeed();
@@ -365,7 +364,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateAuthDomain command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateAuthDomain(command.AuthDomain);
             _repo.Save(user);
             return command.Succeed();
@@ -375,7 +374,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public CommandResponse Handle(UserMsgs.UpdateUserName command)
         {
-            var user = _repo.GetById<User>(command.UserId, command);
+            var user = _repo.GetById<UserAgg>(command.UserId, command);
             user.UpdateUserName(command.UserName);
             _repo.Save(user);
             return command.Succeed();

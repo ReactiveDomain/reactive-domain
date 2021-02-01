@@ -2,14 +2,14 @@
 
 namespace ReactiveDomain.Foundation.Domain
 {
-    public abstract class ChildAggregate
+    public abstract class ChildEntity
     {
         public readonly Guid Id;
 
         private readonly Action<object> _raise;
         private readonly EventRouter _router;
 
-        protected ChildAggregate(
+        protected ChildEntity(
             Guid id,
             AggregateRoot root) {
             Id = id;

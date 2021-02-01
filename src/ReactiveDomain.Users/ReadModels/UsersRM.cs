@@ -31,7 +31,7 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<UserMsgs.UserCreated>(this);
             EventStream.Subscribe<UserMsgs.UserMigrated>(this);
             EventStream.Subscribe<UserMsgs.UserNameUpdated>(this);
-            Start<Domain.Aggregates.User>(blockUntilLive: true);
+            Start<Domain.Aggregates.UserAgg>(blockUntilLive: true);
         }
 
         /// <summary>

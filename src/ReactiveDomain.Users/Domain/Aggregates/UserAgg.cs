@@ -10,10 +10,10 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     /// <summary>
     /// Aggregate for a User.
     /// </summary>
-    public class User : AggregateRoot
+    public class UserAgg : AggregateRoot
     {
         private List<Guid> AssignedRoles { get; } = new List<Guid>();
-        private User()
+        private UserAgg()
         {
             RegisterEvents();
         }
@@ -50,7 +50,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// <summary>
         /// Create a new user.
         /// </summary>
-        public User(
+        public UserAgg(
             Guid id,
             string subjectId,
             string authProvider,

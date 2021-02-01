@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Users.Policy
 {
@@ -29,6 +28,7 @@ namespace ReactiveDomain.Users.Policy
             _permissions = permissions ?? new List<Permission>();
         }
 
+        
         public IReadOnlyList<Role> ListUserRoles(Guid userId) {
             throw new NotImplementedException();
         }

@@ -33,7 +33,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_create_new_user()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -70,7 +70,7 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_email()
         {
             string emptyEmail = string.Empty;
-            var user = new User(
+            var user = new UserAgg(
                 _id,
                 _userSidFromAuthProvider,
                 AuthProvider,
@@ -106,7 +106,7 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_given_name()
         {
             string emptyGivenName = string.Empty;
-            var user = new User(
+            var user = new UserAgg(
                 _id,
                 _userSidFromAuthProvider,
                 AuthProvider,
@@ -143,7 +143,7 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_surname()
         {
             string emptySurname = string.Empty;
-            var user = new User(
+            var user = new UserAgg(
                 _id,
                 _userSidFromAuthProvider,
                 AuthProvider,
@@ -179,7 +179,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_user_with_empty_provider_name()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new User(
+                () => new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             string.Empty,
@@ -196,7 +196,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_user_with_empty_domain_name()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new User(
+                () => new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -213,7 +213,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_user_with_empty_user_name()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new User(
+                () => new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -230,7 +230,7 @@ namespace ReactiveDomain.Users.Tests
         public void cannot_create_user_with_malformed_email()
         {
             Assert.Throws<FormatException>(
-                () => new User(
+                () => new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -246,7 +246,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_log_authentication()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -288,7 +288,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_updateGivenName()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -330,7 +330,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateGivenName_with_empty_givename()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -348,7 +348,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_updateSurName()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -390,7 +390,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateSurName_with_empty_surname()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -408,7 +408,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_updateFullName()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -450,7 +450,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateFullName_with_empty_fullname()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -468,7 +468,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_updateEmail()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -510,7 +510,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateEmail_with_empty_email()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -528,7 +528,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateEmail_with_malformed_email()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -546,7 +546,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_updateAuthDomain()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -588,7 +588,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_updateAuthDomain_with_empty_authdomain()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -606,7 +606,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_update_username()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,
@@ -648,7 +648,7 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void cannot_update_username_with_empty_username()
         {
-            var user = new User(
+            var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
                             AuthProvider,

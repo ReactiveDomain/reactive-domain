@@ -8,7 +8,7 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.Users.Domain.Aggregates
 {
 
-    public class SecurityPolicyAgg : ChildAggregate
+    public class SecurityPolicyAgg : ChildEntity
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
         private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();

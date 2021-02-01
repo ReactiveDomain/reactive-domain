@@ -14,8 +14,8 @@ namespace ReactiveDomain.Users.Domain.Services
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication>,
         IHandleCommand<ApplicationMsgs.RetireApplication>,
-        IHandleCommand<ApplicationMsgs.UnretireApplication> 
-    {
+        IHandleCommand<ApplicationMsgs.UnretireApplication>,
+        IHandleCommand<ApplicationMsgs.CreatePolicy> {
         
         private readonly ICorrelatedRepository _repo;
         private readonly ApplicationsRM _applicationsRm;
@@ -29,12 +29,15 @@ namespace ReactiveDomain.Users.Domain.Services
             IConfiguredConnection conn,
             ICommandSubscriber cmdSource)
             : base(cmdSource) {
+
             _repo = conn.GetCorrelatedRepository(caching:true);
             _applicationsRm = new ApplicationsRM(conn);
 
             Subscribe<ApplicationMsgs.CreateApplication>(this);
+            Subscribe<ApplicationMsgs.CreatePolicy>(this);
             Subscribe<ApplicationMsgs.RetireApplication>(this);
             Subscribe<ApplicationMsgs.UnretireApplication>(this);
+
         }
 
         private bool _disposed;
@@ -77,6 +80,13 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             var application = _repo.GetById<SecuredApplicationAgg>(command.Id, command);
             application.Unretire();
+            _repo.Save(application);
+            return command.Succeed();
+        }
+        public CommandResponse Handle(ApplicationMsgs.CreatePolicy command)
+        {
+            var application = _repo.GetById<SecuredApplicationAgg>(command.ApplicationId, command);
+            application.AddPolicy(command.PolicyId,command.PolicyName);
             _repo.Save(application);
             return command.Succeed();
         }

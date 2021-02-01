@@ -17,7 +17,7 @@ namespace ReactiveDomain
             _causationId = source.MsgId;
         }
 
-        internal void RegisterChild(ChildAggregate childAggregate, out Action<object> raise, out EventRouter router) {
+        internal void RegisterChild(ChildEntity childAggregate, out Action<object> raise, out EventRouter router) {
             Ensure.NotNull(childAggregate, nameof(childAggregate));
             raise = Raise;
             router = Router;

@@ -23,10 +23,10 @@ namespace ReactiveDomain.Users.Domain.Services
         /// <summary>
         /// Configure an application version's policies. This is a one-time action per application version.
         /// </summary>
-        /// <param name="definition">The policy definition of the application version to be configured.</param>
+        /// <param name="policy">The policy definition of the application version to be configured.</param>
         /// <param name="conn">A connection to the ES where the policy streams are stored.</param>
         /// <exception cref="Exception">Throws if the application version has already been configured.</exception> // TODO: typed exception
-        public void Configure(ISecurityPolicy policy, IStreamStoreConnection conn)
+        public void Configure(SecurityPolicy policy, IStreamStoreConnection conn)
         {
             IConfiguredConnection confConn  = new ConfiguredConnection(
                                             conn,
@@ -34,12 +34,9 @@ namespace ReactiveDomain.Users.Domain.Services
                                             new JsonMessageSerializer());
 
             
-            var appSvc = new ApplicationSvc(confConn, _bus);
-            //n.b. not a pure read model
-
             //todo:sort out the ISecurityPolicy interface, we don't want add the internal methods to the public interface 
             //and this direct cast is dangerous
-            var securityRM = new SecurityPolicySyncService((SecurityPolicy)policy,confConn,_bus);
+            var securityRM = new SecurityPolicySyncService(policy,confConn);
 /*
             // Add all permissions
             var permissionIds = new Dictionary<string, Guid>();

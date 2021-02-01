@@ -45,11 +45,21 @@ namespace ReactiveDomain.Users.ReadModels
         public ApplicationsRM(IConfiguredConnection conn)
             : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(ApplicationsRM)))
         {
+            long? checkpoint;
+            using (var reader = conn.GetReader(nameof(ApplicationsRM)))
+            {
+                reader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
+                reader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
+                reader.EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
+                Start<SecuredApplicationAgg>(blockUntilLive: true);
+                checkpoint = reader.Position;
+            }
+
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-            Start<SecuredApplicationAgg>(blockUntilLive: true);
+            Start<SecuredApplicationAgg>(blockUntilLive: true, checkpoint: checkpoint);
             //todo: subscribe to user stream
         }
 
@@ -136,7 +146,7 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(RoleMsgs.RoleCreated @event)
         {
             if (_roles.ContainsKey(@event.RoleId)) return;
-           
+
             _roles.Add(
                 @event.RoleId,
                 new Role(
@@ -174,7 +184,7 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(RoleMsgs.PermissionAdded @event)
         {
             if (_permissions.ContainsKey(@event.PermissionId)) return;
-            
+
             _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, @event.PolicyId));
         }
         public void Handle(RoleMsgs.PermissionAssigned @event)

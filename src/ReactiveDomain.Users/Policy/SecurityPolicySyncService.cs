@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
+using ReactiveDomain.Users.Domain.Services;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
 
@@ -36,17 +38,19 @@ namespace ReactiveDomain.Users.Policy
         private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
-       
-       
+
+
         /// <summary>
         /// Create a read model for a synchronized Security Policy.
         /// </summary>
         public SecurityPolicySyncService(
             SecurityPolicy basePolicy,
-            IConfiguredConnection conn,
-            IDispatcher dispatcher)
+            IConfiguredConnection conn)
             : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(SecurityPolicySyncService)))
         {
+            var dispatcher = new Dispatcher(nameof(SecurityPolicySyncService));
+            var appSvc = new ApplicationSvc(conn, dispatcher);
+
             Policy = basePolicy ?? new SecurityPolicyBuilder().Build();
 
             using (var appReader = conn.GetReader("AppReader"))
@@ -64,10 +68,10 @@ namespace ReactiveDomain.Users.Policy
             if (dbApp == null)
             {
                 appId = Guid.NewGuid();
-                var appCmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion) {CorrelationId = correlationId};
+                var appCmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion) { CorrelationId = correlationId };
                 dispatcher.Send(appCmd);
                 var policyId = new Guid();
-                var polCmd = new ApplicationMsgs.CreatePolicy(policyId, Policy.PolicyName, appId) {CorrelationId = correlationId};
+                var polCmd = new ApplicationMsgs.CreatePolicy(policyId, Policy.PolicyName, appId) { CorrelationId = correlationId };
                 dispatcher.Send(polCmd);
                 Policy.OwningApplication.UpdateApplicationDetails(appId);
                 Policy.PolicyId = policyId;
@@ -75,7 +79,7 @@ namespace ReactiveDomain.Users.Policy
             else
             {
                 Policy.OwningApplication.UpdateApplicationDetails(dbApp.Id);
-                Policy.PolicyId = dbApp.Policies.First( p => p.PolicyName.Equals(Policy.PolicyName)).PolicyId;
+                Policy.PolicyId = dbApp.Policies.First(p => p.PolicyName.Equals(Policy.PolicyName)).PolicyId;
             }
 
             //appId = Policy.OwningApplication.Id;
@@ -85,7 +89,7 @@ namespace ReactiveDomain.Users.Policy
                 appReader.EventStream.Subscribe<RoleMsgs.PermissionAdded>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.PermissionAssigned>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
-                
+
                 appReader.Read<SecuredApplicationAgg>(Policy.OwningApplication.Id);
             }
             //enrich db with roles from the base policy, if any are missing
@@ -115,7 +119,8 @@ namespace ReactiveDomain.Users.Policy
                 }
             }
             //enrich db with permissions from the base policy, if any are missing
-            foreach (var permission in Policy.Permissions) {
+            foreach (var permission in Policy.Permissions)
+            {
                 var dbPerm = _permissions.Values.FirstOrDefault(p =>
                     p.Name.Equals(permission.Name, StringComparison.OrdinalIgnoreCase));
                 if (dbPerm == null)
@@ -126,7 +131,8 @@ namespace ReactiveDomain.Users.Policy
                     permission.SetPermissionId(permissionId);
                     _permissions.Add(permissionId, permission);
                 }
-                else {
+                else
+                {
                     permission.SetPermissionId(dbPerm.Id);
                 }
 
@@ -149,7 +155,8 @@ namespace ReactiveDomain.Users.Policy
             foreach (var role in Policy.Roles)
             {
                 var dbRole = _roles[role.RoleId];
-                foreach (var permission in role.DirectPermissions) {
+                foreach (var permission in role.DirectPermissions)
+                {
                     var dbPermission = dbRole.DirectPermissions.FirstOrDefault(p => p.Id == permission.Id);
                     if (dbPermission == null)
                     {
@@ -175,7 +182,8 @@ namespace ReactiveDomain.Users.Policy
             foreach (var role in Policy.Roles)
             {
                 var dbRole = _roles[role.RoleId];
-                foreach (var childRole in role.ChildRoles) {
+                foreach (var childRole in role.ChildRoles)
+                {
                     var dbChildRole = dbRole.ChildRoles.FirstOrDefault(cr => cr.RoleId == childRole.RoleId);
                     if (dbChildRole == null)
                     {
@@ -203,7 +211,7 @@ namespace ReactiveDomain.Users.Policy
             //todo: subscribe to user stream???
             //Start<ApplicationRoot>(appId, blockUntilLive: true);
         }
-        
+
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
 
@@ -218,7 +226,7 @@ namespace ReactiveDomain.Users.Policy
                 ));
         }
 
-        
+
         public void Handle(ApplicationMsgs.PolicyCreated @event)
         {
 
