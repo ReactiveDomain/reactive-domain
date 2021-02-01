@@ -56,8 +56,6 @@ namespace ReactiveDomain.Users.Policy
             using (var appReader = conn.GetReader("AppReader"))
             {
                 appReader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
-                appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
-
                 appReader.Read(typeof(ApplicationMsgs.ApplicationCreated));
             }
             Guid appId;
@@ -70,7 +68,7 @@ namespace ReactiveDomain.Users.Policy
                 appId = Guid.NewGuid();
                 var appCmd = new ApplicationMsgs.CreateApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion) { CorrelationId = correlationId };
                 dispatcher.Send(appCmd);
-                var policyId = new Guid();
+                var policyId = Guid.NewGuid();
                 var polCmd = new ApplicationMsgs.CreatePolicy(policyId, Policy.PolicyName, appId) { CorrelationId = correlationId };
                 dispatcher.Send(polCmd);
                 Policy.OwningApplication.UpdateApplicationDetails(appId);
@@ -78,20 +76,29 @@ namespace ReactiveDomain.Users.Policy
             }
             else
             {
-                Policy.OwningApplication.UpdateApplicationDetails(dbApp.Id);
-                Policy.PolicyId = dbApp.Policies.First(p => p.PolicyName.Equals(Policy.PolicyName)).PolicyId;
+                appId = dbApp.Id;
             }
 
-            //appId = Policy.OwningApplication.Id;
+            var policySvc = new PolicySvc(appId, conn, dispatcher);
+
+            
             using (var appReader = conn.GetReader("RoleReader"))
             {
+                appReader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
+                appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.PermissionAdded>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.PermissionAssigned>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
 
-                appReader.Read<SecuredApplicationAgg>(Policy.OwningApplication.Id);
+                appReader.Read<SecuredApplicationAgg>(appId);
             }
+            if (dbApp == null) {
+                dbApp = _applications[appId];
+            }
+            Policy.OwningApplication.UpdateApplicationDetails(appId);
+            Policy.PolicyId = dbApp.Policies.First(p => p.PolicyName.Equals(Policy.PolicyName)).PolicyId;
+
             //enrich db with roles from the base policy, if any are missing
             foreach (var role in Policy.Roles)
             {
@@ -214,7 +221,6 @@ namespace ReactiveDomain.Users.Policy
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
-
             if (_applications.ContainsKey(@event.ApplicationId)) return;
 
             _applications.Add(
@@ -226,10 +232,8 @@ namespace ReactiveDomain.Users.Policy
                 ));
         }
 
-
         public void Handle(ApplicationMsgs.PolicyCreated @event)
         {
-
             if (!_applications.ContainsKey(@event.ApplicationId)) return;
             var app = _applications[@event.ApplicationId];
             app.AddPolicy(new SecurityPolicy(@event.PolicyName, @event.PolicyId, app));
