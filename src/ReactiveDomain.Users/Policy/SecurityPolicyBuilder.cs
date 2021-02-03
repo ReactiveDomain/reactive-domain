@@ -14,6 +14,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly Dictionary<string, Permission> _permissions = new Dictionary<string, Permission>();
         private bool _disposed;
         private bool _isBuilt;
+        private string _defaultRole;
 
         public SecurityPolicyBuilder(string policyName = "default")
         {
@@ -43,6 +44,11 @@ namespace ReactiveDomain.Users.Policy
             {
                 roleAction(roleBuilder);
             }
+            return this;
+        }
+
+        public SecurityPolicyBuilder WithDefaultRole(string roleName) {
+            _defaultRole = roleName;
             return this;
         }
 
@@ -91,7 +97,22 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicy Build()
         {
             _isBuilt = true;
-            var policy = new SecurityPolicy(_policyName, Guid.Empty, _app, _roles.Values.ToList(), _permissions.Values.ToList());
+            Role defaultRole = null;
+            if (_roles.ContainsKey(_defaultRole)) {
+                defaultRole = _roles[_defaultRole];
+            }
+            else if(!string.IsNullOrWhiteSpace(_defaultRole)){
+                defaultRole = new Role(Guid.Empty, _defaultRole, Guid.Empty);
+                _roles.Add(_defaultRole, defaultRole);
+            }
+
+            var policy = new SecurityPolicy(
+                                _policyName, 
+                                Guid.Empty, 
+                                _app, 
+                                _roles.Values.ToList(), 
+                                defaultRole, 
+                                _permissions.Values.ToList());
             Dispose();
             return policy;
         }
