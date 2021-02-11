@@ -13,7 +13,7 @@ namespace ReactiveDomain.Foundation
     /// The Raw events returned from the Stream will be unwrapped using the provided serializer and
     /// consumers can subscribe to event notifications by subscribing to the exposed EventStream.
     ///</summary>
-    
+
     public class StreamReader : IStreamReader
     {
         protected readonly string ReaderName;
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Foundation
         private readonly IStreamStoreConnection _streamStoreConnection;
         protected long StreamPosition;
         protected bool firstEventRead;
-        public long? Position => firstEventRead ? StreamPosition : (long?) null;
+        public long? Position => firstEventRead ? StreamPosition : (long?)null;
         public string StreamName { get; private set; }
         private const int ReadPageSize = 500;
 
@@ -43,6 +43,7 @@ namespace ReactiveDomain.Foundation
                 IStreamStoreConnection streamStoreConnection,
                 IStreamNameBuilder streamNameBuilder,
                 IEventSerializer serializer,
+                IHandle<IMessage> target = null,
                 string busName = null)
         {
             ReaderName = name ?? nameof(StreamReader);
@@ -50,6 +51,7 @@ namespace ReactiveDomain.Foundation
             _streamNameBuilder = streamNameBuilder ?? throw new ArgumentNullException(nameof(streamNameBuilder));
             Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             Bus = new InMemoryBus(busName ?? $"{ReaderName} {nameof(EventStream)}");
+            if (target != null) { Bus.SubscribeToAll(target); }
         }
 
         /// <summary>
@@ -118,11 +120,11 @@ namespace ReactiveDomain.Foundation
                         long? count = null,
                         bool readBackwards = false) where TAggregate : class, IEventSource
         {
-           return Read(
-                _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
-                checkpoint,
-                count,
-                readBackwards);
+            return Read(
+                 _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
+                 checkpoint,
+                 count,
+                 readBackwards);
         }
 
         /// <summary>
@@ -158,8 +160,8 @@ namespace ReactiveDomain.Foundation
 
             do
             {
-                var page = remaining < ReadPageSize ? remaining: ReadPageSize;
-                
+                var page = remaining < ReadPageSize ? remaining : ReadPageSize;
+
                 currentSlice = !readBackwards
                     ? _streamStoreConnection.ReadStreamForward(streamName, sliceStart, page)
                     : _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
@@ -170,7 +172,7 @@ namespace ReactiveDomain.Foundation
                 sliceStart = currentSlice.NextEventNumber;
 
                 Array.ForEach(currentSlice.Events, EventRead);
-                
+
             } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
             return eventsRead;
         }
@@ -192,7 +194,7 @@ namespace ReactiveDomain.Foundation
                 Bus.Publish(@event);
             }
         }
-        
+
         public void Cancel()
         {
             _cancelled = true;
