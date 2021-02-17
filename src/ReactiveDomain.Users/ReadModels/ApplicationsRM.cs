@@ -45,21 +45,21 @@ namespace ReactiveDomain.Users.ReadModels
         public ApplicationsRM(IConfiguredConnection conn)
             : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(ApplicationsRM)))
         {
-            long? checkpoint;
-            using (var reader = conn.GetReader(nameof(ApplicationsRM)))
-            {
-                reader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
-                reader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
-                reader.EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-                Start<SecuredApplicationAgg>(blockUntilLive: true);
-                checkpoint = reader.Position;
-            }
-
-            // ReSharper disable once RedundantTypeArgumentsOfMethod
+            //set handlers
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
-            Start<SecuredApplicationAgg>(blockUntilLive: true, checkpoint: checkpoint);
+
+            //read
+            long? checkpoint;
+            using (var reader = conn.GetReader(nameof(ApplicationsRM), this))
+            {                
+                reader.Read<SecuredApplicationAgg>();                
+                checkpoint = reader.Position;
+            }            
+            //subscribe
+            Start<SecuredApplicationAgg>(checkpoint);
+        
             //todo: subscribe to user stream
         }
 

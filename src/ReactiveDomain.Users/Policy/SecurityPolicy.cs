@@ -30,11 +30,14 @@ namespace ReactiveDomain.Users.Policy
         }
 
         public bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out User user) {
-            if (!_users.Any()) {
-                user = new User(Guid.NewGuid(), authenticatedUser.Identity.Name,authenticatedUser.Identity.);
-                AddUser();
-                return true;
-            }
+            throw new NotImplementedException();
+            //todo:case no users at all - debug auto start
+            //if (!_users.Any()) {
+            //    user = new User(Guid.NewGuid(), authenticatedUser.Identity.Name,authenticatedUser.Identity.);
+            //    AddUser();
+            //    return true;
+            //}
+            //todo: check if user is authorized
         }
 
         public User GetCurrentUser() {
