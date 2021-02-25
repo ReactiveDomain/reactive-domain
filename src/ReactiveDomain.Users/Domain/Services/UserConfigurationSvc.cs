@@ -11,17 +11,9 @@ namespace ReactiveDomain.Users.Domain.Services
     /// <summary>
     /// The service that fronts the User aggregate.
     /// </summary>
-    public class UserSvc :
+    public class UserConfigurationSvc :
         TransientSubscriber,
-        IHandleCommand<UserMsgs.CreateUser>,
-        IHandle<IdentityMsgs.UserAuthenticated>,
-        IHandle<IdentityMsgs.UserAuthenticationFailed>,
-        IHandle<IdentityMsgs.UserAuthenticationFailedAccountLocked>,
-        IHandle<IdentityMsgs.UserAuthenticationFailedAccountDisabled>,
-        IHandle<IdentityMsgs.UserAuthenticationFailedInvalidCredentials>,
-        IHandle<IdentityMsgs.UserAuthenticationFailedByExternalProvider>,
-        IHandleCommand<UserMsgs.AssignRole>,
-        IHandleCommand<UserMsgs.UnassignRole>,
+        IHandleCommand<UserMsgs.CreateUser>,    
         IHandleCommand<UserMsgs.Deactivate>,
         IHandleCommand<UserMsgs.Activate>,
         IHandleCommand<UserMsgs.UpdateGivenName>,
@@ -41,7 +33,7 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         /// <param name="repo">The repository for interacting with the EventStore.</param>
         /// <param name="bus">The dispatcher.</param>
-        public UserSvc(
+        public UserConfigurationSvc(
             string schema,
             Func<IListener> getListener,
             IRepository repo,

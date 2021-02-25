@@ -5,7 +5,7 @@ using System.Linq;
 namespace ReactiveDomain.Users.Policy
 {
     
-    public class Application
+    public class SecuredApplication
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
@@ -13,7 +13,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly List<SecurityPolicy> _polices;
         public IReadOnlyList<SecurityPolicy> Policies => _polices.AsReadOnly();
 
-        public Application(
+        public SecuredApplication(
             Guid id,
             string name,
             string version,

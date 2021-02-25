@@ -9,7 +9,7 @@ namespace ReactiveDomain.Users.Policy
     public sealed class SecurityPolicyBuilder : IDisposable
     {
         private readonly string _policyName;
-        private readonly Application _app;
+        private readonly SecuredApplication _app;
         private readonly Dictionary<string, Role> _roles = new Dictionary<string, Role>();
         private readonly Dictionary<string, Permission> _permissions = new Dictionary<string, Permission>();
         private bool _disposed;
@@ -19,7 +19,7 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicyBuilder(string policyName = "default")
         {
             _policyName = policyName;
-            _app = new Application(
+            _app = new SecuredApplication(
                 Guid.Empty,
                 Assembly.GetEntryAssembly()?.GetName().Name,
                 Assembly.GetEntryAssembly()?.GetName().Version.ToString());
@@ -28,7 +28,7 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicyBuilder(string appName, Version appVersion, string policyName = "default")
         {
             _policyName = policyName;
-            _app = new Application(
+            _app = new SecuredApplication(
                 Guid.Empty,
                 appName,
                 appVersion.ToString());

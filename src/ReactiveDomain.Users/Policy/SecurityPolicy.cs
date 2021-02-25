@@ -14,7 +14,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly List<User> _users;
         private AuthorizedUser _currentUser;
 
-        public Application OwningApplication { get; }
+        public SecuredApplication OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
         public IReadOnlyList<User> Users => _users.AsReadOnly();
         public IReadOnlyList<Permission> Permissions => _permissions.AsReadOnly();
@@ -51,7 +51,7 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicy(
             string policyName,
             Guid policyId,
-            Application owningApplication,
+            SecuredApplication owningApplication,
             List<Role> roles = null,
             Role defaultRole = null,
             List<Permission> permissions = null,

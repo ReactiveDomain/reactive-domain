@@ -37,7 +37,7 @@ namespace ReactiveDomain.Users.Policy
 
         private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
-        private readonly Dictionary<Guid, Application> _applications = new Dictionary<Guid, Application>();
+        private readonly Dictionary<Guid, SecuredApplication> _applications = new Dictionary<Guid, SecuredApplication>();
 
 
         /// <summary>
@@ -225,7 +225,7 @@ namespace ReactiveDomain.Users.Policy
 
             _applications.Add(
                 @event.ApplicationId,
-                new Application(
+                new SecuredApplication(
                     @event.ApplicationId,
                     @event.Name,
                     @event.ApplicationVersion
