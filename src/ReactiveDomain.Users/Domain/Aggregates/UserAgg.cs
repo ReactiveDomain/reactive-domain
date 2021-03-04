@@ -12,6 +12,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     /// </summary>
     public class UserAgg : AggregateRoot
     {
+        private List<Guid> AssignedPolicies { get; } = new List<Guid>();
         private List<Guid> AssignedRoles { get; } = new List<Guid>();
         private UserAgg()
         {
@@ -22,8 +23,8 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         {
             Register<UserMsgs.UserCreated>(Apply);
             Register<UserMsgs.UserMigrated>(Apply);
-            Register<UserMsgs.RoleAssigned>(Apply);
-            Register<UserMsgs.RoleUnassigned>(Apply);
+            Register<UserPolicyMsgs.RoleAdded>(Apply);
+            Register<UserPolicyMsgs.RoleRemoved>(Apply);
         }
 
         private void Apply(UserMsgs.UserCreated evt)
@@ -35,13 +36,13 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Id = evt.Id;
         }
 
-        private void Apply(UserMsgs.RoleAssigned evt)
+        private void Apply(UserPolicyMsgs.RoleAdded evt)
         {
             if (evt.UserId == Id)
                 AssignedRoles.Add(evt.RoleId);
         }
 
-        private void Apply(UserMsgs.RoleUnassigned evt)
+        private void Apply(UserPolicyMsgs.RoleRemoved evt)
         {
             if (evt.UserId == Id)
                 AssignedRoles.Remove(evt.RoleId);
@@ -92,75 +93,53 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         }
 
         /// <summary>
-        /// Log the fact that a user has been successfully authenticated.
+        /// Assign a policy to the user.
         /// </summary>
-        public void Authenticated(string hostIPAddress)
+        public void AddPolicy(SecurityPolicyAgg policy)
         {
-            Raise(new UserMsgs.Authenticated(
-                        Id,
-                        DateTime.UtcNow,
-                        hostIPAddress));
-        }
-        /// <summary>
-        /// Log the fact that a user has not been successfully authenticated.
-        /// </summary>
-        public void NotAuthenticated(string hostIPAddress)
-        {
-            Raise(new UserMsgs.AuthenticationFailed(
-                        Id,
-                        DateTime.UtcNow,
-                        hostIPAddress));
-        }
-        /// <summary>
-        /// Log the fact that a user has not been successfully authenticated because account is locked.
-        /// </summary>
-        public void NotAuthenticatedAccountLocked(string hostIPAddress)
-        {
-            Raise(new UserMsgs.AuthenticationFailedAccountLocked(
-                        Id,
-                        DateTime.UtcNow,
-                        hostIPAddress));
-        }
-        /// <summary>
-        /// Log the fact that a user has not been successfully authenticated because account is disabled.
-        /// </summary>
-        public void NotAuthenticatedAccountDisabled(string hostIPAddress)
-        {
-            Raise(new UserMsgs.AuthenticationFailedAccountDisabled(
-                        Id,
-                        DateTime.UtcNow,
-                        hostIPAddress));
-        }
-        /// <summary>
-        /// Log the fact that a user has not been successfully authenticated because invalid credentials were supplied.
-        /// </summary>
-        public void NotAuthenticatedInvalidCredentials(string hostIPAddress)
-        {
-            Raise(new UserMsgs.AuthenticationFailedInvalidCredentials(
-                        Id,
-                        DateTime.UtcNow,
-                        hostIPAddress));
+            Ensure.NotNull(policy, nameof(policy));
+            if (AssignedPolicies.Contains(policy.Id)) return;
+            Raise(new UserPolicyMsgs.PolicyAdded(Id, policy.Id));
         }
 
         /// <summary>
-        /// Assign a role to the user.
+        /// remove a policy from a user.
         /// </summary>
-        public void AssignRole(Guid roleId)
+        public void RemovePolicy(SecurityPolicyAgg policy)
+        {
+            Ensure.NotNull(policy, nameof(policy));
+            if (AssignedPolicies.Contains(policy.Id))
+            {
+                foreach (var role in policy.Roles)
+                {
+                    if (AssignedRoles.Contains(role))
+                    {
+                        Raise(new UserPolicyMsgs.RemoveRole(Id, role));
+                    }
+                }
+                Raise(new UserPolicyMsgs.PolicyRemoved(Id, policy.Id));
+            }
+        }
+
+        /// <summary>
+        /// Add a role to the user.
+        /// </summary>
+        public void AddRole(Guid roleId)
         {
             Ensure.NotEmptyGuid(roleId, nameof(roleId));
             if (AssignedRoles.Contains(roleId)) return;
-            Raise(new UserMsgs.RoleAssigned(Id, roleId));
+            Raise(new UserPolicyMsgs.RoleAdded(Id, roleId));
         }
 
         /// <summary>
         /// Unassign a role from a user.
         /// </summary>
-        public void UnassignRole(Guid roleId)
+        public void RemoveRole(Guid roleId)
         {
             Ensure.NotEmptyGuid(roleId, nameof(roleId));
             if (AssignedRoles.Contains(roleId))
             {
-                Raise(new UserMsgs.RoleUnassigned(Id, roleId));
+                Raise(new UserPolicyMsgs.RoleRemoved(Id, roleId));
             }
         }
 
@@ -220,7 +199,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                         Id,
                         email));
         }
-       
+
         /// <summary>
         /// Log the fact that a user's AuthDomain has been updated.
         /// </summary>

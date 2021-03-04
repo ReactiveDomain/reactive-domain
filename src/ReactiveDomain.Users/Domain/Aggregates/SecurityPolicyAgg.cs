@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ReactiveDomain.Foundation.Domain;
 using ReactiveDomain.Users.Messages;
@@ -12,6 +13,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
         private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
+        public IReadOnlyList<Guid> Roles => _roles.Keys.ToList();
 
         public readonly string PolicyName;
 

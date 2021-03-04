@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using ReactiveDomain.Users.ReadModels;
+﻿using System.Security.Claims;
 
 namespace ReactiveDomain.Users.Policy
 {
