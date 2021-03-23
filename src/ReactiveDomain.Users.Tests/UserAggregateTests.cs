@@ -246,6 +246,8 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_log_authentication()
         {
+            throw new NotImplementedException();
+            /*
             var user = new UserAgg(
                             _id,
                             _userSidFromAuthProvider,
@@ -283,6 +285,7 @@ namespace ReactiveDomain.Users.Tests
                                     throw new Exception("wrong event.");
                                 }
                             });
+            */
         }
 
         [Fact]

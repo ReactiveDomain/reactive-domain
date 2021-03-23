@@ -47,7 +47,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                 Ensure.NotEmptyGuid(source.MsgId, nameof(source.MsgId));
 
             ((ICorrelatedEventSource)this).Source = source;
-            Raise(new UserAuthMsgs.UserAuthCreated(
+            Raise(new UserAuthMsgs.UserAuthHistoryCreated(
                          id,
                          subjectId,
                          authProvider,

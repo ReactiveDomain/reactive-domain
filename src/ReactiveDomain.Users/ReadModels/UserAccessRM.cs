@@ -15,7 +15,7 @@ namespace ReactiveDomain.Users.ReadModels
             //todo: check 
             //n.b. build the User object on demand after 
             throw new NotImplementedException();
-            return (false, new User());
+            //return (false, new User(Guid.Empty,"","",""));
         }
     }
 }

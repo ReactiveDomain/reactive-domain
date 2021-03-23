@@ -119,7 +119,7 @@ namespace ReactiveDomain.Foundation {
             var commitHeaders = new Dictionary<string, object>
             {
                 {CommitIdHeader, Guid.NewGuid() /*commitId*/},
-                {AggregateClrTypeNameHeader, aggregate.GetType().AssemblyQualifiedName},
+                {AggregateClrTypeNameHeader, $"{aggregate.GetType().FullName},{aggregate.GetType().Assembly.GetName()}"},
                 {AggregateClrTypeHeader, aggregate.GetType().Name}
             };
 

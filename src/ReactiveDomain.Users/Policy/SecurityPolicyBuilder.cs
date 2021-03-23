@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Users.Domain;
 
 namespace ReactiveDomain.Users.Policy
@@ -37,7 +38,7 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicyBuilder AddRole(string roleName, params Action<RoleBuilder>[] roleActions)
         {
             if (_disposed || _isBuilt) throw new ObjectDisposedException(nameof(SecurityPolicyBuilder));
-            var roleBuilder = new RoleBuilder(roleName,  this);
+            var roleBuilder = new RoleBuilder(roleName, this);
             if (roleActions == null) return this;
 
             foreach (var roleAction in roleActions)
@@ -47,7 +48,8 @@ namespace ReactiveDomain.Users.Policy
             return this;
         }
 
-        public SecurityPolicyBuilder WithDefaultRole(string roleName) {
+        public SecurityPolicyBuilder WithDefaultRole(string roleName)
+        {
             _defaultRole = roleName;
             return this;
         }
@@ -57,7 +59,7 @@ namespace ReactiveDomain.Users.Policy
         {
             private readonly SecurityPolicyBuilder _policyBuilder;
             private readonly Role _role;
-            public RoleBuilder(string name,  SecurityPolicyBuilder policyBuilder)
+            public RoleBuilder(string name, SecurityPolicyBuilder policyBuilder)
             {
                 _policyBuilder = policyBuilder;
                 if (_policyBuilder._roles.ContainsKey(name)) throw new DuplicateRoleException(name, policyBuilder._policyName);
@@ -67,7 +69,7 @@ namespace ReactiveDomain.Users.Policy
 
             public RoleBuilder WithChildRole(string roleName, params Action<RoleBuilder>[] roleActions)
             {
-                var roleBuilder = new RoleBuilder(roleName,  _policyBuilder);
+                var roleBuilder = new RoleBuilder(roleName, _policyBuilder);
                 _role.AddChildRole(roleBuilder._role);
 
                 if (roleActions == null) return this;
@@ -92,26 +94,39 @@ namespace ReactiveDomain.Users.Policy
                 _role.AddPermission(permission);
                 return this;
             }
+            public RoleBuilder WithCommand(ICommand command, Func<string, Type> typeFinder)
+            {
+                var permissionName = $"{command.GetType().FullName},{command.GetType().Assembly.GetName()}";
+                if (!_policyBuilder._permissions.TryGetValue(permissionName, out var permission))
+                {
+                    permission = new CommandPermission(Guid.Empty, command, Guid.Empty, typeFinder);
+                    _policyBuilder._permissions.Add(permissionName, permission);
+                }
+                _role.AddPermission(permission);
+                return this;
+            }
         }
 
         public SecurityPolicy Build()
         {
             _isBuilt = true;
             Role defaultRole = null;
-            if (_roles.ContainsKey(_defaultRole)) {
+            if (_roles.ContainsKey(_defaultRole))
+            {
                 defaultRole = _roles[_defaultRole];
             }
-            else if(!string.IsNullOrWhiteSpace(_defaultRole)){
+            else if (!string.IsNullOrWhiteSpace(_defaultRole))
+            {
                 defaultRole = new Role(Guid.Empty, _defaultRole, Guid.Empty);
                 _roles.Add(_defaultRole, defaultRole);
             }
 
             var policy = new SecurityPolicy(
-                                _policyName, 
-                                Guid.Empty, 
-                                _app, 
-                                _roles.Values.ToList(), 
-                                defaultRole, 
+                                _policyName,
+                                Guid.Empty,
+                                _app,
+                                _roles.Values.ToList(),
+                                defaultRole,
                                 _permissions.Values.ToList());
             Dispose();
             return policy;

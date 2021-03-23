@@ -45,16 +45,14 @@ namespace ReactiveDomain.Users.Domain.Services
             _providersRM = new ProvidersRM(schema, getListener);
 
             Subscribe<UserMsgs.CreateUser>(this);
-            Subscribe<IdentityMsgs.UserAuthenticated>(this);
-            Subscribe<IdentityMsgs.UserAuthenticationFailed>(this);
-            Subscribe<IdentityMsgs.UserAuthenticationFailedAccountLocked>(this);
-            Subscribe<IdentityMsgs.UserAuthenticationFailedAccountDisabled>(this);
-            Subscribe<IdentityMsgs.UserAuthenticationFailedInvalidCredentials>(this);
-            Subscribe<IdentityMsgs.UserAuthenticationFailedByExternalProvider>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticated>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticationFailed>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticationFailedAccountLocked>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticationFailedAccountDisabled>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticationFailedInvalidCredentials>(this);
+            //Subscribe<IdentityMsgs.UserAuthenticationFailedByExternalProvider>(this);
             Subscribe<UserMsgs.Activate>(this);
             Subscribe<UserMsgs.Deactivate>(this);
-            Subscribe<UserMsgs.AssignRole>(this);
-            Subscribe<UserMsgs.UnassignRole>(this);
             Subscribe<UserMsgs.UpdateGivenName>(this);
             Subscribe<UserMsgs.UpdateSurname>(this);
             Subscribe<UserMsgs.UpdateFullName>(this);
@@ -105,190 +103,6 @@ namespace ReactiveDomain.Users.Domain.Services
                             command.Surname,
                             command.Email,
                             command);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticated event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticated message)
-        {
-            UserAgg user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain,  message.SubjectId, out var id))
-            {
-                user = _repo.GetById<UserAgg>(id, message);
-            }
-            else
-            {
-                user = new UserAgg(
-                            Guid.NewGuid(),
-                            message.SubjectId,
-                            message.AuthProvider,
-                            message.AuthDomain,
-                            message.UserName,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            message);
-            }
-            user.Authenticated(message.HostIPAddress);
-            _repo.Save(user);
-        }
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticationFailed event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticationFailed message)
-        {
-            //todo:clc- address challenge with finding user without sub Claim
-            // do we need to do this?
-
-            UserAgg user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
-            {
-                user = _repo.GetById<UserAgg>(id, message);
-            }
-            else
-            {
-                user = new UserAgg(
-                            Guid.NewGuid(),
-                            string.Empty,
-                            message.AuthProvider,
-                            message.AuthDomain,
-                            message.UserName,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            message);
-            }
-            user.NotAuthenticated(message.HostIPAddress);
-            _repo.Save(user);
-        }
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticationFailedAccountLocked event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticationFailedAccountLocked message)
-        {
-            //todo:clc- address challenge with finding user without sub Claim
-            // do we need to do this?
-            UserAgg user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName,  out var id))
-            {
-                user = _repo.GetById<UserAgg>(id, message);
-            }
-            else
-            {
-                user = new UserAgg(
-                            Guid.NewGuid(),
-                            string.Empty,
-                            message.AuthProvider,
-                            message.AuthDomain,
-                            message.UserName,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            message);
-            }
-            user.NotAuthenticatedAccountLocked(message.HostIPAddress);
-            _repo.Save(user);
-        }
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticationFailedAccountDisabled event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticationFailedAccountDisabled message)
-        {
-            //todo:clc- address challenge with finding user without sub Claim
-            // do we need to do this?
-
-            UserAgg user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
-            {
-                user = _repo.GetById<UserAgg>(id, message);
-            }
-            else
-            {
-                user = new UserAgg(
-                            Guid.NewGuid(),
-                            string.Empty,
-                            message.AuthProvider,
-                            message.AuthDomain,
-                            message.UserName,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            message);
-            }
-            user.NotAuthenticatedAccountDisabled(message.HostIPAddress);
-            _repo.Save(user);
-        }
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticationFailedInvalidCredentials event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticationFailedInvalidCredentials message)
-        {
-            //todo:clc- address challenge with finding user without sub Claim
-            // do we need to do this?
-
-            UserAgg user;
-            if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
-            {
-                user = _repo.GetById<UserAgg>(id, message);
-            }
-            else
-            {
-                user = new UserAgg(
-                            Guid.NewGuid(),
-                            string.Empty,
-                            message.AuthProvider,
-                            message.AuthDomain,
-                            message.UserName,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            message);
-            }
-            user.NotAuthenticatedInvalidCredentials(message.HostIPAddress);
-            _repo.Save(user);
-        }
-
-        /// <summary>
-        /// Handle a IdentityMsgs.UserAuthenticationFailedByExternalProvider event from an external source.
-        /// </summary>
-        public void Handle(IdentityMsgs.UserAuthenticationFailedByExternalProvider message)
-        {
-            ExternalProvider provider;
-            if (_providersRM.TryGetProviderId(message.AuthProvider, out var id))
-            {
-                provider = _repo.GetById<ExternalProvider>(id, message);
-            }
-            else
-            {
-                provider = new ExternalProvider(
-                                Guid.NewGuid(),
-                                message.AuthProvider,
-                                message);
-            }
-            provider.NotAuthenticatedInvalidCredentials(message.HostIPAddress);
-            _repo.Save(provider);
-        }
-
-        public CommandResponse Handle(UserMsgs.AssignRole command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.AssignRole(command.RoleId);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        public CommandResponse Handle(UserMsgs.UnassignRole command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UnassignRole(command.RoleId);
             _repo.Save(user);
             return command.Succeed();
         }

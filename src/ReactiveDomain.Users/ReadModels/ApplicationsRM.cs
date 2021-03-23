@@ -23,10 +23,10 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.UserCreated>,
         IHandle<UserMsgs.Deactivated>,
         IHandle<UserMsgs.Activated>,
-        IHandle<UserMsgs.RoleAssigned>,
+        IHandle<UserPolicyMsgs.RoleAdded>,
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
-        IHandle<UserMsgs.RoleUnassigned>,
+        IHandle<UserPolicyMsgs.RoleRemoved>,
         IHandle<RoleMsgs.ChildRoleAssigned>,
         IHandle<RoleMsgs.PermissionAdded>,
         IHandle<RoleMsgs.PermissionAssigned>,
@@ -221,7 +221,7 @@ namespace ReactiveDomain.Users.ReadModels
             _users[@event.UserId].IsActivated = true;
         }
 
-        public void Handle(UserMsgs.RoleAssigned @event)
+        public void Handle(UserPolicyMsgs.RoleAdded @event)
         {
             if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
             var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
@@ -229,7 +229,7 @@ namespace ReactiveDomain.Users.ReadModels
             _users[@event.UserId].Roles.Add(_roles[@event.RoleId]);
         }
 
-        public void Handle(UserMsgs.RoleUnassigned @event)
+        public void Handle(UserPolicyMsgs.RoleRemoved @event)
         {
             if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
             var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);

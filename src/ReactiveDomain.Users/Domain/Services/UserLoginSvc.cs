@@ -41,24 +41,14 @@ namespace ReactiveDomain.Users.Domain.Services
             _repo = new CorrelatedStreamStoreRepository(repo);
             _usersRm = new UsersRM(getListener);
             _providersRM = new ProvidersRM(schema, getListener);
-
-            Subscribe<UserMsgs.CreateUser>(this);
+           
             Subscribe<IdentityMsgs.UserAuthenticated>(this);
             Subscribe<IdentityMsgs.UserAuthenticationFailed>(this);
             Subscribe<IdentityMsgs.UserAuthenticationFailedAccountLocked>(this);
             Subscribe<IdentityMsgs.UserAuthenticationFailedAccountDisabled>(this);
             Subscribe<IdentityMsgs.UserAuthenticationFailedInvalidCredentials>(this);
             Subscribe<IdentityMsgs.UserAuthenticationFailedByExternalProvider>(this);
-            Subscribe<UserMsgs.Activate>(this);
-            Subscribe<UserMsgs.Deactivate>(this);
-            Subscribe<UserMsgs.AssignRole>(this);
-            Subscribe<UserMsgs.UnassignRole>(this);
-            Subscribe<UserMsgs.UpdateGivenName>(this);
-            Subscribe<UserMsgs.UpdateSurname>(this);
-            Subscribe<UserMsgs.UpdateFullName>(this);
-            Subscribe<UserMsgs.UpdateEmail>(this);
-            Subscribe<UserMsgs.UpdateAuthDomain>(this);
-            Subscribe<UserMsgs.UpdateUserName>(this);
+           
         }
 
         private bool _disposed;
@@ -112,6 +102,8 @@ namespace ReactiveDomain.Users.Domain.Services
         /// </summary>
         public void Handle(IdentityMsgs.UserAuthenticated message)
         {
+            throw new NotImplementedException();
+            /*
             UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain,  message.SubjectId, out var id))
             {
@@ -133,6 +125,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             user.Authenticated(message.HostIPAddress);
             _repo.Save(user);
+            */
         }
         /// <summary>
         /// Handle a IdentityMsgs.UserAuthenticationFailed event from an external source.
@@ -141,7 +134,8 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
-
+               throw new NotImplementedException();
+            /*
             UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
@@ -163,6 +157,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             user.NotAuthenticated(message.HostIPAddress);
             _repo.Save(user);
+            */
         }
         /// <summary>
         /// Handle a IdentityMsgs.UserAuthenticationFailedAccountLocked event from an external source.
@@ -171,6 +166,8 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
+               throw new NotImplementedException();
+            /*
             UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName,  out var id))
             {
@@ -192,6 +189,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             user.NotAuthenticatedAccountLocked(message.HostIPAddress);
             _repo.Save(user);
+            */
         }
         /// <summary>
         /// Handle a IdentityMsgs.UserAuthenticationFailedAccountDisabled event from an external source.
@@ -200,7 +198,8 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
-
+               throw new NotImplementedException();
+            /*
             UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
@@ -222,6 +221,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             user.NotAuthenticatedAccountDisabled(message.HostIPAddress);
             _repo.Save(user);
+            */
         }
         /// <summary>
         /// Handle a IdentityMsgs.UserAuthenticationFailedInvalidCredentials event from an external source.
@@ -230,7 +230,8 @@ namespace ReactiveDomain.Users.Domain.Services
         {
             //todo:clc- address challenge with finding user without sub Claim
             // do we need to do this?
-
+               throw new NotImplementedException();
+            /*
             UserAgg user;
             if (_usersRm.TryGetUserId(message.AuthProvider, message.AuthDomain, message.UserName, out var id))
             {
@@ -252,6 +253,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             user.NotAuthenticatedInvalidCredentials(message.HostIPAddress);
             _repo.Save(user);
+            */
         }
 
         /// <summary>
@@ -273,101 +275,7 @@ namespace ReactiveDomain.Users.Domain.Services
             }
             provider.NotAuthenticatedInvalidCredentials(message.HostIPAddress);
             _repo.Save(provider);
-        }
-
-        public CommandResponse Handle(UserMsgs.AssignRole command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.AssignRole(command.RoleId);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        public CommandResponse Handle(UserMsgs.UnassignRole command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UnassignRole(command.RoleId);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        public CommandResponse Handle(UserMsgs.Deactivate command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.Deactivate();
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        public CommandResponse Handle(UserMsgs.Activate command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.Reactivate();
-            _repo.Save(user);
-            return command.Succeed();
-        }
-        /// <summary>
-        /// Handle a UserMsgs.UpdateGivenName command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateGivenName command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateGivenName(command.GivenName);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-        /// <summary>
-        /// Handle a UserMsgs.UpdateSurname command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateSurname command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateSurname(command.Surname);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        /// <summary>
-        /// Handle a UserMsgs.UpdateFullName command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateFullName command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateFullName(command.FullName);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-
-        /// <summary>
-        /// Handle a UserMsgs.UpdateEmail command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateEmail command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateEmail(command.Email);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-        
-        /// <summary>
-        /// Handle a UserMsgs.UpdateAuthDomain command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateAuthDomain command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateAuthDomain(command.AuthDomain);
-            _repo.Save(user);
-            return command.Succeed();
-        }
-        /// <summary>
-        /// Handle a UserMsgs.UpdateUserName command.
-        /// </summary>
-        public CommandResponse Handle(UserMsgs.UpdateUserName command)
-        {
-            var user = _repo.GetById<UserAgg>(command.UserId, command);
-            user.UpdateUserName(command.UserName);
-            _repo.Save(user);
-            return command.Succeed();
-        }
+        }     
+       
     }
 }
