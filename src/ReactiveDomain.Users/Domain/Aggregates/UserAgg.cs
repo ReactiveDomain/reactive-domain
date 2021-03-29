@@ -251,6 +251,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                         userName));
         }
 
+        /// <summary>
+        /// Disables local password authentication.
+        /// </summary>
         public void DisablePasswordAuthentication()
         {
             if (!string.IsNullOrWhiteSpace(_currentPassword))
@@ -259,7 +262,13 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             }
         }
 
-        public void SetPassword(string password, IdentityOptionsRM options, IPasswordHasher hasher, object emailClient = default)
+        /// <summary>
+        /// Sets a password for this user.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="options"></param>
+        /// <param name="hasher"></param>
+        public void SetPassword(string password, IdentityOptionsRM options, IPasswordHasher hasher)
         {
             Ensure.NotNullOrEmpty(password, nameof(password));
 
@@ -273,16 +282,14 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             // validate password for complexity.
             ValidatePasswordComplexity(password, options);
 
-            // TODO: email user that their password has been reset.
-
             // emit event PasswordSet
             Raise(new UserMsgs.PasswordSet(Id, hashed));
         }
 
         /// <summary>
-        /// Resets the password from user input.
+        /// Changes the user's password.
         /// </summary>
-        public void ChangePassword(string oldPassword, string newPassword, string confirmedNewPassword, IdentityOptionsRM options, IPasswordHasher hasher, object emailClient = default)
+        public void ChangePassword(string oldPassword, string newPassword, string confirmedNewPassword, IdentityOptionsRM options, IPasswordHasher hasher)
         {
             Ensure.NotNullOrEmpty(oldPassword, nameof(oldPassword)); // argument null exception
             Ensure.NotNullOrEmpty(newPassword, nameof(newPassword)); // argument null exception
@@ -294,22 +301,30 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             // ensure that new password and new password confirmation are equal.
             Ensure.True(() => newPassword.Equals(confirmedNewPassword), "New password and confirmed new password do not match."); // argument exception
 
+            var oldPasswordHash = hasher.HashPassword(oldPassword);
+            if (!_currentPassword.Equals(oldPasswordHash)) { throw new Exception("Old password is invalid."); }
+
             // hash new password
             var hashed = hasher.HashPassword(newPassword);
 
+            // if current and new passwords are equivalent, this becomes a no-op.
+            if (_currentPassword.Equals(hashed)) return;
+
             // ensure new password hash is not historically used.
-            if (_currentPassword?.Equals(hashed) ?? false) { return; } // no need to trigger an event when there is a no-op here.
             if (_historicalPasswords.Contains(hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
 
             // validate new password for complexity
             ValidatePasswordComplexity(newPassword, options);
 
-            // TODO: email user that their password has been reset.
-
             // emit event PasswordReset
             Raise(new UserMsgs.PasswordChanged(Id, hashed));
         }
 
+        /// <summary>
+        /// Extraction of the password complexity validation rules.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="identityOptions"></param>
         private void ValidatePasswordComplexity(string password, IdentityOptionsRM identityOptions)
         {
             var errors = new List<IdentityError>();
