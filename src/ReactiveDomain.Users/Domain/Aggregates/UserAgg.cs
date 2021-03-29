@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Mail;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Users.Domain.Services;
 using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.ReadModels;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Users.Domain.Aggregates
@@ -14,6 +17,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     {
         private List<Guid> AssignedPolicies { get; } = new List<Guid>();
         private List<Guid> AssignedRoles { get; } = new List<Guid>();
+        private string _email;
+        private string _currentPassword;
+        private Stack<string> _historicalPasswords = new Stack<string>();
         private UserAgg()
         {
             RegisterEvents();
@@ -23,6 +29,10 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         {
             Register<UserMsgs.UserCreated>(Apply);
             Register<UserMsgs.UserMigrated>(Apply);
+            Register<UserMsgs.EmailUpdated>(Apply);
+            Register<UserMsgs.PasswordSet>(Apply);
+            Register<UserMsgs.PasswordChanged>(Apply);
+            Register<UserMsgs.PasswordCleared>(Apply);
             Register<UserPolicyMsgs.RoleAdded>(Apply);
             Register<UserPolicyMsgs.RoleRemoved>(Apply);
         }
@@ -30,10 +40,30 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         private void Apply(UserMsgs.UserCreated evt)
         {
             Id = evt.Id;
+            _email = evt.Email;
         }
         private void Apply(UserMsgs.UserMigrated evt)
         {
             Id = evt.Id;
+        }
+        private void Apply(UserMsgs.EmailUpdated evt)
+        {
+            _email = evt.Email;
+        }
+        private void Apply(UserMsgs.PasswordSet evt)
+        {
+            _currentPassword = evt.PasswordHash;
+            _historicalPasswords.Push(evt.PasswordHash);
+        }
+        private void Apply(UserMsgs.PasswordChanged evt)
+        {
+            _currentPassword = evt.PasswordHash;
+            _historicalPasswords.Push(evt.PasswordHash);
+        }
+        private void Apply(UserMsgs.PasswordCleared evt)
+        {
+            _currentPassword = default;
+            _historicalPasswords.Clear();
         }
 
         private void Apply(UserPolicyMsgs.RoleAdded evt)
@@ -219,6 +249,119 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Raise(new UserMsgs.UserNameUpdated(
                         Id,
                         userName));
+        }
+
+        public void DisablePasswordAuthentication()
+        {
+            if (!string.IsNullOrWhiteSpace(_currentPassword))
+            {
+                Raise(new UserMsgs.PasswordCleared(Id));
+            }
+        }
+
+        public void SetPassword(string password, IdentityOptionsRM options, IPasswordHasher hasher, object emailClient = default)
+        {
+            Ensure.NotNullOrEmpty(password, nameof(password));
+
+            // hash password
+            var hashed = hasher.HashPassword(password);
+
+            // ensure new password hash is not historically used.
+            if (_currentPassword?.Equals(hashed) ?? false) { return; } // no need to trigger an event when there is a no-op here.
+            if (_historicalPasswords.Contains(hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
+
+            // validate password for complexity.
+            ValidatePasswordComplexity(password, options);
+
+            // TODO: email user that their password has been reset.
+
+            // emit event PasswordSet
+            Raise(new UserMsgs.PasswordSet(Id, hashed));
+        }
+
+        /// <summary>
+        /// Resets the password from user input.
+        /// </summary>
+        public void ChangePassword(string oldPassword, string newPassword, string confirmedNewPassword, IdentityOptionsRM options, IPasswordHasher hasher, object emailClient = default)
+        {
+            Ensure.NotNullOrEmpty(oldPassword, nameof(oldPassword)); // argument null exception
+            Ensure.NotNullOrEmpty(newPassword, nameof(newPassword)); // argument null exception
+            Ensure.NotNullOrEmpty(confirmedNewPassword, nameof(confirmedNewPassword)); // argument null exception
+
+            // ensure that old password and new password are not equal
+            Ensure.False(() => oldPassword.Equals(newPassword), "New password cannot be the same as the current password."); // argument exception
+
+            // ensure that new password and new password confirmation are equal.
+            Ensure.True(() => newPassword.Equals(confirmedNewPassword), "New password and confirmed new password do not match."); // argument exception
+
+            // hash new password
+            var hashed = hasher.HashPassword(newPassword);
+
+            // ensure new password hash is not historically used.
+            if (_currentPassword?.Equals(hashed) ?? false) { return; } // no need to trigger an event when there is a no-op here.
+            if (_historicalPasswords.Contains(hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
+
+            // validate new password for complexity
+            ValidatePasswordComplexity(newPassword, options);
+
+            // TODO: email user that their password has been reset.
+
+            // emit event PasswordReset
+            Raise(new UserMsgs.PasswordChanged(Id, hashed));
+        }
+
+        private void ValidatePasswordComplexity(string password, IdentityOptionsRM identityOptions)
+        {
+            var errors = new List<IdentityError>();
+            var options = identityOptions.Password;
+            if (string.IsNullOrEmpty(password) || password.Length < options.RequiredLength) { errors.Add(Describer.PasswordTooShort(options.RequiredLength)); }
+            if (options.RequireNonAlphanumeric && password.All(IsLetterOrDigit)) { errors.Add(Describer.PasswordRequiresNonAlphanumeric()); }
+            if (options.RequireDigit && !password.Any(IsDigit)) { errors.Add(Describer.PasswordRequiresDigit()); }
+            if (options.RequireLowercase && !password.Any(IsLower)) { errors.Add(Describer.PasswordRequiresLower()); }
+            if (options.RequireUppercase && !password.Any(IsUpper)) { errors.Add(Describer.PasswordRequiresUpper()); }
+            if (options.RequiredUniqueCharacters > 1 && password.Distinct().Count() < options.RequiredUniqueCharacters) { errors.Add(Describer.PasswordRequiresUniqueCharacters(options.RequiredUniqueCharacters)); }
+
+            if (errors.Count > 0) { throw new IdentityErrorException(errors); }
+        }
+
+        /// <summary>
+        /// Returns a flag indicating whether the supplied character is a digit.
+        /// </summary>
+        /// <param name="c">The character to check if it is a digit.</param>
+        /// <returns>True if the character is a digit, otherwise false.</returns>
+        public virtual bool IsDigit(char c)
+        {
+            return c >= '0' && c <= '9';
+        }
+
+        /// <summary>
+        /// Returns a flag indicating whether the supplied character is a lower case ASCII letter.
+        /// </summary>
+        /// <param name="c">The character to check if it is a lower case ASCII letter.</param>
+        /// <returns>True if the character is a lower case ASCII letter, otherwise false.</returns>
+        public virtual bool IsLower(char c)
+        {
+            return c >= 'a' && c <= 'z';
+        }
+
+        /// <summary>
+        /// Returns a flag indicating whether the supplied character is an upper case ASCII letter.
+        /// </summary>
+        /// <param name="c">The character to check if it is an upper case ASCII letter.</param>
+        /// <returns>True if the character is an upper case ASCII letter, otherwise false.</returns>
+        public virtual bool IsUpper(char c)
+        {
+            return c >= 'A' && c <= 'Z';
+        }
+
+        /// <summary>
+        /// Returns a flag indicating whether the supplied character is an ASCII letter or digit.
+        /// </summary>
+        /// <param name="c">The character to check if it is an ASCII letter or digit.</param>
+        /// <returns>True if the character is an ASCII letter or digit, otherwise false.</returns>
+        public virtual bool IsLetterOrDigit(char c)
+        {
+            return IsUpper(c) || IsLower(c) || IsDigit(c);
         }
     }
 }

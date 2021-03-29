@@ -540,5 +540,36 @@ namespace ReactiveDomain.Users.Messages
                 TargetStream = targetStream;
             }
         }
+        public class PasswordSet : Event
+        {
+            public readonly Guid UserId;
+            public readonly string PasswordHash;
+
+            public PasswordSet(Guid userId, string passwordHash)
+            {
+                UserId = userId;
+                PasswordHash = passwordHash;
+            }
+        }
+        public class PasswordChanged : Event
+        {
+            public readonly Guid UserId;
+            public readonly string PasswordHash;
+
+            public PasswordChanged(Guid userId, string passwordHash)
+            {
+                UserId = userId;
+                PasswordHash = passwordHash;
+            }
+        }
+        public class PasswordCleared : Event
+        {
+            public readonly Guid UserId;
+
+            public PasswordCleared(Guid userId)
+            {
+                UserId = userId;
+            }
+        }
     }
 }
