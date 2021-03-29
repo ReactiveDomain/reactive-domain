@@ -540,26 +540,64 @@ namespace ReactiveDomain.Users.Messages
                 TargetStream = targetStream;
             }
         }
+        /// <summary>
+        /// A work in progress.  Determining what settings *MUST* be captured for future use.
+        /// </summary>
+        public class PasswordSettingsChanged : Event
+        {
+            public readonly int RequiredLength;
+            public readonly int RequiredUniqueCharacters;
+            public readonly bool RequireNonAlphanumeric;
+            public readonly bool RequireLowercase;
+            public readonly bool RequireUppercase;
+            public readonly bool RequireDigit;
+            public readonly int MaxHistoricalPasswords;
+            public readonly int MaxPasswordAge;
+
+            public PasswordSettingsChanged(
+                int requiredLength,
+                int requiredUniqueCharacters,
+                bool requireNonAlphanumeric,
+                bool requireLowercase,
+                bool requireUppercase,
+                bool requireDigit,
+                int maxHistoricalPasswords,
+                int maxPasswordAge)
+            {
+                RequiredLength = requiredLength;
+                RequiredUniqueCharacters = requiredUniqueCharacters;
+                RequireNonAlphanumeric = requireNonAlphanumeric;
+                RequireLowercase = requireLowercase;
+                RequireUppercase = requireUppercase;
+                RequireDigit = requireDigit;
+                MaxHistoricalPasswords = maxHistoricalPasswords;
+                MaxPasswordAge = maxPasswordAge;
+            }
+        }
         public class PasswordSet : Event
         {
             public readonly Guid UserId;
             public readonly string PasswordHash;
+            public readonly TimeSpan? PasswordExpiresIn;
 
-            public PasswordSet(Guid userId, string passwordHash)
+            public PasswordSet(Guid userId, string passwordHash, TimeSpan? passwordExpiresIn)
             {
                 UserId = userId;
                 PasswordHash = passwordHash;
+                PasswordExpiresIn = passwordExpiresIn;
             }
         }
         public class PasswordChanged : Event
         {
             public readonly Guid UserId;
             public readonly string PasswordHash;
+            public readonly TimeSpan? PasswordExpiresIn;
 
-            public PasswordChanged(Guid userId, string passwordHash)
+            public PasswordChanged(Guid userId, string passwordHash, TimeSpan? passwordExpiresIn)
             {
                 UserId = userId;
                 PasswordHash = passwordHash;
+                PasswordExpiresIn = passwordExpiresIn;
             }
         }
         public class PasswordCleared : Event

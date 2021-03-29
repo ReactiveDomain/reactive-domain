@@ -11,7 +11,9 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<IdentityOptionsMsgs.RequireNonAlphanumericSet>,
         IHandle<IdentityOptionsMsgs.RequireLowercaseSet>,
         IHandle<IdentityOptionsMsgs.RequireUppercaseSet>,
-        IHandle<IdentityOptionsMsgs.RequireDigitSet>
+        IHandle<IdentityOptionsMsgs.RequireDigitSet>,
+        IHandle<IdentityOptionsMsgs.MaxHistoricalPasswordsSet>,
+        IHandle<IdentityOptionsMsgs.MaximumPasswordAgeSet>
     {
         public IdentityOptionsRM(string name, IConfiguredConnection conn) : base(name, () => conn.GetQueuedListener(nameof(IdentityOptionsRM)))
         {
@@ -23,6 +25,8 @@ namespace ReactiveDomain.Users.ReadModels
                 reader.EventStream.Subscribe<IdentityOptionsMsgs.RequireLowercaseSet>(this);
                 reader.EventStream.Subscribe<IdentityOptionsMsgs.RequireUppercaseSet>(this);
                 reader.EventStream.Subscribe<IdentityOptionsMsgs.RequireDigitSet>(this);
+                reader.EventStream.Subscribe<IdentityOptionsMsgs.MaxHistoricalPasswordsSet>(this);
+                reader.EventStream.Subscribe<IdentityOptionsMsgs.MaximumPasswordAgeSet>(this);
 
                 reader.Read<IdentityOptionsAgg>();
             }
@@ -33,6 +37,8 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<IdentityOptionsMsgs.RequireLowercaseSet>(this);
             EventStream.Subscribe<IdentityOptionsMsgs.RequireUppercaseSet>(this);
             EventStream.Subscribe<IdentityOptionsMsgs.RequireDigitSet>(this);
+            EventStream.Subscribe<IdentityOptionsMsgs.MaxHistoricalPasswordsSet>(this);
+            EventStream.Subscribe<IdentityOptionsMsgs.MaximumPasswordAgeSet>(this);
 
             Start<IdentityOptionsAgg>(blockUntilLive: true);
         }
@@ -45,12 +51,16 @@ namespace ReactiveDomain.Users.ReadModels
         public void Handle(IdentityOptionsMsgs.RequireLowercaseSet msg) => Password.RequireLowercase = msg.OnOff;
         public void Handle(IdentityOptionsMsgs.RequireUppercaseSet msg) => Password.RequireUppercase = msg.OnOff;
         public void Handle(IdentityOptionsMsgs.RequireDigitSet msg) => Password.RequireDigit = msg.OnOff;
+        public void Handle(IdentityOptionsMsgs.MaxHistoricalPasswordsSet msg) => Password.MaxHistoricalPasswords = msg.MaximunNumberOfHistoricalPasswords;
+        public void Handle(IdentityOptionsMsgs.MaximumPasswordAgeSet msg) => Password.MaxPasswordAge = msg.MaximumPasswordAge;
     }
 
     public class PasswordOptions
     {
         public int RequiredLength { get; set; } = 6;
         public int RequiredUniqueCharacters { get; set; } = 1;
+        public int MaxHistoricalPasswords { get; set; } = 4;
+        public int MaxPasswordAge { get; set; } = 90;
         public bool RequireNonAlphanumeric { get; set; } = true;
         public bool RequireLowercase { get; set; } = true;
         public bool RequireUppercase { get; set; } = true;

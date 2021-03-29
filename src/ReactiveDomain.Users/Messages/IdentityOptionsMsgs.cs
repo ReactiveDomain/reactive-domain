@@ -74,5 +74,27 @@ namespace ReactiveDomain.Users.Messages
                 OnOff = onOff;
             }
         }
+        public class MaxHistoricalPasswordsSet : Event
+        {
+            public readonly Guid IdentityOptionsId;
+            public readonly int MaximunNumberOfHistoricalPasswords;
+
+            public MaxHistoricalPasswordsSet(Guid identityOptionsId, int maximumNumberOfHistoricalPasswords)
+            {
+                IdentityOptionsId = identityOptionsId;
+                MaximunNumberOfHistoricalPasswords = maximumNumberOfHistoricalPasswords;
+            }
+        }
+        public class MaximumPasswordAgeSet : Event
+        {
+            public readonly Guid IdentityOptionsId;
+            public readonly int MaximumPasswordAge;
+
+            public MaximumPasswordAgeSet(Guid identityOptionsId, int maximumPasswordAge)
+            {
+                IdentityOptionsId = identityOptionsId;
+                MaximumPasswordAge = maximumPasswordAge;
+            }
+        }
     }
 }

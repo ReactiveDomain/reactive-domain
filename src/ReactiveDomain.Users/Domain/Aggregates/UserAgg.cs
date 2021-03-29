@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Services;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
@@ -17,9 +18,16 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     {
         private List<Guid> AssignedPolicies { get; } = new List<Guid>();
         private List<Guid> AssignedRoles { get; } = new List<Guid>();
-        private string _email;
         private string _currentPassword;
-        private Stack<string> _historicalPasswords = new Stack<string>();
+        private Queue<PasswordHistory> _historicalPasswords = new Queue<PasswordHistory>();
+        private int _maxHistoricalPasswords;
+        private int _maxPasswordAge;
+        private int _requiredLength;
+        private int _requiredUniqueCharacters;
+        private bool _requireNonAlphanumeric;
+        private bool _requireLowercase;
+        private bool _requireUppercase;
+        private bool _requireDigit;
         private UserAgg()
         {
             RegisterEvents();
@@ -29,7 +37,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         {
             Register<UserMsgs.UserCreated>(Apply);
             Register<UserMsgs.UserMigrated>(Apply);
-            Register<UserMsgs.EmailUpdated>(Apply);
+            Register<UserMsgs.PasswordSettingsChanged>(Apply);
             Register<UserMsgs.PasswordSet>(Apply);
             Register<UserMsgs.PasswordChanged>(Apply);
             Register<UserMsgs.PasswordCleared>(Apply);
@@ -40,25 +48,40 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         private void Apply(UserMsgs.UserCreated evt)
         {
             Id = evt.Id;
-            _email = evt.Email;
         }
         private void Apply(UserMsgs.UserMigrated evt)
         {
             Id = evt.Id;
         }
-        private void Apply(UserMsgs.EmailUpdated evt)
+        private void Apply(UserMsgs.PasswordSettingsChanged evt)
         {
-            _email = evt.Email;
+            //Note: This is a work-in-progress.  Determining what is needed for enforcement.
+            _requiredLength = evt.RequiredLength;
+            _requiredUniqueCharacters = evt.RequiredUniqueCharacters;
+            _requireNonAlphanumeric = evt.RequireNonAlphanumeric;
+            _requireLowercase = evt.RequireLowercase;
+            _requireUppercase = evt.RequireUppercase;
+            _requireDigit = evt.RequireDigit;
+            _maxHistoricalPasswords = evt.MaxHistoricalPasswords;
+            _maxPasswordAge = evt.MaxPasswordAge;
         }
         private void Apply(UserMsgs.PasswordSet evt)
         {
             _currentPassword = evt.PasswordHash;
-            _historicalPasswords.Push(evt.PasswordHash);
+            _historicalPasswords.Enqueue(new PasswordHistory(DateTime.UtcNow, evt.PasswordHash));
+            while(_historicalPasswords.Count > _maxHistoricalPasswords)
+            {
+                _historicalPasswords.Dequeue();
+            }
         }
         private void Apply(UserMsgs.PasswordChanged evt)
         {
             _currentPassword = evt.PasswordHash;
-            _historicalPasswords.Push(evt.PasswordHash);
+            _historicalPasswords.Enqueue(new PasswordHistory(DateTime.UtcNow, evt.PasswordHash));
+            while (_historicalPasswords.Count > _maxHistoricalPasswords)
+            {
+                _historicalPasswords.Dequeue();
+            }
         }
         private void Apply(UserMsgs.PasswordCleared evt)
         {
@@ -268,7 +291,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// <param name="password"></param>
         /// <param name="options"></param>
         /// <param name="hasher"></param>
-        public void SetPassword(string password, IdentityOptionsRM options, IPasswordHasher hasher)
+        public void SetPassword(string password, PasswordOptions options, IPasswordHasher hasher, ITimeSource timeSource)
         {
             Ensure.NotNullOrEmpty(password, nameof(password));
 
@@ -277,19 +300,25 @@ namespace ReactiveDomain.Users.Domain.Aggregates
 
             // ensure new password hash is not historically used.
             if (_currentPassword?.Equals(hashed) ?? false) { return; } // no need to trigger an event when there is a no-op here.
-            if (_historicalPasswords.Contains(hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
+            if (_historicalPasswords.Any(h => h.PasswordHash == hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
 
             // validate password for complexity.
             ValidatePasswordComplexity(password, options);
 
+            AttemptToRaisePasswordSettingsChanged(options);
+
+            var expiresIn = options.MaxPasswordAge > 0
+                ? new TimeSpan(options.MaxPasswordAge, 0, 0, 0)
+                : default;
+
             // emit event PasswordSet
-            Raise(new UserMsgs.PasswordSet(Id, hashed));
+            Raise(new UserMsgs.PasswordSet(Id, hashed, expiresIn));
         }
 
         /// <summary>
         /// Changes the user's password.
         /// </summary>
-        public void ChangePassword(string oldPassword, string newPassword, string confirmedNewPassword, IdentityOptionsRM options, IPasswordHasher hasher)
+        public void ChangePassword(string oldPassword, string newPassword, string confirmedNewPassword, PasswordOptions options, IPasswordHasher hasher, ITimeSource timeSource)
         {
             Ensure.NotNullOrEmpty(oldPassword, nameof(oldPassword)); // argument null exception
             Ensure.NotNullOrEmpty(newPassword, nameof(newPassword)); // argument null exception
@@ -311,13 +340,44 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             if (_currentPassword.Equals(hashed)) return;
 
             // ensure new password hash is not historically used.
-            if (_historicalPasswords.Contains(hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
+            if (_historicalPasswords.Any(h => h.PasswordHash == hashed)) { throw new Exception("Cannot set a password that has historically been used."); }
 
             // validate new password for complexity
             ValidatePasswordComplexity(newPassword, options);
 
+            AttemptToRaisePasswordSettingsChanged(options);
+
+            var expiresIn = options.MaxPasswordAge > 0
+                ? new TimeSpan(options.MaxPasswordAge, 0, 0, 0)
+                : default;
+
             // emit event PasswordReset
-            Raise(new UserMsgs.PasswordChanged(Id, hashed));
+            Raise(new UserMsgs.PasswordChanged(Id, hashed, expiresIn));
+        }
+
+        private void AttemptToRaisePasswordSettingsChanged(PasswordOptions options)
+        {
+            if (
+                _requiredLength != options.RequiredLength ||
+                _requiredUniqueCharacters != options.RequiredUniqueCharacters ||
+                _requireNonAlphanumeric != options.RequireNonAlphanumeric ||
+                _requireLowercase != options.RequireLowercase ||
+                _requireUppercase != options.RequireUppercase ||
+                _requireDigit != options.RequireDigit ||
+                _maxHistoricalPasswords != options.MaxHistoricalPasswords ||
+                _maxPasswordAge != options.MaxPasswordAge
+            )
+            {
+                Raise(new UserMsgs.PasswordSettingsChanged(
+                    options.RequiredLength, 
+                    options.RequiredUniqueCharacters, 
+                    options.RequireNonAlphanumeric, 
+                    options.RequireLowercase, 
+                    options.RequireUppercase, 
+                    options.RequireDigit,
+                    options.MaxHistoricalPasswords,
+                    options.MaxPasswordAge));
+            }
         }
 
         /// <summary>
@@ -325,10 +385,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         /// <param name="password"></param>
         /// <param name="identityOptions"></param>
-        private void ValidatePasswordComplexity(string password, IdentityOptionsRM identityOptions)
+        private void ValidatePasswordComplexity(string password, PasswordOptions options)
         {
             var errors = new List<IdentityError>();
-            var options = identityOptions.Password;
             if (string.IsNullOrEmpty(password) || password.Length < options.RequiredLength) { errors.Add(Describer.PasswordTooShort(options.RequiredLength)); }
             if (options.RequireNonAlphanumeric && password.All(IsLetterOrDigit)) { errors.Add(Describer.PasswordRequiresNonAlphanumeric()); }
             if (options.RequireDigit && !password.Any(IsDigit)) { errors.Add(Describer.PasswordRequiresDigit()); }
@@ -377,6 +436,18 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         public virtual bool IsLetterOrDigit(char c)
         {
             return IsUpper(c) || IsLower(c) || IsDigit(c);
+        }
+
+        class PasswordHistory
+        {
+            public readonly DateTime DateChanged;
+            public readonly string PasswordHash;
+
+            public PasswordHistory(DateTime dateChanged, string passwordHash)
+            {
+                DateChanged = dateChanged;
+                PasswordHash = passwordHash;
+            }
         }
     }
 }
