@@ -3,13 +3,13 @@
     using System;
     using System.Text;
     using Newtonsoft.Json;
-    using ReactiveDomain.Logging;
     using ReactiveDomain.Messaging;
     using ReactiveDomain.Util;
 
     public class MessageSerializer : IMessageSerializer {
-        
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private static readonly Encoding Encoding = Helper.UTF8NoBom;
 
         public IMessage FromBytes(ArraySegment<byte> data) {
@@ -25,14 +25,16 @@
             var messageType = MessageHierarchy.GetTypeByFullName(typeName);
             var msg = DeserializeMessage(json, messageType);
 
-            Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgType" + msg.GetType().Name);
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Debug("Deserialized Message MsgId=" + msg.MsgId + " MsgType" + msg.GetType().Name);
             return msg;
         }
 
         public ArraySegment<byte> ToBytes(IMessage message) {
             Ensure.NotNull(message, nameof(message));
             var messageType = message.GetType();
-            Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + messageType.Name + " to be wrapped.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Debug("Message MsgId=" + message.MsgId + " MsgTypeId=" + messageType.Name + " to be wrapped.");
 
             var typeName = messageType.FullName;
             var json = SerializeMessage(message);

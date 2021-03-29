@@ -1,12 +1,12 @@
 using System;
-using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging.Bus
 {
     public class CommandHandler<T> : IHandle<T> where T : class, ICommand
     {
         // ReSharper disable once StaticMemberInGenericType
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private readonly IPublisher _bus;
         private readonly IHandleCommand<T> _handler;
         public CommandHandler(IPublisher bus, IHandleCommand<T> handler)
@@ -20,8 +20,9 @@ namespace ReactiveDomain.Messaging.Bus
             _bus.Publish(new AckCommand(message));
             try
             {
-                if (Log.LogLevel >= LogLevel.Debug)
-                    Log.Debug("{0} command handled by {1}", message.GetType().Name, _handler.GetType().Name);
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //if (Log.LogLevel >= LogLevel.Debug)
+                //    Log.Debug("{0} command handled by {1}", message.GetType().Name, _handler.GetType().Name);
                 _bus.Publish(_handler.Handle(message));
             }
             catch (Exception ex)

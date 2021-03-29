@@ -5,15 +5,14 @@ using System.Threading;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
-using ILogger = ReactiveDomain.Logging.ILogger;
 
 
 namespace ReactiveDomain.EventStore {
     public class EventStoreConnectionManager {
 
-        private readonly ILogger _log = LogManager.GetLogger(nameof(EventStoreConnectionManager));
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private readonly ILogger _log = LogManager.GetLogger(nameof(EventStoreConnectionManager));
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
 
         public IStreamStoreConnection Connection { get; private set; }
@@ -96,7 +95,8 @@ namespace ReactiveDomain.EventStore {
                              EventStoreConnection.Create(settings, serverIpEndPoint, $"{serverIpEndPoint}-Single Connection")
             );
             if (Connection != null) return;
-            _log.Error("Connection to EventStore is null,  - Diagnostic Monitoring will be unavailable.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log.Error("Connection to EventStore is null,  - Diagnostic Monitoring will be unavailable.");
         }
 
         /// <summary>
@@ -139,7 +139,8 @@ namespace ReactiveDomain.EventStore {
             Connection = new EventStoreConnectionWrapper(esConn);
 
             if (Connection != null) return;
-            _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
         }
 
         /// <summary>
@@ -179,7 +180,8 @@ namespace ReactiveDomain.EventStore {
                         "Gossip Seeds-Cluster Connection"));
 
             if (Connection != null) return;
-            _log.Error($"EventStore Custer of {gossipSeeds.Length} Connection is null - Diagnostic Monitoring will be unavailable.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log.Error($"EventStore Custer of {gossipSeeds.Length} Connection is null - Diagnostic Monitoring will be unavailable.");
         }
 
         /// <summary>

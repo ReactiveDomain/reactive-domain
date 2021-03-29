@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
 
 namespace ReactiveDomain.Messaging.Monitoring.Utils
@@ -9,7 +8,8 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
     {
         private const int InvalidCounterResult = -1;
 
-        private readonly ILogger _log;
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private readonly ILogger _log;
 
         private readonly PerformanceCounter _totalCpuCounter;
         private readonly PerformanceCounter _totalMemCounter; //doesn't work on mono
@@ -30,9 +30,11 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
         private readonly PerformanceCounter _gcTimeInGcCounter;
         private readonly PerformanceCounter _gcTotalBytesInHeapsCounter;
 
-        public PerfCounterHelper(ILogger log)
+        public PerfCounterHelper(
+            //ILogger log
+            )
         {
-            _log = log;
+            //_log = log;
 
             _totalCpuCounter = CreatePerfCounter("Processor", "% Processor Time", "_Total");
             _totalMemCounter = CreatePerfCounter("Memory", "Available Bytes");
@@ -62,8 +64,9 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
             }
             catch (Exception ex)
             {
-                _log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
-                           category, counter, processName ?? "<!error getting process name!>", ex.Message);
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //_log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
+                //           category, counter, processName ?? "<!error getting process name!>", ex.Message);
                 return null;
             }
         }
@@ -78,8 +81,9 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
             }
             catch (Exception ex)
             {
-                _log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
-                           category, counter, instance ?? string.Empty, ex.Message);
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //_log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
+                //           category, counter, instance ?? string.Empty, ex.Message);
                 return null;
             }
         }

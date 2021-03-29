@@ -34,14 +34,16 @@ namespace ReactiveDomain.Transport
 
         private ITcpConnection CreateTcpConnection(EndPoint endPoint)
         {
-            Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") entered.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") entered.");
             var clientTcpConnection = Transport.TcpConnection.CreateConnectingTcpConnection(Guid.NewGuid(),
                 endPoint,
                 new TcpClientConnector(),
                 TimeSpan.FromSeconds(120),
                 conn =>
                 {
-                    Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") successfully constructed TcpConnection.");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") successfully constructed TcpConnection.");
 
                     ConfigureTcpListener(conn);
                 },
@@ -60,7 +62,8 @@ namespace ReactiveDomain.Transport
             // a second and try again.
             TcpConnection.Clear(); //client should only have one connection
             Thread.Sleep(1000);
-            Log.Debug("TcpBusClientSide call to CreateConnectingTcpConnection() failed - SocketError= " + err + " - retrying.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Debug("TcpBusClientSide call to CreateConnectingTcpConnection() failed - SocketError= " + err + " - retrying.");
             TcpConnection.Add(CreateTcpConnection(CommandEndpoint));
         }
 
@@ -77,7 +80,8 @@ namespace ReactiveDomain.Transport
                 }
                 catch (PackageFramingException exc)
                 {
-                    Log.ErrorException(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.ErrorException(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
                     // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                     return;
                 }

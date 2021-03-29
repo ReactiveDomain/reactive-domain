@@ -4,9 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Newtonsoft.Json;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
-using ILogger = ReactiveDomain.Logging.ILogger;
 
 
 namespace ReactiveDomain.EventStore {
@@ -21,7 +19,8 @@ namespace ReactiveDomain.EventStore {
             Error
         }
 
-        private readonly ILogger _log = LogManager.GetLogger("Common");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private readonly ILogger _log = LogManager.GetLogger("Common");
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;
         private bool _disposed;

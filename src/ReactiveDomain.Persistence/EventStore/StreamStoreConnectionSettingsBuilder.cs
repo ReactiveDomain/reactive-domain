@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Net;
 using EventStore.ClientAPI;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
-using ILogger = ReactiveDomain.Logging.ILogger;
 
 namespace ReactiveDomain.EventStore {
     /// <summary>
@@ -12,7 +10,8 @@ namespace ReactiveDomain.EventStore {
     /// </summary>
     public class StreamStoreConnectionSettingsBuilder {
 
-        private ILogger _log = new Logging.NullLogger();
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private ILogger _log = new Logging.NullLogger();
         private bool _verboseLogging;
         private IPEndPoint _singleServerIpEndPoint;
         private string _clusterDns;
@@ -35,7 +34,8 @@ namespace ReactiveDomain.EventStore {
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder UseCustomLogger(ILogger logger) {
             Ensure.NotNull(logger, nameof(logger));
-            _log = logger;
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log = logger;
             return this;
         }
 
@@ -44,13 +44,15 @@ namespace ReactiveDomain.EventStore {
         /// </summary>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder UseConsoleLogger() {
-            _log = new ConsoleLogger();
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log = new ConsoleLogger();
             return this;
         }
 
         public StreamStoreConnectionSettingsBuilder UseLazyLogger(string loggerName) {
             Ensure.NotNull(loggerName, nameof(loggerName));
-            _log = LogManager.GetLogger(loggerName);
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //_log = LogManager.GetLogger(loggerName);
             return this;
         }
 
@@ -188,13 +190,14 @@ namespace ReactiveDomain.EventStore {
         /// <see cref="StreamStoreConnectionSettings"/> object.
         /// </summary>
         public StreamStoreConnectionSettings Build() {
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
             return new StreamStoreConnectionSettings(
                 _userCredentials,
                 _singleServerIpEndPoint,
                 _clusterDns,
                 _ipEndPoints,
                 _networkIpPort,
-                _log,
+                //_log,
                 _useTlsConnection,
                 _targetHost,
                 _validateServer,

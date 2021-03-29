@@ -9,10 +9,8 @@ using System.Threading;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Projections;
 using Newtonsoft.Json;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 using ES_ILogger = EventStore.ClientAPI.ILogger;
-using ILogger = ReactiveDomain.Logging.ILogger;
 
 
 namespace ReactiveDomain.EventStore {
@@ -24,7 +22,8 @@ namespace ReactiveDomain.EventStore {
             Error
         }
 
-        private readonly ILogger _log = LogManager.GetLogger("Common");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private readonly ILogger _log = LogManager.GetLogger("Common");
 
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;
@@ -111,7 +110,8 @@ namespace ReactiveDomain.EventStore {
             Connection = new EventStoreConnectionWrapper(EventStoreConnection.Create(settings, tcpEndpoint, "Default Connection"));
 
             if (Connection == null) {
-                _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //_log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
                 TeardownEventStore(false);
                 return;
             }

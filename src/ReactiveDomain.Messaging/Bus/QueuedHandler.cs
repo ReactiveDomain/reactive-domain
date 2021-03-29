@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
 using ReactiveDomain.Util;
 
@@ -19,7 +18,8 @@ namespace ReactiveDomain.Messaging.Bus
 
     public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMonitoredQueue, IThreadSafePublisher
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         public static readonly TimeSpan DefaultStopWaitTimeout = TimeSpan.FromSeconds(10);
         public static readonly TimeSpan VerySlowMsgThreshold = TimeSpan.FromSeconds(7);
@@ -125,11 +125,12 @@ namespace ReactiveDomain.Messaging.Bus
                             var elapsed = DateTime.UtcNow - start;
                             if (elapsed > _slowMsgThreshold)
                             {
-                                Log.Trace("SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
-                                          Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
-                                if (elapsed > VerySlowMsgThreshold)// && !(msg is SystemMessage.SystemInit))
-                                    Log.Error("---!!! VERY SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
-                                              Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
+                                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                                //Log.Trace("SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
+                                //          Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
+                                //if (elapsed > VerySlowMsgThreshold)// && !(msg is SystemMessage.SystemInit))
+                                //    Log.Error("---!!! VERY SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
+                                //              Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
                             }
                         }
                         else
@@ -142,7 +143,8 @@ namespace ReactiveDomain.Messaging.Bus
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex, $"Error while processing message {msg} in queued handler '{Name}'.");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.ErrorException(ex, $"Error while processing message {msg} in queued handler '{Name}'.");
                 }
             }
             _queueStats.Stop();

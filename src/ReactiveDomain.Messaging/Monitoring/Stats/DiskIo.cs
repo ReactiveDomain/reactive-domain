@@ -8,14 +8,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Monitoring.Stats
 {
     public class DiskIo
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
 
         public readonly ulong ReadBytes;
@@ -31,31 +31,44 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             WriteOps = writeOps;
         }
 
-        public static DiskIo GetDiskIo(int procId, ILogger logger)
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        public static DiskIo GetDiskIo(int procId 
+            //, ILogger logger
+        )
         {
             try
             {
-                return OS.IsUnix ? GetOnUnix(procId, logger) : GetOnWindows(logger);
+                return OS.IsUnix ? GetOnUnix(procId
+                    //, logger
+                    ) : GetOnWindows(
+                        //logger
+                        );
             }
             catch (Exception exc)
             {
-                Log.Debug("Getting disk IO error: {0}.", exc.Message);
+                //Log.Debug("Getting disk IO error: {0}.", exc.Message);
                 return null;
             }
         }
 
         // http://stackoverflow.com/questions/3633286/understanding-the-counters-in-proc-pid-io
-        private static DiskIo GetOnUnix(int procId, ILogger log)
+        private static DiskIo GetOnUnix(int procId
+            //, ILogger log
+            )
         {
             var procIoFile = string.Format("/proc/{0}/io", procId);
             if (!File.Exists(procIoFile)) // if no procfs exists/is mounted -- just don't return stats
                 return null;
             var procIoStr = File.ReadAllText(procIoFile);
-            return ParseOnUnix(procIoStr, log);
+            return ParseOnUnix(procIoStr
+                //, log
+            );
 
         }
 
-        internal static DiskIo ParseOnUnix(string procIoStr, ILogger log)
+        internal static DiskIo ParseOnUnix(string procIoStr
+            //, ILogger log
+        )
         {
             ulong readBytes, writtenBytes, readOps, writeOps;
             try
@@ -70,16 +83,20 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             }
             catch (Exception ex)
             {
-                log.InfoException(ex, "Couldn't parse Linux stats.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //log.InfoException(ex, "Couldn't parse Linux stats.");
                 return null;
             }
 
             return new DiskIo(readBytes, writtenBytes, readOps, writeOps);
         }
 
-        private static DiskIo GetOnWindows(ILogger log)
+        private static DiskIo GetOnWindows(
+            //ILogger log
+        )
         {
-            Ensure.NotNull(log, "log");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Ensure.NotNull(log, "log");
 
             IO_COUNTERS counters;
             Process proc = null;
@@ -90,7 +107,8 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             }
             catch (Exception ex)
             {
-                log.InfoException(ex, "Error while reading disk io on Windows.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //log.InfoException(ex, "Error while reading disk io on Windows.");
                 return null;
             }
             finally

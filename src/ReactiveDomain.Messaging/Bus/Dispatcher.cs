@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
@@ -9,7 +8,8 @@ namespace ReactiveDomain.Messaging.Bus
     /// <inheritdoc cref="IDispatcher"/>
     public class Dispatcher : IDispatcher
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         private readonly Dictionary<Type, object> _handleWrappers;
         private readonly MultiQueuedPublisher _queuedPublisher;

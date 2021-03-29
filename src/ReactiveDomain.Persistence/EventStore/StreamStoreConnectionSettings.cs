@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net;
 using EventStore.ClientAPI;
 using ReactiveDomain.Util;
-using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.EventStore
 {
@@ -79,7 +78,8 @@ namespace ReactiveDomain.EventStore
         /// <summary>
         /// The <see cref="Logging.ILogger"/> that this connection will use.
         /// </summary>
-        public readonly Logging.ILogger Log;
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //public readonly Logging.ILogger Log;
 
         /// <summary>
         /// Convenience connection type variables
@@ -97,19 +97,20 @@ namespace ReactiveDomain.EventStore
         public bool IsDnsClusterConnection => _connectionType == ConnectionType.DnsCluster;
         public bool IsGossipSeedClusterConnection => _connectionType == ConnectionType.GossipSeedsCluster;
 
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
         internal StreamStoreConnectionSettings(
             UserCredentials userCredentials,
             IPEndPoint singleServerIpEndPoint,
             string clusterDns,
             IReadOnlyList<IPEndPoint> ipEndPoints,
             int networkIpPort,
-            Logging.ILogger log,
+            //Logging.ILogger log,
             bool useTlsConnection,
             string targetHost,
             bool validateServer,
             bool verboseLogging = false)
         {
-            Ensure.NotNull(log, nameof(log));
+            //Ensure.NotNull(log, nameof(log));
             Ensure.NotNull(userCredentials, nameof(userCredentials));
             if (useTlsConnection)
             {
@@ -140,7 +141,7 @@ namespace ReactiveDomain.EventStore
             SingleServerIpEndPoint = singleServerIpEndPoint;
             ClusterDns = clusterDns;
             NetworkIpPort = networkIpPort;
-            Log = log;
+            //Log = log;
             UseTlsConnection = useTlsConnection;
             ValidateServer = validateServer;
             TargetHost = targetHost;

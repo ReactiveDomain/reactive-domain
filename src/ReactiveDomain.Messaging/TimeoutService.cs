@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
@@ -62,7 +61,8 @@ namespace ReactiveDomain.Messaging
 
     public class TimeoutService
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private static int size = 5000;
         private readonly object _queueLock = new object();
         private readonly HeapPriorityQueue<TimeoutRequestNode> _queue = new HeapPriorityQueue<TimeoutRequestNode>(size);
@@ -152,15 +152,17 @@ namespace ReactiveDomain.Messaging
                         var overdueMs = (epochMs - msg.TimeoutMs);
                         if (overdueMs > 100)
                         {
-                            if(Log.LogLevel >= LogLevel.Info)
-                            Log.Info("Message should have timed out at " + msg.TimeoutMs + ", but it's now " + epochMs + " which is " + overdueMs + " late");
+                            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                            //if (Log.LogLevel >= LogLevel.Info)
+                            //Log.Info("Message should have timed out at " + msg.TimeoutMs + ", but it's now " + epochMs + " which is " + overdueMs + " late");
                         }
                         msg.SendTimeout();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex,$"Error while processing message {msg} in queued handler TimeoutService.");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.ErrorException(ex,$"Error while processing message {msg} in queued handler TimeoutService.");
                 }
             }
             _stopped.Set();

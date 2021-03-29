@@ -7,11 +7,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Util {
     public static class FileStreamExtensions {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         private static readonly Action<FileStream> FlushSafe;
         private static readonly Func<FileStream, SafeFileHandle> GetFileHandle;
 
@@ -36,7 +35,8 @@ namespace ReactiveDomain.Util {
                 };
             }
             catch (Exception exc) {
-                Log.ErrorException(exc, "Error while compiling sneaky SafeFileHandle getter.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.ErrorException(exc, "Error while compiling sneaky SafeFileHandle getter.");
                 FlushSafe = f => f.Flush(flushToDisk: true);
             }
 

@@ -3,14 +3,14 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Transport
 {
     public class TcpServerListener
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         private readonly EndPoint _serverEndPoint;
         private readonly Socket _listeningSocket;
@@ -43,7 +43,8 @@ namespace ReactiveDomain.Transport
 
             _onSocketAccepted = callback;
 
-            Log.Info("Starting {0} TCP listening on TCP endpoint: {1}.", securityType, _serverEndPoint);
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Info("Starting {0} TCP listening on TCP endpoint: {1}.", securityType, _serverEndPoint);
             try
             {
                 _listeningSocket.Bind(_serverEndPoint);
@@ -51,7 +52,8 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.InfoException(ex,"Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.InfoException(ex,"Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
                 Helper.EatException(() => _listeningSocket.Close(TcpConfiguration.SocketCloseTimeoutMs));
                 throw;
             }

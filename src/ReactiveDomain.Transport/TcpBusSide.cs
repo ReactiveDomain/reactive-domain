@@ -5,14 +5,14 @@ using System.Timers;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Serialization;
 
 namespace ReactiveDomain.Transport
 {
     public abstract class TcpBusSide : IHandle<IMessage>
     {
-        protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
         protected readonly IDispatcher MessageBus;
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
@@ -65,17 +65,21 @@ namespace ReactiveDomain.Transport
         {
             if (_inboundSpamMessageQueuedHandler == null)
             {
-                Log.Error("_inboundSpamMessageQueuedHandler is null.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.Error("_inboundSpamMessageQueuedHandler is null.");
                 return;
             }
-            Log.Debug(_inboundSpamMessageQueuedHandler.GetStatistics().ToString());
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Debug(_inboundSpamMessageQueuedHandler.GetStatistics().ToString());
 
             if (_inboundMessageQueuedHandler == null)
             {
-                Log.Error("_inboundMessageQueuedHandler is null.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.Error("_inboundMessageQueuedHandler is null.");
                 return;
             }
-            Log.Debug(_inboundMessageQueuedHandler.GetStatistics().ToString());
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Debug(_inboundMessageQueuedHandler.GetStatistics().ToString());
 
         }
 
@@ -88,18 +92,21 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.ErrorException(ex, "TcpMessage.FromArraySegment() threw an exception:");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.ErrorException(ex, "TcpMessage.FromArraySegment() threw an exception:");
                 throw;
             }
 
             var type = message.GetType();
-            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") received from TCP.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") received from TCP.");
 
             if (_inboundSpamMessageTypes.Contains(type))
             {
                 if (_inboundSpamMessageQueuedHandler == null)
                 {
-                    Log.Error("TCP message (a Message) has arrived, but _inboundSpamMessageQueuedHandler is null.");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.Error("TCP message (a Message) has arrived, but _inboundSpamMessageQueuedHandler is null.");
                     return;
                 }
 
@@ -109,7 +116,8 @@ namespace ReactiveDomain.Transport
             {
                 if (_inboundMessageQueuedHandler == null)
                 {
-                    Log.Error("TCP message (a Message) has arrived, but _inboundMessageQueuedHandler is null.");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.Error("TCP message (a Message) has arrived, but _inboundMessageQueuedHandler is null.");
                     return;
                 }
 
@@ -120,11 +128,13 @@ namespace ReactiveDomain.Transport
         public void Handle(IMessage message)
         {
             var type = message.GetType();
-            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
+            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+            //Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
 
             if (TcpConnection == null)
             {
-                Log.Debug("TCP connection not yet established - Message " + message.MsgId + " (Type " + type.Name + ") will be discarded.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.Debug("TCP connection not yet established - Message " + message.MsgId + " (Type " + type.Name + ") will be discarded.");
                 return;
             }
 
@@ -138,7 +148,8 @@ namespace ReactiveDomain.Transport
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                    //Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
                 }
             }
         }

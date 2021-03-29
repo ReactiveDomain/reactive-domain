@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Formatting;
 using ReactiveDomain.Transport.Framing;
 
@@ -13,7 +12,8 @@ namespace ReactiveDomain.Transport
     public class TcpTypedConnection<T>
     {
         // ReSharper disable once StaticMemberInGenericType
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
         public event Action<TcpTypedConnection<T>, SocketError> ConnectionClosed;
 
@@ -86,7 +86,8 @@ namespace ReactiveDomain.Transport
             }
             catch (PackageFramingException exc)
             {
-                Log.InfoException(exc,"Invalid TCP frame received.");
+                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
+                //Log.InfoException(exc,"Invalid TCP frame received.");
                 Close("Invalid TCP frame received.");
                 return;
             }
