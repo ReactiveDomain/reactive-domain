@@ -1,7 +1,7 @@
 language: csharp
 mono: none
 sudo: required
-dist: xenial
+dist: focal
 dotnet: 5.0
 global:
     - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
