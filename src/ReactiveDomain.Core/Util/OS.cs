@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 
+using Microsoft.Extensions.Logging;
+
 
 // ReSharper disable ClassNeverInstantiated.Global
 namespace ReactiveDomain.Util
@@ -16,8 +18,7 @@ namespace ReactiveDomain.Util
 
     public class OS
     {
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         public static readonly OsFlavor OsFlavor = DetermineOSFlavor();
 
@@ -61,8 +62,7 @@ namespace ReactiveDomain.Util
             }
             catch (Exception ex)
             {
-                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                //Log.ErrorException(ex,"Couldn't determine the flavor of Unix-like OS.");
+                Log.LogError(ex,"Couldn't determine the flavor of Unix-like OS.");
             }
 
             switch (uname)

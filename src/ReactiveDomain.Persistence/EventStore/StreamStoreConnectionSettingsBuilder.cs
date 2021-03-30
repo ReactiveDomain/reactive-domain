@@ -10,8 +10,9 @@ namespace ReactiveDomain.EventStore {
     /// </summary>
     public class StreamStoreConnectionSettingsBuilder {
 
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private ILogger _log = new Logging.NullLogger();
+        //dealproc: current api facade looks to accept various "internal" loggers.  This can be negated and may use the config utilities
+        // of the microsoft suite of logging abstractions.
+        private static readonly Microsoft.Extensions.Logging.ILogger Log = Logging.LogProvider.GetLogger<StreamStoreConnectionSettingsBuilder>();
         private bool _verboseLogging;
         private IPEndPoint _singleServerIpEndPoint;
         private string _clusterDns;
@@ -25,36 +26,6 @@ namespace ReactiveDomain.EventStore {
 
 
         internal StreamStoreConnectionSettingsBuilder() { }
-
-        /// <summary>
-        /// Configures the connection to output log messages to the given <see cref="ILogger" />.
-        /// You should implement this interface using another library such as NLog, seriLog or log4net.
-        /// </summary>
-        /// <param name="logger">The <see cref="ILogger"/> to use.</param>
-        /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder UseCustomLogger(ILogger logger) {
-            Ensure.NotNull(logger, nameof(logger));
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //_log = logger;
-            return this;
-        }
-
-        /// <summary>
-        /// Configures the connection to output log messages to the <see cref="ConsoleLogger" />.
-        /// </summary>
-        /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder UseConsoleLogger() {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //_log = new ConsoleLogger();
-            return this;
-        }
-
-        public StreamStoreConnectionSettingsBuilder UseLazyLogger(string loggerName) {
-            Ensure.NotNull(loggerName, nameof(loggerName));
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //_log = LogManager.GetLogger(loggerName);
-            return this;
-        }
 
         /// <summary>
         /// Sets the Reactive Domain <see cref="UserCredentials"/> used for this connection.
@@ -190,14 +161,13 @@ namespace ReactiveDomain.EventStore {
         /// <see cref="StreamStoreConnectionSettings"/> object.
         /// </summary>
         public StreamStoreConnectionSettings Build() {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
             return new StreamStoreConnectionSettings(
                 _userCredentials,
                 _singleServerIpEndPoint,
                 _clusterDns,
                 _ipEndPoints,
                 _networkIpPort,
-                //_log,
+                Log,
                 _useTlsConnection,
                 _targetHost,
                 _validateServer,

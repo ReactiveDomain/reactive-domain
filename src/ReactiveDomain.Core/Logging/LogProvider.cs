@@ -8,8 +8,12 @@ namespace ReactiveDomain.Logging
     public static class LogProvider
     {
         private static IDictionary<string, ILogger> _loggers = new Dictionary<string, ILogger>();
-        private static ILoggerFactory _loggerFactory;// = new LoggerFactory();
+        private static ILoggerFactory _loggerFactory;
 
+        /// <summary>
+        /// This MUST be set during program startup.
+        /// </summary>
+        /// <param name="factory"></param>
         public static void SetLogFactory(ILoggerFactory factory)
         {
             _loggerFactory?.Dispose();

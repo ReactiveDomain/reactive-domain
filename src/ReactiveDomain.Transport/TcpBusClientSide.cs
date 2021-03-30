@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Transport.Serialization;
@@ -34,16 +35,14 @@ namespace ReactiveDomain.Transport
 
         private ITcpConnection CreateTcpConnection(EndPoint endPoint)
         {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") entered.");
+            Log.LogInformation("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") entered.");
             var clientTcpConnection = Transport.TcpConnection.CreateConnectingTcpConnection(Guid.NewGuid(),
                 endPoint,
                 new TcpClientConnector(),
                 TimeSpan.FromSeconds(120),
                 conn =>
                 {
-                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                    //Log.Info("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") successfully constructed TcpConnection.");
+                    Log.LogInformation("TcpBusClientSide.CreateTcpConnection(" + endPoint + ") successfully constructed TcpConnection.");
 
                     ConfigureTcpListener(conn);
                 },
@@ -62,8 +61,7 @@ namespace ReactiveDomain.Transport
             // a second and try again.
             TcpConnection.Clear(); //client should only have one connection
             Thread.Sleep(1000);
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Debug("TcpBusClientSide call to CreateConnectingTcpConnection() failed - SocketError= " + err + " - retrying.");
+            Log.LogDebug("TcpBusClientSide call to CreateConnectingTcpConnection() failed - SocketError= " + err + " - retrying.");
             TcpConnection.Add(CreateTcpConnection(CommandEndpoint));
         }
 
@@ -80,8 +78,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (PackageFramingException exc)
                 {
-                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                    //Log.ErrorException(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
+                    Log.LogError(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
                     // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                     return;
                 }

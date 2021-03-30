@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+
 namespace ReactiveDomain.Messaging.Bus {
     public class CommandManager :
         QueuedSubscriber,
@@ -10,8 +12,7 @@ namespace ReactiveDomain.Messaging.Bus {
         IHandle<AckCommand>,
         IHandle<AckTimeout>,
         IHandle<CompletionTimeout> {
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private static readonly TimeSpan DefaultAckTimeout = TimeSpan.FromMilliseconds(100);
         private static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(500);
         private readonly IBus _outBus;
@@ -34,9 +35,8 @@ namespace ReactiveDomain.Messaging.Bus {
                 throw new ObjectDisposedException(nameof(CommandManager));
             }
 
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //if (Log.LogLevel >= LogLevel.Debug)
-            //    Log.Debug("Registering command tracker for" + command.GetType().Name);
+            if (Log.IsEnabled(LogLevel.Debug))
+                Log.LogDebug("Registering command tracker for" + command.GetType().Name);
             if (_pendingCommands.ContainsKey(command.MsgId))
                 throw new CommandException($"Command tracker already registered for this Command {command.GetType().Name} Id {command.MsgId}.", command);
 

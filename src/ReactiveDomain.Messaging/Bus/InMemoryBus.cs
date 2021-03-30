@@ -12,6 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
@@ -31,8 +34,7 @@ namespace ReactiveDomain.Messaging.Bus
         }
 
         public static readonly TimeSpan DefaultSlowMessageThreshold = TimeSpan.FromMilliseconds(48);
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
 
         public string Name { get; }
@@ -56,8 +58,8 @@ namespace ReactiveDomain.Messaging.Bus
             }
             catch (Exception ex)
             {
-                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
                 //if (Log.LogLevel >= LogLevel.Error) Log.ErrorException(ex, "Error building InMemoryBus");
+                Log.LogError(ex, "Error building InMemoryBus");
                 throw;
             }
 
@@ -173,8 +175,7 @@ namespace ReactiveDomain.Messaging.Bus
         {
             if (message == null)
             {
-                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                //Log.Error("Message was null, publishing aborted");
+                Log.LogError("Message was null, publishing aborted");
                 return;
             }
             // Call each handler registered to the message type.
@@ -191,12 +192,11 @@ namespace ReactiveDomain.Messaging.Bus
                     var elapsed = DateTime.UtcNow - before;
                     if (elapsed <= _slowMsgThreshold) continue;
 
-                    //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                    //Log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
-                    //    Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
-                    //if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
-                    //    Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
-                    //        Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
+                    Log.LogTrace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+                        Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
+                    if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
+                        Log.LogError("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+                            Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
                 }
                 else
                 {
@@ -220,14 +220,12 @@ namespace ReactiveDomain.Messaging.Bus
         //tracing 
         public virtual void NoMessageHandler(dynamic msg, Type type)
         {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Info(type.Name + " message not handled (no handler)");
+            Log.LogInformation(type.Name + " message not handled (no handler)");
         }
 
         public virtual void PreHandleMessage(dynamic msg, Type type, IMessageHandler handler)
         {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Debug("{0} message handled by {1}", type.Name, handler.HandlerName);
+            Log.LogDebug("{0} message handled by {1}", type.Name, handler.HandlerName);
         }
 
         public virtual void PostHandleMessage(dynamic msg, Type type, IMessageHandler handler, TimeSpan handleTimeSpan)
@@ -237,8 +235,9 @@ namespace ReactiveDomain.Messaging.Bus
 
         public virtual void MessageReceived(dynamic msg, Type type, string publishedBy)
         {
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
             //Log.Trace("Publishing Message {0} details \n{1}\n{2}", type.FullName, type.Name, Json.ToLogJson(msg));
+            //dealproc: I had an issue with logtrace not handling ^^ appropriately, so i've inlined the data.
+            Log.LogTrace($"Publishing Message {type.FullName} details \n{type.Name}\n{Json.ToLogJson(msg)}");
         }
 
         //Implementation of IDisposable

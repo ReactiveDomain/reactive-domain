@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Projections;
+
+using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 using ReactiveDomain.Util;
 using ES_ILogger = EventStore.ClientAPI.ILogger;
@@ -22,8 +25,7 @@ namespace ReactiveDomain.EventStore {
             Error
         }
 
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private readonly ILogger _log = LogManager.GetLogger("Common");
+        private static readonly Microsoft.Extensions.Logging.ILogger Log = Logging.LogProvider.GetLogger("Common");
 
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;
@@ -110,8 +112,7 @@ namespace ReactiveDomain.EventStore {
             Connection = new EventStoreConnectionWrapper(EventStoreConnection.Create(settings, tcpEndpoint, "Default Connection"));
 
             if (Connection == null) {
-                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                //_log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
+                Log.LogError("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
                 TeardownEventStore(false);
                 return;
             }
@@ -142,7 +143,7 @@ namespace ReactiveDomain.EventStore {
             dynamic typedMessage = message;
             var eventBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(typedMessage, SerializerSettings));
             var metaDataString = JsonConvert.SerializeObject(metaData, SerializerSettings);
-            //Log.Debug("Metadata= " + metaDataString);
+            Log.LogDebug("Metadata= " + metaDataString);
             var metaDataBytes = Encoding.UTF8.GetBytes(metaDataString);
             var typeName = typedMessage.GetType().Name;
             return new EventData(eventId, typeName, true, eventBytes, metaDataBytes);

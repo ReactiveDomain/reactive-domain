@@ -3,6 +3,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+
+using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 using ReactiveDomain.Util;
 
@@ -19,8 +22,7 @@ namespace ReactiveDomain.EventStore {
             Error
         }
 
-        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-        //private readonly ILogger _log = LogManager.GetLogger("Common");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("Common");
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;
         private bool _disposed;

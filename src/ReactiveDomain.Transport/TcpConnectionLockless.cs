@@ -5,6 +5,9 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Transport.BufferManagement;
 using ReactiveDomain.Util;
 
@@ -15,7 +18,7 @@ namespace ReactiveDomain.Transport
         internal const int MaxSendPacketSize = 64 * 1024;
         internal static readonly BufferManager BufferManager = new BufferManager(TcpConfiguration.BufferChunksCount, TcpConfiguration.SocketBufferSize);
 
-        //private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private static readonly SocketArgsPool SocketArgsPool = new SocketArgsPool("TcpConnection.SocketArgsPool", 
                                                                                    TcpConfiguration.SendReceivePoolSize, 
                                                                                    () => new SocketAsyncEventArgs());
@@ -281,8 +284,7 @@ namespace ReactiveDomain.Transport
                     var callback = Interlocked.Exchange(ref _receiveCallback, null);
                     if (callback == null)
                     {
-                        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                        //Log.Error("Some threading issue in TryDequeueReceivedData! Callback is null!");
+                        Log.LogError("Some threading issue in TryDequeueReceivedData! Callback is null!");
                         throw new Exception("Some threading issue in TryDequeueReceivedData! Callback is null!");
                     }
 
@@ -325,14 +327,13 @@ namespace ReactiveDomain.Transport
             NotifyClosed();
             if (_verbose)
             {
-                //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                //Log.Info("ES {12} closed [{0:HH:mm:ss.fff}: N{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
-                //         + "Send calls: {6}, callbacks: {7}\nReceive calls: {8}, callbacks: {9}\nClose reason: [{10}] {11}\n",
-                //         DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, _connectionId,
-                //         TotalBytesReceived, TotalBytesSent,
-                //         SendCalls, SendCallbacks,
-                //         ReceiveCalls, ReceiveCallbacks,
-                //         socketError, reason, GetType().Name);
+                Log.LogInformation("ES {12} closed [{0:HH:mm:ss.fff}: N{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
+                         + "Send calls: {6}, callbacks: {7}\nReceive calls: {8}, callbacks: {9}\nClose reason: [{10}] {11}\n",
+                         DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, _connectionId,
+                         TotalBytesReceived, TotalBytesSent,
+                         SendCalls, SendCallbacks,
+                         ReceiveCalls, ReceiveCallbacks,
+                         socketError, reason, GetType().Name);
             }
             CloseSocket();
             if (Interlocked.CompareExchange(ref _sending, 1, 0) == 0)

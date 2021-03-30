@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using Microsoft.Extensions.Logging;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Transport.Serialization;
@@ -19,8 +20,7 @@ namespace ReactiveDomain.Transport
             : base(hostIp, commandPort, messageBus, messageSerializer)
         {
 
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") entered.");
+            Log.LogInformation("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") entered.");
             
             var listener = new TcpServerListener(CommandEndpoint);
 
@@ -40,8 +40,7 @@ namespace ReactiveDomain.Transport
                     }
                     catch (PackageFramingException exc)
                     {
-                        //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-                        //Log.ErrorException(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
+                        Log.LogError(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
                         // SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
                         return;
                     }
@@ -50,8 +49,7 @@ namespace ReactiveDomain.Transport
                 conn.ReceiveAsync(callback);
                 TcpConnection.Add(conn);
             }, "Standard");
-            //TODO: Setup a static logger using LoggingAbstractions from Microsoft
-            //Log.Info("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") successfully constructed TcpServerListener.");
+            Log.LogInformation("ConfigureTcpListener(" + CommandEndpoint.AddressFamily + ", " + CommandEndpoint + ") successfully constructed TcpServerListener.");
             _commandPortListener = listener;
         }
     }
