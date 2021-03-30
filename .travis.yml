@@ -17,11 +17,13 @@ addons:
     packages:
       - powershell
 
-before_script:
+before_install:
   - sudo apt-get update
   - sudo apt-get install -y apt-transport-https
   - sudo apt-get update
   - sudo apt-get install -y dotnet-sdk-5.0
+
+before_script:
   - powershell -executionpolicy unrestricted -File ./tools/CheckAssemblyVersion.ps1
   
 script: 
