@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Net;
 using EventStore.ClientAPI;
-using ReactiveDomain.Logging;
+
 using ReactiveDomain.Util;
-using ILogger = ReactiveDomain.Logging.ILogger;
+
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace ReactiveDomain.EventStore {
     /// <summary>
@@ -11,8 +12,7 @@ namespace ReactiveDomain.EventStore {
     /// underlying event based data store.
     /// </summary>
     public class StreamStoreConnectionSettingsBuilder {
-
-        private ILogger _log = new Logging.NullLogger();
+        private ILogger _log = Logging.LogProvider.GetLogger("ReactiveDomain.EventStore");
         private bool _verboseLogging;
         private IPEndPoint _singleServerIpEndPoint;
         private string _clusterDns;
@@ -36,21 +36,6 @@ namespace ReactiveDomain.EventStore {
         public StreamStoreConnectionSettingsBuilder UseCustomLogger(ILogger logger) {
             Ensure.NotNull(logger, nameof(logger));
             _log = logger;
-            return this;
-        }
-
-        /// <summary>
-        /// Configures the connection to output log messages to the <see cref="ConsoleLogger" />.
-        /// </summary>
-        /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder UseConsoleLogger() {
-            _log = new ConsoleLogger();
-            return this;
-        }
-
-        public StreamStoreConnectionSettingsBuilder UseLazyLogger(string loggerName) {
-            Ensure.NotNull(loggerName, nameof(loggerName));
-            _log = LogManager.GetLogger(loggerName);
             return this;
         }
 

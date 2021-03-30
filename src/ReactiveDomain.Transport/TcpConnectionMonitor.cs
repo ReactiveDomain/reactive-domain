@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Transport
@@ -9,7 +11,7 @@ namespace ReactiveDomain.Transport
     public class TcpConnectionMonitor
     {
         public static readonly TcpConnectionMonitor Default = new TcpConnectionMonitor();
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         private readonly object _statsLock = new object();
 
@@ -78,7 +80,7 @@ namespace ReactiveDomain.Transport
 
             if (Application.IsDefined(Application.DumpStatistics))
             {
-                Log.Info("\n# Total connections: {0,3}. Out: {1:0.00}b/s  In: {2:0.00}b/s  Pending Send: {3}  " +
+                Log.LogInformation("\n# Total connections: {0,3}. Out: {1:0.00}b/s  In: {2:0.00}b/s  Pending Send: {3}  " +
                           "In Send: {4}  Pending Received: {5} Measure Time: {6}",
                           stats.Connections,
                           stats.SendingSpeed,
@@ -99,7 +101,7 @@ namespace ReactiveDomain.Transport
 
             if (connection.IsFaulted)
             {
-                Log.Info("# {0} is faulted", connection);
+                Log.LogInformation("# {0} is faulted", connection);
                 return;
             }
 
@@ -145,7 +147,7 @@ namespace ReactiveDomain.Transport
 
             if (missingReceiveCallback && connectionData.LastMissingReceiveCallBack)
             {
-                Log.Error("# {0} {1}ms since last Receive started. No completion callback received, but socket status is READY_FOR_RECEIVE",
+                Log.LogError("# {0} {1}ms since last Receive started. No completion callback received, but socket status is READY_FOR_RECEIVE",
                           connection, sinceLastReceive);
             }
             connectionData.LastMissingReceiveCallBack = missingReceiveCallback;
@@ -165,7 +167,7 @@ namespace ReactiveDomain.Transport
             if (missingSendCallback && connectionData.LastMissingSendCallBack)
             {
                 // _anySendBlockedOnLastRun = true;
-                Log.Error(
+                Log.LogError(
                     "# {0} {1}ms since last send started. No completion callback received, but socket status is READY_FOR_SEND. In send: {2}",
                     connection, sinceLastSend, inSendBytes);
             }
@@ -177,7 +179,7 @@ namespace ReactiveDomain.Transport
             int pendingSendBytes = connection.PendingSendBytes;
             if (pendingSendBytes > 128 * 1024)
             {
-                Log.Info("# {0} {1}kb pending send", connection, pendingSendBytes / 1024);
+                Log.LogInformation("# {0} {1}kb pending send", connection, pendingSendBytes / 1024);
             }
         }
 
@@ -186,7 +188,7 @@ namespace ReactiveDomain.Transport
             int pendingReceivedBytes = connection.PendingReceivedBytes;
             if (pendingReceivedBytes > 128 * 1024)
             {
-                Log.Info("# {0} {1}kb are not dispatched", connection, pendingReceivedBytes / 1024);
+                Log.LogInformation("# {0} {1}kb are not dispatched", connection, pendingReceivedBytes / 1024);
             }
         }
 

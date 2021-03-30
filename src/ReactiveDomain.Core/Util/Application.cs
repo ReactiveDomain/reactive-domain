@@ -3,7 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
 
 namespace ReactiveDomain.Util
 {
@@ -22,7 +23,7 @@ namespace ReactiveDomain.Util
         public const string AlwaysKeepScavenged = "ALWAYS_KEEP_SCAVENGED";
         public const string DisableMergeChunks = "DISABLE_MERGE_CHUNKS";
 
-        protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        protected static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         private static Action<int> OnExit;
         private static int Exited;
@@ -63,9 +64,9 @@ namespace ReactiveDomain.Util
                 var message = string.Format("Exiting with exit code: {0}.\nExit reason: {1}", exitCode, reason);
                 Console.WriteLine(message);
                 if (exitCode != 0)
-                    Log.Error(message);
+                    Log.LogError(message);
                 else
-                    Log.Info(message);
+                    Log.LogInformation(message);
             }
 
             var exit = OnExit;

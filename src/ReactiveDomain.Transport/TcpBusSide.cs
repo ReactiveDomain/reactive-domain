@@ -5,14 +5,14 @@ using System.Timers;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace ReactiveDomain.Transport
 {
     public abstract class TcpBusSide : IHandle<IMessage>
     {
-        protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        protected static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         protected readonly IDispatcher MessageBus;
         private List<Type> _inboundSpamMessageTypes;
         private QueuedHandlerDiscarding _inboundSpamMessageQueuedHandler;
@@ -65,17 +65,17 @@ namespace ReactiveDomain.Transport
         {
             if (_inboundSpamMessageQueuedHandler == null)
             {
-                Log.Error("_inboundSpamMessageQueuedHandler is null.");
+                Log.LogError("_inboundSpamMessageQueuedHandler is null.");
                 return;
             }
-            Log.Debug(_inboundSpamMessageQueuedHandler.GetStatistics().ToString());
+            Log.LogDebug(_inboundSpamMessageQueuedHandler.GetStatistics().ToString());
 
             if (_inboundMessageQueuedHandler == null)
             {
-                Log.Error("_inboundMessageQueuedHandler is null.");
+                Log.LogError("_inboundMessageQueuedHandler is null.");
                 return;
             }
-            Log.Debug(_inboundMessageQueuedHandler.GetStatistics().ToString());
+            Log.LogDebug(_inboundMessageQueuedHandler.GetStatistics().ToString());
 
         }
 
@@ -88,18 +88,18 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.ErrorException(ex, "TcpMessage.FromArraySegment() threw an exception:");
+                Log.LogError(ex, "TcpMessage.FromArraySegment() threw an exception:");
                 throw;
             }
 
             var type = message.GetType();
-            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") received from TCP.");
+            Log.LogTrace("Message " + message.MsgId + " (Type " + type.Name + ") received from TCP.");
 
             if (_inboundSpamMessageTypes.Contains(type))
             {
                 if (_inboundSpamMessageQueuedHandler == null)
                 {
-                    Log.Error("TCP message (a Message) has arrived, but _inboundSpamMessageQueuedHandler is null.");
+                    Log.LogError("TCP message (a Message) has arrived, but _inboundSpamMessageQueuedHandler is null.");
                     return;
                 }
 
@@ -109,7 +109,7 @@ namespace ReactiveDomain.Transport
             {
                 if (_inboundMessageQueuedHandler == null)
                 {
-                    Log.Error("TCP message (a Message) has arrived, but _inboundMessageQueuedHandler is null.");
+                    Log.LogError("TCP message (a Message) has arrived, but _inboundMessageQueuedHandler is null.");
                     return;
                 }
 
@@ -120,11 +120,11 @@ namespace ReactiveDomain.Transport
         public void Handle(IMessage message)
         {
             var type = message.GetType();
-            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
+            Log.LogTrace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
 
             if (TcpConnection == null)
             {
-                Log.Debug("TCP connection not yet established - Message " + message.MsgId + " (Type " + type.Name + ") will be discarded.");
+                Log.LogDebug("TCP connection not yet established - Message " + message.MsgId + " (Type " + type.Name + ") will be discarded.");
                 return;
             }
 
@@ -138,7 +138,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
+                    Log.LogError(ex, "Exception caught while handling Message " + message.MsgId + " (Type " + type.Name + ")");
                 }
             }
         }

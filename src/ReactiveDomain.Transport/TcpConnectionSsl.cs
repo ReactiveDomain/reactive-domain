@@ -9,7 +9,9 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Transport.Locks;
 using ReactiveDomain.Util;
 
@@ -17,7 +19,7 @@ namespace ReactiveDomain.Transport
 {
     public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         public static ITcpConnection CreateConnectingConnection(Guid connectionId, 
                                                                 EndPoint remoteEndPoint, 
@@ -129,7 +131,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (AuthenticationException exc)
                 {
-                    Log.InfoException(exc,String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
+                    Log.LogInformation(exc,String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
                     CloseInternal(SocketError.SocketError, exc.Message);
                 }
                 catch (ObjectDisposedException)
@@ -138,7 +140,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (Exception exc)
                 {
-                    Log.InfoException(exc,String.Format("[S{0}, L{1}]: Exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
+                    Log.LogInformation(exc,String.Format("[S{0}, L{1}]: Exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
                     CloseInternal(SocketError.SocketError, exc.Message);
                 }
             }
@@ -161,7 +163,7 @@ namespace ReactiveDomain.Transport
             }
             catch (AuthenticationException exc)
             {
-                Log.InfoException(exc,
+                Log.LogInformation(exc,
                     $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Authentication exception on EndAuthenticateAsServer.");
                 CloseInternal(SocketError.SocketError, exc.Message);
             }
@@ -171,7 +173,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.InfoException(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsServer.");
+                Log.LogInformation(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsServer.");
                 CloseInternal(SocketError.SocketError, exc.Message);
             }
         }
@@ -204,7 +206,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (AuthenticationException exc)
                 {
-                    Log.InfoException(exc,String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint));
+                    Log.LogInformation(exc,String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint));
                     CloseInternal(SocketError.SocketError, exc.Message);
                 }
                 catch (ObjectDisposedException)
@@ -213,7 +215,7 @@ namespace ReactiveDomain.Transport
                 }
                 catch (Exception exc)
                 {
-                    Log.InfoException(exc, $"[S{RemoteEndPoint}, {LocalEndPoint}]: Exception on BeginAuthenticateAsClient.");
+                    Log.LogInformation(exc, $"[S{RemoteEndPoint}, {LocalEndPoint}]: Exception on BeginAuthenticateAsClient.");
                     CloseInternal(SocketError.SocketError, exc.Message);
                 }
             }
@@ -236,7 +238,7 @@ namespace ReactiveDomain.Transport
             }
             catch (AuthenticationException exc)
             {
-                Log.InfoException(exc,
+                Log.LogInformation(exc,
                     $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Authentication exception on EndAuthenticateAsClient.");
                 CloseInternal(SocketError.SocketError, exc.Message);
             }
@@ -246,7 +248,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.InfoException(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsClient.");
+                Log.LogInformation(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsClient.");
                 CloseInternal(SocketError.SocketError, exc.Message);
             }
         }
@@ -259,7 +261,7 @@ namespace ReactiveDomain.Transport
 
             if (sslPolicyErrors == SslPolicyErrors.None)
                 return true;
-            Log.Error("[S{0}, L{1}]: Certificate error: {2}", RemoteEndPoint, LocalEndPoint, sslPolicyErrors);
+            Log.LogError("[S{0}, L{1}]: Certificate error: {2}", RemoteEndPoint, LocalEndPoint, sslPolicyErrors);
             // Do not allow this client to communicate with unauthenticated servers. 
             return false;
         }
@@ -294,7 +296,7 @@ namespace ReactiveDomain.Transport
             else
                 sb.AppendFormat("Remote certificate is null.\n");
 
-            Log.Info(sb.ToString());
+            Log.LogInformation(sb.ToString());
         }
 
         public void EnqueueSend(IEnumerable<ArraySegment<byte>> data)
@@ -339,7 +341,7 @@ namespace ReactiveDomain.Transport
             }
             catch (SocketException exc)
             {
-                Log.DebugException(exc,String.Format("SocketException '{0}' during BeginWrite.", exc.SocketErrorCode));
+                Log.LogDebug(exc,String.Format("SocketException '{0}' during BeginWrite.", exc.SocketErrorCode));
                 CloseInternal(exc.SocketErrorCode, "SocketException during BeginWrite.");
             }
             catch (ObjectDisposedException)
@@ -348,7 +350,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.DebugException(exc,"Exception during BeginWrite.");
+                Log.LogDebug(exc,"Exception during BeginWrite.");
                 CloseInternal(SocketError.SocketError, "Exception during BeginWrite");
             }
         }
@@ -368,7 +370,7 @@ namespace ReactiveDomain.Transport
             }
             catch (SocketException exc)
             {
-                Log.DebugException(exc,String.Format("SocketException '{0}' during EndWrite.", exc.SocketErrorCode));
+                Log.LogDebug(exc,String.Format("SocketException '{0}' during EndWrite.", exc.SocketErrorCode));
                 NotifySendCompleted(0);
                 CloseInternal(exc.SocketErrorCode, "SocketException during EndWrite.");
             }
@@ -379,7 +381,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.DebugException(exc,"Exception during EndWrite.");
+                Log.LogDebug(exc,"Exception during EndWrite.");
                 NotifySendCompleted(0);
                 CloseInternal(SocketError.SocketError, "Exception during EndWrite.");
             }
@@ -391,7 +393,7 @@ namespace ReactiveDomain.Transport
 
             if (Interlocked.Exchange(ref _receiveCallback, callback) != null)
             {
-                Log.Error("ReceiveAsync called again while previous call wasn't fulfilled"); 
+                Log.LogError("ReceiveAsync called again while previous call wasn't fulfilled"); 
                 throw new InvalidOperationException("ReceiveAsync called again while previous call wasn't fulfilled");
             }
             TryDequeueReceivedData();
@@ -406,7 +408,7 @@ namespace ReactiveDomain.Transport
             }
             catch (SocketException exc)
             {
-                Log.DebugException(exc,String.Format("SocketException '{0}' during BeginRead.", exc.SocketErrorCode));
+                Log.LogDebug(exc,String.Format("SocketException '{0}' during BeginRead.", exc.SocketErrorCode));
                 CloseInternal(exc.SocketErrorCode, "SocketException during BeginRead.");
             }
             catch (ObjectDisposedException)
@@ -415,7 +417,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.DebugException(exc,"Exception during BeginRead.");
+                Log.LogDebug(exc,"Exception during BeginRead.");
                 CloseInternal(SocketError.SocketError, "Exception during BeginRead.");
             }
         }
@@ -429,7 +431,7 @@ namespace ReactiveDomain.Transport
             }
             catch (SocketException exc)
             {
-                Log.DebugException(exc,String.Format("SocketException '{0}' during EndRead.", exc.SocketErrorCode));
+                Log.LogDebug(exc,String.Format("SocketException '{0}' during EndRead.", exc.SocketErrorCode));
                 NotifyReceiveCompleted(0);
                 CloseInternal(exc.SocketErrorCode, "SocketException during EndRead.");
                 return;
@@ -442,7 +444,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception exc)
             {
-                Log.DebugException(exc,"Exception during EndRead.");
+                Log.LogDebug(exc,"Exception during EndRead.");
                 NotifyReceiveCompleted(0);
                 CloseInternal(SocketError.SocketError, "Exception during EndRead.");
                 return;
@@ -478,7 +480,7 @@ namespace ReactiveDomain.Transport
                     var callback = Interlocked.Exchange(ref _receiveCallback, null);
                     if (callback == null)
                     {
-                        Log.Error("Some threading issue in TryDequeueReceivedData! Callback is null!");
+                        Log.LogError("Some threading issue in TryDequeueReceivedData! Callback is null!");
                         throw new Exception("Some threading issue in TryDequeueReceivedData! Callback is null!");
                     }
 
@@ -525,7 +527,7 @@ namespace ReactiveDomain.Transport
 
             if (_verbose)
             {
-                Log.Info("ES {12} closed [{0:HH:mm:ss.fff}: S{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
+                Log.LogInformation("ES {12} closed [{0:HH:mm:ss.fff}: S{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
                          + "Send calls: {6}, callbacks: {7}\nReceive calls: {8}, callbacks: {9}\nClose reason: [{10}] {11}\n",
                          DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, _connectionId,
                          TotalBytesReceived, TotalBytesSent,

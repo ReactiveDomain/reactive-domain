@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Util;
 
 
@@ -14,7 +16,7 @@ namespace ReactiveDomain.Transport.Framing
     /// </summary>
     public class LengthPrefixMessageFramer : IMessageFramer
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         public const int HeaderLength = sizeof(Int32);
         
@@ -78,7 +80,7 @@ namespace ReactiveDomain.Transport.Framing
                     {
                         if (_packageLength <= 0 || _packageLength > _maxPackageSize)
                         {
-                            Log.Error("FRAMING ERROR! Data:\n{0}", Helper.FormatBinaryDump(bytes));
+                            Log.LogError("FRAMING ERROR! Data:\n{0}", Helper.FormatBinaryDump(bytes));
                             throw new PackageFramingException(string.Format("Package size is out of bounds: {0} (max: {1}).",
                                                                             _packageLength, _maxPackageSize));
                         }

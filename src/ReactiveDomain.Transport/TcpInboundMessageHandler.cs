@@ -1,5 +1,7 @@
 ﻿using System;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -14,7 +16,7 @@ namespace ReactiveDomain.Transport
     /// </summary>
     public class TcpInboundMessageHandler : IHandle<IMessage>
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         protected readonly IDispatcher _mainBus;
         private readonly TcpOutboundMessageHandler _tcpOutboundMessageHandler;
         public TcpInboundMessageHandler(IDispatcher mainBus, TcpOutboundMessageHandler tcpOutboundMessageHandler)
@@ -25,7 +27,7 @@ namespace ReactiveDomain.Transport
 
         public virtual void PostHandleMessage(dynamic msg, Type type, TimeSpan handleTimeSpan)
         {
-            Log.Trace($"Message {type.Name} MsgId= { msg.MsgId } took { handleTimeSpan.TotalMilliseconds } msec to process.");
+            Log.LogTrace($"Message {type.Name} MsgId= { msg.MsgId } took { handleTimeSpan.TotalMilliseconds } msec to process.");
         }
 
         public virtual void MessageReceived(dynamic msg, Type type, string publishedBy)
@@ -42,7 +44,7 @@ namespace ReactiveDomain.Transport
             {
                 var error =
                     $"Message object-type mismatch.  MsgType={message.GetType().FullName}, which MessageHierarchy claims is a {type1.FullName}.  However, .Net Reflection says that the command is a {type2.FullName}";
-                Log.Error(error);
+                Log.LogError(error);
                 throw new Exception(error);
             }
 

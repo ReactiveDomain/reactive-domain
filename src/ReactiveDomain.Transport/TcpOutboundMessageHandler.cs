@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -8,7 +10,7 @@ namespace ReactiveDomain.Transport
 {
     public class TcpOutboundMessageHandler : IHandle<IMessage>
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private readonly IDispatcher _messageBus;
         private readonly QueuedHandler _outboundMessageQueuedHandler;
 
@@ -36,11 +38,11 @@ namespace ReactiveDomain.Transport
             Type type = message.GetType();
             if (message.MsgId == Guid.Empty)
             {
-                Log.Error("Message " + message.MsgId + " (Type " + type.Name + ") - INTERNAL ERROR: there should NEVER be a message with that MsgId value");
+                Log.LogError("Message " + message.MsgId + " (Type " + type.Name + ") - INTERNAL ERROR: there should NEVER be a message with that MsgId value");
             }
             if (_messagesThatCameFromTcp.TryAdd(message.MsgId, message))
             {
-                Log.Trace("Message " + message.MsgId + " (Type " + type.Name +
+                Log.LogTrace("Message " + message.MsgId + " (Type " + type.Name +
                           ") came from TCP, now added to MessagesThatCameFromTcp hash.  Hash now contains " +
                           _messagesThatCameFromTcp.Count + " entries.");
             }
@@ -52,13 +54,13 @@ namespace ReactiveDomain.Transport
             IMessage removedMessage;
             if (_messagesThatCameFromTcp.TryRemove(message.MsgId, out removedMessage))
             {
-                Log.Trace("Message " + message.MsgId + " (Type " + type.Name +
+                Log.LogTrace("Message " + message.MsgId + " (Type " + type.Name +
                           ") came from TCP originally, NOT sent back on TCP.  MessagesThatCameFromTcp hash now contains " +
                           _messagesThatCameFromTcp.Count + " entries.");
                 return;
             }
 
-            Log.Trace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
+            Log.LogTrace("Message " + message.MsgId + " (Type " + type.Name + ") to be sent over TCP.");
             _outboundMessageQueuedHandler.Publish(message);
         }
 

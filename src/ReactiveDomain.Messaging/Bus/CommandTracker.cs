@@ -1,11 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
 
 namespace ReactiveDomain.Messaging.Bus {
     public class CommandTracker : IDisposable {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private readonly ICommand _command;
         private readonly TaskCompletionSource<CommandResponse> _tcs;
         private readonly IPublisher _bus;
@@ -49,8 +50,9 @@ namespace ReactiveDomain.Messaging.Bus {
             Interlocked.Increment(ref _ackCount);
             var curState = Interlocked.Read(ref _state);
             if (curState != PendingAck || Interlocked.CompareExchange(ref _state, PendingResponse, curState) != curState) {
-                if (Log.LogLevel >= LogLevel.Error)
-                    Log.Error(_command.GetType().Name + " Multiple Handlers Acked Command");
+                //if (Log.LogLevel >= LogLevel.Error)
+                //    Log.Error(_command.GetType().Name + " Multiple Handlers Acked Command");
+                Log.LogError(_command.GetType().Name + " Multiple Handlers Acked Command");
                 if (_tcs.TrySetException(new CommandOversubscribedException(" multiple handlers responded to the command", _command)))
                     _cancelAction();
                 return;
@@ -60,8 +62,9 @@ namespace ReactiveDomain.Messaging.Bus {
         public void Handle(AckTimeout message) {
             if (Interlocked.Read(ref _state) == PendingAck) {
                 if (_tcs.TrySetException(new CommandNotHandledException(" timed out waiting for a handler to start. Make sure a command handler is subscribed", _command))) {
-                    if (Log.LogLevel >= LogLevel.Error)
-                        Log.Error(_command.GetType().Name + " command not handled (no handler)");
+                    //if (Log.LogLevel >= LogLevel.Error)
+                    //    Log.Error(_command.GetType().Name + " command not handled (no handler)");
+                    Log.LogError(_command.GetType().Name + " command not handled (no handler)");
                     _cancelAction();
                 }
             }
@@ -70,8 +73,9 @@ namespace ReactiveDomain.Messaging.Bus {
         public void Handle(CompletionTimeout message) {
             if (Interlocked.Read(ref _state) == PendingResponse) {
                 if (_tcs.TrySetException(new CommandTimedOutException(" timed out waiting for handler to complete.", _command))) {
-                    if (Log.LogLevel >= LogLevel.Error)
-                        Log.Error(_command.GetType().Name + " command timed out");
+                    //if (Log.LogLevel >= LogLevel.Error)
+                    //    Log.Error(_command.GetType().Name + " command timed out");
+                    Log.LogError(_command.GetType().Name + " command timed out");
                     _cancelAction();
                 }
             }

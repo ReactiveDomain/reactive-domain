@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
 
 namespace ReactiveDomain.Transport.BufferManagement
 {
@@ -22,7 +23,7 @@ namespace ReactiveDomain.Transport.BufferManagement
     /// </remarks>
     public class BufferManager
     {
-        private static ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private const int TrialsCount = 100;
 
         private static BufferManager _defaultBufferManager;
@@ -162,7 +163,7 @@ namespace ReactiveDomain.Transport.BufferManagement
                     _buffers.Push(chunk);
                 }
 
-                Log.Debug("Segments count: {0}, buffers count: {1}, should be when full: {2}",
+                Log.LogDebug("Segments count: {0}, buffers count: {1}, should be when full: {2}",
                                   _segments.Count,
                                   _buffers.Count,
                                   _segments.Count * _segmentChunks);

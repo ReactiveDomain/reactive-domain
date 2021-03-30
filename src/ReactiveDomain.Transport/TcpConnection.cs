@@ -5,10 +5,10 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Locks;
 using ReactiveDomain.Transport.BufferManagement;
 using ReactiveDomain.Util;
+using Microsoft.Extensions.Logging;
 
 namespace ReactiveDomain.Transport
 {
@@ -17,7 +17,7 @@ namespace ReactiveDomain.Transport
         internal const int MaxSendPacketSize = 64 * 1024;
         internal static readonly BufferManager BufferManager = new BufferManager(TcpConfiguration.BufferChunksCount, TcpConfiguration.SocketBufferSize);
 
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private static readonly SocketArgsPool SocketArgsPool = new SocketArgsPool("TcpConnection.SocketArgsPool", 
                                                                                    TcpConfiguration.SendReceivePoolSize, 
                                                                                    () => new SocketAsyncEventArgs());
@@ -156,7 +156,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.ErrorException(ex,"Exception thrown while attempting to dequeue message(s).");
+                Log.LogError(ex,"Exception thrown while attempting to dequeue message(s).");
                 throw;
             }
 
@@ -169,7 +169,7 @@ namespace ReactiveDomain.Transport
             }
             catch (ObjectDisposedException ex)
             {
-                Log.ErrorException(ex, "Exception thrown while attempting to send message(s).");
+                Log.LogError(ex, "Exception thrown while attempting to send message(s).");
                 ReturnSendingSocketArgs();
             }
         }
@@ -183,7 +183,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.ErrorException(ex, "Exception caught in TcpConnection.OnSendAsyncCompleted().");
+                Log.LogError(ex, "Exception caught in TcpConnection.OnSendAsyncCompleted().");
             }
         }
 
@@ -221,7 +221,7 @@ namespace ReactiveDomain.Transport
             {
                 if (_receiveCallback != null)
                 {
-                    Log.Error("ReceiveAsync called again while previous call wasn't fulfilled");
+                    Log.LogError("ReceiveAsync called again while previous call wasn't fulfilled");
                     throw new InvalidOperationException("ReceiveAsync called again while previous call wasn't fulfilled");
                 }
                 _receiveCallback = callback;
@@ -255,7 +255,7 @@ namespace ReactiveDomain.Transport
             }
             catch (ObjectDisposedException ex)
             {
-                Log.ErrorException(ex, "Exception thrown while attempting to receive message(s).");
+                Log.LogError(ex, "Exception thrown while attempting to receive message(s).");
                 ReturnReceivingSocketArgs();
             }
         }
@@ -269,7 +269,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.ErrorException(ex,"Exception caught in TcpConnection.OnReceiveAsyncCompleted().");
+                Log.LogError(ex,"Exception caught in TcpConnection.OnReceiveAsyncCompleted().");
             }
         }
 
@@ -356,7 +356,7 @@ namespace ReactiveDomain.Transport
 
             if (_verbose)
             {
-                Log.Info("ES {12} closed [{0:HH:mm:ss.fff}: N{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
+                Log.LogInformation("ES {12} closed [{0:HH:mm:ss.fff}: N{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
                          + "Send calls: {6}, callbacks: {7}\nReceive calls: {8}, callbacks: {9}\nClose reason: [{10}] {11}\n",
                          DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, _connectionId,
                          TotalBytesReceived, TotalBytesSent,

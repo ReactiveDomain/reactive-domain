@@ -8,15 +8,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Monitoring.Stats
 {
     public class DiskIo
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
 
         public readonly ulong ReadBytes;
         public readonly ulong WrittenBytes;
@@ -39,7 +40,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             }
             catch (Exception exc)
             {
-                Log.Debug("Getting disk IO error: {0}.", exc.Message);
+                Log.LogDebug("Getting disk IO error: {0}.", exc.Message);
                 return null;
             }
         }
@@ -70,7 +71,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             }
             catch (Exception ex)
             {
-                log.InfoException(ex, "Couldn't parse Linux stats.");
+                log.LogInformation(ex, "Couldn't parse Linux stats.");
                 return null;
             }
 
@@ -90,7 +91,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats
             }
             catch (Exception ex)
             {
-                log.InfoException(ex, "Error while reading disk io on Windows.");
+                log.LogInformation(ex, "Error while reading disk io on Windows.");
                 return null;
             }
             finally

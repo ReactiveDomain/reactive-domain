@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
-using ReactiveDomain.Logging;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Messaging.Monitoring.Stats;
 
 namespace ReactiveDomain.Messaging.Monitoring.Utils
@@ -62,7 +64,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
             }
             catch (Exception ex)
             {
-                _log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
+                _log.LogTrace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
                            category, counter, processName ?? "<!error getting process name!>", ex.Message);
                 return null;
             }
@@ -78,7 +80,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Utils
             }
             catch (Exception ex)
             {
-                _log.Trace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
+                _log.LogTrace("Couldn't create performance counter: category='{0}', counter='{1}', instance='{2}'. Error: {3}",
                            category, counter, instance ?? string.Empty, ex.Message);
                 return null;
             }

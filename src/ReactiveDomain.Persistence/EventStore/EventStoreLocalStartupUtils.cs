@@ -3,11 +3,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Newtonsoft.Json;
-using ReactiveDomain.Logging;
-using ReactiveDomain.Util;
-using ILogger = ReactiveDomain.Logging.ILogger;
 
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.EventStore {
     public class EventStoreLocalStartupUtils {
@@ -21,7 +21,7 @@ namespace ReactiveDomain.EventStore {
             Error
         }
 
-        private readonly ILogger _log = LogManager.GetLogger("Common");
+        private readonly ILogger Log = Logging.LogProvider.GetLogger("Common");
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
         private Process _process;
         private bool _disposed;

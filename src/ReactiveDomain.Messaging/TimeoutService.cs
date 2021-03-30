@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading;
+
+using Microsoft.Extensions.Logging;
+
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging
@@ -62,7 +64,7 @@ namespace ReactiveDomain.Messaging
 
     public class TimeoutService
     {
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+        private static readonly ILogger Log = Logging.LogProvider.GetLogger("ReactiveDomain");
         private static int size = 5000;
         private readonly object _queueLock = new object();
         private readonly HeapPriorityQueue<TimeoutRequestNode> _queue = new HeapPriorityQueue<TimeoutRequestNode>(size);
@@ -152,15 +154,15 @@ namespace ReactiveDomain.Messaging
                         var overdueMs = (epochMs - msg.TimeoutMs);
                         if (overdueMs > 100)
                         {
-                            if(Log.LogLevel >= LogLevel.Info)
-                            Log.Info("Message should have timed out at " + msg.TimeoutMs + ", but it's now " + epochMs + " which is " + overdueMs + " late");
+                            //if(Log.LogLevel >= LogLevel.Info)
+                            Log.LogInformation("Message should have timed out at " + msg.TimeoutMs + ", but it's now " + epochMs + " which is " + overdueMs + " late");
                         }
                         msg.SendTimeout();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.ErrorException(ex,$"Error while processing message {msg} in queued handler TimeoutService.");
+                    Log.LogError(ex, $"Error while processing message {msg} in queued handler TimeoutService.");
                 }
             }
             _stopped.Set();
