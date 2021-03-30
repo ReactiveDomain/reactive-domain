@@ -9,6 +9,8 @@ $masterString = "master"
 $branch = $env:TRAVIS_BRANCH
 $buildType = $env:TRAVIS_EVENT_TYPE 
 
+Write-Host ("Hello World!  Testing to make sure dealproc's branch is being built.")
+
 # create and push nuget off of master branch ONLY
 if ($branch -ne $masterString)  
 {
