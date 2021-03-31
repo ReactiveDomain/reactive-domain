@@ -28,13 +28,10 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.UserNameUpdated>,
         IHandle<UserPolicyMsgs.RoleRemoved>,
         IHandle<RoleMsgs.ChildRoleAssigned>,
-        IHandle<RoleMsgs.PermissionAdded>,
-        IHandle<RoleMsgs.PermissionAssigned>,
         IUserEntitlementRM
     {
         public List<User> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
 
-        private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, SecuredApplication> _applications = new Dictionary<Guid, SecuredApplication>();
         private readonly Dictionary<Guid, User> _users = new Dictionary<Guid, User>();
@@ -180,18 +177,6 @@ namespace ReactiveDomain.Users.ReadModels
             if (!_roles.ContainsKey(@event.ChildRoleId)) return;
 
             _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
-        }
-        public void Handle(RoleMsgs.PermissionAdded @event)
-        {
-            if (_permissions.ContainsKey(@event.PermissionId)) return;
-
-            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, @event.PolicyId));
-        }
-        public void Handle(RoleMsgs.PermissionAssigned @event)
-        {
-            if (!_roles.ContainsKey(@event.RoleId)) return; //todo: log this error
-            if (!_permissions.ContainsKey(@event.PermissionId)) return; //todo: log this error
-            _roles[@event.RoleId].AddPermission(_permissions[@event.PermissionId]);
         }
 
 
