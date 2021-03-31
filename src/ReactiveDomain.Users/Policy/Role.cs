@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Users.Policy
 {
@@ -43,21 +44,28 @@ namespace ReactiveDomain.Users.Policy
             PolicyId = policyId;
         }
 
-        public void AddPermission(Permission permission)
+        public Permission AddPermission<T>() where T : ICommand => AddPermission(typeof(T));
+
+        public Permission AddPermission(Type t)
         {
-            _permissions.Add(permission);
-            _effectivePermissions.Add(permission);
+            var p = new Permission(t);
+            
+            _permissions.Add(p);
+            _effectivePermissions.Add(p);
             foreach (var parentRole in _parentRoles)
             {
-                parentRole.AddInherited(permission);
+                parentRole.AddInherited(p);
             }
+
+            return p;
         }
-        public void AddInherited(Permission permission)
+        
+        public void AddInherited(Permission p)
         {
-            _effectivePermissions.Add(permission);
+            _effectivePermissions.Add(p);
             foreach (var parentRole in _parentRoles)
             {
-                parentRole.AddInherited(permission);
+                parentRole.AddInherited(p);
             }
         }
         public void AddChildRole(Role role)

@@ -121,18 +121,6 @@ namespace ReactiveDomain.Users.Policy
                     baseRole.SetRoleId(role.RoleId);
                 }
             }
-            //sync db permission assignments into the base policy, if any are missing
-            foreach (var role in _roles.Values)
-            {
-                var baseRole = Policy.Roles.First(r => r.RoleId == role.RoleId);
-                foreach (var permission in role.DirectPermissions)
-                {
-                    if (baseRole.DirectPermissions.All(p => p.Id != permission.Id))
-                    {
-                        baseRole.AddPermission(permission);
-                    }
-                }
-            }
             //enrich db with child role assignments from the base policy, if any are missing
             foreach (var role in Policy.Roles)
             {

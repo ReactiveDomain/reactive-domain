@@ -12,7 +12,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly string _policyName;
         private readonly SecuredApplication _app;
         private readonly Dictionary<string, Role> _roles = new Dictionary<string, Role>();
-        private readonly Dictionary<string, Permission> _permissions = new Dictionary<string, Permission>();
+        private readonly List<Permission> _permissions = new List<Permission>(); //hash or similar?
         private bool _disposed;
         private bool _isBuilt;
         private string _defaultRole;
@@ -23,7 +23,7 @@ namespace ReactiveDomain.Users.Policy
             _app = new SecuredApplication(
                 Guid.Empty,
                 Assembly.GetEntryAssembly()?.GetName().Name,
-                Assembly.GetEntryAssembly()?.GetName().Version.ToString());
+                Assembly.GetEntryAssembly()?.GetName().Version?.ToString());
         }
 
         public SecurityPolicyBuilder(string appName, Version appVersion, string policyName = "default")
@@ -81,28 +81,17 @@ namespace ReactiveDomain.Users.Policy
                 return this;
             }
 
-            public RoleBuilder WithPermission(string permissionName)
+            public RoleBuilder WithCommand<T>(Func<string, Type> typeFinder) where T : ICommand => WithCommand(typeof(T), typeFinder);
+            
+            public RoleBuilder WithCommand(Type t, Func<string, Type> typeFinder)
             {
-                if (!_policyBuilder._permissions.TryGetValue(permissionName, out var permission))
+                var permission = _role.AddPermission(t);
+                
+                if (_policyBuilder._permissions.All(p => !p.Matches(t)))
                 {
-                    permission = new Permission(
-                        Guid.Empty,
-                        permissionName,
-                        Guid.Empty);
-                    _policyBuilder._permissions.Add(permissionName, permission);
+                    _policyBuilder._permissions.Add(permission);
                 }
-                _role.AddPermission(permission);
-                return this;
-            }
-            public RoleBuilder WithCommand(ICommand command, Func<string, Type> typeFinder)
-            {
-                var permissionName = $"{command.GetType().FullName},{command.GetType().Assembly.GetName()}";
-                if (!_policyBuilder._permissions.TryGetValue(permissionName, out var permission))
-                {
-                    permission = new CommandPermission(Guid.Empty, command, Guid.Empty, typeFinder);
-                    _policyBuilder._permissions.Add(permissionName, permission);
-                }
-                _role.AddPermission(permission);
+
                 return this;
             }
         }
@@ -111,7 +100,7 @@ namespace ReactiveDomain.Users.Policy
         {
             _isBuilt = true;
             Role defaultRole = null;
-            if (_roles.ContainsKey(_defaultRole))
+            if (_roles.ContainsKey(_defaultRole ?? string.Empty))
             {
                 defaultRole = _roles[_defaultRole];
             }
@@ -127,7 +116,7 @@ namespace ReactiveDomain.Users.Policy
                                 _app,
                                 _roles.Values.ToList(),
                                 defaultRole,
-                                _permissions.Values.ToList());
+                                _permissions.ToList());
             Dispose();
             return policy;
         }

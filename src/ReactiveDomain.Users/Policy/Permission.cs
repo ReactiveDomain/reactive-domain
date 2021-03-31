@@ -1,32 +1,37 @@
 ﻿using System;
+using ReactiveDomain.Messaging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Users.Policy
 {
-    public class Permission {
+    public class Permission
+    {
+        private readonly Type _t;
         /// <summary>
-        /// The permission ID.
+        /// The name of the command which is enveloped by this permission definition.
         /// </summary>
-        public Guid Id { get; private set; }
-        /// <summary>
-        /// The permission name.
-        /// </summary>
-        public string Name { get; }
-        /// <summary>
-        /// The PolicyId defining the roles.
-        /// </summary>
-        public Guid PolicyId { get; }
+        public string Name => _t.Name;
 
-        public Permission(Guid id, string name, Guid policyId) {
-            Id = id;
-            Name = name;
-            PolicyId = policyId;
-        }
+        /// <summary>
+        /// The full name of the command which is enveloped by this permission definition.
+        /// </summary>
+        public string FullName => _t.FullName;
 
-        public void SetPermissionId(Guid id) {
-            if(id == Id) return;
-            if(id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id),"Cannot set permissionId to guid.empty");
-            if(Id != Guid.Empty) throw new InvalidOperationException("cannot change PermissionId ");
-            Id = id;
+        /// <summary>
+        /// determines if the source type is equivalent of the type being represented by this permission.
+        /// <remarks>Use this method as part of a linq expression to determine if the permission exists for the command.</remarks>
+        /// </summary>
+        /// <param name="source">The type of the command that is attempting to be executed.</param>
+        /// <returns>True - The types are equivalent; False - The types are not equivalent.</returns>
+        public bool Matches(Type source) => _t == source;
+
+        public bool Matches<T>() => Matches(typeof(T));
+
+        public Permission(Type t)
+        {
+            Ensure.NotNull(t, nameof(t));
+            if (!typeof(ICommand).IsAssignableFrom(t)) throw new ArgumentException("Type must implement `ICommand`.");
+            _t = t;
         }
     }
 }
