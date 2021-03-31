@@ -11,9 +11,7 @@ namespace ReactiveDomain.Users.Domain.Services
     public class PolicySvc :
             TransientSubscriber,
             IHandleCommand<RoleMsgs.CreateRole>,
-            IHandleCommand<RoleMsgs.AssignChildRole>,
-            IHandleCommand<RoleMsgs.AddPermission>,
-            IHandleCommand<RoleMsgs.AssignPermission>
+            IHandleCommand<RoleMsgs.AssignChildRole>
     //todo: handle other role commands
     //IHandleCommand<RoleMsgs.RoleMigrated>
     {
@@ -31,8 +29,6 @@ namespace ReactiveDomain.Users.Domain.Services
 
             Subscribe<RoleMsgs.CreateRole>(this);
             Subscribe<RoleMsgs.AssignChildRole>(this);
-            Subscribe<RoleMsgs.AddPermission>(this);
-            Subscribe<RoleMsgs.AssignPermission>(this);
         }
         /// <summary>
         /// Given the create role command, creates a role created event.
@@ -54,20 +50,5 @@ namespace ReactiveDomain.Users.Domain.Services
             return cmd.Succeed();
         }
 
-        public CommandResponse Handle(RoleMsgs.AddPermission cmd)
-        {
-            var application = _repo.GetById<SecuredApplicationAgg>(_applicationId, cmd);
-            application.Policies.First(p=> p.Id == cmd.PolicyId).AddPermission(cmd.PermissionId, cmd.PermissionName);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
-
-        public CommandResponse Handle(RoleMsgs.AssignPermission cmd)
-        {
-            var application = _repo.GetById<SecuredApplicationAgg>(_applicationId, cmd);
-            application.Policies.First(p=> p.Id == cmd.PolicyId).AssignPermission(cmd.RoleId, cmd.PermissionId);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
     }
 }
