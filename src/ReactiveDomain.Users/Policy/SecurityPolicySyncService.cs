@@ -28,9 +28,7 @@ namespace ReactiveDomain.Users.Policy
         //IHandle<UserMsgs.AuthDomainUpdated>,
         //IHandle<UserMsgs.UserNameUpdated>,
         //IHandle<UserMsgs.RoleUnassigned>, 
-        IHandle<RoleMsgs.ChildRoleAssigned>,
-        IHandle<RoleMsgs.PermissionAdded>,
-        IHandle<RoleMsgs.PermissionAssigned>
+        IHandle<RoleMsgs.ChildRoleAssigned>
     {
         //public data
         public SecurityPolicy Policy;
@@ -87,8 +85,6 @@ namespace ReactiveDomain.Users.Policy
                 appReader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
                 appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
-                appReader.EventStream.Subscribe<RoleMsgs.PermissionAdded>(this);
-                appReader.EventStream.Subscribe<RoleMsgs.PermissionAssigned>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
 
                 appReader.Read<SecuredApplicationAgg>(appId);
@@ -123,54 +119,6 @@ namespace ReactiveDomain.Users.Policy
                 else
                 {
                     baseRole.SetRoleId(role.RoleId);
-                }
-            }
-            //enrich db with permissions from the base policy, if any are missing
-            foreach (var permission in Policy.Permissions)
-            {
-                var dbPerm = _permissions.Values.FirstOrDefault(p =>
-                    p.Name.Equals(permission.Name, StringComparison.OrdinalIgnoreCase));
-                if (dbPerm == null)
-                {
-                    var permissionId = Guid.NewGuid();
-                    var cmd = new RoleMsgs.AddPermission(permissionId, permission.Name, Policy.PolicyId) { CorrelationId = correlationId };
-                    dispatcher.Send(cmd);
-                    permission.SetPermissionId(permissionId);
-                    _permissions.Add(permissionId, permission);
-                }
-                else
-                {
-                    permission.SetPermissionId(dbPerm.Id);
-                }
-
-            }
-            //sync all permissions on the Policy with Ids from the DB
-            //and add any missing permissions from the db
-            foreach (var permission in _permissions.Values)
-            {
-                var basePermission = Policy.Permissions.FirstOrDefault(p => p.Name.Equals(permission.Name, StringComparison.OrdinalIgnoreCase));
-                if (basePermission == null)
-                {
-                    Policy.AddPermission(permission);
-                }
-                else
-                {
-                    basePermission.SetPermissionId(permission.Id);
-                }
-            }
-            //enrich db with permission assignments from the base policy, if any are missing
-            foreach (var role in Policy.Roles)
-            {
-                var dbRole = _roles[role.RoleId];
-                foreach (var permission in role.DirectPermissions)
-                {
-                    var dbPermission = dbRole.DirectPermissions.FirstOrDefault(p => p.Id == permission.Id);
-                    if (dbPermission == null)
-                    {
-                        var cmd = new RoleMsgs.AssignPermission(dbRole.RoleId, permission.Id, Policy.PolicyId) { CorrelationId = correlationId };
-                        dispatcher.Send(cmd);
-                        dbRole.AddPermission(permission);
-                    }
                 }
             }
             //sync db permission assignments into the base policy, if any are missing
@@ -278,17 +226,6 @@ namespace ReactiveDomain.Users.Policy
             if (!_roles.ContainsKey(@event.ChildRoleId)) return;
 
             _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
-        }
-        public void Handle(RoleMsgs.PermissionAdded @event)
-        {
-            if (_permissions.ContainsKey(@event.PermissionId)) return;
-            _permissions.Add(@event.PermissionId, new Permission(@event.PermissionId, @event.PermissionName, Policy.PolicyId));
-        }
-        public void Handle(RoleMsgs.PermissionAssigned @event)
-        {
-            if (!_roles.ContainsKey(@event.RoleId)) return; //todo: log this error
-            if (!_permissions.ContainsKey(@event.PermissionId)) return; //todo: log this error
-            _roles[@event.RoleId].AddPermission(_permissions[@event.PermissionId]);
         }
 
         /*
