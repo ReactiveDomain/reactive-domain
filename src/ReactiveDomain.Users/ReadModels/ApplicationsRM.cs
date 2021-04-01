@@ -243,7 +243,8 @@ namespace ReactiveDomain.Users.ReadModels
             {
                 throw new UserDeactivatedException("UserId = " + subjectId + ", authDomain = " + authDomain);
             }
-            return user.Roles.FindAll(x => x.PolicyId == policyId);
+
+            return user.Roles.Where(x => x.PolicyId == policyId).ToList();
         }
 
     }

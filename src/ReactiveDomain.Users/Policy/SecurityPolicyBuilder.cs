@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Users.Domain;
 
@@ -16,6 +17,7 @@ namespace ReactiveDomain.Users.Policy
         private bool _disposed;
         private bool _isBuilt;
         private string _defaultRole;
+        private Func<ClaimsPrincipal, User> _findUserFunc;
 
         public SecurityPolicyBuilder(string policyName = "default")
         {
@@ -51,6 +53,12 @@ namespace ReactiveDomain.Users.Policy
         public SecurityPolicyBuilder WithDefaultRole(string roleName)
         {
             _defaultRole = roleName;
+            return this;
+        }
+
+        public SecurityPolicyBuilder WithUserResolver(Func<ClaimsPrincipal, User> findUserFunc)
+        {
+            _findUserFunc = findUserFunc;
             return this;
         }
 
@@ -94,6 +102,7 @@ namespace ReactiveDomain.Users.Policy
                                 _policyName,
                                 Guid.Empty,
                                 _app,
+                                _findUserFunc,
                                 _roles.Values.ToList(),
                                 defaultRole);
             Dispose();

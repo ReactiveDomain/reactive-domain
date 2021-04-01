@@ -10,8 +10,9 @@ namespace ReactiveDomain.Users.Policy
         public  Guid PolicyId { get; internal set; }
         private readonly List<Role> _roles;
         private readonly Role _defaultRole;
-        private readonly List<User> _users;
+        private readonly List<User> _users = new List<User>();
         private AuthorizedUser _currentUser;
+        private Func<ClaimsPrincipal, User> _findUser;
 
         public SecuredApplication OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
@@ -21,10 +22,7 @@ namespace ReactiveDomain.Users.Policy
 
         public AuthorizedUser CurrentUser {
             get => _currentUser;
-            set {
-
-                _currentUser = value;
-            }
+            set { _currentUser = value; }
         }
 
         public bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out User user) {
@@ -50,19 +48,18 @@ namespace ReactiveDomain.Users.Policy
             string policyName,
             Guid policyId,
             SecuredApplication owningApplication,
+            Func<ClaimsPrincipal, User> findUser,
             List<Role> roles = null,
-            Role defaultRole = null,
-            List<User> users = null) {
+            Role defaultRole = null) {
             PolicyName = policyName;
             PolicyId = policyId;
             OwningApplication = owningApplication;
+            _findUser = findUser;
             _roles = roles ?? new List<Role>();
             _defaultRole = defaultRole;
             if (_defaultRole != null && !_roles.Any(r => r.Name.Equals(_defaultRole.Name))) {
                 _roles.Add(_defaultRole);
             }
-
-            _users = users ?? new List<User>();
         }
         
         //used for synchronizing with the backing store
@@ -72,6 +69,21 @@ namespace ReactiveDomain.Users.Policy
         //used for synchronizing with the backing store
         internal void AddUser(User user) {
             _users.Add(user);
+        }
+
+        public User ResolveUser(ClaimsPrincipal principal) => _findUser(principal);
+
+        public IReadOnlyList<Type> GetEffectivePermissions(IEnumerable<Role> roles)
+        {
+            HashSet<Type> permissions = new HashSet<Type>();
+            
+            foreach (var role in roles)
+            {
+                permissions.UnionWith(role.AllowedPermissions);
+            }
+            
+            // figure out effective permissions based on provided roles.
+            return permissions.ToList().AsReadOnly();
         }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Policy;
 
 namespace ReactiveDomain.Users.Identity
 {
@@ -60,10 +62,24 @@ namespace ReactiveDomain.Users.Identity
             }
             subject.Roles.ExceptWith(@event.Roles);
         }
+        
+        // rebuild this to pull a shell of a `User` type.
         public bool TryGetSubject(string ProviderSubClaim, out SubjectDTO subject)
         {
             subject = _subjects.FirstOrDefault(x => string.CompareOrdinal(x.ProviderSubClaim, ProviderSubClaim) == 0);
             return subject != null;
+        }
+
+        public bool TryGetUser(ClaimsPrincipal principal, out User user)
+        {
+            // find `sub` claim within principal.  If not there, throw error.
+            // attempt to locate SubjectDTO using sub claim value.
+            // if not there, return false, keep user null
+            
+            // if there, then build shell of User.
+            user = new User(Guid.Empty, "", "", "");
+            user.Roles.UnionWith(new Role[]{}); // pull this from SubjectDTO found in #76
+            return user != null;
         }
     }
 }

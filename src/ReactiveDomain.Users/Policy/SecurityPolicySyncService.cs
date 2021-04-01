@@ -5,6 +5,7 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Domain.Services;
+using ReactiveDomain.Users.Identity;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
 
@@ -33,6 +34,7 @@ namespace ReactiveDomain.Users.Policy
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, SecuredApplication> _applications = new Dictionary<Guid, SecuredApplication>();
+        private SubjectRM _subjectRM;
 
 
         /// <summary>
@@ -117,6 +119,9 @@ namespace ReactiveDomain.Users.Policy
                     baseRole.SetRoleId(role.RoleId);
                 }
             }
+
+            _subjectRM = new SubjectRM(() => conn.GetQueuedListener(nameof(SubjectRM)));
+
             //todo: subscribe to user assignments
 
             //todo: subscribe to user stream???
@@ -140,7 +145,13 @@ namespace ReactiveDomain.Users.Policy
         {
             if (!_applications.ContainsKey(@event.ApplicationId)) return;
             var app = _applications[@event.ApplicationId];
-            app.AddPolicy(new SecurityPolicy(@event.PolicyName, @event.PolicyId, app));
+            app.AddPolicy(
+                new SecurityPolicy(
+                    @event.PolicyName, 
+                    @event.PolicyId, app, 
+                    principal => default
+                )
+            );
         }
 
         /// <summary>

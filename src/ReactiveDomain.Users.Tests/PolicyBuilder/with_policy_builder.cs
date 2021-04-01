@@ -49,7 +49,7 @@ namespace ReactiveDomain.Users.Tests.PolicyBuilder
                 r => Assert.Equal("viewer", r.Name));
 
             //admin role
-            Assert.Collection(policy.Roles[0].AllowedCommands,
+            Assert.Collection(policy.Roles[0].AllowedPermissions,
                 p => Assert.True(p == typeof(DoStuff)),
                 p => Assert.True(p == typeof(DoOtherStuff)),
                 p => Assert.True(p == typeof(SeeStuff)),

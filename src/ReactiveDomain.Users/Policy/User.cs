@@ -10,9 +10,9 @@ namespace ReactiveDomain.Users.Policy {
         public string SubjectId { get; set; }
         public string AuthDomain { get; set; }
         public Role CurrentRole { get; set; } //allow switching active role for UI etc.
-        public List<Role> Roles { get; } = new List<Role>(); //n.b. this is a union of both role lists
-        public List<Role> AssignedRoles { get; } = new List<Role>();
-        public List<Role> IdentityRoles { get; } = new List<Role>();
+        public HashSet<Role> Roles { get; } = new HashSet<Role>(); //n.b. this is a union of both role lists
+        public HashSet<Role> AssignedRoles { get; } = new HashSet<Role>();
+        public HashSet<Role> IdentityRoles { get; } = new HashSet<Role>();
         public List<ResourceGroup> ResourceGroups { get; } = new List<ResourceGroup>();
         public bool IsActivated { get; set; } = true;
 

@@ -35,7 +35,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly HashSet<Type> _deniedPermissions = new HashSet<Type>();
         private HashSet<Type> _effectivePermissions = new HashSet<Type>();
 
-        public IReadOnlyList<Type> AllowedCommands => _effectivePermissions.ToList().AsReadOnly();
+        public IReadOnlyList<Type> AllowedPermissions => _effectivePermissions.ToList().AsReadOnly();
         
         private readonly HashSet<Role> _parentRoles = new HashSet<Role>();
         /// <summary>
