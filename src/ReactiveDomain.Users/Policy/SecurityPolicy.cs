@@ -10,14 +10,12 @@ namespace ReactiveDomain.Users.Policy
         public  Guid PolicyId { get; internal set; }
         private readonly List<Role> _roles;
         private readonly Role _defaultRole;
-        private readonly List<Permission> _permissions;
         private readonly List<User> _users;
         private AuthorizedUser _currentUser;
 
         public SecuredApplication OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
         public IReadOnlyList<User> Users => _users.AsReadOnly();
-        public IReadOnlyList<Permission> Permissions => _permissions.AsReadOnly();
         public string ApplicationName => OwningApplication.Name;
         public string ApplicationVersion => OwningApplication.Version;
 
@@ -54,7 +52,6 @@ namespace ReactiveDomain.Users.Policy
             SecuredApplication owningApplication,
             List<Role> roles = null,
             Role defaultRole = null,
-            List<Permission> permissions = null,
             List<User> users = null) {
             PolicyName = policyName;
             PolicyId = policyId;
@@ -65,17 +62,12 @@ namespace ReactiveDomain.Users.Policy
                 _roles.Add(_defaultRole);
             }
 
-            _permissions = permissions ?? new List<Permission>();
             _users = users ?? new List<User>();
         }
         
         //used for synchronizing with the backing store
         internal void AddRole(Role role) {
             _roles.Add(role);
-        }
-        //used for synchronizing with the backing store
-        internal void AddPermission(Permission permission) {
-            _permissions.Add(permission);
         }
         //used for synchronizing with the backing store
         internal void AddUser(User user) {

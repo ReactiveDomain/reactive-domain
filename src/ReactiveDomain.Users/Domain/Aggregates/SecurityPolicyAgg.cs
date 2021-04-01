@@ -25,13 +25,11 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             PolicyName = policyName;
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
-            Register<RoleMsgs.ChildRoleAssigned>(Apply);
         }
 
         //Apply State
         private void Apply(RoleMsgs.RoleCreated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
         private void Apply(RoleMsgs.RoleMigrated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
-        private void Apply(RoleMsgs.ChildRoleAssigned @event) { /*todo:do we need to track this? see contained role class*/}
 
         //Public methods
         /// <summary>
@@ -51,23 +49,6 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             Raise(new RoleMsgs.RoleCreated(
                 roleId,
                 roleName,
-                Id));
-        }
-        /// <summary>
-        /// assign a child role
-        /// </summary>
-        public void AssignChildRole(
-            Guid parentRoleId,
-            Guid childRoleId)
-        {
-            if (!_roles.ContainsKey(parentRoleId) || !_roles.ContainsKey(childRoleId))
-            {
-                throw new InvalidOperationException($"Cannot add child role, role not found Parent Role: {parentRoleId} Child Role: {childRoleId}");
-            }
-            //todo: need some sort of check here, do we need a child domain entity for role to track this?
-            Raise(new RoleMsgs.ChildRoleAssigned(
-                parentRoleId,
-                childRoleId,
                 Id));
         }
 

@@ -12,7 +12,7 @@ namespace ReactiveDomain.Users.Policy
         private readonly string _policyName;
         private readonly SecuredApplication _app;
         private readonly Dictionary<string, Role> _roles = new Dictionary<string, Role>();
-        private readonly List<Permission> _permissions = new List<Permission>(); //hash or similar?
+        private readonly List<Type> _permissions = new List<Type>(); //hash or similar?
         private bool _disposed;
         private bool _isBuilt;
         private string _defaultRole;
@@ -67,30 +67,10 @@ namespace ReactiveDomain.Users.Policy
                 _policyBuilder._roles.Add(name, _role);
             }
 
-            public RoleBuilder WithChildRole(string roleName, params Action<RoleBuilder>[] roleActions)
+
+            public RoleBuilder WithCommand(Type t)
             {
-                var roleBuilder = new RoleBuilder(roleName, _policyBuilder);
-                _role.AddChildRole(roleBuilder._role);
-
-                if (roleActions == null) return this;
-
-                foreach (var roleAction in roleActions)
-                {
-                    roleAction(roleBuilder);
-                }
-                return this;
-            }
-
-            public RoleBuilder WithCommand<T>(Func<string, Type> typeFinder) where T : ICommand => WithCommand(typeof(T), typeFinder);
-            
-            public RoleBuilder WithCommand(Type t, Func<string, Type> typeFinder)
-            {
-                var permission = _role.AddPermission(t);
-                
-                if (_policyBuilder._permissions.All(p => !p.Matches(t)))
-                {
-                    _policyBuilder._permissions.Add(permission);
-                }
+                _role.AllowPermission(t);
 
                 return this;
             }
@@ -115,8 +95,7 @@ namespace ReactiveDomain.Users.Policy
                                 Guid.Empty,
                                 _app,
                                 _roles.Values.ToList(),
-                                defaultRole,
-                                _permissions.ToList());
+                                defaultRole);
             Dispose();
             return policy;
         }

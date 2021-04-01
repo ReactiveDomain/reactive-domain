@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Users.Policy
 {
@@ -22,15 +23,21 @@ namespace ReactiveDomain.Users.Policy
         /// The Id of the policy defining the roles.
         /// </summary>
         public Guid PolicyId { get; internal set; }
+        
+        // role has:
+        // - Allowed Permissions
+        // - Denied Permissions
+        
+        // methods:
+        // - IsAllowed(ICommand cmd)
 
-        private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
-        private readonly HashSet<Permission> _effectivePermissions = new HashSet<Permission>();
-        public IReadOnlyList<Permission> DirectPermissions => _permissions.ToList().AsReadOnly();
+        private readonly HashSet<Type> _allowedPermissions = new HashSet<Type>();
+        private readonly HashSet<Type> _deniedPermissions = new HashSet<Type>();
+        private HashSet<Type> _effectivePermissions = new HashSet<Type>();
 
-        public IReadOnlyList<Permission> Permissions => _effectivePermissions.ToList().AsReadOnly();
+        public IReadOnlyList<Type> AllowedCommands => _effectivePermissions.ToList().AsReadOnly();
+        
         private readonly HashSet<Role> _parentRoles = new HashSet<Role>();
-        private readonly HashSet<Role> _childRoles = new HashSet<Role>();
-        public IReadOnlyList<Role> ChildRoles => _childRoles.ToList().AsReadOnly();
         /// <summary>
         /// Houses the role data populated by the role created handler.
         /// </summary>
@@ -44,36 +51,25 @@ namespace ReactiveDomain.Users.Policy
             PolicyId = policyId;
         }
 
-        public Permission AddPermission<T>() where T : ICommand => AddPermission(typeof(T));
+        public void AllowPermission(Type t)
+        {
+            var newTypes = new HashSet<Type>(MessageHierarchy.DescendantsAndSelf(t).Where(type => typeof(ICommand).IsAssignableFrom(type)));
+            _allowedPermissions.UnionWith(newTypes);
 
-        public Permission AddPermission(Type t)
-        {
-            var p = new Permission(t);
-            
-            _permissions.Add(p);
-            _effectivePermissions.Add(p);
-            foreach (var parentRole in _parentRoles)
-            {
-                parentRole.AddInherited(p);
-            }
+            _effectivePermissions = new HashSet<Type>(_allowedPermissions);
+            _effectivePermissions.ExceptWith(_deniedPermissions);
+        }
 
-            return p;
-        }
-        
-        public void AddInherited(Permission p)
+        public void DenyPermission(Type t)
         {
-            _effectivePermissions.Add(p);
-            foreach (var parentRole in _parentRoles)
-            {
-                parentRole.AddInherited(p);
-            }
+            var newTypes = new HashSet<Type>(MessageHierarchy.DescendantsAndSelf(t).Where(type => typeof(ICommand).IsAssignableFrom(type)));
+            _deniedPermissions.UnionWith(newTypes);
+
+            _effectivePermissions = new HashSet<Type>(_allowedPermissions);
+            _effectivePermissions.ExceptWith(_deniedPermissions);
         }
-        public void AddChildRole(Role role)
-        {
-            _childRoles.Add(role);
-            _effectivePermissions.UnionWith(role._permissions);
-            role._parentRoles.Add(this);
-        }
+
+        public bool IsAllowed<T>() where T : class => _effectivePermissions.Any(ep => ep == typeof(T));
 
         internal void SetRoleId(Guid id)
         {

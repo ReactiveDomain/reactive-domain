@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
@@ -20,20 +19,18 @@ namespace ReactiveDomain.Users.Policy
         IHandle<ApplicationMsgs.ApplicationCreated>,
         IHandle<ApplicationMsgs.PolicyCreated>,
         IHandle<RoleMsgs.RoleCreated>,
-        IHandle<RoleMsgs.RoleMigrated>,
+        IHandle<RoleMsgs.RoleMigrated>
         //IHandle<UserMsgs.UserCreated>,
         //IHandle<UserMsgs.Deactivated>,
         //IHandle<UserMsgs.Activated>,
         //IHandle<UserMsgs.RoleAssigned>,
         //IHandle<UserMsgs.AuthDomainUpdated>,
         //IHandle<UserMsgs.UserNameUpdated>,
-        //IHandle<UserMsgs.RoleUnassigned>, 
-        IHandle<RoleMsgs.ChildRoleAssigned>
+        //IHandle<UserMsgs.RoleUnassigned>
     {
         //public data
         public SecurityPolicy Policy;
 
-        private readonly Dictionary<Guid, Permission> _permissions = new Dictionary<Guid, Permission>();
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, SecuredApplication> _applications = new Dictionary<Guid, SecuredApplication>();
 
@@ -85,7 +82,6 @@ namespace ReactiveDomain.Users.Policy
                 appReader.EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
                 appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
-                appReader.EventStream.Subscribe<RoleMsgs.ChildRoleAssigned>(this);
 
                 appReader.Read<SecuredApplicationAgg>(appId);
             }
@@ -119,34 +115,6 @@ namespace ReactiveDomain.Users.Policy
                 else
                 {
                     baseRole.SetRoleId(role.RoleId);
-                }
-            }
-            //enrich db with child role assignments from the base policy, if any are missing
-            foreach (var role in Policy.Roles)
-            {
-                var dbRole = _roles[role.RoleId];
-                foreach (var childRole in role.ChildRoles)
-                {
-                    var dbChildRole = dbRole.ChildRoles.FirstOrDefault(cr => cr.RoleId == childRole.RoleId);
-                    if (dbChildRole == null)
-                    {
-                        var cmd = new RoleMsgs.AssignChildRole(dbRole.RoleId, childRole.RoleId, Policy.PolicyId) { CorrelationId = correlationId };
-                        dispatcher.Send(cmd);
-                        dbRole.AddChildRole(childRole);
-                    }
-                }
-            }
-
-            //sync db child role assignments into the base policy, if any are missing
-            foreach (var role in _roles.Values)
-            {
-                var baseRole = Policy.Roles.First(r => r.RoleId == role.RoleId);
-                foreach (var childRole in role.ChildRoles)
-                {
-                    if (baseRole.ChildRoles.All(cr => cr.RoleId != childRole.RoleId))
-                    {
-                        baseRole.AddChildRole(childRole);
-                    }
                 }
             }
             //todo: subscribe to user assignments
@@ -206,14 +174,6 @@ namespace ReactiveDomain.Users.Policy
                     @event.Name,
                     app));
             */
-        }
-
-        public void Handle(RoleMsgs.ChildRoleAssigned @event)
-        {
-            if (!_roles.ContainsKey(@event.ParentRoleId)) return;
-            if (!_roles.ContainsKey(@event.ChildRoleId)) return;
-
-            _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
         }
 
         /*

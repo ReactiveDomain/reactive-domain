@@ -10,8 +10,7 @@ namespace ReactiveDomain.Users.Domain.Services
 {
     public class PolicySvc :
             TransientSubscriber,
-            IHandleCommand<RoleMsgs.CreateRole>,
-            IHandleCommand<RoleMsgs.AssignChildRole>
+            IHandleCommand<RoleMsgs.CreateRole>
     //todo: handle other role commands
     //IHandleCommand<RoleMsgs.RoleMigrated>
     {
@@ -28,7 +27,6 @@ namespace ReactiveDomain.Users.Domain.Services
             _repo = conn.GetCorrelatedRepository(caching: true);
 
             Subscribe<RoleMsgs.CreateRole>(this);
-            Subscribe<RoleMsgs.AssignChildRole>(this);
         }
         /// <summary>
         /// Given the create role command, creates a role created event.
@@ -41,14 +39,5 @@ namespace ReactiveDomain.Users.Domain.Services
             _repo.Save(application);
             return cmd.Succeed();
         }
-
-        public CommandResponse Handle(RoleMsgs.AssignChildRole cmd)
-        {
-            var application = _repo.GetById<SecuredApplicationAgg>(_applicationId, cmd);
-            application.Policies.First(p=> p.Id == cmd.PolicyId).AssignChildRole(cmd.ParentRoleId, cmd.ChildRoleId);
-            _repo.Save(application);
-            return cmd.Succeed();
-        }
-
     }
 }

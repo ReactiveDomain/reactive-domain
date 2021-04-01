@@ -13,7 +13,6 @@ namespace ReactiveDomain.Users.Policy {
         public List<Role> Roles { get; } = new List<Role>(); //n.b. this is a union of both role lists
         public List<Role> AssignedRoles { get; } = new List<Role>();
         public List<Role> IdentityRoles { get; } = new List<Role>();
-        public List<Permission> Permissions { get; } = new List<Permission>();
         public List<ResourceGroup> ResourceGroups { get; } = new List<ResourceGroup>();
         public bool IsActivated { get; set; } = true;
 

@@ -27,7 +27,6 @@ namespace ReactiveDomain.Users.ReadModels
         IHandle<UserMsgs.AuthDomainUpdated>,
         IHandle<UserMsgs.UserNameUpdated>,
         IHandle<UserPolicyMsgs.RoleRemoved>,
-        IHandle<RoleMsgs.ChildRoleAssigned>,
         IUserEntitlementRM
     {
         public List<User> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
@@ -170,15 +169,6 @@ namespace ReactiveDomain.Users.ReadModels
                     app));
             */
         }
-
-        public void Handle(RoleMsgs.ChildRoleAssigned @event)
-        {
-            if (!_roles.ContainsKey(@event.ParentRoleId)) return;
-            if (!_roles.ContainsKey(@event.ChildRoleId)) return;
-
-            _roles[@event.ParentRoleId].AddChildRole(_roles[@event.ChildRoleId]);
-        }
-
 
         /// <summary>
         /// Handle a UserMsgs.UserCreated event.

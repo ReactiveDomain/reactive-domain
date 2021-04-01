@@ -62,59 +62,7 @@ namespace ReactiveDomain.Users.Messages
             }
 
         }
-        /// <summary>
-        /// Add an existing role as child role to the parent
-        /// </summary>
-        public class AssignChildRole : Command
-        {
-            /// <summary>The Id of the parent role.</summary>
-            public readonly Guid ParentRoleId;
-            /// <summary>The Id of the child role.</summary>
-            public readonly Guid ChildRoleId;
-            /// <summary>The Policy these role apply to.</summary>
-            public readonly Guid PolicyId;
 
-            /// <summary>
-            /// Add an existing role as child role to the parent
-            /// </summary>
-            public AssignChildRole(
-                Guid parentRoleId,
-                Guid childRoleId,
-                Guid policyId)
-            {
-                ParentRoleId = parentRoleId;
-                ChildRoleId = childRoleId;
-                PolicyId = policyId;
-            }
-
-        }
-
-        /// <summary>
-        /// An existing role was added as child role to the parent
-        /// </summary>
-        public class ChildRoleAssigned : Event
-        {
-            /// <summary>The Id of the parent role.</summary>
-            public readonly Guid ParentRoleId;
-            /// <summary>The Id of the child role.</summary>
-            public readonly Guid ChildRoleId;
-            /// <summary>The application these role apply to.</summary>
-            public readonly Guid PolicyId;
-
-            /// <summary>
-            /// An existing role was added as child role to the parent
-            /// </summary>
-            public ChildRoleAssigned(
-                Guid parentRoleId,
-                Guid childRoleId,
-                Guid policyId)
-            {
-                ParentRoleId = parentRoleId;
-                ChildRoleId = childRoleId;
-                PolicyId = policyId;
-            }
-
-        }
         //todo: fix migration to match the new model
         /// <summary>
         /// Role data was migrated.
