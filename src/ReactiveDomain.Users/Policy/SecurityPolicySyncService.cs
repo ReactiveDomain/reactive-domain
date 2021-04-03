@@ -147,7 +147,7 @@ namespace ReactiveDomain.Users.Policy
             var app = _applications[@event.ApplicationId];
             app.AddPolicy(
                 new SecurityPolicy(
-                    @event.PolicyName, 
+                    @event.ClientId, 
                     @event.PolicyId, app, 
                     principal => default
                 )

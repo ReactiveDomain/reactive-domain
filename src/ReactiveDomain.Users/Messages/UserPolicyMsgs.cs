@@ -5,23 +5,23 @@ namespace ReactiveDomain.Users.Messages
 {
     public class UserPolicyMsgs
     {
-       
+
         public class AddPolicy : Command
-        {           
-            public readonly Guid UserId;           
-            public readonly Guid PolicyId;              
+        {
+            public readonly Guid UserId;
+            public readonly Guid PolicyId;
             public AddPolicy(Guid userId, Guid policyId)
             {
                 UserId = userId;
                 PolicyId = policyId;
             }
         }
-       
+
         public class PolicyAdded : Command
-        {           
-            public readonly Guid UserId;           
-            public readonly Guid PolicyId;           
-            public readonly Guid ApplicationId;           
+        {
+            public readonly Guid UserId;
+            public readonly Guid PolicyId;
+            public readonly Guid ApplicationId;
             public PolicyAdded(Guid userId, Guid policyId)
             {
                 UserId = userId;
@@ -30,20 +30,20 @@ namespace ReactiveDomain.Users.Messages
         }
 
         public class RemovePolicy : Command
-        {           
-            public readonly Guid UserId;           
-            public readonly Guid PolicyId;           
+        {
+            public readonly Guid UserId;
+            public readonly Guid PolicyId;
             public RemovePolicy(Guid userId, Guid policyId)
             {
                 UserId = userId;
                 PolicyId = policyId;
             }
         }
-       
+
         public class PolicyRemoved : Command
-        {           
-            public readonly Guid UserId;           
-            public readonly Guid PolicyId;                
+        {
+            public readonly Guid UserId;
+            public readonly Guid PolicyId;
             public PolicyRemoved(Guid userId, Guid policyId)
             {
                 UserId = userId;
@@ -51,7 +51,7 @@ namespace ReactiveDomain.Users.Messages
             }
         }
 
-        
+
         public class AddRole : Command
         {
             public readonly Guid UserId;
@@ -96,6 +96,39 @@ namespace ReactiveDomain.Users.Messages
             {
                 UserId = userId;
                 RoleId = roleId;
+            }
+        }
+
+        public class MapSubject : Event
+        {
+
+            public Guid UserId;
+            public object SubClaim;
+            public object AuthProvider;
+            public object AuthDomain;
+
+            public MapSubject(Guid id, string subClaim, string authProvider, string authDomain)
+            {
+                UserId = id;
+                SubClaim = subClaim;
+                AuthProvider = authProvider;
+                AuthDomain = authDomain;
+            }
+        }
+
+        internal class RemoveSubject
+        {
+               public Guid UserId;
+            public object SubClaim;
+            public object AuthProvider;
+            public object AuthDomain;
+
+            public RemoveSubject(Guid id, string subClaim, string authProvider, string authDomain)
+            {
+                UserId = id;
+                SubClaim = subClaim;
+                AuthProvider = authProvider;
+                AuthDomain = authDomain;
             }
         }
 

@@ -205,30 +205,30 @@ namespace ReactiveDomain.Users.Messages
 
         public class CreatePolicy : Command {
             public readonly Guid PolicyId;
-            public readonly string PolicyName;
+            public readonly string ClientId;
             public readonly Guid ApplicationId;
 
             public CreatePolicy(
                 Guid policyId,
-                string policyName,
+                string clientId,
                 Guid applicationId) {
                 PolicyId = policyId;
-                PolicyName = policyName;
+                ClientId = clientId;
                 ApplicationId = applicationId;
             }
         }
 
         public class PolicyCreated : Event {
             public readonly Guid PolicyId;
-            public readonly string PolicyName;
+            public readonly string ClientId;
             public readonly Guid ApplicationId;
 
             public PolicyCreated(
                 Guid policyId,
-                string policyName,
+                string clientId,
                 Guid applicationId) {
                 PolicyId = policyId;
-                PolicyName = policyName;
+                ClientId = clientId;
                 ApplicationId = applicationId;
             }
         }

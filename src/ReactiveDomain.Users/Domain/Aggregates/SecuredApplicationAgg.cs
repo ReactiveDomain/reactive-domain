@@ -32,10 +32,10 @@ namespace ReactiveDomain.Users.Domain.Aggregates
 
         private void Apply(ApplicationMsgs.PolicyCreated @event)
         {
-            var policy = new SecurityPolicyAgg(@event.PolicyId, @event.PolicyName, this);
+            var policy = new SecurityPolicyAgg(@event.PolicyId, @event.ClientId, this);
             if (DefaultPolicy == null) { DefaultPolicy = policy; }
             _policies.Add(@event.PolicyId, policy);
-            _policyNames.Add(@event.PolicyName);
+            _policyNames.Add(@event.ClientId);
         }
 
         //Public Methods
@@ -45,21 +45,21 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         public SecuredApplicationAgg(
             Guid id,
-            string name,
+            string defaultClientId,
             string version,
             ICorrelatedMessage source)
             : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
-            Ensure.NotNullOrEmpty(name, nameof(name));
+            Ensure.NotNullOrEmpty(defaultClientId, nameof(defaultClientId));
             Ensure.NotNullOrEmpty(version, nameof(version));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source));
             RegisterEvents();
             Raise(new ApplicationMsgs.ApplicationCreated(
                          id,
-                         name,
+                         defaultClientId,
                          version));
-            Raise(new ApplicationMsgs.PolicyCreated(Guid.NewGuid(), name, id));
+            Raise(new ApplicationMsgs.PolicyCreated(Guid.NewGuid(), defaultClientId, id));
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             // Event should be idempotent in RMs, so no validation necessary.
             Raise(new ApplicationMsgs.ApplicationUnretired(Id));
         }
-        public SecurityPolicyAgg DefaultPolicy { private set; get; }
+        public SecurityPolicyAgg DefaultPolicy { get; private set;  }
         public IReadOnlyList<SecurityPolicyAgg> Policies => _policies.Values.ToList().AsReadOnly();
         public SecurityPolicyAgg AddAdditionalPolicy(Guid policyId, string policyName)
         {

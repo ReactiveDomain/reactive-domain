@@ -12,6 +12,10 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     /// </summary>
     public class SubjectAgg : AggregateRoot
     {
+        //todo: set these from handling the creat event
+        public string SubClaim { get; private set;}
+        public string AuthProvider { get; private set;}
+        public string AuthDomain { get; private set;}
         private SubjectAgg()
         {
             RegisterEvents();
@@ -62,18 +66,20 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                         DateTime.UtcNow,
                         hostIPAddress));
         }
-        public void AddClientGrant(Guid applicationId, Guid policyId){ 
+        public void AddClientGrant(SecurityPolicyAgg policy){ 
+            //todo: make this an idempotent no-op
             Raise(new SubjectMsgs.ClientGrantAdded(
                 Id,
-                applicationId,
-                policyId
+                policy.AppId,
+                policy.Id
                 ));
             }
-        public void RemoveClientGrant(Guid applicationId, Guid policyId){ 
+        public void RemoveClientGrant(SecurityPolicyAgg policy){ 
+            //todo: if grant not present just return
             Raise(new SubjectMsgs.ClientGrantRemoved(
                 Id,
-                applicationId,
-                policyId
+                policy.AppId,
+                policy.Id
                 ));
             }
         /// <summary>

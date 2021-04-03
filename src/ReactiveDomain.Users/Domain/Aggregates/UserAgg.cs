@@ -91,7 +91,14 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                          surname,
                          email));
         }
-
+        public void MapSubject(SubjectAgg subject)
+        {   
+            Raise(new UserPolicyMsgs.MapSubject(Id, subject.SubClaim, subject.AuthProvider, subject.AuthDomain));
+        }
+        public void RemoveSubject(SubjectAgg subject)
+        {
+            Raise(new UserPolicyMsgs.RemoveSubject(Id, subject.SubClaim, subject.AuthProvider, subject.AuthDomain));
+        }
         /// <summary>
         /// Assign a policy to the user.
         /// </summary>

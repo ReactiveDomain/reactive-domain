@@ -12,29 +12,29 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     public class SecurityPolicyAgg : ChildEntity
     {
         private readonly Dictionary<Guid, string> _roles = new Dictionary<Guid, string>();
-        private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
         public IReadOnlyList<Guid> Roles => _roles.Keys.ToList();
+        //todo: set these from an apply method
+        public string ClientId { get; private set; }
+        public Guid AppId => base.Id;
 
-        public string PolicyName => ClientId;
-        public readonly string ClientId;
-
+        //n.b. this method is called only inside an apply handler in the root aggregate
+        // so setting values is ok, but raising events is not
+        // the create event is raised in the root aggregate
         public SecurityPolicyAgg(
             Guid policyId,
             string clientId,
             SecuredApplicationAgg root)
             : base(policyId, root)
         {
-
             Register<RoleMsgs.RoleCreated>(Apply);
-            Register<RoleMsgs.RoleMigrated>(Apply);
-            Raise(new ApplicationMsgs.PolicyCreated(policyId, clientId, base.Id));
-
-
+            Register<RoleMsgs.RoleMigrated>(Apply);   
+            ClientId = clientId;
         }
 
-        //Apply State
+        //Apply State only if it applies to my id
         private void Apply(RoleMsgs.RoleCreated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
         private void Apply(RoleMsgs.RoleMigrated @event) { if (@event.PolicyId == Id) _roles.Add(@event.RoleId, @event.Name); }
+        
 
         //Public methods
         /// <summary>
