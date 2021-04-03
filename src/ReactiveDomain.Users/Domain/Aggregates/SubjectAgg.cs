@@ -10,9 +10,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     /// <summary>
     /// User authentication and login.
     /// </summary>
-    public class LoginAgg : AggregateRoot
+    public class SubjectAgg : AggregateRoot
     {
-        private LoginAgg()
+        private SubjectAgg()
         {
             RegisterEvents();
         }
@@ -23,33 +23,31 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         }
         
         /// <summary>
-        /// Create a new user login tracker.
+        /// Create a new subject for identity server.
         /// </summary>
         //todo: should we require a UserAgg here as the two are linked, might be a problem with unknown users.
         //Hmm? or a possiblity to include unknown users in a good workflow
-        public LoginAgg(
+        public SubjectAgg(
             Guid id,
-            Guid userId,
-            string subjectId,
+            string subClaim,
             string authProvider,
             string authDomain,          
             ICorrelatedMessage source)
             : this()
         {
             Ensure.NotEmptyGuid(id, nameof(id));
-            Ensure.NotEmptyGuid(userId, nameof(id));
             Ensure.NotNullOrEmpty(authProvider, nameof(authProvider));
             Ensure.NotNullOrEmpty(authDomain, nameof(authDomain));
-            Ensure.NotNullOrEmpty(subjectId, nameof(subjectId));           
+            Ensure.NotNullOrEmpty(subClaim, nameof(subClaim));           
             Ensure.NotNull(source, nameof(source));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source.CorrelationId));
             if (source.CausationId == Guid.Empty)
                 Ensure.NotEmptyGuid(source.MsgId, nameof(source.MsgId));
 
             ((ICorrelatedEventSource)this).Source = source;
-            Raise(new UserAuthMsgs.UserAuthHistoryCreated(
+            Raise(new SubjectMsgs.SubjectCreated(
                          id,
-                         subjectId,
+                         subClaim,
                          authProvider,
                          authDomain));
         }
@@ -59,17 +57,52 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         public void Authenticated(string hostIPAddress)
         {
-            Raise(new UserAuthMsgs.Authenticated(
+            Raise(new SubjectMsgs.Authenticated(
                         Id,
                         DateTime.UtcNow,
                         hostIPAddress));
         }
+        public void AddClientGrant(Guid applicationId, Guid policyId){ 
+            Raise(new SubjectMsgs.ClientGrantAdded(
+                Id,
+                applicationId,
+                policyId
+                ));
+            }
+        public void RemoveClientGrant(Guid applicationId, Guid policyId){ 
+            Raise(new SubjectMsgs.ClientGrantRemoved(
+                Id,
+                applicationId,
+                policyId
+                ));
+            }
+        /// <summary>
+        /// Log the fact that a user was granted access to a client.
+        /// </summary>
+        public void ClientAccessGranted(string clientAudience)
+        {
+            Raise(new SubjectMsgs.ClientAccessGranted(
+                        Id,
+                        DateTime.UtcNow,
+                        clientAudience));
+        }
+        /// <summary>
+        /// Log the fact that a user has atttemped to access a client without a client grant.
+        /// </summary>
+        public void ClientAccessDenied(string clientAudience)
+        {
+            Raise(new SubjectMsgs.ClientAccessDenied(
+                        Id,
+                        DateTime.UtcNow,
+                        clientAudience));
+        }
+        
         /// <summary>
         /// Log the fact that a user has not been successfully authenticated.
         /// </summary>
         public void NotAuthenticated(string hostIPAddress)
         {
-            Raise(new UserAuthMsgs.AuthenticationFailed(
+            Raise(new SubjectMsgs.AuthenticationFailed(
                         Id,
                         DateTime.UtcNow,
                         hostIPAddress));
@@ -79,7 +112,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         public void NotAuthenticatedAccountLocked(string hostIPAddress)
         {
-            Raise(new UserAuthMsgs.AuthenticationFailedAccountLocked(
+            Raise(new SubjectMsgs.AuthenticationFailedAccountLocked(
                         Id,
                         DateTime.UtcNow,
                         hostIPAddress));
@@ -89,7 +122,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         public void NotAuthenticatedAccountDisabled(string hostIPAddress)
         {
-            Raise(new UserAuthMsgs.AuthenticationFailedAccountDisabled(
+            Raise(new SubjectMsgs.AuthenticationFailedAccountDisabled(
                         Id,
                         DateTime.UtcNow,
                         hostIPAddress));
@@ -99,7 +132,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// </summary>
         public void NotAuthenticatedInvalidCredentials(string hostIPAddress)
         {
-            Raise(new UserAuthMsgs.AuthenticationFailedInvalidCredentials(
+            Raise(new SubjectMsgs.AuthenticationFailedInvalidCredentials(
                         Id,
                         DateTime.UtcNow,
                         hostIPAddress));

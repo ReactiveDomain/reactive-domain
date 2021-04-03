@@ -15,16 +15,21 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         private readonly Dictionary<Guid, string> _permissions = new Dictionary<Guid, string>();
         public IReadOnlyList<Guid> Roles => _roles.Keys.ToList();
 
-        public readonly string PolicyName;
+        public string PolicyName => ClientId;
+        public readonly string ClientId;
 
         public SecurityPolicyAgg(
-            Guid policyId, 
-            string policyName,
+            Guid policyId,
+            string clientId,
             SecuredApplicationAgg root)
-            : base(policyId, root) {
-            PolicyName = policyName;
+            : base(policyId, root)
+        {
+
             Register<RoleMsgs.RoleCreated>(Apply);
             Register<RoleMsgs.RoleMigrated>(Apply);
+            Raise(new ApplicationMsgs.PolicyCreated(policyId, clientId, base.Id));
+
+
         }
 
         //Apply State
