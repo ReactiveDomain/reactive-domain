@@ -5,8 +5,8 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.Policy;
-using User = ReactiveDomain.Users.Policy.User;
+using ReactiveDomain.Users.PolicyModel;
+using User = ReactiveDomain.Users.PolicyModel.User;
 
 namespace ReactiveDomain.Users.ReadModels
 {

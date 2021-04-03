@@ -6,6 +6,7 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.PolicyModel;
 using ReactiveDomain.Users.ReadModels;
 using ReactiveDomain.Util;
 

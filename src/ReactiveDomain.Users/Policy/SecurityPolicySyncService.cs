@@ -7,6 +7,7 @@ using ReactiveDomain.Users.Domain.Aggregates;
 using ReactiveDomain.Users.Domain.Services;
 using ReactiveDomain.Users.Identity;
 using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.PolicyModel;
 using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Users.Policy

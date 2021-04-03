@@ -5,6 +5,7 @@ using System.Security.Claims;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.PolicyModel;
 
 namespace ReactiveDomain.Users.Identity
 {

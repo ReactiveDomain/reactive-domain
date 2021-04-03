@@ -1,4 +1,5 @@
 ﻿using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.PolicyModel;
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;

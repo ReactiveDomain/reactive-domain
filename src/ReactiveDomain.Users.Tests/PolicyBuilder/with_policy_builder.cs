@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.PolicyModel;
 using Xunit;
 
 namespace ReactiveDomain.Users.Tests.PolicyBuilder

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Users.PolicyModel
 {
-    
+
     public class SecuredApplication
     {
         public Guid Id { get; private set; }
@@ -35,16 +35,18 @@ namespace ReactiveDomain.Users.Policy
             string name = null,
             string version = null)
         {
-            if (id.HasValue &&  id.Value != Guid.Empty) { Id = id.Value; }
+            if (id.HasValue && id.Value != Guid.Empty) { Id = id.Value; }
             if (!string.IsNullOrWhiteSpace(name)) { Name = name; }
             if (!string.IsNullOrWhiteSpace(version)) { Version = version; }
         }
 
-        public void AddPolicy(SecurityPolicy policy) {
+        public void AddPolicy(SecurityPolicy policy)
+        {
             //don't add duplicates, but the ID might be Guid.Empty if db sync hasn't happened
             var existingPolicy = _polices.FirstOrDefault(p =>
                 p.PolicyId == policy.PolicyId || p.PolicyName.Equals(policy.PolicyName));
-            if (existingPolicy == null) {
+            if (existingPolicy == null)
+            {
                 _polices.Add(policy);
             }
             //return idempotent success

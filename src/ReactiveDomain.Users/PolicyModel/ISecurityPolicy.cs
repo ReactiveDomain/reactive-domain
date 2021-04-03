@@ -1,8 +1,10 @@
-﻿using System.Security.Claims;
+﻿using ReactiveDomain.Users.Policy;
+using System.Security.Claims;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Users.PolicyModel
 {
-    public interface ISecurityPolicy {
+    public interface ISecurityPolicy
+    {
         string ApplicationName { get; }
         string ApplicationVersion { get; }
         bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out User user);

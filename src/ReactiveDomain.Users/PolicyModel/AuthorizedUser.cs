@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Users.PolicyModel
 {
     public class AuthorizedUser
     {

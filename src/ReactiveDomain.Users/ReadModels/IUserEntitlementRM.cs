@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.PolicyModel;
 
 namespace ReactiveDomain.Users.ReadModels
 {

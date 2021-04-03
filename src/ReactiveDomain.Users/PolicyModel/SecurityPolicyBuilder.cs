@@ -5,8 +5,9 @@ using System.Reflection;
 using System.Security.Claims;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Users.Policy;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Users.PolicyModel
 {
     public sealed class SecurityPolicyBuilder : IDisposable
     {

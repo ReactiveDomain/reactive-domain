@@ -1,8 +1,10 @@
+using ReactiveDomain.Users.PolicyModel;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 
-namespace ReactiveDomain.Users.Policy {
+namespace ReactiveDomain.Users.PolicyModel
+{
     public class User
     {
         public Guid UserId { get; }

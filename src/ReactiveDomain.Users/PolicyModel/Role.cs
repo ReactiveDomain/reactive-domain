@@ -4,7 +4,7 @@ using System.Linq;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Users.PolicyModel
 {
     /// <summary>
     /// Houses the role data populated by the role created handler.
@@ -23,11 +23,11 @@ namespace ReactiveDomain.Users.Policy
         /// The Id of the policy defining the roles.
         /// </summary>
         public Guid PolicyId { get; internal set; }
-        
+
         // role has:
         // - Allowed Permissions
         // - Denied Permissions
-        
+
         // methods:
         // - IsAllowed(ICommand cmd)
 
@@ -36,7 +36,7 @@ namespace ReactiveDomain.Users.Policy
         private HashSet<Type> _effectivePermissions = new HashSet<Type>();
 
         public IReadOnlyList<Type> AllowedPermissions => _effectivePermissions.ToList().AsReadOnly();
-        
+
         private readonly HashSet<Role> _parentRoles = new HashSet<Role>();
         /// <summary>
         /// Houses the role data populated by the role created handler.
