@@ -14,7 +14,6 @@ namespace ReactiveDomain.Users.Domain.Aggregates
     {
         private readonly Dictionary<Guid, SecurityPolicyAgg> _policies = new Dictionary<Guid, SecurityPolicyAgg>();
         private readonly HashSet<string> _policyNames = new HashSet<string>();
-        
 
         // ReSharper disable once UnusedMember.Local
         // used via reflection in the repository
@@ -33,7 +32,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
 
         private void Apply(ApplicationMsgs.PolicyCreated @event)
         {
-            _policies.Add(@event.PolicyId, new SecurityPolicyAgg(@event.PolicyId, @event.PolicyName, this));
+            var policy = new SecurityPolicyAgg(@event.PolicyId, @event.PolicyName, this);
+            if (DefaultPolicy == null) { DefaultPolicy = policy; }
+            _policies.Add(@event.PolicyId, policy);
             _policyNames.Add(@event.PolicyName);
         }
 
@@ -58,6 +59,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
                          id,
                          name,
                          version));
+            Raise(new ApplicationMsgs.PolicyCreated(Guid.NewGuid(), name, id));
         }
 
         /// <summary>
@@ -77,8 +79,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             // Event should be idempotent in RMs, so no validation necessary.
             Raise(new ApplicationMsgs.ApplicationUnretired(Id));
         }
+        public SecurityPolicyAgg DefaultPolicy { private set; get; }
         public IReadOnlyList<SecurityPolicyAgg> Policies => _policies.Values.ToList().AsReadOnly();
-        public SecurityPolicyAgg AddPolicy(Guid policyId, string policyName)
+        public SecurityPolicyAgg AddAdditionalPolicy(Guid policyId, string policyName)
         {
             Ensure.NotEmptyGuid(policyId, nameof(policyId));
             Ensure.NotNullOrEmpty(policyName, nameof(policyName));

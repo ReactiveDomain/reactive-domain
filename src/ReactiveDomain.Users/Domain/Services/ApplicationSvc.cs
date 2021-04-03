@@ -86,7 +86,7 @@ namespace ReactiveDomain.Users.Domain.Services
         public CommandResponse Handle(ApplicationMsgs.CreatePolicy command)
         {
             var application = _repo.GetById<SecuredApplicationAgg>(command.ApplicationId, command);
-            application.AddPolicy(command.PolicyId,command.PolicyName);
+            application.AddAdditionalPolicy(command.PolicyId,command.PolicyName);
             _repo.Save(application);
             return command.Succeed();
         }
