@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../ci.build.imports" />
     <PropertyGroup>
-      <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
     </PropertyGroup>
     <ItemGroup>
@@ -44,9 +44,6 @@
       <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Reference Include="Microsoft.CSharp" Condition="'$(TargetFramework)'=='net48'" />
-    </ItemGroup>
-    <ItemGroup>
       <Folder Include="PolicyBuilder\" />
-    </ItemGroup>
+    </ItemGroup>   
   </Project>

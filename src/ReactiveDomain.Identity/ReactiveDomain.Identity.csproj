@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ci.build.imports" />
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Identity\**" />
+    <Compile Remove="Messages\**" />
+    <Compile Remove="PolicyModel\**" />
+    <Compile Remove="Policy\**" />
+    <Compile Remove="ReadModels\**" />
+    <Compile Remove="Services\**" />
+    <Compile Remove="Stores\**" />
+    <EmbeddedResource Remove="Identity\**" />
+    <EmbeddedResource Remove="Messages\**" />
+    <EmbeddedResource Remove="PolicyModel\**" />
+    <EmbeddedResource Remove="Policy\**" />
+    <EmbeddedResource Remove="ReadModels\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <EmbeddedResource Remove="Stores\**" />
+    <None Remove="Identity\**" />
+    <None Remove="Messages\**" />
+    <None Remove="PolicyModel\**" />
+    <None Remove="Policy\**" />
+    <None Remove="ReadModels\**" />
+    <None Remove="Services\**" />
+    <None Remove="Stores\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="AccountOptions.cs" />
+    <Compile Remove="ActiveDirectoryUserSearch.cs" />
+    <Compile Remove="Constants.cs" />
+    <Compile Remove="CustomScopes.cs" />
+    <Compile Remove="SubjectAgg.cs" />
+    <Compile Remove="UserExceptions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Messages\ExternalProviderMsgs.cs" />
+  </ItemGroup> 
+ <ItemGroup>
+    <PackageReference Include="IdentityServer4" Version="4.1.1" />
+    <PackageReference Include="IdentityServer4.Storage" Version="4.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.DirectoryServices" Version="5.0.0" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="5.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
+  </ItemGroup>
+</Project>
