@@ -35,7 +35,8 @@
         <reference file="ReactiveDomain.Persistence.pdb" />
         <reference file="ReactiveDomain.Transport.pdb" />
         <reference file="ReactiveDomain.Users.pdb" />
-        <reference file="ReactiveDomain.IdentityServer4.Storage.pdb" />
+        <reference file="ReactiveDomain.Policy.pdb" />
+        <reference file="ReactiveDomain.Identity.pdb" />
       </group>
     </references>
   </metadata>
@@ -54,6 +55,7 @@
     <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Persistence.pdb" target="lib\netcoreapp3.1" />
     <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Transport.pdb" target="lib\netcoreapp3.1" />
     <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.pdb" target="lib\netcoreapp3.1" />
-    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.IdentityServer4.Storage.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Policy.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Identity.pdb" target="lib\netcoreapp3.1" />    
   </files>
 </package>

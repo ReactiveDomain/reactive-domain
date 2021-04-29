@@ -44,21 +44,20 @@ $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
 $sourceRDTestNuspec = Join-Path $sourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $sourceRDUINuspec = Join-Path $sourceDir "ReactiveDomain.UI.Debug.nuspec"
 $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
-$sourceRDIdentityStorageNuspec = Join-Path $sourceDir "ReactiveDomain.IdentityStorage.Debug.nuspec"
+
 
 #target nuspec file paths in temp dir
 $ReactiveDomainNuspec = Join-Path $tempSourceDir "ReactiveDomain.Debug.nuspec"
 $ReactiveDomainTestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $ReactiveDomainUINuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Debug.nuspec"
 $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
-$ReactiveDomainIdentityStorageNuspec = Join-Path $tempSourceDir "ReactiveDomain.IdentityStorage.Debug.nuspec"
+
 
 #copy nuspec files to temp
 Copy-Item $sourceRDNuspec -Destination $ReactiveDomainNuspec
 Copy-Item $sourceRDTestNuspec -Destination $ReactiveDomainTestingNuspec
 Copy-Item $sourceRDUINuspec -Destination $ReactiveDomainUINuspec
 Copy-Item $sourceRDUITestNuspec -Destination $ReactiveDomainUITestingNuspec
-Copy-Item $sourceRDIdentityStorageNuspec -Destination $ReactiveDomainIdentityStorageNuspec
 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
@@ -88,7 +87,9 @@ $ReactiveDomainTestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Testi
 $RDUIProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
 $RDUITestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
 $RDUsersProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Users.csproj"
-$RDIdentityStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.IdentityServer4.Storage\ReactiveDomain.IdentityServer4.Storage.csproj"
+$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Policy.csproj"
+$RDIdentityProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Identity.csproj"
+
 $nuget = $ReactiveDomainRepo + "\src\.nuget\nuget.exe"
 
 Write-Host ("Reactive Domain version is " + $RDVersion)

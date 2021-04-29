@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    <Version>0.8.23-beta58</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Constants.cs" />
