@@ -53,13 +53,13 @@
     <Choose>
       <When Condition="$(OS) == 'WINDOWS_NT'">
         <PropertyGroup>
-          <LibTargetFrameworks>netstandard2.1;net48;netcoreapp3.1</LibTargetFrameworks>
+          <LibTargetFrameworks>net48;netcoreapp3.1</LibTargetFrameworks>
           <TestTargetFrameworks>net48;netcoreapp3.1</TestTargetFrameworks>
         </PropertyGroup>
       </When>
       <When Condition=" $(OS) != 'WINDOWS_NT'">
         <PropertyGroup>
-          <LibTargetFrameworks>netstandard2.1;netcoreapp3.1</LibTargetFrameworks>
+          <LibTargetFrameworks>netcoreapp3.1</LibTargetFrameworks>
           <TestTargetFrameworks>netcoreapp3.1</TestTargetFrameworks>
         </PropertyGroup>
       </When>

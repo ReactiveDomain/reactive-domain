@@ -20,4 +20,8 @@
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Domain\" />
+    <Folder Include="Messages\" />
+  </ItemGroup>
 </Project>

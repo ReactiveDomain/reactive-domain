@@ -11,8 +11,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="5.0.9" Condition="" />
-    <PackageReference Include="EventStore.Client.Embedded" Version="5.0.1" Condition="'$(TargetFramework)'!='netstandard2.1'" />
+    <PackageReference Include="EventStore.Client" Version="5.0.9" Condition="" />    
     <PackageReference Include="EventStore.Client.Embedded" Version="5.0.9" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
