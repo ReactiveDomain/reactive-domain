@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 
-namespace ReactiveDomain.Users.PolicyModel
+namespace ReactiveDomain.Policy.ReadModels
 {
     public class AuthorizedUser
     {

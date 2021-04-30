@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Users.Messages
+namespace ReactiveDomain.Policy.Messages
 {
     /// <summary>
     /// Messages for the Application domain.

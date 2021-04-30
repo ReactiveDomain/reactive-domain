@@ -1,10 +1,12 @@
-﻿using ReactiveDomain.Users.Policy;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using ReactiveDomain.Policy.ReadModels;
+using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Users.ReadModels;
 
-namespace ReactiveDomain.Users.PolicyModel
+namespace ReactiveDomain.Policy.Application
 {
     public class SecurityPolicy : ISecurityPolicy
     {
@@ -12,13 +14,13 @@ namespace ReactiveDomain.Users.PolicyModel
         public Guid PolicyId { get; internal set; }
         private readonly List<Role> _roles;
         private readonly Role _defaultRole;
-        private readonly List<User> _users = new List<User>();
+        private readonly List<UserDTO> _users = new List<UserDTO>();
         private AuthorizedUser _currentUser;
-        private Func<ClaimsPrincipal, User> _findUser;
+        private Func<ClaimsPrincipal, UserDTO> _findUser;
 
         public SecuredApplication OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
-        public IReadOnlyList<User> Users => _users.AsReadOnly();
+        public IReadOnlyList<UserDTO> Users => _users.AsReadOnly();
         public string ApplicationName => OwningApplication.Name;
         public string ApplicationVersion => OwningApplication.Version;
 
@@ -40,6 +42,14 @@ namespace ReactiveDomain.Users.PolicyModel
             //todo: check if user is authorized
         }
 
+        public bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out UserDTO user) {
+            throw new NotImplementedException();
+        }
+
+        UserDTO ISecurityPolicy.GetCurrentUser() {
+            throw new NotImplementedException();
+        }
+
         public User GetCurrentUser()
         {
             throw new NotImplementedException();
@@ -54,7 +64,7 @@ namespace ReactiveDomain.Users.PolicyModel
             string policyName,
             Guid policyId,
             SecuredApplication owningApplication,
-            Func<ClaimsPrincipal, User> findUser,
+            Func<ClaimsPrincipal, UserDTO> findUser,
             List<Role> roles = null,
             Role defaultRole = null)
         {
@@ -76,12 +86,12 @@ namespace ReactiveDomain.Users.PolicyModel
             _roles.Add(role);
         }
         //used for synchronizing with the backing store
-        internal void AddUser(User user)
+        internal void AddUser(UserDTO user)
         {
             _users.Add(user);
         }
 
-        public User ResolveUser(ClaimsPrincipal principal) => _findUser(principal);
+        public UserDTO ResolveUser(ClaimsPrincipal principal) => _findUser(principal);
 
         public IReadOnlyList<Type> GetEffectivePermissions(IEnumerable<Role> roles)
         {

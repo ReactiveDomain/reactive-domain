@@ -3,10 +3,10 @@ using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Domain.Aggregates;
-using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Policy.Domain;
+using ReactiveDomain.Policy.Messages;
 
-namespace ReactiveDomain.Users.Domain.Services
+namespace ReactiveDomain.Policy
 {
     public class PolicySvc :
             TransientSubscriber,
@@ -34,7 +34,7 @@ namespace ReactiveDomain.Users.Domain.Services
         public CommandResponse Handle(RoleMsgs.CreateRole cmd)
         {
 
-            var application = _repo.GetById<SecuredApplicationAgg>(_applicationId, cmd);
+            var application = _repo.GetById<SecuredApplication>(_applicationId, cmd);
             application.Policies.First(p=> p.Id == cmd.PolicyId).AddRole(cmd.RoleId, cmd.Name);
             _repo.Save(application);
             return cmd.Succeed();

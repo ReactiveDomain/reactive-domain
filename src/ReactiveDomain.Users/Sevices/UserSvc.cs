@@ -1,9 +1,10 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.Users.Sevices
 {
     /// <summary>
     /// The service that fronts the User aggregate.

@@ -2,22 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Domain.Aggregates
+namespace ReactiveDomain.Policy.Domain
 {
     /// <summary>
     /// Aggregate for a Application.
     /// </summary>
-    public class SecuredApplicationAgg : AggregateRoot
+    public class SecuredApplication : AggregateRoot
     {
-        private readonly Dictionary<Guid, PolicyAgg> _policies = new Dictionary<Guid, PolicyAgg>();
+        private readonly Dictionary<Guid, SecurityPolicy> _policies = new Dictionary<Guid, SecurityPolicy>();
         private readonly HashSet<string> _policyNames = new HashSet<string>();
 
         // ReSharper disable once UnusedMember.Local
         // used via reflection in the repository
-        private SecuredApplicationAgg()
+        private SecuredApplication()
         {
             RegisterEvents();
         }
@@ -32,7 +32,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
 
         private void Apply(ApplicationMsgs.PolicyCreated @event)
         {
-            var policy = new PolicyAgg(@event.PolicyId, @event.ClientId, this);
+            var policy = new SecurityPolicy(@event.PolicyId, @event.ClientId, this);
             if (DefaultPolicy == null) { DefaultPolicy = policy; }
             _policies.Add(@event.PolicyId, policy);
             _policyNames.Add(@event.ClientId);
@@ -43,7 +43,7 @@ namespace ReactiveDomain.Users.Domain.Aggregates
         /// <summary>
         /// Create a new Application.
         /// </summary>
-        public SecuredApplicationAgg(
+        public SecuredApplication(
             Guid id,
             string defaultClientId,
             string version,
@@ -79,9 +79,9 @@ namespace ReactiveDomain.Users.Domain.Aggregates
             // Event should be idempotent in RMs, so no validation necessary.
             Raise(new ApplicationMsgs.ApplicationUnretired(Id));
         }
-        public PolicyAgg DefaultPolicy { get; private set;  }
-        public IReadOnlyList<PolicyAgg> Policies => _policies.Values.ToList().AsReadOnly();
-        public PolicyAgg AddAdditionalPolicy(Guid policyId, string policyName)
+        public SecurityPolicy DefaultPolicy { get; private set;  }
+        public IReadOnlyList<SecurityPolicy> Policies => _policies.Values.ToList().AsReadOnly();
+        public SecurityPolicy AddAdditionalPolicy(Guid policyId, string policyName)
         {
             Ensure.NotEmptyGuid(policyId, nameof(policyId));
             Ensure.NotNullOrEmpty(policyName, nameof(policyName));

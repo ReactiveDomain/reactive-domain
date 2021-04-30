@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
     <Version>0.8.23-beta58</Version>
   </PropertyGroup>
@@ -19,9 +19,6 @@
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Domain\" />
-    <Folder Include="Messages\" />
+    <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
   </ItemGroup>
 </Project>

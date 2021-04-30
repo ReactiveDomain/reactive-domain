@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
-using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Policy;
+using ReactiveDomain.Users.ReadModels;
 
-namespace ReactiveDomain.Users.PolicyModel
+namespace ReactiveDomain.Policy.Application
 {
     public sealed class SecurityPolicyBuilder : IDisposable
     {
@@ -18,7 +16,7 @@ namespace ReactiveDomain.Users.PolicyModel
         private bool _disposed;
         private bool _isBuilt;
         private string _defaultRole;
-        private Func<ClaimsPrincipal, User> _findUserFunc;
+        private Func<ClaimsPrincipal, UserDTO> _findUserFunc;
 
         public SecurityPolicyBuilder(string policyName = "default")
         {
@@ -57,7 +55,7 @@ namespace ReactiveDomain.Users.PolicyModel
             return this;
         }
 
-        public SecurityPolicyBuilder WithUserResolver(Func<ClaimsPrincipal, User> findUserFunc)
+        public SecurityPolicyBuilder WithUserResolver(Func<ClaimsPrincipal, UserDTO> findUserFunc)
         {
             _findUserFunc = findUserFunc;
             return this;

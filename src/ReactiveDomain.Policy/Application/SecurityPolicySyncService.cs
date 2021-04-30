@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Domain.Aggregates;
-using ReactiveDomain.Users.Domain.Services;
-using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.PolicyModel;
-using ReactiveDomain.Users.ReadModels;
+using ReactiveDomain.Policy.Messages;
+using ReactiveDomain.Policy.ReadModels;
 
-namespace ReactiveDomain.Users.Policy
+namespace ReactiveDomain.Policy.Application
 {
     // for use in applications enforcing security policy
     /// <summary>
@@ -19,8 +16,7 @@ namespace ReactiveDomain.Users.Policy
         ReadModelBase,
         IHandle<ApplicationMsgs.ApplicationCreated>,
         IHandle<ApplicationMsgs.PolicyCreated>,
-        IHandle<RoleMsgs.RoleCreated>,
-        IHandle<RoleMsgs.RoleMigrated>
+        IHandle<RoleMsgs.RoleCreated>//,
         //IHandle<UserMsgs.UserCreated>,
         //IHandle<UserMsgs.Deactivated>,
         //IHandle<UserMsgs.Activated>,
@@ -85,7 +81,7 @@ namespace ReactiveDomain.Users.Policy
                 appReader.EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
                 appReader.EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
 
-                appReader.Read<SecuredApplicationAgg>(appId);
+                appReader.Read<Domain.SecuredApplication>(appId);
             }
             if (dbApp == null) {
                 dbApp = _applications[appId];
@@ -167,25 +163,7 @@ namespace ReactiveDomain.Users.Policy
                     @event.Name,
                     Policy.PolicyId));
         }
-        //todo: handle migration events
-        /// <summary>
-        /// Given the role migrated event, adds the role to the collection of roles.
-        /// </summary>
-        public void Handle(RoleMsgs.RoleMigrated @event)
-        {
-            /*
-            if(_roles.ContainsKey(@event.RoleId)) return;
-            if(!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
-            var app = _applications[@event.ApplicationId];
-            
-            _roles.Add(
-                @event.RoleId,
-                new RoleModel(
-                    @event.RoleId,
-                    @event.Name,
-                    app));
-            */
-        }
+       
 
         /*
         /// <summary>

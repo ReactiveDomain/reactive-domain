@@ -1,10 +1,10 @@
-﻿using ReactiveDomain.Messaging.Bus;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.Users.ReadModels
 {
     public class UserDTO :
                 IHandle<UserMsgs.Deactivated>,
@@ -25,7 +25,7 @@ namespace ReactiveDomain.Users
         public string AuthProvider { private set; get; }
         public string AuthDomain { private set; get; }
         public string UserName { private set; get; }
-        private HashSet<string> _scopes = new HashSet<string>();
+        private readonly HashSet<string> _scopes = new HashSet<string>();
         public IReadOnlyList<string> Scopes => _scopes.ToList();
 
         public UserDTO(Guid userId)

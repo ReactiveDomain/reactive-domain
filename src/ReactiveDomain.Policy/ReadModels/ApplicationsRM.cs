@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Domain.Aggregates;
-using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.PolicyModel;
-using User = ReactiveDomain.Users.PolicyModel.User;
+using ReactiveDomain.Policy.Application;
+using ReactiveDomain.Policy.Messages;
+using ReactiveDomain.Users;
+using ReactiveDomain.Users.ReadModels;
 
-namespace ReactiveDomain.Users.ReadModels
+
+namespace ReactiveDomain.Policy.ReadModels
 {
     //todo: we likely need a version of this that loads just a single application by name and version
     // for use in applications enforcing security policy
@@ -18,19 +19,18 @@ namespace ReactiveDomain.Users.ReadModels
     public class ApplicationsRM :
         ReadModelBase,
         IHandle<ApplicationMsgs.ApplicationCreated>,
-        IHandle<RoleMsgs.RoleCreated>,
-        IHandle<RoleMsgs.RoleMigrated>,
+        IHandle<RoleMsgs.RoleCreated>//,
        
-        IHandle<UserPolicyMsgs.RoleAdded>,
+        //IHandle<UserPolicyMsgs.RoleAdded>,
        
-        IHandle<UserPolicyMsgs.RoleRemoved>
+        //IHandle<UserPolicyMsgs.RoleRemoved>
         //IUserEntitlementRM
     {
-        public List<User> ActivatedUsers => _users.Values.Where(x => x.IsActivated).ToList(); //todo: is this the best way?
+        public List<UserDTO> ActivatedUsers => _users.Values.Where(x => x.Active).ToList(); //todo: is this the best way?
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private readonly Dictionary<Guid, SecuredApplication> _applications = new Dictionary<Guid, SecuredApplication>();
-        private readonly Dictionary<Guid, User> _users = new Dictionary<Guid, User>();
+        private readonly Dictionary<Guid, UserDTO> _users = new Dictionary<Guid, UserDTO>();
 
         /// <summary>
         /// Create a read model for getting information about existing applications.
@@ -41,17 +41,16 @@ namespace ReactiveDomain.Users.ReadModels
             //set handlers
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
-            EventStream.Subscribe<RoleMsgs.RoleMigrated>(this);
 
             //read
             long? checkpoint;
             using (var reader = conn.GetReader(nameof(ApplicationsRM), this))
             {                
-                reader.Read<SecuredApplicationAgg>();                
+                reader.Read<Domain.SecuredApplication>();                
                 checkpoint = reader.Position;
             }            
             //subscribe
-            Start<SecuredApplicationAgg>(checkpoint);
+            Start<Domain.SecuredApplication>(checkpoint);
         
             //todo: subscribe to user stream
         }
@@ -147,44 +146,22 @@ namespace ReactiveDomain.Users.ReadModels
                     @event.Name,
                     @event.PolicyId));
         }
-        //todo: handle migration events
-        /// <summary>
-        /// Given the role migrated event, adds the role to the collection of roles.
-        /// </summary>
-        public void Handle(RoleMsgs.RoleMigrated @event)
-        {
-            /*
-            if(_roles.ContainsKey(@event.RoleId)) return;
-            if(!_applications.ContainsKey(@event.ApplicationId)) return; //todo: log error, this should never happen
-            var app = _applications[@event.ApplicationId];
-            
-            _roles.Add(
-                @event.RoleId,
-                new RoleModel(
-                    @event.RoleId,
-                    @event.Name,
-                    app));
-            */
-        }
+        
+        //public void Handle(UserPolicyMsgs.RoleAdded @event)
+        //{
+        //    if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
+        //    var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
+        //    if (role != null) return;
+        //    _users[@event.UserId].Roles.Add(_roles[@event.RoleId]);
+        //}
 
-      
-      
-
-        public void Handle(UserPolicyMsgs.RoleAdded @event)
-        {
-            if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
-            var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if (role != null) return;
-            _users[@event.UserId].Roles.Add(_roles[@event.RoleId]);
-        }
-
-        public void Handle(UserPolicyMsgs.RoleRemoved @event)
-        {
-            if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
-            var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if (role == null) return;
-            _users[@event.UserId].Roles.Remove(role);
-        }
+        //public void Handle(UserPolicyMsgs.RoleRemoved @event)
+        //{
+        //    if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
+        //    var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
+        //    if (role == null) return;
+        //    _users[@event.UserId].Roles.Remove(role);
+        //}
        
         public List<Role> RolesForUser(
             string subjectId,
@@ -192,6 +169,7 @@ namespace ReactiveDomain.Users.ReadModels
             string authDomain,
             Guid policyId)
         {
+            throw new NotImplementedException("Roles are on the Security Policy not the user");
             var user = _users.Values.FirstOrDefault(x =>
                 x.AuthDomain.Equals(authDomain, StringComparison.CurrentCultureIgnoreCase)
                 && (string.IsNullOrEmpty(subjectId) ||
@@ -204,12 +182,12 @@ namespace ReactiveDomain.Users.ReadModels
             {
                 throw new UserNotFoundException("UserId = " + subjectId + ", authDomain = " + authDomain);
             }
-            if (!user.IsActivated)
+            if (!user.Active)
             {
                 throw new UserDeactivatedException("UserId = " + subjectId + ", authDomain = " + authDomain);
             }
 
-            return user.Roles.Where(x => x.PolicyId == policyId).ToList();
+            //return user.Roles.Where(x => x.PolicyId == policyId).ToList();
         }
 
     }

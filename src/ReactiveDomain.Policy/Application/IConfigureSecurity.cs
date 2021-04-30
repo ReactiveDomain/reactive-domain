@@ -1,4 +1,4 @@
-﻿namespace ReactiveDomain.Users.PolicyModel
+﻿namespace ReactiveDomain.Policy.Application
 {
     public interface IConfigureSecurity
     {

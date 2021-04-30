@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.PolicyModel
+namespace ReactiveDomain.Policy.Application
 {
     /// <summary>
     /// Houses the role data populated by the role created handler.

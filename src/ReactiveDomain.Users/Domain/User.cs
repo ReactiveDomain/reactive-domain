@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Net.Mail;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.Users.Domain
 {
     /// <summary>
     /// Aggregate for a User.
@@ -15,7 +16,7 @@ namespace ReactiveDomain.Users
         private string _givenName;
         private string _surname;
         private string _email;
-        private HashSet<string> _clientScopes = new HashSet<string>();
+        private readonly HashSet<string> _clientScopes = new HashSet<string>();
         private User()
         {
             RegisterEvents();

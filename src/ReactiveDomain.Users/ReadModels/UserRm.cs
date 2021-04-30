@@ -1,9 +1,11 @@
-﻿using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging.Bus;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using ReactiveDomain.Foundation;
+using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.Users.ReadModels
 {
     public class UserRm :
         ReadModelBase,
@@ -11,7 +13,7 @@ namespace ReactiveDomain.Users
         IHandle<UserMsgs.UserEvent>
     {
         private readonly IConfiguredConnection _conn;
-        private Dictionary<string, Guid> _userIds = new Dictionary<string, Guid>();
+        private readonly Dictionary<string, Guid> _userIds = new Dictionary<string, Guid>();
         public Dictionary<Guid, UserDTO> Users = new Dictionary<Guid, UserDTO>();
 
         public UserRm(IConfiguredConnection conn) : base(nameof(UserRm), () => conn.GetListener(nameof(UserRm)))
