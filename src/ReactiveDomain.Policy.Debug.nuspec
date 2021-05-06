@@ -1,0 +1,46 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ReactiveDomain.Policy</id>
+    <version>0.8.22.0</version>
+    <authors>PerkinElmer,Linedata</authors>
+    <owners>PerkinElmer,Linedata</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>Package includes all ReactiveDomain Core assemblies</description>
+    <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
+    <dependencies>
+	   <group targetFramework=".NETFramework4.8">
+        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
+		<dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="netcoreapp3.1">
+        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
+		<dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <references>
+      <!--TODO: Just reference the ReactiveDomain NuGet instead of pulling all these in again-->
+      <group targetFramework=".NETFramework4.8">
+        <reference file="ReactiveDomain.Policy.dll" />
+        <reference file="ReactiveDomain.Policy.pdb" />
+      </group>
+	  <group targetFramework="netcoreapp3.1">
+        <reference file="ReactiveDomain.Policy.dll" />
+        <reference file="ReactiveDomain.Policy.pdb" />
+      </group>
+    </references>
+  </metadata>
+  <files>
+    <file src="..\bld\Debug\net48\ReactiveDomain.Policy.dll" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.Policy.pdb" target="lib\net48" />  
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Policy.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Policy.pdb" target="lib\netcoreapp3.1" />    
+  </files>
+</package>

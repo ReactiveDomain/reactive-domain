@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ReactiveDomain.Users</id>
+    <version>0.8.22.0</version>
+    <authors>PerkinElmer,Linedata</authors>
+    <owners>PerkinElmer,Linedata</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>Package includes ReactiveDomain Users</description>
+    <copyright>Copyright © 2014-2020 PerkinElmer, Linedata Inc.</copyright>
+    <dependencies>      
+      <group targetFramework=".NETFramework4.8">
+        <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.1">
+        <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
+      </group>
+	  <group targetFramework="netcoreapp3.1">
+        <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <references>     
+      <group targetFramework=".NETFramework4.8">
+        <reference file="ReactiveDomain.Users.dll" />
+        <reference file="ReactiveDomain.Users.pdb" />
+      </group>
+      <group targetFramework=".NETStandard2.1">
+        <reference file="ReactiveDomain.Users.dll" />
+        <reference file="ReactiveDomain.Users.pdb" />
+      </group>
+	  <group targetFramework="netcoreapp3.1">
+        <reference file="ReactiveDomain.Users.dll" />
+        <reference file="ReactiveDomain.Users.pdb" />
+      </group>
+    </references>   
+  </metadata>
+  <files>
+    <file src="..\bld\Debug\net48\ReactiveDomain.Users.dll" target="lib\net48" />
+    <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.Users.dll" target="lib\netstandard2.1" />
+	<file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.Users.pdb" target="lib\net48" />
+    <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.Users.pdb" target="lib\netstandard2.1" />
+	<file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.pdb" target="lib\netcoreapp3.1" />
+  </files>
+</package>

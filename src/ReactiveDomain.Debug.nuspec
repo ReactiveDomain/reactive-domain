@@ -22,6 +22,12 @@
         <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
       </group>
+	  <group targetFramework="netcoreapp3.1">
+        <dependency id="EventStore.Client" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CSharp" version="4.5.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
+      </group>
     </dependencies>
     <references>
       <group targetFramework=".NETFramework4.8">
@@ -52,6 +58,20 @@
         <reference file="ReactiveDomain.Transport.pdb" />
         <reference file="ReactiveDomain.Users.pdb" />
       </group>
+      <group targetFramework="netcoreapp3.1">
+        <reference file="ReactiveDomain.Core.dll" />
+        <reference file="ReactiveDomain.Foundation.dll" />
+        <reference file="ReactiveDomain.Messaging.dll" />
+        <reference file="ReactiveDomain.Persistence.dll" />
+        <reference file="ReactiveDomain.Transport.dll" />
+        <reference file="ReactiveDomain.Users.dll" />
+        <reference file="ReactiveDomain.Core.pdb" />
+        <reference file="ReactiveDomain.Foundation.pdb" />
+        <reference file="ReactiveDomain.Messaging.pdb" />
+        <reference file="ReactiveDomain.Persistence.pdb" />
+        <reference file="ReactiveDomain.Transport.pdb" />
+        <reference file="ReactiveDomain.Users.pdb" />
+      </group>	  
     </references>
   </metadata>
   <files>
@@ -79,5 +99,17 @@
     <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.Persistence.pdb" target="lib\netstandard2.1" />
     <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.Transport.pdb" target="lib\netstandard2.1" />
     <file src="..\bld\Debug\netstandard2.1\ReactiveDomain.Users.pdb" target="lib\netstandard2.1" />
+	<file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Core.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Foundation.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Messaging.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Persistence.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Transport.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.dll" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Core.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Foundation.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Messaging.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Persistence.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Transport.pdb" target="lib\netcoreapp3.1" />
+    <file src="..\bld\Debug\netcoreapp3.1\ReactiveDomain.Users.pdb" target="lib\netcoreapp3.1" />
   </files>
 </package>

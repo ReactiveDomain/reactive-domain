@@ -16,16 +16,6 @@ $masterString = "master"
 $ReactiveDomainRepo = ".\"
 $nupkgsDir = ".\nupkgs\"
 
-$buildSuffix = ""
-$TempNum = Get-Random -Minimum 1000 -Maximum 10000
-if ($args[0] -eq $null )
-{	
-	$buildSuffix = "-local" + $TempNum.ToString()
-}
-else
-{
-	$buildSuffix = $args[0]
-}
 Write-Host ("*********************   Begin Create Nuget script   **************************************")  
 
 Write-Host ("Copy ReactiveDomain build folder and nuspec files to a temp directory")
@@ -44,13 +34,17 @@ $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
 $sourceRDTestNuspec = Join-Path $sourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $sourceRDUINuspec = Join-Path $sourceDir "ReactiveDomain.UI.Debug.nuspec"
 $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
-
+$sourceRDIdentityTestNuspec = Join-Path $sourceDir "ReactiveDomain.IdentityStorage.Debug.nuspec"
+$sourceRDPolicyTestNuspec = Join-Path $sourceDir "ReactiveDomain.Policy.Debug.nuspec
 
 #target nuspec file paths in temp dir
 $ReactiveDomainNuspec = Join-Path $tempSourceDir "ReactiveDomain.Debug.nuspec"
 $ReactiveDomainTestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $ReactiveDomainUINuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Debug.nuspec"
 $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
+$ReactiveDomainIdentityNuspec = Join-Path $tempSourceDir "ReactiveDomain.IdentityStorage.Debug.nuspec"
+$ReactiveDomainPolicyNuspec = Join-Path $tempSourceDir "ReactiveDomain.Policy.Debug.nuspec"
+#$ReactiveDomainUsersNuspec = Join-Path $tempSourceDir "ReactiveDomain.Users.Debug.nuspec"
 
 
 #copy nuspec files to temp
@@ -58,6 +52,9 @@ Copy-Item $sourceRDNuspec -Destination $ReactiveDomainNuspec
 Copy-Item $sourceRDTestNuspec -Destination $ReactiveDomainTestingNuspec
 Copy-Item $sourceRDUINuspec -Destination $ReactiveDomainUINuspec
 Copy-Item $sourceRDUITestNuspec -Destination $ReactiveDomainUITestingNuspec
+Copy-Item $sourceRDIdentityTestNuspec -Destination $ReactiveDomainIdentityNuspec
+Copy-Item $sourceRDPolicyTestNuspec -Destination $ReactiveDomainPolicyNuspec
+#Copy-Item $sourceRDUsersTestNuspec -Destination $ReactiveDomainUsersNuspec
 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
@@ -74,8 +71,13 @@ $minor = $localRDVersion.InnerText.Split('.')[1]
 $build = $localRDVersion.InnerText.Split('.')[2]
 $revision = $localRDVersion.InnerText.Split('.')[3]
 
-$RDVersion = $major + "." + $minor + "." + $build + "." + $revision + $buildSuffix
+# Use random numbers for build revs
+$RandomMajor = Get-Random -Minimum 100 -Maximum 1000
+$RandomMinor = Get-Random -Minimum 100 -Maximum 1000
+$RandomBuild = Get-Random -Minimum 100 -Maximum 1000
+$RandomRevision = Get-Random -Minimum 100 -Maximum 1000
 
+$RDVersion = $RandomMajor.ToString() + "." + $RandomMinor.ToString() + "." + $RandomBuild.ToString() + "." + $RandomRevision.ToString()
 Write-Host "Debug ReactiveDomain nuget version is: " $RDVersion
 
 #list of target projects
@@ -87,8 +89,8 @@ $ReactiveDomainTestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Testi
 $RDUIProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
 $RDUITestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
 $RDUsersProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Users.csproj"
-$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Policy.csproj"
-$RDIdentityProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Identity.csproj"
+$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
+$RDIdentityProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Identity\ReactiveDomain.Identity.csproj"
 
 $nuget = $ReactiveDomainRepo + "\src\.nuget\nuget.exe"
 
@@ -98,6 +100,8 @@ Write-Host ("ReactiveDomain nuspec file is " + $ReactiveDomainNuspec)
 Write-Host ("ReactiveDomain.Testing nuspec file is " + $ReactiveDomainTestingNuspec)
 Write-Host ("ReactiveDomain.UI nuspec file is " + $ReactiveDomainUINuspec)
 Write-Host ("ReactiveDomain.UI.Testing nuspec file is " + $ReactiveDomainUITestingNuspec)
+Write-Host ("ReactiveDomain.Identity.Testing nuspec file is " + $ReactiveDomainIdentityNuspec)
+Write-Host ("ReactiveDomain.Policy.Testing nuspec file is " + $sourceRDPolicyTestNuspec)
 Write-Host ("Branch is file is " + $branch)
 
 class PackagRef
@@ -286,8 +290,10 @@ UpdateDependencyVersions $ReactiveDomainTestingNuspec $ReactiveDomainTestingProj
 UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject 
 
 # These go into updating the ReactiveDomain.IdentityStorage.nuspec
-UpdateDependencyVersions $ReactiveDomainIdentityStorageNuspec $RDIdentityStorageProject 
+UpdateDependencyVersions $ReactiveDomainIdentityNuspec $RDIdentityProject 
 
+# These go into updating the ReactiveDomain.Policy.nuspec
+UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDPolicyProject 
 
 # *******************************************************************************************************
 
@@ -301,7 +307,8 @@ $versionString = $RDVersion
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString -OutputDirectory $nupkgsDir
 & $nuget pack $ReactiveDomainUINuspec -Version $versionString -OutputDirectory $nupkgsDir
 & $nuget pack $ReactiveDomainUITestingNuspec -Version $versionString -OutputDirectory $nupkgsDir
-& $nuget pack $ReactiveDomainIdentityStorageNuspec -Version $versionString -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainIdentityNuspec -Version $versionString -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainPolicyNuspec -Version $versionString -OutputDirectory $nupkgsDir
 
 # *******************************************************************************************************************************
 
