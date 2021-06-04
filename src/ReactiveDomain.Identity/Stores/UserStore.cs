@@ -31,7 +31,7 @@ namespace ReactiveDomain.Identity.Stores
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
                 _userSvc.Handle(
-                    MessageBuilder.New(()=>
+                    MessageBuilder.New(() =>
                     new UserMsgs.UpdateUserDetails(
                     userId,
                     retrievedUser.GivenName,
@@ -42,9 +42,9 @@ namespace ReactiveDomain.Identity.Stores
             else //User not present in ES Add User and Subject for Audit Tracking
             {
                 userId = Guid.NewGuid();
-                var createMsg = 
+                var createMsg =
                     MessageBuilder.New(
-                        ()=> new UserMsgs.CreateUser(
+                        () => new UserMsgs.CreateUser(
                             userId,
                             retrievedUser.GivenName,
                             retrievedUser.Surname,
@@ -54,7 +54,7 @@ namespace ReactiveDomain.Identity.Stores
                 _userSvc.Handle(
                     MessageBuilder
                         .From(createMsg)
-                        .Build(()=>
+                        .Build(() =>
                             new UserMsgs.MapToAuthDomain(
                             userId,
                             retrievedUser.Sid.Value,
@@ -71,19 +71,18 @@ namespace ReactiveDomain.Identity.Stores
             }
         }
         //return the allowed client scopes the user has access to 
-        public List<Claim> GetAccessClaims(UserPrincipal retrievedUser, string domain)
-
+        public List<Claim> GetAdditionalClaims(UserPrincipal retrievedUser, string domain)
         {
-            var claims = new List<Claim>();
-            if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
-            {
-                var user = _usersRm.UsersById[userId];
-                foreach (var clientScope in user.Scopes)
-                {
-                    claims.Add(new Claim("policy-access", clientScope));
-                }
+            var claimList = new List<Claim>();
+            if (!_usersRm.HasUser(retrievedUser.Sid.Value, domain, out var userId)) {
+                return claimList;
             }
-            return claims;
+            foreach (string scope in _usersRm.UsersById[userId].Scopes)
+            {
+                claimList.Add(new Claim("policy-access", scope));
+            }
+            claimList.Add(new Claim("rd-userid", userId.ToString()));
+            return claimList;
         }
 
         //Add events to the Subject for tracking the authentication status results
@@ -126,6 +125,6 @@ namespace ReactiveDomain.Identity.Stores
             }
 
         }
-       
+
     }
 }

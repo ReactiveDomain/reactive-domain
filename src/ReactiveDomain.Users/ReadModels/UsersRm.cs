@@ -16,7 +16,7 @@ namespace ReactiveDomain.Users.ReadModels
 
         public UsersRm(IConfiguredConnection conn) : base(nameof(UsersRm), () => conn.GetListener(nameof(UsersRm)))
         {
-            long position;
+            long? position;
             using (var reader = conn.GetReader(nameof(UsersRm)))
             {
                 reader.EventStream.Subscribe<UserMsgs.UserEvent>(this);

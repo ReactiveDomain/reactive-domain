@@ -24,7 +24,7 @@ namespace ReactiveDomain.Identity
             //    displayName: "Your profile data"));
             _resources.IdentityResources.Add(new IdentityResource(
                 name:"rd-policy",
-                userClaims:  new []{"policy-access"},
+                userClaims:  new []{"policy-access", "rd-userid"},
                 displayName: "Reactive Domain Access Policy"));
         }
         //todo:use hash set operations for comparisons
