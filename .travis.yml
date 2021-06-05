@@ -28,7 +28,7 @@ script:
   - dotnet restore ./src/ReactiveDomain.sln -s https://api.nuget.org/v3/index.json
   - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Debug
   - dotnet msbuild ./src/ReactiveDomain.sln -p:Configuration=Release
-  #- dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj
+  # - dotnet test ./src/ReactiveDomain.Messaging.Tests/ReactiveDomain.Messaging.Tests.csproj #TODO: Fix unit test
   - dotnet test ./src/ReactiveDomain.Foundation.Tests/ReactiveDomain.Foundation.Tests.csproj  
   - dotnet test ./src/ReactiveDomain.Transport.Tests/ReactiveDomain.Transport.Tests.csproj
 
