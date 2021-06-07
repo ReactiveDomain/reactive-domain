@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace ReactiveDomain.Policy.ReadModels
@@ -67,5 +68,9 @@ namespace ReactiveDomain.Policy.ReadModels
         /// The authentication time.
         /// </value>
         public DateTime AuthenticationTime { get; internal set; }
+
+        public HashSet<string> RoleSet { get; internal set; }
+        public HashSet<Type> PermissionSet { get; internal set; }
+
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Security.Claims;
+﻿using System.Collections.Generic;
+using System.Security.Claims;
+using ReactiveDomain.Foundation;
+using ReactiveDomain.Policy.ReadModels;
 using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Users.ReadModels;
 
@@ -11,7 +14,7 @@ namespace ReactiveDomain.Policy.Application
         string ClientId { get; }
         string[] RedirectionUris { get; }
         string ClientSecret { get; }
-        bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out UserDTO user);
-        UserDTO GetCurrentUser();
+        PolicyUser GetPolicyUserFrom(UserDTO user, IConfiguredConnection conn, List<string> additionalRoles);
+        IReadOnlyList<PolicyUser>  PolicyUsers { get; }
     }
 }

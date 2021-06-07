@@ -10,7 +10,7 @@ namespace ReactiveDomain.Users.Sevices
     /// The service that fronts the User aggregate.
     /// </summary>
     public class UserSvc :
-        IHandleCommand<UserMsgs.CreateUser>,    
+        IHandleCommand<UserMsgs.CreateUser>,
         IHandleCommand<UserMsgs.Deactivate>,
         IHandleCommand<UserMsgs.Activate>,
         IHandleCommand<UserMsgs.UpdateUserDetails>,
@@ -25,18 +25,25 @@ namespace ReactiveDomain.Users.Sevices
         /// </summary>
         /// <param name="repo">The repository for interacting with the EventStore.</param>
         /// <param name="bus">The dispatcher.</param>
-        public UserSvc(IRepository repo)
+        public UserSvc(IRepository repo, IDispatcher bus)
         {
-            _repo = new CorrelatedStreamStoreRepository(repo);                 
-        }      
+            _repo = new CorrelatedStreamStoreRepository(repo);
+            bus.Subscribe<UserMsgs.CreateUser>(this);
+            bus.Subscribe<UserMsgs.Deactivate>(this);
+            bus.Subscribe<UserMsgs.Activate>(this);
+            bus.Subscribe<UserMsgs.UpdateUserDetails>(this);
+            bus.Subscribe<UserMsgs.MapToAuthDomain>(this);
+            bus.Subscribe<UserMsgs.AddClientScope>(this);
+            bus.Subscribe<UserMsgs.RemoveClientScope>(this);
+        }
 
         /// <summary>
         /// Handle a UserMsgs.CreateUser command.
         /// </summary>
         public CommandResponse Handle(UserMsgs.CreateUser command)
-        {           
+        {
             var user = new User(
-                            command.UserId,                          
+                            command.UserId,
                             command.FullName,
                             command.GivenName,
                             command.Surname,
@@ -61,7 +68,7 @@ namespace ReactiveDomain.Users.Sevices
             _repo.Save(user);
             return command.Succeed();
         }
-    
+
         public CommandResponse Handle(UserMsgs.UpdateUserDetails command)
         {
             var user = _repo.GetById<User>(command.UserId, command);
@@ -73,7 +80,7 @@ namespace ReactiveDomain.Users.Sevices
             _repo.Save(user);
             return command.Succeed();
         }
-        
+
         /// <summary>
         /// Handle a UserMsgs.UpdateAuthDomain command.
         /// </summary>
@@ -82,13 +89,13 @@ namespace ReactiveDomain.Users.Sevices
             var user = _repo.GetById<User>(command.UserId, command);
             user.MapToAuthDomain(
                 command.SubjectId,
-                command.AuthProvider,                
+                command.AuthProvider,
                 command.AuthDomain,
                 command.UserName);
 
             _repo.Save(user);
             return command.Succeed();
-        }       
+        }
 
         public CommandResponse Handle(UserMsgs.AddClientScope command)
         {

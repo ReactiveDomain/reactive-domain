@@ -5,6 +5,7 @@ using System.Security.Claims;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Identity.Domain;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
@@ -20,7 +21,7 @@ namespace ReactiveDomain.Identity.Stores
 
         public UserStore(IConfiguredConnection conn)
         {
-            _userSvc = new UserSvc(conn.GetRepository());
+            _userSvc = new UserSvc(conn.GetRepository(), new Dispatcher("bus-to-nowhere"));
             _usersRm = new UsersRm(conn);
             _repo = conn.GetCorrelatedRepository();
         }
@@ -74,7 +75,8 @@ namespace ReactiveDomain.Identity.Stores
         public List<Claim> GetAdditionalClaims(UserPrincipal retrievedUser, string domain)
         {
             var claimList = new List<Claim>();
-            if (!_usersRm.HasUser(retrievedUser.Sid.Value, domain, out var userId)) {
+            if (!_usersRm.HasUser(retrievedUser.Sid.Value, domain, out var userId))
+            {
                 return claimList;
             }
             foreach (string scope in _usersRm.UsersById[userId].Scopes)

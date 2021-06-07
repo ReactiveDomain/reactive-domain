@@ -70,12 +70,15 @@ namespace ReactiveDomain.Policy.Application
 
         public bool IsAllowed<T>() where T : class => _effectivePermissions.Any(ep => ep == typeof(T));
 
-        internal void SetRoleId(Guid id)
+        internal void SetRoleId(Guid roleId, Guid policyId)
         {
-            if (id == RoleId) return;
-            if (id == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(id), "Cannot set roleId to guid.empty");
+            if (roleId == RoleId) return;
+            if (roleId == Guid.Empty ) throw new ArgumentOutOfRangeException(nameof(roleId), "Cannot set roleId to guid.empty");
+            if (policyId == Guid.Empty) throw new ArgumentOutOfRangeException(nameof(policyId), "Cannot set policyId to guid.empty");
             if (RoleId != Guid.Empty) throw new InvalidOperationException("cannot change RoleID ");
-            RoleId = id;
+            if (PolicyId != Guid.Empty) throw new InvalidOperationException("cannot change PolicyId ");
+            RoleId = roleId;
+            PolicyId = policyId;
         }
     }
 }

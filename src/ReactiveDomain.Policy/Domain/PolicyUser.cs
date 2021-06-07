@@ -1,20 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Util;
-
+[assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
 namespace ReactiveDomain.Policy.Domain
 {
     /// <summary>
     /// Aggregate for a User in an application policy.
     /// </summary>
-    public class PolicyUser : AggregateRoot {
+    internal class PolicyUser : AggregateRoot {
 
         private Guid _userId;
         private Guid _policyId;
+        private HashSet<string> _roles = new HashSet<string>();
         public Guid PolicyId => _policyId;
         public Guid UserId => _userId;
+        public HashSet<string> Roles => new HashSet<string>(_roles);
+        private bool _active;
+
         // ReSharper disable once UnusedMember.Local
         // used via reflection in the repository
         private PolicyUser()
@@ -24,13 +30,32 @@ namespace ReactiveDomain.Policy.Domain
 
         private void RegisterEvents()
         {
-          Register<PolicyUserMsgs.PolicyUserAdded>(Apply);
+            Register<PolicyUserMsgs.PolicyUserAdded>(Apply);
+            Register<PolicyUserMsgs.RoleAdded>(Apply);
+            Register<PolicyUserMsgs.RoleRemoved>(Apply);
+            Register<PolicyUserMsgs.UserDeactivated>(Apply);
+            Register<PolicyUserMsgs.UserReactivated>(Apply);
         }
         //Apply State Changes
         private void Apply(PolicyUserMsgs.PolicyUserAdded @event) {
             Id = @event.PolicyUserId;
             _policyId = @event.PolicyId;
             _userId = @event.UserId;
+            _active = true;
+        }
+
+        private void Apply(PolicyUserMsgs.RoleAdded @event) {
+            _roles.Add(@event.RoleName);
+        }
+
+        private void Apply(PolicyUserMsgs.RoleRemoved @event) {
+            _roles.Remove(@event.RoleName);
+        }
+        private void Apply(PolicyUserMsgs.UserDeactivated @event) {
+            _active = false;
+        }
+        private void Apply(PolicyUserMsgs.UserReactivated @event) {
+            _active = true;
         }
 
         //Public Methods
@@ -53,7 +78,8 @@ namespace ReactiveDomain.Policy.Domain
             Raise(new PolicyUserMsgs.PolicyUserAdded(
                          id,
                          user.Id,
-                         policy.Id
+                         policy.Id,
+                         policy.AppId
                          ));
         }
 
@@ -64,5 +90,15 @@ namespace ReactiveDomain.Policy.Domain
             Raise(new PolicyUserMsgs.RoleRemoved(Id,roleId,roleName));
         }
 
+        public void Deactivate() {
+            if (!_active) { return; }
+            Raise(new PolicyUserMsgs.UserDeactivated(Id));
+        }
+
+        public void Reactivate() {
+            if (_active) { return; }
+            Raise(new PolicyUserMsgs.UserReactivated(Id));
+
+        }
     }
 }

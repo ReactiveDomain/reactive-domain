@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Users.Messages;
@@ -13,21 +14,28 @@ namespace ReactiveDomain.Users.ReadModels
     {
         public readonly Dictionary<string, Guid> UserIdsBySubjectAtDomain = new Dictionary<string, Guid>();
         public readonly Dictionary<Guid, UserDTO> UsersById = new Dictionary<Guid, UserDTO>();
-
+        private readonly List<Guid> _userIds = new List<Guid>();
         public UsersRm(IConfiguredConnection conn) : base(nameof(UsersRm), () => conn.GetListener(nameof(UsersRm)))
         {
             long? position;
+            EventStream.Subscribe<UserMsgs.UserEvent>(this);
             using (var reader = conn.GetReader(nameof(UsersRm)))
             {
-                reader.EventStream.Subscribe<UserMsgs.UserEvent>(this);
+                reader.EventStream.Subscribe<Message>(this);
                 reader.Read<User>();
-                position = reader.Position ?? StreamPosition.Start;
+                position = reader.Position;
             }
-            EventStream.Subscribe<UserMsgs.UserEvent>(this);
-            Start<User>(checkpoint: position);
+
+            Start<User>(checkpoint: position, blockUntilLive: true);
         }
 
-
+        public List<Guid> GetUserIds()
+        {
+            lock (_userIds)
+            {
+                return new List<Guid>(_userIds);
+            }
+        }
         public bool HasUser(string subjectId, string authDomain, out Guid userId)
         {
             var subject = $"{subjectId}@{authDomain}";
@@ -44,6 +52,10 @@ namespace ReactiveDomain.Users.ReadModels
             switch (@event)
             {
                 case UserMsgs.UserCreated created:
+                    lock (_userIds)
+                    {
+                        _userIds.Add(@event.UserId);
+                    }
                     UsersById.Add(created.UserId, new UserDTO(created.UserId));
                     break;
                 case UserMsgs.AuthDomainMapped mapped:

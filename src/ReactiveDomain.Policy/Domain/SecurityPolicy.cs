@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ReactiveDomain.Foundation.Domain;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
-
+[assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
 namespace ReactiveDomain.Policy.Domain
 {
 
-    public class SecurityPolicy : ChildEntity
+    internal class SecurityPolicy : ChildEntity
     {
         private readonly Dictionary<Guid, string> _rolesById = new Dictionary<Guid, string>();
         private readonly Dictionary<string, Guid> _rolesByName = new Dictionary<string, Guid>();

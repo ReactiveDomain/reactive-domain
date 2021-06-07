@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
 
+[assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
 namespace ReactiveDomain.Policy.Domain
 {
     /// <summary>
     /// Aggregate for a Application.
     /// </summary>
-    public class SecuredApplication : AggregateRoot
+   
+    internal class SecuredApplication : AggregateRoot
     {
         private readonly Dictionary<Guid, SecurityPolicy> _policies = new Dictionary<Guid, SecurityPolicy>();
         private readonly HashSet<string> _policyNames = new HashSet<string>();

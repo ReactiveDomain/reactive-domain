@@ -84,7 +84,6 @@ namespace ReactiveDomain.Policy.Application
                                 _policyName,
                                 Guid.Empty,
                                 _app,
-                                _findUserFunc,
                                 _roles.Values.ToList());
             Dispose();
             return policy;

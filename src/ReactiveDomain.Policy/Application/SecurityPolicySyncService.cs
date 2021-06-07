@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Policy.ReadModels;
+using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Policy.Application
 {
@@ -20,15 +21,7 @@ namespace ReactiveDomain.Policy.Application
         IHandle<ApplicationMsgs.STSClientDetailsAdded>,
         IHandle<ApplicationMsgs.STSClientSecretAdded>,
         IHandle<ApplicationMsgs.PolicyCreated>,
-        IHandle<RoleMsgs.RoleCreated>//,
-                                     //IHandle<UserMsgs.UserCreated>,
-                                     //IHandle<UserMsgs.Deactivated>,
-                                     //IHandle<UserMsgs.Activated>,
-                                     //IHandle<UserMsgs.RoleAssigned>,
-                                     //IHandle<UserMsgs.AuthDomainUpdated>,
-                                     //IHandle<UserMsgs.UserNameUpdated>,
-                                     //IHandle<UserMsgs.RoleUnassigned>
-    {
+        IHandle<RoleMsgs.RoleCreated> {
         //public data
         public SecurityPolicy Policy;
 
@@ -95,7 +88,7 @@ namespace ReactiveDomain.Policy.Application
                     var application = repo.GetById<Domain.SecuredApplication>(appId, source);
                     application.DefaultPolicy.AddRole(roleId, role.Name);
                     repo.Save(application);
-                    role.SetRoleId(roleId);
+                    role.SetRoleId(roleId, Policy.PolicyId);
                     _roles.Add(roleId, new Role(roleId, role.Name, role.PolicyId));
                 }
             }
@@ -110,18 +103,21 @@ namespace ReactiveDomain.Policy.Application
                 }
                 else
                 {
-                    baseRole.SetRoleId(role.RoleId);
+                    baseRole.SetRoleId(role.RoleId, Policy.PolicyId);
                 }
             }
-
-            //_subjectRM = new SubjectRM(() => conn.GetQueuedListener(nameof(SubjectRM)));
-
-            //todo: subscribe to user assignments
-
-            //todo: subscribe to user stream???
+            
+            var usersRm = new UsersRm(conn);
+            var userIds = usersRm.GetUserIds();
+            foreach (var id in userIds) {
+                if (usersRm.UsersById.TryGetValue(id, out var user)) {
+                    Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(user, conn, new List<string>()));
+                }
+            }
+            //todo: update/replace policy users as users are added and role assignments change ??
             //Start<ApplicationRoot>(appId, blockUntilLive: true);
         }
-
+        
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
             if (dbApp != null) { return; }
@@ -150,8 +146,7 @@ namespace ReactiveDomain.Policy.Application
             dbApp.AddPolicy(
                 new SecurityPolicy(
                     @event.ClientId,
-                    @event.PolicyId, dbApp,
-                    principal => default
+                    @event.PolicyId, dbApp
                 )
             );
         }
@@ -169,84 +164,6 @@ namespace ReactiveDomain.Policy.Application
                     @event.Name,
                     Policy.PolicyId));
         }
-
-
-        /*
-        /// <summary>
-        /// Handle a UserMsgs.UserCreated event.
-        /// </summary>
-        public void Handle(UserMsgs.UserCreated @event) {
-            if (_users.ContainsKey(@event.Id)) return;
-            _users.Add(
-                @event.Id,
-                new UserModel(
-                    @event.Id,
-                    @event.UserName,
-                    @event.SubjectId,
-                    @event.AuthDomain));
-        }
-        public void Handle(UserMsgs.Deactivated @event)
-        {
-            if (!_users.ContainsKey(@event.UserId)) return;
-            _users[@event.UserId].IsActivated = false;
-        }
-
-        public void Handle(UserMsgs.Activated @event)
-        {
-            if (!_users.ContainsKey(@event.UserId)) return;
-            _users[@event.UserId].IsActivated = true;
-        }
-
-        public void Handle(UserMsgs.RoleAssigned @event)
-        {
-            if (!_users.ContainsKey(@event.UserId) || !_roles.ContainsKey(@event.RoleId)) return;
-            var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if( role != null) return;
-            _users[@event.UserId].Roles.Add(_roles[@event.RoleId]);
-        }
-
-        public void Handle(UserMsgs.RoleUnassigned @event)
-        {
-            if (!_users.ContainsKey(@event.UserId)|| !_roles.ContainsKey(@event.RoleId)) return;
-            var role = _users[@event.UserId].Roles.FirstOrDefault(r => r.RoleId == @event.RoleId);
-            if( role == null) return;
-            _users[@event.UserId].Roles.Remove(role);
-        }
-        public void Handle(UserMsgs.AuthDomainUpdated @event)
-        {
-            if (!_users.ContainsKey(@event.UserId)) return;
-            _users[@event.UserId].AuthDomain = @event.AuthDomain;
-        }
-        public void Handle(UserMsgs.UserNameUpdated @event)
-        {
-            if (!_users.ContainsKey(@event.UserId)) return;
-            _users[@event.UserId].UserName = @event.UserName;
-        }
-        public List<Role> RolesForUser(
-            string subjectId,
-            string userName,
-            string authDomain,
-            Application application)
-        {
-            var user = _users.Values.FirstOrDefault(x =>
-                x.AuthDomain.Equals(authDomain, StringComparison.CurrentCultureIgnoreCase)
-                && (string.IsNullOrEmpty(subjectId) ||
-                    string.IsNullOrEmpty(x.SubjectId)
-                    ? x.UserName.Equals(userName, StringComparison.CurrentCultureIgnoreCase)
-                    : x.SubjectId.Equals(subjectId, StringComparison.CurrentCultureIgnoreCase))
-
-            );
-            if (user == null)
-            {
-                throw new UserNotFoundException("UserId = " + subjectId + ", authDomain = " + authDomain);
-            }
-            if (!user.IsActivated)
-            {
-                throw new UserDeactivatedException("UserId = " + subjectId + ", authDomain = " + authDomain);
-            }
-            return user.Roles.FindAll(x => x.Application == application);
-        }
-        */
         class SyncServiceCorrelationSource : ICorrelatedMessage
         {
             public Guid MsgId => Guid.NewGuid();

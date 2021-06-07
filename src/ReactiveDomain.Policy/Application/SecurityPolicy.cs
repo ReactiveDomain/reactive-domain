@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
-using ReactiveDomain.Policy.ReadModels;
-using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Policy.Application
@@ -13,12 +11,13 @@ namespace ReactiveDomain.Policy.Application
         public readonly string PolicyName;
         public Guid PolicyId { get; internal set; }
         private readonly List<Role> _roles;
-        private readonly List<UserDTO> _users = new List<UserDTO>();
-        private Func<ClaimsPrincipal, UserDTO> _findUser;
-
+        private readonly List<PolicyUser> _policyUsers = new List<PolicyUser>();
+        public IReadOnlyList<PolicyUser> PolicyUsers => _policyUsers.AsReadOnly();
+        private Guid _currentUser;
+        public PolicyUser CurrentUser { get; private set; }
         public SecuredApplication OwningApplication { get; }
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
-        public IReadOnlyList<UserDTO> Users => _users.AsReadOnly();
+
         public string ApplicationName => OwningApplication.Name;
         public string ApplicationVersion => OwningApplication.Version;
 
@@ -26,49 +25,15 @@ namespace ReactiveDomain.Policy.Application
         public string[] RedirectionUris => OwningApplication.RedirectionUris;
         public string ClientSecret => OwningApplication.ClientSecret;
 
-        public AuthorizedUser CurrentUser { get; set; }
-
-        public bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out User user)
-        {
-            throw new NotImplementedException();
-            //todo:case no users at all - debug auto start
-            //if (!_users.Any()) {
-            //    user = new User(Guid.NewGuid(), authenticatedUser.Identity.Name,authenticatedUser.Identity.);
-            //    AddUser();
-            //    return true;
-            //}
-            //todo: check if user is authorized
-        }
-
-        public bool TrySetCurrentUser(ClaimsPrincipal authenticatedUser, out UserDTO user) {
-            throw new NotImplementedException();
-        }
-
-        UserDTO ISecurityPolicy.GetCurrentUser() {
-            throw new NotImplementedException();
-        }
-
-        public User GetCurrentUser()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool HasUsers()
-        {
-            return _users.Any();
-        }
-
         public SecurityPolicy(
             string policyName,
             Guid policyId,
             SecuredApplication owningApplication,
-            Func<ClaimsPrincipal, UserDTO> findUser,
             List<Role> roles = null)
         {
             PolicyName = policyName;
             PolicyId = policyId;
             OwningApplication = owningApplication;
-            _findUser = findUser;
             _roles = roles ?? new List<Role>();
         }
 
@@ -77,15 +42,67 @@ namespace ReactiveDomain.Policy.Application
         {
             _roles.Add(role);
         }
-        //used for synchronizing with the backing store
-        internal void AddUser(UserDTO user)
+        public void AddOrUpdateUser(PolicyUser user)
         {
-            _users.Add(user);
+            lock (_policyUsers)
+            {
+                bool updated = false;
+                for (var index = 0; index < PolicyUsers.Count; index++)
+                {
+                    if (PolicyUsers[index].User.UserId != user.User.UserId) continue;
+                    _policyUsers[index] = user;
+                    updated = true;
+                    break;
+                }
+                if (!updated)
+                {
+                    _policyUsers.Add(user);
+                }
+            }
+            SetCurrentUser(_currentUser);
         }
 
-        public UserDTO ResolveUser(ClaimsPrincipal principal) => _findUser(principal);
+        public void RemoveUser(Guid userId) {
+            bool removed = false;
+            lock (_policyUsers)
+            {
+                for (var index = 0; index < PolicyUsers.Count; index++)
+                {
+                    if (PolicyUsers[index].User.UserId != userId) continue;
+                   var user = _policyUsers[index];
+                   _policyUsers.Remove(user);
+                   removed = true;
+                    break;
+                }
+            }
 
-        public IReadOnlyList<Type> GetEffectivePermissions(IEnumerable<Role> roles)
+            if (removed) {
+                SetCurrentUser(_currentUser);
+            }
+        }
+        public void SetCurrentUser(Guid userId)
+        {
+            lock (_policyUsers)
+            {
+                _currentUser = userId;
+                CurrentUser = _policyUsers.FirstOrDefault(u => u.User.UserId == _currentUser);
+            }
+        }
+        public PolicyUser GetPolicyUserFrom(UserDTO user, IConfiguredConnection conn, List<string> additionalRoles)
+        {
+            var repo = conn.GetRepository();
+            if (!repo.TryGetById<Domain.PolicyUser>(user.UserId, out var domainUser))
+            {
+                //todo: add new policy user via the policy aggregate in the Policy Service
+            }
+            var roleNames = domainUser?.Roles ?? new HashSet<string>();
+            roleNames.UnionWith(additionalRoles);
+            var roles = roleNames.Select(roleName => _roles.FirstOrDefault(r => r.Name == roleName)).Where(x => x != null).ToList();
+            var permissions = GetEffectivePermissions(roles);
+            return new PolicyUser(user, roles, permissions);
+        }
+
+        private IReadOnlyList<Type> GetEffectivePermissions(IEnumerable<Role> roles)
         {
             HashSet<Type> permissions = new HashSet<Type>();
 
