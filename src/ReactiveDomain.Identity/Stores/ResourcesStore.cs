@@ -27,7 +27,7 @@ namespace ReactiveDomain.Identity
                 userClaims:  new []{"policy-access", "rd-userid"},
                 displayName: "Reactive Domain Access Policy"));
         }
-        //todo:use hash set operations for comparisons
+        //todo:use hash set operations for comparisons line 39 & 50 Identity resources is a collection
 
         public async Task<IEnumerable<IdentityResource>> FindIdentityResourcesByScopeNameAsync(
             IEnumerable<string> scopeNames)
