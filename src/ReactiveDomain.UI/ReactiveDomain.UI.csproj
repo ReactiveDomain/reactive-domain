@@ -7,19 +7,14 @@
  
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="reactiveui" Version="7.4.0" Condition="'$(TargetFramework)'=='net452'" />
-    <PackageReference Include="reactiveui" Version="9.22.1" Condition="'$(TargetFramework)'=='net472'" />
-    <PackageReference Include="reactiveui" Version="9.22.1" Condition="'$(TargetFramework)'=='netstandard2.1'" />
+    <PackageReference Include="reactiveui" Version="9.22.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'!='net472'">
-    <Compile Remove="ViewObjects\Threading.cs" />
-  </ItemGroup>
   <ItemGroup>    
-    <Reference Include="PresentationFramework" Condition="'$(TargetFramework)'=='net472'" />
+    <Reference Include="PresentationFramework"/>
   </ItemGroup>
 </Project>

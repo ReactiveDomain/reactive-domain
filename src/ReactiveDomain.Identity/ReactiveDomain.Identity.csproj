@@ -6,35 +6,6 @@
     <Version>0.8.23-beta58</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Identity\**" />
-    <Compile Remove="Messages\**" />
-    <Compile Remove="PolicyModel\**" />
-    <Compile Remove="Policy\**" />
-    <EmbeddedResource Remove="Identity\**" />
-    <EmbeddedResource Remove="Messages\**" />
-    <EmbeddedResource Remove="PolicyModel\**" />
-    <EmbeddedResource Remove="Policy\**" />
-    <None Remove="Identity\**" />
-    <None Remove="Messages\**" />
-    <None Remove="PolicyModel\**" />
-    <None Remove="Policy\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="AccountOptions.cs" />
-    <Compile Remove="ActiveDirectoryUserSearch.cs" />
-    <Compile Remove="Constants.cs" />
-    <Compile Remove="CustomScopes.cs" />
-    <Compile Remove="ExternalProvider.cs" />
-    <Compile Remove="Stores\CredentialValidationResult.cs" />
-    <Compile Remove="Stores\PersistedGrantStore.cs" />
-    <Compile Remove="SubjectAgg.cs" />
-    <Compile Remove="UserExceptions.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Messages\SubjectMsgs.cs" />
-  </ItemGroup> 
- <ItemGroup>
-    <!--<PackageReference Include="IdentityServer4" Version="4.1.2" />-->
     <PackageReference Include="IdentityServer4.Storage" Version="4.1.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

@@ -19,7 +19,4 @@
     <PackageReference Include="reactiveui" Version="9.22.1" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
-  <!--<ItemGroup Condition="'$(TargetFramework)'=='net48'">
-    <Compile Remove="Asserts.cs" />
-  </ItemGroup>-->
 </Project>

@@ -8,9 +8,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Constants.cs" />
-  </ItemGroup> 
-  <ItemGroup>
     <PackageReference Include="IdentityModel" Version="4.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

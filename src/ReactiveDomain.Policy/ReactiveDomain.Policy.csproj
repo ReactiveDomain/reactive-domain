@@ -6,7 +6,6 @@
     <Version>0.8.23-beta58</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Constants.cs" />
     <Compile Remove="ReadModels\AuthorizedUser.cs" />
   </ItemGroup> 
   <ItemGroup>
