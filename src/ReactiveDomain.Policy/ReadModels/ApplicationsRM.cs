@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -29,6 +30,8 @@ namespace ReactiveDomain.Policy.ReadModels
         //IHandle<UserPolicyMsgs.RoleRemoved>
         //IUserEntitlementRM
     {
+        public IConnectableCache<SecuredApplication,Guid> AppCache => _appCache;
+        private readonly SourceCache<SecuredApplication, Guid> _appCache = new SourceCache<SecuredApplication, Guid>(x => x.Id);
         public List<UserDTO> ActivatedUsers => _users.Values.Where(x => x.Active).ToList(); //todo: is this the best way?
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
@@ -128,14 +131,14 @@ namespace ReactiveDomain.Policy.ReadModels
         {
 
             if (_applications.ContainsKey(@event.ApplicationId)) return;
-
-            _applications.Add(
+            var app = new SecuredApplication(
                 @event.ApplicationId,
-                new SecuredApplication(
-                    @event.ApplicationId,
-                    @event.Name,
-                    @event.ApplicationVersion
-                ));
+                @event.Name,
+                @event.ApplicationVersion
+            );
+            _applications.Add(
+                @event.ApplicationId, app);
+            _appCache.AddOrUpdate(app);
         }
         public void Handle(ApplicationMsgs.STSClientDetailsAdded @event) {
             if (_applications.TryGetValue(@event.ApplicationId, out var app)) {
