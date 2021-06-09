@@ -41,7 +41,7 @@ namespace ReactiveDomain.EventStore
                 EsConnection.ConnectAsync().Wait();
             }
             catch (AggregateException aggregate) {
-                if (aggregate.InnerException is ES.Exceptions.CannotEstablishConnectionException) {
+                if (aggregate.InnerException is CannotEstablishConnectionException) {
                     throw new CannotEstablishConnectionException(aggregate.InnerException.Message, aggregate.InnerException);
                 }
                 throw;
@@ -64,10 +64,10 @@ namespace ReactiveDomain.EventStore
             {
                 if (events.Length < WriteBatchSize)
                 {
-                    return EsConnection.AppendToStreamAsync(stream, (int)expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
+                    return EsConnection.AppendToStreamAsync(stream, expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
                 }
 
-                var transaction = EsConnection.StartTransactionAsync(stream, (int)expectedVersion).Result;
+                var transaction = EsConnection.StartTransactionAsync(stream, expectedVersion).Result;
                 var position = 0;
                 while (position < events.Length)
                 {
@@ -95,8 +95,7 @@ namespace ReactiveDomain.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            //todo: why does this need an int with v 4.0 of eventstore?
-            var slice = EsConnection.ReadStreamEventsForwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsForwardAsync(stream, start, (int)count, true, credentials.ToESCredentials()).Result;
             switch (slice.Status)
             {
                 case ES.SliceReadStatus.Success:
@@ -116,8 +115,7 @@ namespace ReactiveDomain.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            //todo: why does this need an int with v 4.0 of eventstore?
-            var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, (int)start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, start, (int)count, true, credentials.ToESCredentials()).Result;
             switch (slice.Status)
             {
                 case ES.SliceReadStatus.Success:
@@ -227,8 +225,12 @@ namespace ReactiveDomain.EventStore
         }
 
 
-        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
+        public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
                         => EsConnection.DeleteStreamAsync(stream, expectedVersion, credentials.ToESCredentials()).Wait();
+
+        public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
+                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, true, credentials.ToESCredentials()).Wait();
+
         public void Dispose()
         {
             if (!_disposed)

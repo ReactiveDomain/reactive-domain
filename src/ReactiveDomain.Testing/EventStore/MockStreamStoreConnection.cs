@@ -429,11 +429,30 @@ namespace ReactiveDomain.Testing.EventStore
                 userCredentials);
         }
 
-        public void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null)
+        public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
             if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
                stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
+            }
+            if (stream.StartsWith("$")) {
+                throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
+            }
+            lock (_store) {
+                if (_store.ContainsKey(stream)) {
+                    _store.Remove(stream);
+                }
+                if (expectedVersion == ExpectedVersion.StreamExists) {
+                    throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
+        {
+            if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
+               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
             }
             if (stream.StartsWith("$")) {
                 throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));

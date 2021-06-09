@@ -105,6 +105,19 @@ namespace ReactiveDomain.Foundation.Tests
 
         }
 
+        [Fact]
+        public void can_delete_aggregate()
+        {
+            var newAccountId = Guid.NewGuid();
+            ICorrelatedMessage source = MessageBuilder.New(() => new when_using_correlated_repository.CreateAccount(newAccountId));
+            var newAccount = new when_using_correlated_repository.Account(newAccountId, source);
+            _cachingRepo.Save(newAccount);
+
+            var retrievedAccount = _cachingRepo.GetById<when_using_correlated_repository.Account>(newAccountId);
+            _cachingRepo.Delete(retrievedAccount);
+
+            Assert.Throws<AggregateNotFoundException>(() => _cachingRepo.GetById<when_using_correlated_repository.Account>(newAccountId));
+        }
 
         public class Account : EventDrivenStateMachine
         {

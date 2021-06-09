@@ -165,9 +165,21 @@ namespace ReactiveDomain.Foundation.Tests
 			Assert.NotNull(retrievedAccount2);
 			Assert.Equal(_accountId, retrievedAccount2.Id);
 			Assert.Equal(101, retrievedAccount.Balance);
+        }
 
-		}
-		
+        [Fact]
+        public void can_delete_aggregate()
+        {
+            var newAccountId = Guid.NewGuid();
+            ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(newAccountId));
+            var newAccount = new Account(newAccountId, source);
+			_correlatedRepo.Save(newAccount);
+
+            var retrievedAccount = _correlatedRepo.GetById<Account>(newAccountId, source);
+            _correlatedRepo.Delete(retrievedAccount);
+
+            Assert.Throws<AggregateNotFoundException>(() => _correlatedRepo.GetById<Account>(newAccountId, source));
+        }
 
 		public class Account : AggregateRoot
 		{

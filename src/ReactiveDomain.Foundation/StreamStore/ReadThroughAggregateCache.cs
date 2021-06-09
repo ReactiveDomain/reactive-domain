@@ -106,6 +106,25 @@ namespace ReactiveDomain.Foundation.StreamStore
 
 
         }
+
+        /// <summary>
+        /// Soft delete the aggregate. Its stream can be re-created by appending new events.
+        /// </summary>
+        /// <param name="aggregate">The aggregate to be deleted.</param>
+        public void Delete(IEventSource aggregate) {
+            _baseRepository.Delete(aggregate);
+            _knownAggregates.Remove(aggregate.Id);
+        }
+
+        /// <summary>
+        /// Hard delete the aggregate. This permanently deletes the aggregate's stream.
+        /// </summary>
+        /// <param name="aggregate">The aggregate to be deleted.</param>
+        public void HardDelete(IEventSource aggregate) {
+            _baseRepository.HardDelete(aggregate);
+            _knownAggregates.Remove(aggregate.Id);
+        }
+
         public bool Remove(Guid id) {
             return _knownAggregates.Remove(id);
         }

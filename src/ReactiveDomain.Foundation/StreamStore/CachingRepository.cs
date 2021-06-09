@@ -31,6 +31,12 @@ namespace ReactiveDomain.Foundation.StreamStore {
         public void Save(IEventSource aggregate) {
             _cache.Save(aggregate);
         }
+        public void Delete(IEventSource aggregate) {
+            _cache.Delete(aggregate);
+        }
+        public void HardDelete(IEventSource aggregate) {
+            _cache.HardDelete(aggregate);
+        }
         public bool ClearCache(Guid id) {
             return _cache.Remove(id);
         }
