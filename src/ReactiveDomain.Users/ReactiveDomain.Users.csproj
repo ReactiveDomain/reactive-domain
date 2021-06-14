@@ -8,6 +8,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="DynamicData" Version="7.1.17" />
     <PackageReference Include="IdentityModel" Version="4.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
@@ -18,5 +19,5 @@
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
-  </ItemGroup>
+  </ItemGroup> 
 </Project>

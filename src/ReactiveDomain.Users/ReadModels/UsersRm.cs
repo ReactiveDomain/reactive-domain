@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -14,6 +15,10 @@ namespace ReactiveDomain.Users.ReadModels
     {
         public readonly Dictionary<string, Guid> UserIdsBySubjectAtDomain = new Dictionary<string, Guid>();
         public readonly Dictionary<Guid, UserDTO> UsersById = new Dictionary<Guid, UserDTO>();
+
+        public IConnectableCache<UserDTO, Guid> AllUsers => _allUsers;
+        private readonly SourceCache<UserDTO, Guid> _allUsers = new SourceCache<UserDTO, Guid>(x => x.UserId);
+
         private readonly List<Guid> _userIds = new List<Guid>();
         public UsersRm(IConfiguredConnection conn) : base(nameof(UsersRm), () => conn.GetListener(nameof(UsersRm)))
         {
@@ -56,7 +61,9 @@ namespace ReactiveDomain.Users.ReadModels
                     {
                         _userIds.Add(@event.UserId);
                     }
-                    UsersById.Add(created.UserId, new UserDTO(created.UserId));
+                    var userDto  = new UserDTO(created.UserId);
+                    UsersById.Add(created.UserId, userDto);
+                    _allUsers.AddOrUpdate(userDto);
                     break;
                 case UserMsgs.AuthDomainMapped mapped:
                     var subject = $"{mapped.SubjectId}@{mapped.AuthDomain}";

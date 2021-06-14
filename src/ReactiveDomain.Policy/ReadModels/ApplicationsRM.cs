@@ -30,8 +30,12 @@ namespace ReactiveDomain.Policy.ReadModels
         //IHandle<UserPolicyMsgs.RoleRemoved>
         //IUserEntitlementRM
     {
-        public IConnectableCache<SecuredApplication,Guid> AppCache => _appCache;
-        private readonly SourceCache<SecuredApplication, Guid> _appCache = new SourceCache<SecuredApplication, Guid>(x => x.Id);
+        public IConnectableCache<SecuredApplication,Guid> RegisteredApplications => _registeredApplications;
+        private readonly SourceCache<SecuredApplication, Guid> _registeredApplications = new SourceCache<SecuredApplication, Guid>(x => x.Id);
+
+        public IConnectableCache<Role, Guid> ApplicationRoles => _applicationRoles;
+        private readonly SourceCache<Role, Guid> _applicationRoles = new SourceCache<Role, Guid>(x => x.RoleId);
+
         public List<UserDTO> ActivatedUsers => _users.Values.Where(x => x.Active).ToList(); //todo: is this the best way?
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
@@ -138,7 +142,7 @@ namespace ReactiveDomain.Policy.ReadModels
             );
             _applications.Add(
                 @event.ApplicationId, app);
-            _appCache.AddOrUpdate(app);
+            _registeredApplications.AddOrUpdate(app);
         }
         public void Handle(ApplicationMsgs.STSClientDetailsAdded @event) {
             if (_applications.TryGetValue(@event.ApplicationId, out var app)) {
@@ -159,12 +163,15 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (_roles.ContainsKey(@event.RoleId)) return;
 
+            var role = new Role(
+                            @event.RoleId,
+                            @event.Name,
+                            @event.PolicyId);
             _roles.Add(
                 @event.RoleId,
-                new Role(
-                    @event.RoleId,
-                    @event.Name,
-                    @event.PolicyId));
+                role);
+
+            _applicationRoles.AddOrUpdate(role);
         }
         
         //public void Handle(UserPolicyMsgs.RoleAdded @event)
