@@ -137,15 +137,23 @@ namespace ReactiveDomain.Users.Domain
             string fullName = null,
             string email = null)
         {
-            if (givenName == null && surName == null && fullName == null && email == null) { return; }
-            Raise(new UserMsgs.UserDetailsUpdated(
-                        Id,
-                        givenName ?? _givenName,
-                        surName ?? _surname,
-                        fullName ?? _fullName,
-                        email ?? _email));
+            if (IsChange(givenName, _givenName) ||
+                IsChange(surName, _surname) ||
+                IsChange(fullName, _fullName) ||
+                IsChange(email, _email))
+            {
+                Raise(new UserMsgs.UserDetailsUpdated(
+                            Id,
+                            givenName ?? _givenName,
+                            surName ?? _surname,
+                            fullName ?? _fullName,
+                            email ?? _email));
+            }
         }
-
+        private bool IsChange(string input, string existing) {
+            if (input == null) { return false; }
+            return string.Equals(input, existing, StringComparison.Ordinal);
+        }
 
     }
 }
