@@ -1,6 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Identity.Messages;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Identity.Domain
@@ -24,6 +25,7 @@ namespace ReactiveDomain.Identity.Domain
         /// </summary>
         public Subject(
             Guid id,
+            Guid userId,
             string subClaim,
             string authProvider,
             string authDomain,          
@@ -33,8 +35,9 @@ namespace ReactiveDomain.Identity.Domain
             Ensure.NotEmptyGuid(id, nameof(id));
             Ensure.NotNullOrEmpty(authProvider, nameof(authProvider));
             Ensure.NotNullOrEmpty(authDomain, nameof(authDomain));
-            Ensure.NotNullOrEmpty(subClaim, nameof(subClaim));           
+            Ensure.NotNullOrEmpty(subClaim, nameof(subClaim));
             Ensure.NotNull(source, nameof(source));
+            Ensure.NotEmptyGuid(userId, nameof(userId));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source.CorrelationId));
             if (source.CausationId == Guid.Empty)
                 Ensure.NotEmptyGuid(source.MsgId, nameof(source.MsgId));
@@ -42,6 +45,7 @@ namespace ReactiveDomain.Identity.Domain
             ((ICorrelatedEventSource)this).Source = source;
             Raise(new SubjectMsgs.SubjectCreated(
                          id,
+                         userId,
                          subClaim,
                          authProvider,
                          authDomain));

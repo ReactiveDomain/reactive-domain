@@ -8,8 +8,11 @@ namespace ReactiveDomain.Identity.Messages
         /// A new user login tracker was created.
         /// </summary>
         public class SubjectCreated : Event {
-            /// <summary>The unique Id of the tracked user.</summary>
+            /// <summary>The unique Id of the login idenity subject.</summary>
             public readonly Guid SubjectId;
+
+            /// <summary>The unique Id of the user.</summary>
+            public readonly Guid UserId;
 
             /// <summary>The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</summary>
             public readonly string SubClaim;
@@ -29,10 +32,12 @@ namespace ReactiveDomain.Identity.Messages
             /// <param name="authDomain">The user's domain.</param>
             public SubjectCreated(
                 Guid subjectId,
+                Guid userId,
                 string subClaim,
                 string authProvider,
                 string authDomain) {
                 SubjectId = subjectId;
+                UserId = userId;
                 SubClaim = subClaim;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
