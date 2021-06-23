@@ -22,17 +22,19 @@ namespace ReactiveDomain.Policy.Application
             _policyName = policyName;
             _app = new SecuredApplication(
                 Guid.Empty,
-                Assembly.GetEntryAssembly()?.GetName().Name,
-                Assembly.GetEntryAssembly()?.GetName().Version?.ToString());
+                Assembly.GetEntryAssembly()?.GetName().Name,              
+                Assembly.GetEntryAssembly()?.GetName().Version?.ToString(),
+                false);
         }
 
-        public SecurityPolicyBuilder(string appName, Version appVersion, string policyName = "default")
+        public SecurityPolicyBuilder(string appName, Version appVersion, string policyName = "default", bool oneRolePerUser = false)
         {
             _policyName = policyName;
             _app = new SecuredApplication(
                 Guid.Empty,
                 appName,
-                appVersion.ToString());
+                appVersion.ToString(),
+                oneRolePerUser);
         }
 
         public SecurityPolicyBuilder AddRole(string roleName, params Action<RoleBuilder>[] roleActions)

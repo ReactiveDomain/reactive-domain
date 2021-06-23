@@ -137,11 +137,13 @@ namespace ReactiveDomain.Policy.ReadModels
             if (_applications.ContainsKey(@event.ApplicationId)) return;
             var app = new SecuredApplication(
                 @event.ApplicationId,
-                @event.Name,
-                @event.ApplicationVersion
-            );
-            _applications.Add(
-                @event.ApplicationId, app);
+                new SecuredApplication(
+                    @event.ApplicationId,
+                    @event.Name,
+                    @event.ApplicationVersion,
+                    @event.OneRolePerUser
+                ));
+            _applications.Add(@event.ApplicationId, app);
             _registeredApplications.AddOrUpdate(app);
         }
         public void Handle(ApplicationMsgs.STSClientDetailsAdded @event) {

@@ -56,7 +56,7 @@ namespace ReactiveDomain.Policy.Application
             else
             {
                 appId = Guid.NewGuid();
-                var app = new Domain.SecuredApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion, source);
+                var app = new Domain.SecuredApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion, Policy.OneRolePerUser, source);
                 //todo: encrypt this
                 app.AddSTSClientSecret($"{Guid.NewGuid()}@PKI");
                 repo.Save(app);
@@ -126,7 +126,8 @@ namespace ReactiveDomain.Policy.Application
                 new SecuredApplication(
                     @event.ApplicationId,
                     @event.Name,
-                    @event.ApplicationVersion
+                    @event.ApplicationVersion,
+                    @event.OneRolePerUser
                 );
         }
 

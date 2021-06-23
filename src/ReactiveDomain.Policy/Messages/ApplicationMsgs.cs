@@ -22,6 +22,7 @@ namespace ReactiveDomain.Policy.Messages
 
             /// <summary> Application name</summary>
             public readonly string Version;
+            public readonly bool OneRolePerUser;
 
             /// <summary>
             /// Register a new application.
@@ -32,11 +33,13 @@ namespace ReactiveDomain.Policy.Messages
             public CreateApplication(
                 Guid applicationId,
                 string name,
-                string version)
+                string version,
+                bool oneRolePerUser)
             {
                 ApplicationId = applicationId;
                 Name = name;
                 Version = version;
+                OneRolePerUser = oneRolePerUser;
             }
         }
 
@@ -54,6 +57,7 @@ namespace ReactiveDomain.Policy.Messages
             /// <summary> Application name</summary>
             public readonly string ApplicationVersion;
 
+            public readonly bool OneRolePerUser;
             /// <summary>
             /// Register a new application.
             /// </summary>
@@ -63,11 +67,13 @@ namespace ReactiveDomain.Policy.Messages
             public ApplicationCreated(
                 Guid applicationId,
                 string name,
-                string applicationVersion)
+                string applicationVersion,
+                bool oneRolePerUser)
             {
                 ApplicationId = applicationId;
                 Name = name;
                 ApplicationVersion = applicationVersion;
+                OneRolePerUser = oneRolePerUser;
             }
         }
 
@@ -238,19 +244,23 @@ namespace ReactiveDomain.Policy.Messages
             public readonly Guid PolicyId;
             public readonly string ClientId;
             public readonly Guid ApplicationId;
+            public readonly bool OneRolePerUser;
 
             public PolicyCreated(
                 Guid policyId,
                 string clientId,
-                Guid applicationId)
+                Guid applicationId,
+                bool oneRolePerUser)
             {
                 PolicyId = policyId;
                 ClientId = clientId;
                 ApplicationId = applicationId;
+                OneRolePerUser = oneRolePerUser;
             }
         }
 
-        public class STSClientDetailsAdded : Event {
+        public class STSClientDetailsAdded : Event
+        {
             public readonly Guid ApplicationId;
             public readonly string ClientId;
             public readonly string[] GrantTypes;
@@ -268,7 +278,7 @@ namespace ReactiveDomain.Policy.Messages
                 string[] allowedScopes,
                 string[] redirectUris,
                 string[] postLogoutRedirectUris,
-                string frontChannelLogoutUri )
+                string frontChannelLogoutUri)
             {
                 ApplicationId = applicationId;
                 ClientId = clientId;
@@ -282,13 +292,14 @@ namespace ReactiveDomain.Policy.Messages
         }
         public class STSClientSecretAdded : Event
         {
-            
+
             public readonly Guid ApplicationId;
             public readonly string EncryptedClientSecret;
 
-            public STSClientSecretAdded(Guid applicationId, string encryptedClientSecret) {
-               ApplicationId = applicationId;
-               EncryptedClientSecret = encryptedClientSecret;
+            public STSClientSecretAdded(Guid applicationId, string encryptedClientSecret)
+            {
+                ApplicationId = applicationId;
+                EncryptedClientSecret = encryptedClientSecret;
             }
         }
         public class STSClientSecretRemoved : Event
@@ -296,7 +307,7 @@ namespace ReactiveDomain.Policy.Messages
             public readonly Guid ApplicationId;
             public readonly string EncryptedClientSecret;
 
-            public STSClientSecretRemoved(Guid applicationId,string encryptedClientSecret)
+            public STSClientSecretRemoved(Guid applicationId, string encryptedClientSecret)
             {
                 ApplicationId = applicationId;
                 EncryptedClientSecret = encryptedClientSecret;

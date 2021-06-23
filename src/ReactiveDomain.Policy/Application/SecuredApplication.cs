@@ -10,6 +10,7 @@ namespace ReactiveDomain.Policy.Application
         public Guid Id { get; private set; }
         public string Name { get; private set; }
         public string Version { get; private set; }
+        public bool OneRolePerUser { get; private set; }
         public string[] RedirectionUris { get; set; }
         public string ClientSecret { get; set; }
 
@@ -20,11 +21,13 @@ namespace ReactiveDomain.Policy.Application
             Guid id,
             string name,
             string version,
+            bool oneRolePerUser,
             IEnumerable<SecurityPolicy> policies = null)
         {
             Id = id;
             Name = name;
             Version = version;
+            OneRolePerUser = oneRolePerUser;
             _polices = policies?.ToList() ?? new List<SecurityPolicy>();
         }
         /// <summary>

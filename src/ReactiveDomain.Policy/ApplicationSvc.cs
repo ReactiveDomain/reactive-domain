@@ -20,7 +20,7 @@ namespace ReactiveDomain.Policy
         }
 
         public CommandResponse Handle(ApplicationMsgs.CreateApplication cmd) {
-            var app = new Domain.SecuredApplication(cmd.ApplicationId,cmd.Name,cmd.Version,cmd);
+            var app = new Domain.SecuredApplication(cmd.ApplicationId,cmd.Name,cmd.Version,cmd.OneRolePerUser, cmd);
             _repo.Save(app);
             return cmd.Succeed();
         }

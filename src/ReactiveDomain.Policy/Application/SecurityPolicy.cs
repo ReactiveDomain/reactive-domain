@@ -20,7 +20,7 @@ namespace ReactiveDomain.Policy.Application
 
         public string ApplicationName => OwningApplication.Name;
         public string ApplicationVersion => OwningApplication.Version;
-
+        public bool OneRolePerUser => OwningApplication.OneRolePerUser;
         public string ClientId => OwningApplication.Name;
         public string[] RedirectionUris => OwningApplication.RedirectionUris;
         public string ClientSecret => OwningApplication.ClientSecret;
