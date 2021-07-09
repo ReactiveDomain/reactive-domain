@@ -76,9 +76,9 @@ namespace ReactiveDomain.Users.Domain
             Raise(new UserMsgs.UserCreated(id));
             Raise(new UserMsgs.UserDetailsUpdated(
                                      id,
-                                     fullName,
                                      givenName,
                                      surname,
+                                     fullName,
                                      email));
 
         }
