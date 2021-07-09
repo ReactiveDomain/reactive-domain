@@ -52,8 +52,7 @@ namespace ReactiveDomain.Policy
             var policy = _repo.GetById<Domain.SecuredApplication>(cmd.ApplicationId, cmd).DefaultPolicy;
             if (policy.Id != cmd.PolicyId) { throw new NotSupportedException("Multiple Policies per Application is not supported. (or bad policy id)"); }
 
-            var user = _repo.GetById<User>(cmd.UserId, cmd);
-            var policyUser = new Domain.PolicyUser(cmd.PolicyUserId, policy, user, cmd);
+            var policyUser = new Domain.PolicyUser(cmd.PolicyUserId, policy.Id, cmd.UserId, cmd);
             _repo.Save(policyUser);
             return cmd.Succeed();
         }

@@ -38,7 +38,7 @@ namespace ReactiveDomain.Policy.Application
             : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(SecurityPolicySyncService)))
         {
             var repo = conn.GetCorrelatedRepository();
-            ICorrelatedMessage source = new SyncServiceCorrelationSource { CorrelationId = Guid.NewGuid() };
+            ICorrelatedMessage source = new CorrelationSource { CorrelationId = Guid.NewGuid() };
 
             Policy = basePolicy ?? new SecurityPolicyBuilder().Build();
            
@@ -107,11 +107,17 @@ namespace ReactiveDomain.Policy.Application
                 }
             }
             
+            var policyUserRm = new PolicyUserRm(conn);
             var usersRm = new UsersRm(conn);
-            var userIds = usersRm.GetUserIds();
-            foreach (var id in userIds) {
-                if (usersRm.UsersById.TryGetValue(id, out var user)) {
-                    Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(user, conn, new List<string>()));
+            if (policyUserRm.UsersByPolicy.ContainsKey(Policy.PolicyId))
+            {
+                var userIds = policyUserRm.UsersByPolicy[Policy.PolicyId];
+                foreach (var id in userIds)
+                {
+                    if (usersRm.UsersById.TryGetValue(id, out var user))
+                    {
+                        Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(user, conn, new List<string>()));
+                    }
                 }
             }
             //todo: update/replace policy users as users are added and role assignments change ??
@@ -165,7 +171,7 @@ namespace ReactiveDomain.Policy.Application
                     @event.Name,
                     Policy.PolicyId));
         }
-        class SyncServiceCorrelationSource : ICorrelatedMessage
+       public class CorrelationSource : ICorrelatedMessage
         {
             public Guid MsgId => Guid.NewGuid();
             public Guid CorrelationId { get; set; }

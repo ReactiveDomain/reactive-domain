@@ -65,22 +65,20 @@ namespace ReactiveDomain.Policy.Domain
         /// </summary>
         public PolicyUser(
             Guid id,
-            SecurityPolicy policy,
-            User user,
+            Guid policyId,
+            Guid userId,
             ICorrelatedMessage source)
             : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
-            Ensure.NotNull(policy, nameof(policy));
-            Ensure.NotNull(user, nameof(user));
+            Ensure.NotEmptyGuid(policyId, nameof(policyId));
+            Ensure.NotEmptyGuid(userId, nameof(userId));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source));
             RegisterEvents();
             Raise(new PolicyUserMsgs.PolicyUserAdded(
                          id,
-                         user.Id,
-                         policy.Id,
-                         policy.AppId
-                         ));
+                         userId,
+                         policyId));
         }
 
         public void AddRole(string roleName, Guid roleId) {

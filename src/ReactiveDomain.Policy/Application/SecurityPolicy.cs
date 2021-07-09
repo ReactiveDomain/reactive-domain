@@ -59,43 +59,56 @@ namespace ReactiveDomain.Policy.Application
                     _policyUsers.Add(user);
                 }
             }
-            SetCurrentUser(_currentUser);
+            TrySetCurrentUser(_currentUser);
         }
 
-        public void RemoveUser(Guid userId) {
+        public void RemoveUser(Guid userId)
+        {
             bool removed = false;
             lock (_policyUsers)
             {
                 for (var index = 0; index < PolicyUsers.Count; index++)
                 {
                     if (PolicyUsers[index].User.UserId != userId) continue;
-                   var user = _policyUsers[index];
-                   _policyUsers.Remove(user);
-                   removed = true;
+                    var user = _policyUsers[index];
+                    _policyUsers.Remove(user);
+                    removed = true;
                     break;
                 }
             }
 
-            if (removed) {
-                SetCurrentUser(_currentUser);
+            if (removed)
+            {
+                TrySetCurrentUser(_currentUser);
             }
         }
-        public void SetCurrentUser(Guid userId)
+        /// <summary>
+        /// This will attempt to set the the current user by Id from the internal list of authorized Policy Users 
+        /// </summary>
+        /// <param name="userId">The user Id to look up</param>
+        /// <returns><see langword="true"/>if the requested user was found in the list of authorized users</returns>
+        public bool TrySetCurrentUser(Guid userId)
         {
             lock (_policyUsers)
             {
                 _currentUser = userId;
                 CurrentUser = _policyUsers.FirstOrDefault(u => u.User.UserId == _currentUser);
             }
+            return CurrentUser != null;
         }
         public PolicyUser GetPolicyUserFrom(UserDTO user, IConfiguredConnection conn, List<string> additionalRoles)
         {
             var repo = conn.GetRepository();
-            if (!repo.TryGetById<Domain.PolicyUser>(user.UserId, out var domainUser))
+            if (!repo.TryGetById<Domain.PolicyUser>(user.UserId, out var policyUser))
             {
-                //todo: add new policy user via the policy aggregate in the Policy Service
+                policyUser = new Domain.PolicyUser(
+                    Guid.NewGuid(),
+                    PolicyId,
+                    user.UserId,
+                    new SecurityPolicySyncService.CorrelationSource { CorrelationId = Guid.NewGuid() });
+                repo.Save(policyUser);                
             }
-            var roleNames = domainUser?.Roles ?? new HashSet<string>();
+            var roleNames = policyUser?.Roles ?? new HashSet<string>();
             roleNames.UnionWith(additionalRoles);
             var roles = roleNames.Select(roleName => _roles.FirstOrDefault(r => r.Name == roleName)).Where(x => x != null).ToList();
             var permissions = GetEffectivePermissions(roles);

@@ -4,6 +4,7 @@ using System.DirectoryServices.AccountManagement;
 using System.Security.Claims;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Identity.Domain;
+using ReactiveDomain.Identity.ReadModels;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
@@ -16,17 +17,23 @@ namespace ReactiveDomain.Identity.Stores
     public class UserStore
     {
         private readonly UserSvc _userSvc;
-        private readonly UsersRm _usersRm;
+        private UsersRm _usersRm;
+        private SubjectsRm _subjectsRm;
+
         private readonly ICorrelatedRepository _repo;
+        private readonly IConfiguredConnection _conn;
 
         public UserStore(IConfiguredConnection conn)
         {
-            _userSvc = new UserSvc(conn.GetRepository(), new Dispatcher("bus-to-nowhere"));
-            _usersRm = new UsersRm(conn);
-            _repo = conn.GetCorrelatedRepository();
+            _conn = conn;
+            _userSvc = new UserSvc(_conn.GetRepository(), new Dispatcher("bus-to-nowhere"));
+            _usersRm = new UsersRm(_conn);
+            _subjectsRm = new SubjectsRm(_conn);
+            _repo = _conn.GetCorrelatedRepository();
+
         }
 
-        public void UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider)
+        public Guid UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider)
         {
             //existing User in ES, update the user details if they have changed
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
@@ -44,7 +51,7 @@ namespace ReactiveDomain.Identity.Stores
             {
                 userId = Guid.NewGuid();
                 var subjectId = Guid.NewGuid();
-                var createMsg = 
+                var createMsg =
                     MessageBuilder.New(
                         () => new UserMsgs.CreateUser(
                             userId,
@@ -70,22 +77,22 @@ namespace ReactiveDomain.Identity.Stores
                     authProvider,
                     domain,
                     createMsg);
-                _repo.Save(subject);
+                _repo.Save(subject);               
             }
+            return userId;
         }
         //return the allowed client scopes the user has access to 
-        public List<Claim> GetAdditionalClaims(UserPrincipal retrievedUser, string domain)
+        public List<Claim> GetAdditionalClaims(UserPrincipal retrievedUser, string domain, Guid userId)
         {
             var claimList = new List<Claim>();
-            if (!_usersRm.HasUser(retrievedUser.Sid.Value, domain, out var userId))
-            {
-                return claimList;
-            }
-            foreach (string scope in _usersRm.UsersById[userId].Scopes)
-            {
-                claimList.Add(new Claim("policy-access", scope));
-            }
             claimList.Add(new Claim("rd-userid", userId.ToString()));
+            if (_usersRm.UsersById.ContainsKey(userId))
+            {
+                foreach (string scope in _usersRm.UsersById[userId].Scopes)
+                {
+                    claimList.Add(new Claim("policy-access", scope));
+                }
+            }
             return claimList;
         }
 
@@ -94,7 +101,8 @@ namespace ReactiveDomain.Identity.Stores
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
-                var subject = _repo.GetById<Subject>(userId, new CorrelatedRoot());
+                var subId = _subjectsRm.SubjectIdByUserId[userId];
+                var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
                 subject.Authenticated(hostIpAddress);
                 _repo.Save(subject);
             }
@@ -103,7 +111,8 @@ namespace ReactiveDomain.Identity.Stores
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
-                var subject = _repo.GetById<Subject>(userId, new CorrelatedRoot());
+                var subId = _subjectsRm.SubjectIdByUserId[userId];
+                var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
                 subject.NotAuthenticatedInvalidCredentials(hostIpAddress);
                 _repo.Save(subject);
             }
@@ -113,7 +122,8 @@ namespace ReactiveDomain.Identity.Stores
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
-                var subject = _repo.GetById<Subject>(userId, new CorrelatedRoot());
+                var subId = _subjectsRm.SubjectIdByUserId[userId];
+                var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
                 subject.NotAuthenticatedAccountLocked(hostIpAddress);
                 _repo.Save(subject);
             }
@@ -123,7 +133,8 @@ namespace ReactiveDomain.Identity.Stores
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
-                var subject = _repo.GetById<Subject>(userId, new CorrelatedRoot());
+                var subId = _subjectsRm.SubjectIdByUserId[userId];
+                var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
                 subject.NotAuthenticatedAccountDisabled(hostIpAddress);
                 _repo.Save(subject);
             }
