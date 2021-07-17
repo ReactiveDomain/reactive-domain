@@ -33,7 +33,7 @@ namespace ReactiveDomain.Identity.Stores
 
         }
 
-        public Guid UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider)
+        public Guid UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider, Guid? proposedUserId = null)
         {
             //existing User in ES, update the user details if they have changed
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
@@ -49,7 +49,7 @@ namespace ReactiveDomain.Identity.Stores
             }
             else //User not present in ES Add User and Subject for Audit Tracking
             {
-                userId = Guid.NewGuid();
+                userId = proposedUserId ?? Guid.NewGuid();
                 var subjectId = Guid.NewGuid();
                 var createMsg =
                     MessageBuilder.New(
