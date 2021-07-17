@@ -73,8 +73,6 @@ namespace ReactiveDomain.Identity.Messages
             }
         }
 
-
-
         /// <summary>
         /// A user was not successfully authenticated because account is locked.
         /// </summary>
