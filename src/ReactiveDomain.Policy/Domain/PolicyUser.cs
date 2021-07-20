@@ -67,6 +67,7 @@ namespace ReactiveDomain.Policy.Domain
             Guid id,
             Guid policyId,
             Guid userId,
+            bool singleRole,
             ICorrelatedMessage source)
             : base(source)
         {
@@ -78,7 +79,8 @@ namespace ReactiveDomain.Policy.Domain
             Raise(new PolicyUserMsgs.PolicyUserAdded(
                          id,
                          userId,
-                         policyId));
+                         policyId,
+                         singleRole));
         }
 
         public void AddRole(string roleName, Guid roleId) {

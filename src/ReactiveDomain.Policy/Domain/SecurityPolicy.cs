@@ -17,8 +17,7 @@ namespace ReactiveDomain.Policy.Domain
        
         public string ClientId { get; }
         public Guid AppId => base.Id;
-
-
+        public readonly bool OneRolePerUser;
         public SecurityPolicy(
             Guid policyId,
             string clientId,
@@ -28,12 +27,13 @@ namespace ReactiveDomain.Policy.Domain
             //n.b. this method is called only inside an apply handler in the root aggregate
             // so setting values is ok, but raising events is not
             // the create event is raised in the root aggregate
-            Register<RoleMsgs.RoleCreated>(Apply);
+            Register<ApplicationMsgs.RoleCreated>(Apply);
             ClientId = clientId;
+            OneRolePerUser = root.OneRolePerUser;
         }
 
         //Apply State only if it applies to my id
-        private void Apply(RoleMsgs.RoleCreated @event)
+        private void Apply(ApplicationMsgs.RoleCreated @event)
         {
             if (@event.PolicyId == Id)
             {
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Policy.Domain
                 throw new InvalidOperationException($"Cannot add duplicate role. RoleName: {roleName} RoleId:{roleId}");
             }
 
-            Raise(new RoleMsgs.RoleCreated(
+            Raise(new ApplicationMsgs.RoleCreated(
                 roleId,
                 roleName,
                 Id));

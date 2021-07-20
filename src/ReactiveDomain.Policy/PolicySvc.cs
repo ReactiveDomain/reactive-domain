@@ -12,7 +12,7 @@ namespace ReactiveDomain.Policy
 {
     public class PolicySvc :
             TransientSubscriber,
-            IHandleCommand<RoleMsgs.CreateRole>,
+            IHandleCommand<ApplicationMsgs.CreateRole>,
             IHandleCommand<PolicyUserMsgs.AddPolicyUser>,
             IHandleCommand<PolicyUserMsgs.AddRole>,
             IHandleCommand<PolicyUserMsgs.RemoveRole>,
@@ -29,7 +29,7 @@ namespace ReactiveDomain.Policy
         {
             _repo = conn.GetCorrelatedRepository(caching: true);
 
-            Subscribe<RoleMsgs.CreateRole>(this);
+            Subscribe<ApplicationMsgs.CreateRole>(this);
             Subscribe<PolicyUserMsgs.AddPolicyUser>(this);
             Subscribe<PolicyUserMsgs.AddRole>(this);
             Subscribe<PolicyUserMsgs.RemoveRole>(this);
@@ -39,7 +39,7 @@ namespace ReactiveDomain.Policy
         /// <summary>
         /// Given the create role command, creates a role created event.
         /// </summary>
-        public CommandResponse Handle(RoleMsgs.CreateRole cmd)
+        public CommandResponse Handle(ApplicationMsgs.CreateRole cmd)
         {
             var application = _repo.GetById<SecuredApplication>(cmd.AppId, cmd);
             application.Policies.First(p => p.Id == cmd.PolicyId).AddRole(cmd.RoleId ?? Guid.NewGuid(), cmd.Name);
@@ -52,7 +52,7 @@ namespace ReactiveDomain.Policy
             var policy = _repo.GetById<Domain.SecuredApplication>(cmd.ApplicationId, cmd).DefaultPolicy;
             if (policy.Id != cmd.PolicyId) { throw new NotSupportedException("Multiple Policies per Application is not supported. (or bad policy id)"); }
 
-            var policyUser = new Domain.PolicyUser(cmd.PolicyUserId, policy.Id, cmd.UserId, cmd);
+            var policyUser = new Domain.PolicyUser(cmd.PolicyUserId, policy.Id, cmd.UserId, policy.OneRolePerUser, cmd);
             _repo.Save(policyUser);
             return cmd.Succeed();
         }

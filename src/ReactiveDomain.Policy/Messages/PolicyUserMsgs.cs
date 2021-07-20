@@ -24,10 +24,12 @@ namespace ReactiveDomain.Policy.Messages
             public readonly Guid PolicyUserId;
             public readonly Guid UserId;
             public readonly Guid PolicyId;
-            public PolicyUserAdded(Guid policyUserId,Guid userId, Guid policyId) {
+            public readonly bool OneRolePerUser;
+            public PolicyUserAdded(Guid policyUserId,Guid userId, Guid policyId, bool oneRolePerUser) {
                 PolicyUserId = policyUserId;
                 UserId = userId;
                 PolicyId = policyId;
+                OneRolePerUser = oneRolePerUser;
             }
         }
        

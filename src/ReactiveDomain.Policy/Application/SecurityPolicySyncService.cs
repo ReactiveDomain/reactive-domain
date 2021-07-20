@@ -21,7 +21,7 @@ namespace ReactiveDomain.Policy.Application
         IHandle<ApplicationMsgs.STSClientDetailsAdded>,
         IHandle<ApplicationMsgs.STSClientSecretAdded>,
         IHandle<ApplicationMsgs.PolicyCreated>,
-        IHandle<RoleMsgs.RoleCreated> {
+        IHandle<ApplicationMsgs.RoleCreated> {
         //public data
         public SecurityPolicy Policy;
 
@@ -35,7 +35,7 @@ namespace ReactiveDomain.Policy.Application
         public SecurityPolicySyncService(
             SecurityPolicy basePolicy,
             IConfiguredConnection conn)
-            : base(nameof(ApplicationsRM), () => conn.GetListener(nameof(SecurityPolicySyncService)))
+            : base(nameof(SecurityPolicySyncService), () => conn.GetListener(nameof(SecurityPolicySyncService)))
         {
             var repo = conn.GetCorrelatedRepository();
             ICorrelatedMessage source = new CorrelationSource { CorrelationId = Guid.NewGuid() };
@@ -68,7 +68,7 @@ namespace ReactiveDomain.Policy.Application
             EventStream.Subscribe<ApplicationMsgs.STSClientDetailsAdded>(this);
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
-            EventStream.Subscribe<RoleMsgs.RoleCreated>(this);
+            EventStream.Subscribe<ApplicationMsgs.RoleCreated>(this);
 
             using (var appReader = conn.GetReader("appReader")) {
                 appReader.EventStream.Subscribe<Message>(this);
@@ -161,7 +161,7 @@ namespace ReactiveDomain.Policy.Application
         /// <summary>
         /// Given the role created event, adds a new role to the collection of roles.
         /// </summary>
-        public void Handle(RoleMsgs.RoleCreated @event)
+        public void Handle(ApplicationMsgs.RoleCreated @event)
         {
             if (_roles.ContainsKey(@event.RoleId)) return;
             _roles.Add(

@@ -105,6 +105,7 @@ namespace ReactiveDomain.Policy.Application
                     Guid.NewGuid(),
                     PolicyId,
                     user.UserId,
+                    OneRolePerUser,
                     new SecurityPolicySyncService.CorrelationSource { CorrelationId = Guid.NewGuid() });
                 repo.Save(policyUser);                
             }
