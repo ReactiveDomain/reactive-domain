@@ -39,13 +39,13 @@ namespace ReactiveDomain.Identity.Stores
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId))
             {
                 _userSvc.Handle(
-                    MessageBuilder.New(() =>
-                    new UserMsgs.UpdateUserDetails(
-                    userId,
-                    retrievedUser.GivenName,
-                    retrievedUser.Surname,
-                    retrievedUser.DisplayName,
-                    retrievedUser.EmailAddress)));
+                    MessageBuilder.New(
+                        () => new UserMsgs.UpdateUserDetails(
+                            userId,
+                            retrievedUser.GivenName,
+                            retrievedUser.Surname,
+                            retrievedUser.DisplayName,
+                            retrievedUser.EmailAddress)));
             }
             else //User not present in ES Add User and Subject for Audit Tracking
             {

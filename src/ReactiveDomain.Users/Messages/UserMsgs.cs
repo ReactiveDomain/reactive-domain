@@ -20,10 +20,10 @@ namespace ReactiveDomain.Users.Messages
             public readonly string GivenName;
             /// <summary>The user's surname or family name. This is the last name in most cultures.</summary>
             public readonly string Surname;
-            /// <summary>The user's email address.</summary>
-            public readonly string Email;
             /// <summary> User full name for local windows users</summary>
             public readonly string FullName;
+            /// <summary>The user's email address.</summary>
+            public readonly string Email;
 
             /// <summary>
             /// Create a new user.
@@ -35,18 +35,17 @@ namespace ReactiveDomain.Users.Messages
             /// <param name="fullName">user full name.</param>
             public CreateUser(
                 Guid userId,
-                string fullName,
                 string givenName,
                 string surname,
+                string fullName,
                 string email
-                )
+            )
             {
                 UserId = userId;
-                FullName = fullName;
                 GivenName = givenName;
                 Surname = surname;
+                FullName = fullName;
                 Email = email;
-
             }
         }
         public class UserEvent : Event
@@ -206,13 +205,14 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The username, which should be unique within the <see cref="AuthDomain"/>.</summary>
             public readonly string UserName;
 
-            /// <summary>
-            /// Modify a user's AuthDomain information.
-            /// </summary>
-            ///<param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
-            /// <param name="authProvider">The identity provider.</param>
-            /// <param name="authDomain">The user's domain.</param>
-            /// <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
+            ///  <summary>
+            ///  Modify a user's AuthDomain information.
+            ///  </summary>
+            ///  <param name="userId">The unique ID of the user in RD.</param>
+            ///  <param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
+            ///  <param name="authProvider">The identity provider.</param>
+            ///  <param name="authDomain">The user's domain.</param>
+            ///  <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
             public MapToAuthDomain(
                 Guid userId,
                 string subjectId,
@@ -242,13 +242,14 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>The username, which should be unique within the <see cref="AuthDomain"/>.</summary>
             public readonly string UserName;
 
-            /// <summary>
-            /// User's AuthDomain information updated.
-            /// </summary>
-            ///<param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
-            /// <param name="authProvider">The identity provider.</param>
-            /// <param name="authDomain">The user's domain.</param>
-            /// <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
+            ///  <summary>
+            ///  User's AuthDomain information updated.
+            ///  </summary>
+            ///  <param name="userId">The unique ID of the user in RD.</param>
+            ///  <param name="subjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
+            ///  <param name="authProvider">The identity provider.</param>
+            ///  <param name="authDomain">The user's domain.</param>
+            ///  <param name="userName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
             public AuthDomainMapped(
                 Guid userId,
                 string subjectId,
