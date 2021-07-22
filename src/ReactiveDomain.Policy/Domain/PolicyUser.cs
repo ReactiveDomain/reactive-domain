@@ -61,7 +61,7 @@ namespace ReactiveDomain.Policy.Domain
         //Public Methods
 
         /// <summary>
-        /// Create a new Application.
+        /// Create a new Policy User.
         /// </summary>
         public PolicyUser(
             Guid id,

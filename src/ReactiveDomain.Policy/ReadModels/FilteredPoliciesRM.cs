@@ -6,7 +6,6 @@ using ReactiveDomain.Policy.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace ReactiveDomain.Policy.ReadModels
 {
@@ -21,13 +20,12 @@ namespace ReactiveDomain.Policy.ReadModels
         IHandle<PolicyUserMsgs.UserDeactivated>,
         IHandle<PolicyUserMsgs.UserReactivated>
     {
-
-        public IConnectableCache<PolicyDTO, Guid> Polices => _polices;
-        private readonly SourceCache<PolicyDTO, Guid> _polices = new SourceCache<PolicyDTO, Guid>(x => x.PolicyId);
+        public IConnectableCache<PolicyDTO, Guid> Policies => _policies;
+        private readonly SourceCache<PolicyDTO, Guid> _policies = new SourceCache<PolicyDTO, Guid>(x => x.PolicyId);
         private HashSet<string> AllowedApplications { get; }
-        private Dictionary<Guid, ApplicationDTO> _applications = new Dictionary<Guid, ApplicationDTO>();
-        private Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
-        private Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
+        private readonly Dictionary<Guid, ApplicationDTO> _applications = new Dictionary<Guid, ApplicationDTO>();
+        private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
+        private readonly Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
 
         public FilteredPoliciesRM(IConfiguredConnection conn, List<string> policyFilter = null)
            : base(nameof(FilteredPoliciesRM), () => conn.GetListener(nameof(FilteredPoliciesRM)))
@@ -59,10 +57,16 @@ namespace ReactiveDomain.Policy.ReadModels
             //subscribe
             Start<Domain.SecuredApplication>(checkpoint);
             Start<Domain.PolicyUser>(checkpoint);
-
-            
         }
 
+        /// <summary>
+        /// Get the policy user for the given user ID and policy ID.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">No policy user is found in the specified policy for the specified policy ID.</exception>
+        public PolicyUserDTO GetPolicyUser(Guid userId, Guid policyId)
+        {
+            return _policyUsers.Values.First(usr => usr.UserId == userId && usr.PolicyId == policyId);
+        }
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
@@ -70,7 +74,6 @@ namespace ReactiveDomain.Policy.ReadModels
                 AllowedApplications.Contains(@event.Name, StringComparer.OrdinalIgnoreCase)) //in filtered list
             {
                 _applications.Add(@event.ApplicationId, new ApplicationDTO(@event));
-                return;
             }
             //not in filtered list, ignore it
         }
@@ -79,13 +82,13 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (_applications.ContainsKey(@event.ApplicationId)) //in filtered list
             {
-                _polices.AddOrUpdate(new PolicyDTO(@event));
+                _policies.AddOrUpdate(new PolicyDTO(@event));
             }
         }
 
         public void Handle(ApplicationMsgs.RoleCreated @event)
         {
-            var policy = _polices.Lookup(@event.PolicyId);
+            var policy = _policies.Lookup(@event.PolicyId);
             if (policy.HasValue)
             {
                 var role = new RoleDTO(@event);
@@ -96,7 +99,7 @@ namespace ReactiveDomain.Policy.ReadModels
 
         public void Handle(PolicyUserMsgs.PolicyUserAdded @event)
         {
-            var policy = _polices.Lookup(@event.PolicyId);
+            var policy = _policies.Lookup(@event.PolicyId);
             if (policy.HasValue)
             {
                 var policyUser = new PolicyUserDTO(@event);
@@ -125,7 +128,7 @@ namespace ReactiveDomain.Policy.ReadModels
         {
 
             if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)){
-                var policy = _polices.Lookup(user.PolicyId);
+                var policy = _policies.Lookup(user.PolicyId);
                 if (policy.HasValue) {
                     policy.Value.Users.Remove(user);
                 }
@@ -136,7 +139,7 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user))
             {
-                var policy = _polices.Lookup(user.PolicyId);
+                var policy = _policies.Lookup(user.PolicyId);
                 if (policy.HasValue)
                 {
                     policy.Value.Users.AddOrUpdate(user);

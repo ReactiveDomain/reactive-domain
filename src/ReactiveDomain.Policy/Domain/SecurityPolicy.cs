@@ -77,7 +77,7 @@ namespace ReactiveDomain.Policy.Domain
             }
             user.AddRole(roleName, roleId);
         }
-        public void RemoveRole(PolicyUser user, string roleName)
+        public void RevokeRole(PolicyUser user, string roleName)
         {
             Ensure.NotNull(user, nameof(user));
             Ensure.NotNullOrEmpty(roleName, nameof(roleName));
