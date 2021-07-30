@@ -96,13 +96,22 @@ namespace ReactiveDomain.Policy.Application
             }
             return CurrentUser != null;
         }
-        public PolicyUser GetPolicyUserFrom(UserDTO user, IConfiguredConnection conn, List<string> additionalRoles)
+        /// <summary>
+        /// Gets the existing policy user for the specified policy user ID or creates a new one if none is found.
+        /// </summary>
+        /// <param name="policyUserId">The policy user ID.</param>
+        /// <param name="user">The user to utilize if creating a new policy user.</param>
+        /// <param name="conn">A configured stream store connection.</param>
+        /// <param name="additionalRoles">Additional roles to add to the retrieved user, if any.</param>
+        /// <returns>A policy user.</returns>
+        public PolicyUser GetPolicyUserFrom(Guid policyUserId, UserDTO user, IConfiguredConnection conn, List<string> additionalRoles)
         {
             var repo = conn.GetRepository();
-            if (!repo.TryGetById<Domain.PolicyUser>(user.UserId, out var policyUser))
+            if (!repo.TryGetById<Domain.PolicyUser>(policyUserId, out var policyUser))
             {
+                policyUserId = Guid.NewGuid();
                 policyUser = new Domain.PolicyUser(
-                    Guid.NewGuid(),
+                    policyUserId,
                     PolicyId,
                     user.UserId,
                     OneRolePerUser,
@@ -113,7 +122,7 @@ namespace ReactiveDomain.Policy.Application
             roleNames.UnionWith(additionalRoles);
             var roles = roleNames.Select(roleName => _roles.FirstOrDefault(r => r.Name == roleName)).Where(x => x != null).ToList();
             var permissions = GetEffectivePermissions(roles);
-            return new PolicyUser(user, roles, permissions);
+            return new PolicyUser(policyUserId, user, roles, permissions);
         }
 
         private IReadOnlyList<Type> GetEffectivePermissions(IEnumerable<Role> roles)

@@ -114,9 +114,10 @@ namespace ReactiveDomain.Policy.Application
                 var userIds = policyUserRm.UsersByPolicy[Policy.PolicyId];
                 foreach (var id in userIds)
                 {
+                    policyUserRm.TryGetPolicyUserId(id, Policy.PolicyId, out var policyUserId); // Guid.Empty if none found
                     if (usersRm.UsersById.TryGetValue(id, out var user))
                     {
-                        Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(user, conn, new List<string>()));
+                        Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(policyUserId, user, conn, new List<string>()));
                     }
                 }
             }

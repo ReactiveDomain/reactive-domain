@@ -57,6 +57,26 @@ namespace ReactiveDomain.Policy.ReadModels
         public readonly Dictionary<Guid, HashSet<Guid>> PoliciesByUser = new Dictionary<Guid, HashSet<Guid>>();
         public readonly Dictionary<Guid, HashSet<Guid>> PolicyUsersByUserId = new Dictionary<Guid, HashSet<Guid>>();
 
+        /// <summary>
+        /// Get the policy user ID for a given combination of user ID and policy ID
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="policyId">The policy ID.</param>
+        /// <param name="policyUserId">The policy user ID or Guid.Empty if none is found.</param>
+        /// <returns>true if a matching user policy is found, otherwise false.</returns>
+        public bool TryGetPolicyUserId(Guid userId, Guid policyId, out Guid policyUserId)
+        {
+            policyUserId = Guid.Empty;
+            if (!PolicyUsersByUserId.TryGetValue(userId, out var policyUsers)) return false;
+            foreach (var policyUser in policyUsers)
+            {
+                if (!_policyByPolicyUser.TryGetValue(policyUser, out var policy) || policy != policyId) continue;
+                policyUserId = policyUser;
+                return true;
+            }
+            return false;
+        }
+
         public void Handle(PolicyUserMsgs.PolicyUserAdded @event)
         {
             if (!PolicyUsersByUserId.TryGetValue(@event.UserId, out var policyUsers))
