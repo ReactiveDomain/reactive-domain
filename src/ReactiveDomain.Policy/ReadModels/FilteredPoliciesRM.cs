@@ -46,17 +46,19 @@ namespace ReactiveDomain.Policy.ReadModels
             EventStream.Subscribe<PolicyUserMsgs.UserReactivated>(this);
 
             //read
-            long ? checkpoint;
+            long ? appCheckpoint;
+            long ? userCheckpoint;
             using (var reader = conn.GetReader(nameof(FilteredPoliciesRM), this))
             {
                 reader.EventStream.Subscribe<Message>(this);
                 reader.Read<Domain.SecuredApplication>();
+                appCheckpoint = reader.Position;
                 reader.Read<Domain.PolicyUser>();
-                checkpoint = reader.Position;
+                userCheckpoint = reader.Position;
             }
             //subscribe
-            Start<Domain.SecuredApplication>(checkpoint);
-            Start<Domain.PolicyUser>(checkpoint);
+            Start<Domain.SecuredApplication>(appCheckpoint);
+            Start<Domain.PolicyUser>(userCheckpoint);
         }
 
         /// <summary>
