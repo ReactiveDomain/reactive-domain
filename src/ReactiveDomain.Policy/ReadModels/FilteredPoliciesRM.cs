@@ -70,6 +70,13 @@ namespace ReactiveDomain.Policy.ReadModels
             return _policyUsers.Values.First(usr => usr.UserId == userId && usr.PolicyId == policyId);
         }
 
+        /// <summary>
+        /// Get the application with the specified ID.
+        /// </summary>
+        /// <param name="applicationId">The application ID.</param>
+        /// <exception cref="KeyNotFoundException">Thrown if no application with that ID is found.</exception>
+        public ApplicationDTO GetApplication(Guid applicationId) => _applications[applicationId];
+
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
             if (AllowedApplications == null || //no filter
