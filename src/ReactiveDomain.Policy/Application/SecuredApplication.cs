@@ -9,7 +9,7 @@ namespace ReactiveDomain.Policy.Application
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
-        public string Version { get; private set; }
+        public string SecurityModelVersion { get; private set; }
         public bool OneRolePerUser { get; private set; }
         public string[] RedirectionUris { get; set; }
         public string ClientSecret { get; set; }
@@ -20,13 +20,13 @@ namespace ReactiveDomain.Policy.Application
         public SecuredApplication(
             Guid id,
             string name,
-            string version,
+            string securityModelVersion,
             bool oneRolePerUser,
             IEnumerable<SecurityPolicy> policies = null)
         {
             Id = id;
             Name = name;
-            Version = version;
+            SecurityModelVersion = securityModelVersion;
             OneRolePerUser = oneRolePerUser;
             _polices = policies?.ToList() ?? new List<SecurityPolicy>();
         }
@@ -43,7 +43,7 @@ namespace ReactiveDomain.Policy.Application
         {
             if (id.HasValue && id.Value != Guid.Empty) { Id = id.Value; }
             if (!string.IsNullOrWhiteSpace(name)) { Name = name; }
-            if (!string.IsNullOrWhiteSpace(version)) { Version = version; }
+            if (!string.IsNullOrWhiteSpace(version)) { SecurityModelVersion = version; }
         }
 
         public void AddPolicy(SecurityPolicy policy)

@@ -19,7 +19,7 @@ namespace ReactiveDomain.Policy.Application
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
 
         public string ApplicationName => OwningApplication.Name;
-        public string ApplicationVersion => OwningApplication.Version;
+        public string SecurityModelVersion => OwningApplication.SecurityModelVersion;
         public bool OneRolePerUser => OwningApplication.OneRolePerUser;
         public string ClientId => OwningApplication.Name;
         public string[] RedirectionUris => OwningApplication.RedirectionUris;

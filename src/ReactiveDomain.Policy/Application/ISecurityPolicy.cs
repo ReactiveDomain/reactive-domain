@@ -8,7 +8,7 @@ namespace ReactiveDomain.Policy.Application
     public interface ISecurityPolicy
     {
         string ApplicationName { get; }
-        string ApplicationVersion { get; }
+        string SecurityModelVersion { get; }
         string ClientId { get; }
         string[] RedirectionUris { get; }
         string ClientSecret { get; }

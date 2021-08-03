@@ -27,13 +27,13 @@ namespace ReactiveDomain.Policy.Application
                 false);
         }
 
-        public SecurityPolicyBuilder(string appName, Version appVersion, string policyName = "default", bool oneRolePerUser = false)
+        public SecurityPolicyBuilder(string appName, Version securityModelVersion, string policyName = "default", bool oneRolePerUser = false)
         {
             _policyName = policyName;
             _app = new SecuredApplication(
                 Guid.Empty,
                 appName,
-                appVersion.ToString(),
+                securityModelVersion.ToString(),
                 oneRolePerUser);
         }
 

@@ -15,30 +15,34 @@ namespace ReactiveDomain.Policy.Messages
         {
             /// <summary>The unique ID of the new application.</summary>
             public readonly Guid ApplicationId;
-
-            /// <summary> Application name</summary>
+            /// <summary>The unique ID of the default policy that is to be created along with the secured application.</summary>
+            public readonly Guid DefaultPolicyId;
+            /// <summary>Application name</summary>
             public readonly string Name;
-
-            /// <summary> Application name</summary>
-            public readonly string Version;
+            /// <summary>Security model version</summary>
+            public readonly string SecurityModelVersion;
+            /// <summary>If true, each user may only have a single role.</summary>
             public readonly bool OneRolePerUser;
 
             /// <summary>
             /// Register a new application.
             /// </summary>
             /// <param name="applicationId">The unique ID of the new application.</param>
-            /// <param name="name">application name.</param>
-            /// <param name="version">application version</param>
+            /// <param name="defaultPolicyId">The unique ID of the default policy that is to be created along with the secured application.</param>
+            /// <param name="name">Application name.</param>
+            /// <param name="securityModelVersion">Security model version</param>
             /// <param name="oneRolePerUser">If true, each user may only have a single role.</param>
             public CreateApplication(
                 Guid applicationId,
+                Guid defaultPolicyId,
                 string name,
-                string version,
+                string securityModelVersion,
                 bool oneRolePerUser)
             {
                 ApplicationId = applicationId;
+                DefaultPolicyId = defaultPolicyId;
                 Name = name;
-                Version = version;
+                SecurityModelVersion = securityModelVersion;
                 OneRolePerUser = oneRolePerUser;
             }
         }
@@ -55,8 +59,9 @@ namespace ReactiveDomain.Policy.Messages
             public readonly string Name;
 
             /// <summary> Application name</summary>
-            public readonly string ApplicationVersion;
+            public readonly string SecurityModelVersion;
 
+            /// <summary>If true, each user may only have a single role.</summary>
             public readonly bool OneRolePerUser;
 
             /// <summary>
@@ -64,17 +69,17 @@ namespace ReactiveDomain.Policy.Messages
             /// </summary>
             /// <param name="applicationId">The unique ID of the new application.</param>
             /// <param name="name">The application name.</param>
-            /// <param name="applicationVersion">The application version.</param>
+            /// <param name="securityModelVersion">The version of the application's security model.</param>
             /// <param name="oneRolePerUser">If true, each user may only have a single role.</param>
             public ApplicationCreated(
                 Guid applicationId,
                 string name,
-                string applicationVersion,
+                string securityModelVersion,
                 bool oneRolePerUser)
             {
                 ApplicationId = applicationId;
                 Name = name;
-                ApplicationVersion = applicationVersion;
+                SecurityModelVersion = securityModelVersion;
                 OneRolePerUser = oneRolePerUser;
             }
         }
@@ -198,6 +203,7 @@ namespace ReactiveDomain.Policy.Messages
             public readonly string Name;
             /// <summary>The policy this role applies to.</summary>
             public readonly Guid PolicyId;
+            /// <summary>The application this role applies to.</summary>
             public readonly Guid AppId;
 
             /// <summary>

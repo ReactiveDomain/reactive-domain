@@ -6,7 +6,6 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Policy.ReadModels;
-using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Policy.Application
@@ -26,7 +25,7 @@ namespace ReactiveDomain.Policy.Application
         public SecurityPolicy Policy;
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
-        private SecuredApplication dbApp;
+        private SecuredApplication _dbApp;
         
 
         /// <summary>
@@ -45,18 +44,19 @@ namespace ReactiveDomain.Policy.Application
             var appList = new Dictionary<string, Guid>();
             using (var appReader = conn.GetReader("AppReader"))
             {
-                appReader.EventStream.Subscribe(new AdHocHandler<ApplicationMsgs.ApplicationCreated>(evt => appList.Add($"{evt.Name}-{evt.ApplicationVersion}", evt.ApplicationId)));
+                appReader.EventStream.Subscribe(new AdHocHandler<ApplicationMsgs.ApplicationCreated>(evt => appList.Add($"{evt.Name}-{evt.SecurityModelVersion}", evt.ApplicationId)));
                 appReader.Read(typeof(ApplicationMsgs.ApplicationCreated));
             }
             Guid appId;
-            if (appList.ContainsKey($"{Policy.ApplicationName}-{Policy.ApplicationVersion}"))
+            if (appList.ContainsKey($"{Policy.ApplicationName}-{Policy.SecurityModelVersion}"))
             {
-                appId = appList[$"{Policy.ApplicationName}-{Policy.ApplicationVersion}"];
+                appId = appList[$"{Policy.ApplicationName}-{Policy.SecurityModelVersion}"];
             }
             else
             {
                 appId = Guid.NewGuid();
-                var app = new Domain.SecuredApplication(appId, Policy.ApplicationName, Policy.ApplicationVersion, Policy.OneRolePerUser, source);
+                var policyId = Policy.PolicyId == Guid.Empty ? Guid.NewGuid() : Policy.PolicyId;
+                var app = new Domain.SecuredApplication(appId, policyId, Policy.ApplicationName, Policy.SecurityModelVersion, Policy.OneRolePerUser, source);
                 //todo: encrypt this
                 app.AddSTSClientSecret($"{Guid.NewGuid()}@PKI");
                 repo.Save(app);
@@ -75,9 +75,9 @@ namespace ReactiveDomain.Policy.Application
                 appReader.Read<Domain.SecuredApplication>(appId);
             }
             Policy.OwningApplication.UpdateApplicationDetails(appId);
-            Policy.OwningApplication.ClientSecret = dbApp.ClientSecret;
-            Policy.OwningApplication.RedirectionUris = dbApp.RedirectionUris;
-            Policy.PolicyId = dbApp.Policies.First().PolicyId; //todo:add multi policy support
+            Policy.OwningApplication.ClientSecret = _dbApp.ClientSecret;
+            Policy.OwningApplication.RedirectionUris = _dbApp.RedirectionUris;
+            Policy.PolicyId = _dbApp.Policies.First().PolicyId; //todo:add multi policy support
 
             //enrich db with roles from the base policy, if any are missing
             foreach (var role in Policy.Roles)
@@ -127,34 +127,34 @@ namespace ReactiveDomain.Policy.Application
         
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
-            if (dbApp != null) { return; }
+            if (_dbApp != null) { return; }
 
-            dbApp =
+            _dbApp =
                 new SecuredApplication(
                     @event.ApplicationId,
                     @event.Name,
-                    @event.ApplicationVersion,
+                    @event.SecurityModelVersion,
                     @event.OneRolePerUser
                 );
         }
 
         public void Handle(ApplicationMsgs.STSClientDetailsAdded @event) {
-            if (dbApp.Id != @event.ApplicationId){ return; }
-            dbApp.ClientSecret = @event.EncryptedClientSecret;
-            dbApp.RedirectionUris = @event.RedirectUris;
+            if (_dbApp.Id != @event.ApplicationId){ return; }
+            _dbApp.ClientSecret = @event.EncryptedClientSecret;
+            _dbApp.RedirectionUris = @event.RedirectUris;
         }
 
         public void Handle(ApplicationMsgs.STSClientSecretAdded @event) {
-            if (dbApp.Id != @event.ApplicationId){ return; }
-            dbApp.ClientSecret = @event.EncryptedClientSecret;
+            if (_dbApp.Id != @event.ApplicationId){ return; }
+            _dbApp.ClientSecret = @event.EncryptedClientSecret;
         }
         public void Handle(ApplicationMsgs.PolicyCreated @event)
         {
-            if (dbApp.Id != @event.ApplicationId){ return; }
-            dbApp.AddPolicy(
+            if (_dbApp.Id != @event.ApplicationId){ return; }
+            _dbApp.AddPolicy(
                 new SecurityPolicy(
                     @event.ClientId,
-                    @event.PolicyId, dbApp
+                    @event.PolicyId, _dbApp
                 )
             );
         }

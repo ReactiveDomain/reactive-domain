@@ -61,6 +61,7 @@ namespace ReactiveDomain.Policy.Domain
         /// </summary>
         public SecuredApplication(
             Guid id,
+            Guid defaultPolicyId,
             string defaultClientId,
             string version,
             bool oneRolePerUser,
@@ -68,6 +69,7 @@ namespace ReactiveDomain.Policy.Domain
             : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
+            Ensure.NotEmptyGuid(defaultPolicyId, nameof(defaultPolicyId));
             Ensure.NotNullOrEmpty(defaultClientId, nameof(defaultClientId));
             Ensure.NotNullOrEmpty(version, nameof(version));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source));
@@ -77,7 +79,7 @@ namespace ReactiveDomain.Policy.Domain
                          defaultClientId,
                          version,
                          oneRolePerUser));
-            Raise(new ApplicationMsgs.PolicyCreated(Guid.NewGuid(), defaultClientId, id, oneRolePerUser));
+            Raise(new ApplicationMsgs.PolicyCreated(defaultPolicyId, defaultClientId, id, oneRolePerUser));
         }
 
         /// <summary>
