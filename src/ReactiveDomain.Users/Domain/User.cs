@@ -106,7 +106,7 @@ namespace ReactiveDomain.Users.Domain
         /// </summary>
         public void RemoveClientScope(string scope)
         {
-            if (string.IsNullOrWhiteSpace(scope)) { throw new ArgumentOutOfRangeException(nameof(scope), "Cannot remove null, empty, or whitespace scope from User"); }
+            if (string.IsNullOrWhiteSpace(scope)) { throw new ArgumentOutOfRangeException(nameof(scope), "Cannot add null, empty, or whitespace scope to User"); }
             scope = scope.ToUpper();
             if (_clientScopes.Contains(scope)) { return; }
             Raise(new UserMsgs.ClientScopeRemoved(Id, scope));
@@ -152,7 +152,7 @@ namespace ReactiveDomain.Users.Domain
         }
         private bool IsChange(string input, string existing) {
             if (input == null) { return false; }
-            return string.Equals(input, existing, StringComparison.Ordinal);
+            return !string.Equals(input, existing, StringComparison.Ordinal);
         }
 
     }
