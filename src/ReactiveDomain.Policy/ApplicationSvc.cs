@@ -1,7 +1,9 @@
-﻿using ReactiveDomain.Foundation;
+﻿using System;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
+using ReactiveDomain.Policy.ReadModels;
 
 namespace ReactiveDomain.Policy
 {
@@ -10,6 +12,7 @@ namespace ReactiveDomain.Policy
         IHandleCommand<ApplicationMsgs.CreateApplication> {
         private readonly IConfiguredConnection _conn;
         private readonly IRepository _repo;
+        private readonly FilteredPoliciesRM _rm;
 
         public ApplicationSvc(
             IConfiguredConnection conn,
@@ -17,10 +20,14 @@ namespace ReactiveDomain.Policy
             : base(subscriber) {
             _conn = conn;
             _repo = conn.GetRepository();
+            _rm = new FilteredPoliciesRM(conn);
             Subscribe<ApplicationMsgs.CreateApplication>(this);
         }
 
-        public CommandResponse Handle(ApplicationMsgs.CreateApplication cmd) {
+        public CommandResponse Handle(ApplicationMsgs.CreateApplication cmd)
+        {
+            if (_rm.ApplicationExists(cmd.Name, new Version(cmd.SecurityModelVersion)))
+                throw new DuplicateApplicationException(cmd.Name, cmd.SecurityModelVersion);
             var app = new Domain.SecuredApplication(
                             cmd.ApplicationId,
                             cmd.DefaultPolicyId,

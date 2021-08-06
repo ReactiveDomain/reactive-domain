@@ -62,7 +62,7 @@ namespace ReactiveDomain.Policy.ReadModels
         }
 
         /// <summary>
-        /// Get the policy user for the given user ID and policy ID.
+        /// Gets the policy user for the given user ID and policy ID.
         /// </summary>
         /// <exception cref="InvalidOperationException">No policy user is found in the specified policy for the specified policy ID.</exception>
         public PolicyUserDTO GetPolicyUser(Guid userId, Guid policyId)
@@ -71,11 +71,19 @@ namespace ReactiveDomain.Policy.ReadModels
         }
 
         /// <summary>
-        /// Get the application with the specified ID.
+        /// Gets the application with the specified ID.
         /// </summary>
         /// <param name="applicationId">The application ID.</param>
         /// <exception cref="KeyNotFoundException">Thrown if no application with that ID is found.</exception>
         public ApplicationDTO GetApplication(Guid applicationId) => _applications[applicationId];
+
+        /// <summary>
+        /// Gets whether there is already a secured application with the given name and version.
+        /// </summary>
+        /// <param name="appName">The name of the application.</param>
+        /// <param name="securityModelVersion">The version of the application's security model.</param>
+        /// <returns>True if an application exists that matches both name and version, otherwise false.</returns>
+        public bool ApplicationExists(string appName, Version securityModelVersion) => _applications.Values.Any(x => x.Name == appName && x.SecurityModelVersion == securityModelVersion);
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
