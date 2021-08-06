@@ -4,7 +4,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.Sevices
+namespace ReactiveDomain.Users.Services
 {
     /// <summary>
     /// The service that fronts the User aggregate.

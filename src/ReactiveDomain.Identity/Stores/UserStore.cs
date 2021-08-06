@@ -10,15 +10,15 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
-using ReactiveDomain.Users.Sevices;
+using ReactiveDomain.Users.Services;
 
 namespace ReactiveDomain.Identity.Stores
 {
     public class UserStore
     {
         private readonly UserSvc _userSvc;
-        private UsersRm _usersRm;
-        private SubjectsRm _subjectsRm;
+        private readonly UsersRm _usersRm;
+        private readonly SubjectsRm _subjectsRm;
 
         private readonly ICorrelatedRepository _repo;
         private readonly IConfiguredConnection _conn;
@@ -30,7 +30,6 @@ namespace ReactiveDomain.Identity.Stores
             _usersRm = new UsersRm(_conn);
             _subjectsRm = new SubjectsRm(_conn);
             _repo = _conn.GetCorrelatedRepository();
-
         }
 
         public Guid UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider, Guid? proposedUserId = null)
