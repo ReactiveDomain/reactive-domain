@@ -51,6 +51,10 @@ namespace ReactiveDomain.Users.Messages
         public class UserEvent : Event
         {
             public Guid UserId;
+            public UserEvent(Guid userId)
+            {
+                UserId = userId;
+            }
         }
 
         /// <summary>
@@ -58,14 +62,10 @@ namespace ReactiveDomain.Users.Messages
         /// </summary>
         public class UserCreated : UserEvent
         {
-
             /// <summary>
             /// A new user was created.
             /// </summary>         
-            public UserCreated(Guid userId)
-            {
-                UserId = userId;
-            }
+            public UserCreated(Guid userId) : base(userId) { }
         }
         /// <summary>
         /// Deactivate a user.
@@ -93,10 +93,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// User is deactivated.
             /// </summary>
-            public Deactivated(Guid userId)
-            {
-                UserId = userId;
-            }
+            public Deactivated(Guid userId) : base(userId) { }
         }
 
         /// <summary>
@@ -124,10 +121,7 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// User is activated.
             /// </summary>
-            public Activated(Guid userId)
-            {
-                UserId = userId;
-            }
+            public Activated(Guid userId) : base(userId) { }
         }
 
         /// <summary>
@@ -179,9 +173,8 @@ namespace ReactiveDomain.Users.Messages
                 string givenName,
                 string surname,
                 string fullName,
-                string email)
+                string email) : base(userId)
             {
-                UserId = userId;
                 GivenName = givenName;
                 Surname = surname;
                 FullName = fullName;
@@ -218,7 +211,7 @@ namespace ReactiveDomain.Users.Messages
                 string subjectId,
                 string authProvider,
                 string authDomain,
-                string userName)
+                string userName) 
             {
                 UserId = userId;
                 SubjectId = subjectId;
@@ -255,9 +248,8 @@ namespace ReactiveDomain.Users.Messages
                 string subjectId,
                 string authProvider,
                 string authDomain,
-                string userName)
+                string userName) : base(userId)
             {
-                UserId = userId;
                 SubjectId = subjectId;
                 AuthProvider = authProvider;
                 AuthDomain = authDomain;
@@ -295,9 +287,8 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// Client Scope Added
             /// </summary>
-            public ClientScopeAdded(Guid userId, string clientScope)
+            public ClientScopeAdded(Guid userId, string clientScope) : base(userId)
             {
-                UserId = userId;
                 ClientScope = clientScope;
             }
         }
@@ -331,9 +322,8 @@ namespace ReactiveDomain.Users.Messages
             /// <summary>
             /// Client Scope Removed
             /// </summary>
-            public ClientScopeRemoved(Guid userId, string clientScope)
+            public ClientScopeRemoved(Guid userId, string clientScope) : base(userId)
             {
-                UserId = userId;
                 ClientScope = clientScope;
             }
         }
