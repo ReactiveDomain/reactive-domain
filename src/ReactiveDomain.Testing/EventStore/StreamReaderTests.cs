@@ -1,5 +1,6 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace ReactiveDomain.Testing.EventStore
 {
-    public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, Messaging.Bus.IHandle<Event>
+    public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IHandle<Event>
     {
         private readonly List<IStreamStoreConnection> _stores = new List<IStreamStoreConnection>();
         private readonly IEventSerializer _serializer = new JsonMessageSerializer();
@@ -75,8 +76,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-                reader.EventStream.Subscribe<Event>(this);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } } );
+               
                 // forward 1 from beginning
                 _count = 0;
                 Assert.Null(reader.Position);
@@ -97,9 +98,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
                 var position = NUM_OF_EVENTS / 2;
-                reader.EventStream.Subscribe<Event>(this);
 
                 reader.Read(_streamName, position);
 
@@ -113,9 +113,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
 
-                reader.EventStream.Subscribe<Event>(this);
 
                 reader.Read(_streamName, NUM_OF_EVENTS);
 
@@ -132,8 +131,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-                reader.EventStream.Subscribe<Event>(this);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
 
                 Assert.False(reader.Read("missing_stream"));
 
@@ -153,8 +152,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-                reader.EventStream.Subscribe<Event>(this);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
                 Parallel.Invoke(
                     () =>
                     {
@@ -178,8 +177,8 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-                reader.EventStream.Subscribe<Event>(this);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
 
                 reader.Read(_streamName, readBackwards: true);
 
@@ -193,9 +192,9 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-                var position = NUM_OF_EVENTS / 2;
-                reader.EventStream.Subscribe<Event>(this);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
+                var position = NUM_OF_EVENTS / 2;               
 
                 reader.Read(_streamName, position, readBackwards: true);
 
@@ -215,9 +214,8 @@ namespace ReactiveDomain.Testing.EventStore
                 int TotalEvents = 10010;
                 var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
                 AppendEventArray(TotalEvents, conn, longStreamName);
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
 
-                reader.EventStream.Subscribe<Event>(this);
 
                 var events = new List<ReadTestEvent>(TotalEvents);
                 _gotEvent = evt => { events.Add(evt as ReadTestEvent); };
@@ -239,13 +237,14 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
                 var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
 
                 const int ManyEvents = 1000;
 
                 AppendEventArray(ManyEvents, conn, longStreamName);
-                reader.EventStream.Subscribe<Event>(this);
+               
                 _gotEvent = e =>
                 {
                     if (_count == 100) reader.Cancel();
@@ -273,13 +272,14 @@ namespace ReactiveDomain.Testing.EventStore
         {
             foreach (var conn in _stores)
             {
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
                 var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
 
                 const int ManyEvents = 1550;
                 AppendEventArray(ManyEvents, conn, longStreamName);
 
-                reader.EventStream.Subscribe<Event>(this);
+               
 
                 // forward from 0
                 _count = 0;
@@ -324,14 +324,15 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var conn in _stores)
             {
                 _count = 0;
-                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+
                 var streamName2 = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
                 var categoryStream = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
                 var typeStream = _streamNameBuilder.GenerateForEventType(nameof(ReadTestEvent));
 
                 AppendEventArray(NUM_OF_EVENTS, conn, streamName2);
                 Thread.Sleep(100);
-                reader.EventStream.Subscribe<Event>(this);
+                
 
                 // forward 1 from beginning
                 _count = 0;
@@ -374,7 +375,8 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
-        void Messaging.Bus.IHandle<Event>.Handle(Event message)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Interface fequired for fixture.")]
+        public void Handle(Event message)
         {            
             _gotEvent?.Invoke(message);
             Interlocked.Increment(ref _count);

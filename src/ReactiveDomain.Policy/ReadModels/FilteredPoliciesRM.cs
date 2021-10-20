@@ -48,13 +48,14 @@ namespace ReactiveDomain.Policy.ReadModels
             //read
             long ? appCheckpoint;
             long ? userCheckpoint;
-            using (var reader = conn.GetReader(nameof(FilteredPoliciesRM), this))
-            {
-                reader.EventStream.Subscribe<Message>(this);
+            using (var reader = conn.GetReader(nameof(FilteredPoliciesRM), Handle))
+            {               
                 reader.Read<Domain.SecuredApplication>();
                 appCheckpoint = reader.Position;
+                while (!Idle) { };
                 reader.Read<Domain.PolicyUser>();
                 userCheckpoint = reader.Position;
+                while (!Idle) { };
             }
             //subscribe
             Start<Domain.SecuredApplication>(appCheckpoint);
@@ -87,6 +88,7 @@ namespace ReactiveDomain.Policy.ReadModels
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
+            if (_applications.ContainsKey(@event.ApplicationId)) { return; }
             if (AllowedApplications == null || //no filter
                 AllowedApplications.Contains(@event.Name, StringComparer.OrdinalIgnoreCase)) //in filtered list
             {
@@ -99,6 +101,7 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (_applications.ContainsKey(@event.ApplicationId)) //in filtered list
             {
+                if (_policies.Keys.Contains(@event.PolicyId)) { return; }
                 _policies.AddOrUpdate(new PolicyDTO(@event));
             }
         }
@@ -106,7 +109,7 @@ namespace ReactiveDomain.Policy.ReadModels
         public void Handle(ApplicationMsgs.RoleCreated @event)
         {
             var policy = _policies.Lookup(@event.PolicyId);
-            if (policy.HasValue)
+            if (policy.HasValue && !_roles.ContainsKey(@event.RoleId))
             {
                 var role = new RoleDTO(@event);
                 _roles.Add(@event.RoleId, role);
@@ -117,7 +120,7 @@ namespace ReactiveDomain.Policy.ReadModels
         public void Handle(PolicyUserMsgs.PolicyUserAdded @event)
         {
             var policy = _policies.Lookup(@event.PolicyId);
-            if (policy.HasValue)
+            if (policy.HasValue && !_policyUsers.ContainsKey(@event.PolicyUserId))
             {
                 var policyUser = new PolicyUserDTO(@event);
                 _policyUsers.Add(@event.PolicyUserId, policyUser);
@@ -130,6 +133,7 @@ namespace ReactiveDomain.Policy.ReadModels
             if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
                 _roles.TryGetValue(@event.RoleId, out var role))
             {
+                if (user.Roles.Keys.Contains(@event.RoleId)) { return; }
                 user.AddRole(role);
             }
         }

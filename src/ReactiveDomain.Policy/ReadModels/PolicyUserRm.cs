@@ -39,11 +39,11 @@ namespace ReactiveDomain.Policy.ReadModels
 
             //read
             long? checkpoint;
-            using (var reader = conn.GetReader(nameof(PolicyUserRm), this))
-            {
-                reader.EventStream.Subscribe<Message>(this);
+            using (var reader = conn.GetReader(nameof(PolicyUserRm), Handle))
+            {               
                 reader.Read<Domain.PolicyUser>();
                 checkpoint = reader.Position;
+                while (!Idle) { };
             }
             //subscribe
             Start<Domain.PolicyUser>(checkpoint);

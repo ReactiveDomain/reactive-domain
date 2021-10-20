@@ -17,14 +17,13 @@ namespace ReactiveDomain.Foundation
     public class StreamReader : IStreamReader
     {
         protected readonly string ReaderName;
-        protected readonly InMemoryBus Bus;
         private readonly IStreamNameBuilder _streamNameBuilder;
         protected readonly IEventSerializer Serializer;
-        public ISubscriber EventStream => Bus;
         private readonly IStreamStoreConnection _streamStoreConnection;
         protected long StreamPosition;
         protected bool firstEventRead;
         public long? Position => firstEventRead ? StreamPosition : (long?)null;
+        public Action<IMessage> Handle { get; set; }
         public string StreamName { get; private set; }
         private const int ReadPageSize = 500;
 
@@ -43,15 +42,13 @@ namespace ReactiveDomain.Foundation
                 IStreamStoreConnection streamStoreConnection,
                 IStreamNameBuilder streamNameBuilder,
                 IEventSerializer serializer,
-                IHandle<IMessage> target = null,
-                string busName = null)
+                Action<IMessage> target)
         {
             ReaderName = name ?? nameof(StreamReader);
             _streamStoreConnection = streamStoreConnection ?? throw new ArgumentNullException(nameof(streamStoreConnection));
             _streamNameBuilder = streamNameBuilder ?? throw new ArgumentNullException(nameof(streamNameBuilder));
             Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            Bus = new InMemoryBus(busName ?? $"{ReaderName} {nameof(EventStream)}");
-            if (target != null) { Bus.SubscribeToAll(target); }
+            Handle = target;
         }
 
         /// <summary>
@@ -142,7 +139,7 @@ namespace ReactiveDomain.Foundation
                             long? count = null,
                             bool readBackwards = false)
         {
-            var eventsRead = false;
+
 
             if (checkpoint != null)
                 Ensure.Nonnegative((long)checkpoint, nameof(checkpoint));
@@ -166,15 +163,15 @@ namespace ReactiveDomain.Foundation
                     ? _streamStoreConnection.ReadStreamForward(streamName, sliceStart, page)
                     : _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
 
-                if (!(currentSlice is StreamEventsSlice)) { return false; }
-
+                if (!(currentSlice is StreamEventsSlice)) { break; }
+                firstEventRead = true;
                 remaining -= currentSlice.Events.Length;
                 sliceStart = currentSlice.NextEventNumber;
 
                 Array.ForEach(currentSlice.Events, EventRead);
 
             } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
-            return eventsRead;
+            return firstEventRead;
         }
         public bool ValidateStreamName(string streamName)
         {
@@ -191,7 +188,7 @@ namespace ReactiveDomain.Foundation
 
             if (Serializer.Deserialize(recordedEvent) is IMessage @event)
             {
-                Bus.Publish(@event);
+                Handle(@event);
             }
         }
 
@@ -211,8 +208,7 @@ namespace ReactiveDomain.Foundation
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
-                return;
-            Bus?.Dispose();
+                return;           
             _disposed = true;
         }
         #endregion

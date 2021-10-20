@@ -29,13 +29,11 @@ namespace ReactiveDomain.Identity.Stores
             EventStream.Subscribe<ApplicationMsgs.STSClientSecretAdded>(this);
             EventStream.Subscribe<ApplicationMsgs.STSClientSecretRemoved>(this);
 
-            using (var reader = conn.GetReader(nameof(ClientStore)))
-            {
-                reader.EventStream.Subscribe<ApplicationMsgs.STSClientDetailsAdded>(this);
-                reader.EventStream.Subscribe<ApplicationMsgs.STSClientSecretAdded>(this);
-                reader.EventStream.Subscribe<ApplicationMsgs.STSClientSecretRemoved>(this);
+            using (var reader = conn.GetReader(nameof(ClientStore),Handle))
+            {             
                 reader.Read<SecuredApplication>();
                 checkpoint = reader.Position ?? StreamPosition.Start;
+                while (!Idle) { };
             }
             Start<SecuredApplication>(checkpoint);
         }

@@ -1,6 +1,7 @@
 ﻿using ReactiveDomain.Foundation.StreamStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using System;
 
 namespace ReactiveDomain.Foundation
 {
@@ -31,9 +32,9 @@ namespace ReactiveDomain.Foundation
             return new QueuedStreamListener(name, Connection, StreamNamer, Serializer);
         }
 
-        public IStreamReader GetReader(string name, IHandle<IMessage> target = null)
+        public IStreamReader GetReader(string name, Action<IMessage> handle)
         {
-            return new StreamReader(name, Connection, StreamNamer, Serializer, target);
+            return new StreamReader(name, Connection, StreamNamer, Serializer, handle);
         }
 
         public IRepository GetRepository(bool caching = false)

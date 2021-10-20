@@ -19,7 +19,8 @@ namespace ReactiveDomain.Foundation
         private readonly List<IListener> _listeners;
         private readonly InMemoryBus _bus;
         private readonly QueuedHandler _queue;
-
+        public int MessageCount => _queue.MessageCount;
+        public bool Idle => _queue.Idle;
         protected ReadModelBase(string name, Func<IListener> getListener)
         {
 

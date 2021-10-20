@@ -24,11 +24,11 @@ namespace ReactiveDomain.Users.ReadModels
         {
             long? position;
             EventStream.Subscribe<UserMsgs.UserEvent>(this);
-            using (var reader = conn.GetReader(nameof(UsersRm)))
-            {
-                reader.EventStream.Subscribe<Message>(this);
+            using (var reader = conn.GetReader(nameof(UsersRm), Handle))
+            {               
                 reader.Read<User>();
                 position = reader.Position;
+                while (!Idle) { };
             }
 
             Start<User>(checkpoint: position, blockUntilLive: true);
@@ -61,7 +61,7 @@ namespace ReactiveDomain.Users.ReadModels
                     {
                         _userIds.Add(@event.UserId);
                     }
-                    var userDto  = new UserDTO(created.UserId);
+                    var userDto = new UserDTO(created.UserId);
                     UsersById.Add(created.UserId, userDto);
                     _allUsers.AddOrUpdate(userDto);
                     break;

@@ -19,20 +19,21 @@ namespace ReactiveDomain.Identity.ReadModels
 
             //read
             long? checkpoint;
-            using (var reader = conn.GetReader(nameof(SubjectsRm), this))
+            using (var reader = conn.GetReader(nameof(SubjectsRm), Handle))
             {
-                reader.EventStream.Subscribe<Message>(this);
                 reader.Read<Domain.Subject>();
                 checkpoint = reader.Position;
+                while (!Idle) { };
             }
 
             //subscribe
-            Start<Domain.Subject>(checkpoint);
+            Start<Domain.Subject>(checkpoint, true);
         }
         public Dictionary<Guid, Guid> SubjectIdByUserId = new Dictionary<Guid, Guid>();
         public void Handle(SubjectMsgs.SubjectCreated @event)
         {
-            if (SubjectIdByUserId.ContainsKey(@event.UserId)) {
+            if (SubjectIdByUserId.ContainsKey(@event.UserId))
+            {
                 SubjectIdByUserId[@event.UserId] = @event.SubjectId;
             }
             else

@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using System;
 
 
@@ -6,10 +7,8 @@ namespace ReactiveDomain.Foundation
 {
     public interface IStreamReader : IDisposable
     {
-        /// <summary>
-        /// The Eventstream the Events are read onto
-        /// </summary>
-        ISubscriber EventStream { get; }
+        
+      
         
         /// <summary>
         /// The ending position of the stream after the read is complete
@@ -20,6 +19,12 @@ namespace ReactiveDomain.Foundation
         /// </summary>
         string StreamName { get; }
 
+        /// <summary>
+        /// The updatable handle for the events.
+        /// If set replaces the existing target/handle.
+        /// </summary>
+        Action<IMessage> Handle { set; }
+        
         /// <summary>
         /// Reads the events on a named stream
         /// </summary>

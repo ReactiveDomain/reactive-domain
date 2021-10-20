@@ -1,5 +1,6 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using System;
 
 namespace ReactiveDomain.Foundation
 {
@@ -10,7 +11,7 @@ namespace ReactiveDomain.Foundation
         IEventSerializer Serializer { get; }
         IListener GetListener(string name);
         IListener GetQueuedListener(string name);
-        IStreamReader GetReader(string name, IHandle<IMessage> target = null);
+        IStreamReader GetReader(string name, Action<IMessage> handle);
         IRepository GetRepository(bool caching = false);
         ICorrelatedRepository GetCorrelatedRepository(IRepository baseRepository = null, bool caching = false);
 
