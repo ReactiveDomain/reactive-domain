@@ -1,5 +1,7 @@
 using System;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Users.Domain;
+using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.Tests.Helpers;
 using Xunit;
 
@@ -11,6 +13,8 @@ namespace ReactiveDomain.Users.Tests
         private readonly ICorrelatedMessage _command = MessageBuilder.New(() => new TestMessages.RootCommand());
 
         private readonly Guid _id = Guid.NewGuid();
+
+
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
         private const string AuthProvider = Constants.AuthenticationProviderAD;
         private const string AuthDomain = "Perkinelmernet";
@@ -28,15 +32,12 @@ namespace ReactiveDomain.Users.Tests
         private readonly string AuthDomainUpdate = "Perkinelmernet Update";
         private readonly string UserNameUpdate = "jsmith Update";
 
+
         [Fact]
         public void can_create_new_user()
         {
-            var user = new IdentityAgg(
+            var user = new User(
                             _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
                             FullName,
                             GivenName,
                             Surname,
@@ -47,15 +48,24 @@ namespace ReactiveDomain.Users.Tests
                             events,
                             e =>
                             {
-                                if (e is PolicyUserMsgs.UserCreated created)
+                                if (e is UserMsgs.UserCreated created)
                                 {
-                                    Assert.Equal(_id, created.Id);
-                                    Assert.Equal(AuthProvider, created.AuthProvider);
-                                    Assert.Equal(AuthDomain, created.AuthDomain);
-                                    Assert.Equal(UserName, created.UserName);
-                                    Assert.Equal(GivenName, created.GivenName);
-                                    Assert.Equal(Surname, created.Surname);
-                                    Assert.Equal(Email, created.Email);
+                                    Assert.Equal(_id, created.UserId);
+                                }
+                                else
+                                {
+                                    throw new Exception("wrong event.");
+                                }
+                            },
+                            e =>
+                            {
+                                if (e is UserMsgs.UserDetailsUpdated details)
+                                {
+                                    Assert.Equal(_id, details.UserId);
+                                    Assert.Equal(FullName, details.FullName);
+                                    Assert.Equal(GivenName, details.GivenName);
+                                    Assert.Equal(Surname, details.Surname);
+                                    Assert.Equal(Email, details.Email);
                                 }
                                 else
                                 {
@@ -68,12 +78,8 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_email()
         {
             string emptyEmail = string.Empty;
-            var user = new IdentityAgg(
+            var user = new User(
                 _id,
-                _userSidFromAuthProvider,
-                AuthProvider,
-                AuthDomain,
-                UserName,
                 FullName,
                 GivenName,
                 Surname,
@@ -84,15 +90,24 @@ namespace ReactiveDomain.Users.Tests
                 events,
                 e =>
                 {
-                    if (e is PolicyUserMsgs.UserCreated created)
+                    if (e is UserMsgs.UserCreated created)
                     {
-                        Assert.Equal(_id, created.Id);
-                        Assert.Equal(AuthProvider, created.AuthProvider);
-                        Assert.Equal(AuthDomain, created.AuthDomain);
-                        Assert.Equal(UserName, created.UserName);
-                        Assert.Equal(GivenName, created.GivenName);
-                        Assert.Equal(Surname, created.Surname);
-                        Assert.Equal(emptyEmail, created.Email);
+                        Assert.Equal(_id, created.UserId);
+                    }
+                    else
+                    {
+                        throw new Exception("wrong event.");
+                    }
+                },
+                e =>
+                {
+                    if (e is UserMsgs.UserDetailsUpdated details)
+                    {
+                        Assert.Equal(_id, details.UserId);
+                        Assert.Equal(FullName, details.FullName);
+                        Assert.Equal(GivenName, details.GivenName);
+                        Assert.Equal(Surname, details.Surname);
+                        Assert.Equal(emptyEmail, details.Email);
                     }
                     else
                     {
@@ -104,12 +119,8 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_given_name()
         {
             string emptyGivenName = string.Empty;
-            var user = new IdentityAgg(
+            var user = new User(
                 _id,
-                _userSidFromAuthProvider,
-                AuthProvider,
-                AuthDomain,
-                UserName,
                 FullName,
                 emptyGivenName,
                 Surname,
@@ -120,15 +131,24 @@ namespace ReactiveDomain.Users.Tests
                 events,
                 e =>
                 {
-                    if (e is PolicyUserMsgs.UserCreated created)
+                    if (e is UserMsgs.UserCreated created)
                     {
-                        Assert.Equal(_id, created.Id);
-                        Assert.Equal(AuthProvider, created.AuthProvider);
-                        Assert.Equal(AuthDomain, created.AuthDomain);
-                        Assert.Equal(UserName, created.UserName);
-                        Assert.Equal(emptyGivenName, created.GivenName);
-                        Assert.Equal(Surname, created.Surname);
-                        Assert.Equal(Email, created.Email);
+                        Assert.Equal(_id, created.UserId);
+                    }
+                    else
+                    {
+                        throw new Exception("wrong event.");
+                    }
+                },
+                e =>
+                {
+                    if (e is UserMsgs.UserDetailsUpdated details)
+                    {
+                        Assert.Equal(_id, details.UserId);
+                        Assert.Equal(FullName, details.FullName);
+                        Assert.Equal(emptyGivenName, details.GivenName);
+                        Assert.Equal(Surname, details.Surname);
+                        Assert.Equal(Email, details.Email);
                     }
                     else
                     {
@@ -141,12 +161,8 @@ namespace ReactiveDomain.Users.Tests
         public void can_create_new_user_with_empty_surname()
         {
             string emptySurname = string.Empty;
-            var user = new IdentityAgg(
+            var user = new User(
                 _id,
-                _userSidFromAuthProvider,
-                AuthProvider,
-                AuthDomain,
-                UserName,
                 FullName,
                 GivenName,
                 emptySurname,
@@ -155,17 +171,26 @@ namespace ReactiveDomain.Users.Tests
             var events = user.TakeEvents();
             Assert.Collection(
                 events,
+                 e =>
+                 {
+                     if (e is UserMsgs.UserCreated created)
+                     {
+                         Assert.Equal(_id, created.UserId);
+                     }
+                     else
+                     {
+                         throw new Exception("wrong event.");
+                     }
+                 },
                 e =>
                 {
-                    if (e is PolicyUserMsgs.UserCreated created)
+                    if (e is UserMsgs.UserDetailsUpdated details)
                     {
-                        Assert.Equal(_id, created.Id);
-                        Assert.Equal(AuthProvider, created.AuthProvider);
-                        Assert.Equal(AuthDomain, created.AuthDomain);
-                        Assert.Equal(UserName, created.UserName);
-                        Assert.Equal(GivenName, created.GivenName);
-                        Assert.Equal(emptySurname, created.Surname);
-                        Assert.Equal(Email, created.Email);
+                        Assert.Equal(_id, details.UserId);
+                        Assert.Equal(FullName, details.FullName);
+                        Assert.Equal(GivenName, details.GivenName);
+                        Assert.Equal(emptySurname, details.Surname);
+                        Assert.Equal(Email, details.Email);
                     }
                     else
                     {
@@ -173,91 +198,55 @@ namespace ReactiveDomain.Users.Tests
                     }
                 });
         }
-        [Fact]
-        public void cannot_create_user_with_empty_provider_name()
-        {
-            Assert.Throws<ArgumentNullException>(
-                () => new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            string.Empty,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command));
-        }
 
         [Fact]
-        public void cannot_create_user_with_empty_domain_name()
+        public void cannot_create_user_with_empty_ids()
         {
-            Assert.Throws<ArgumentNullException>(
-                () => new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            string.Empty,
-                            UserName,
+            Assert.Throws<ArgumentException>(
+                () => new User(
+                            Guid.Empty,
                             FullName,
                             GivenName,
                             Surname,
                             Email,
                             _command));
-        }
+            Assert.Throws<ArgumentNullException>(
+               () => new User(
+                           _id,
+                           FullName,
+                           GivenName,
+                           Surname,
+                           Email,
+                           null));
 
-        [Fact]
-        public void cannot_create_user_with_empty_user_name()
-        {
-            Assert.Throws<ArgumentNullException>(
-                () => new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            string.Empty,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command));
         }
-        
         [Fact]
         public void cannot_create_user_with_malformed_email()
         {
             Assert.Throws<FormatException>(
-                () => new IdentityAgg(
+                () => new User(
                             _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
                             FullName,
                             GivenName,
                             Surname,
                             "joe",
                             _command));
         }
-
         [Fact]
-        public void can_log_authentication()
+        public void can_mapp_authdomain()
         {
-            throw new NotImplementedException();
-            /*
-            var user = new IdentityAgg(
+            var user = new User(
                             _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
                             FullName,
                             GivenName,
                             Surname,
                             Email,
                             _command);
-            user.Authenticated(HostIPAddress);
+            user.MapToAuthDomain(
+              _userSidFromAuthProvider,
+              AuthProvider,
+              AuthDomain,
+              UserName);
             var events = user.TakeEvents();
             Assert.Collection(
                             events,
@@ -265,7 +254,7 @@ namespace ReactiveDomain.Users.Tests
                             {
                                 if (e is UserMsgs.UserCreated created)
                                 {
-                                    Assert.Equal(_id, created.Id);
+                                    Assert.Equal(_id, created.UserId);
                                 }
                                 else
                                 {
@@ -274,41 +263,65 @@ namespace ReactiveDomain.Users.Tests
                             },
                             e =>
                             {
-                                if (e is UserMsgs.Authenticated authenticated)
+                                if (e is UserMsgs.UserDetailsUpdated details)
                                 {
-                                    Assert.Equal(_id, authenticated.Id);
+                                    Assert.Equal(_id, details.UserId);
+                                    Assert.Equal(FullName, details.FullName);
+                                    Assert.Equal(GivenName, details.GivenName);
+                                    Assert.Equal(Surname, details.Surname);
+                                    Assert.Equal(Email, details.Email);
+                                }
+                                else
+                                {
+                                    throw new Exception("wrong event.");
+                                }
+                            },
+                            e =>
+                            {
+                                if (e is UserMsgs.AuthDomainMapped mapped)
+                                {
+                                    Assert.Equal(_id, mapped.UserId);
+                                    Assert.Equal(_userSidFromAuthProvider, mapped.SubjectId);
+                                    Assert.Equal(AuthProvider, mapped.AuthProvider);
+                                    Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                    Assert.Equal(UserName, mapped.UserName);
                                 }
                                 else
                                 {
                                     throw new Exception("wrong event.");
                                 }
                             });
-            */
         }
 
         [Fact]
-        public void can_updateGivenName()
+        public void can_map_additional_authdomains()
         {
-            var user = new IdentityAgg(
+            var otherSid = "other SID";
+            var user = new User(
                             _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
                             FullName,
                             GivenName,
                             Surname,
                             Email,
                             _command);
-            user.UpdateGivenName(GivenNameUpdate);
+            user.MapToAuthDomain(
+             _userSidFromAuthProvider,
+             AuthProvider,
+             AuthDomain,
+             UserName);
+            user.MapToAuthDomain(
+             otherSid,
+             AuthProvider,
+             AuthDomain,
+             UserName);
             var events = user.TakeEvents();
             Assert.Collection(
                             events,
                             e =>
                             {
-                                if (e is PolicyUserMsgs.UserCreated created)
+                                if (e is UserMsgs.UserCreated created)
                                 {
-                                    Assert.Equal(_id, created.Id);
+                                    Assert.Equal(_id, created.UserId);
                                 }
                                 else
                                 {
@@ -317,352 +330,179 @@ namespace ReactiveDomain.Users.Tests
                             },
                             e =>
                             {
-                                if (e is PolicyUserMsgs.GivenNameUpdated giveNameUpdated)
+                                if (e is UserMsgs.UserDetailsUpdated details)
                                 {
-                                    Assert.Equal(_id, giveNameUpdated.UserId);
-                                    Assert.Equal(GivenNameUpdate, giveNameUpdated.GivenName);
+                                    Assert.Equal(_id, details.UserId);
+                                    Assert.Equal(FullName, details.FullName);
+                                    Assert.Equal(GivenName, details.GivenName);
+                                    Assert.Equal(Surname, details.Surname);
+                                    Assert.Equal(Email, details.Email);
                                 }
                                 else
                                 {
                                     throw new Exception("wrong event.");
                                 }
-                            });
-        }
-        [Fact]
-        public void cannot_updateGivenName_with_empty_givename()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            Assert.Throws<ArgumentNullException>(
-                () => user.UpdateGivenName(string.Empty));
+                            },
+                            e =>
+                            {
+                                if (e is UserMsgs.AuthDomainMapped mapped)
+                                {
+                                    Assert.Equal(_id, mapped.UserId);
+                                    Assert.Equal(_userSidFromAuthProvider, mapped.SubjectId);
+                                    Assert.Equal(AuthProvider, mapped.AuthProvider);
+                                    Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                    Assert.Equal(UserName, mapped.UserName);
+                                }
+                                else
+                                {
+                                    throw new Exception("wrong event.");
+                                }
+                            },
+                             e =>
+                             {
+                                 if (e is UserMsgs.AuthDomainMapped mapped)
+                                 {
+                                     Assert.Equal(_id, mapped.UserId);
+                                     Assert.Equal(otherSid, mapped.SubjectId);
+                                     Assert.Equal(AuthProvider, mapped.AuthProvider);
+                                     Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                     Assert.Equal(UserName, mapped.UserName);
+                                 }
+                                 else
+                                 {
+                                     throw new Exception("wrong event.");
+                                 }
+                             });
 
         }
         [Fact]
-        public void can_updateSurName()
+        public void cannot_remap_same_authdomain()
         {
-            var user = new IdentityAgg(
-                            _id,
+            var user = new User(
+                           _id,
+                           FullName,
+                           GivenName,
+                           Surname,
+                           Email,
+                           _command);
+            user.MapToAuthDomain(
+             _userSidFromAuthProvider,
+             AuthProvider,
+             AuthDomain,
+             UserName);
+
+            Assert.Throws<ArgumentException>(
+                  () => user.MapToAuthDomain(
                             _userSidFromAuthProvider,
                             AuthProvider,
                             AuthDomain,
-                            UserName,
+                            UserName));
+
+        }
+
+
+
+
+
+
+        [Fact]
+        public void can_update_name_details()
+        {
+            var newFullName = "newFullName";
+            var newGivenName = "newGivenName";
+            var newSurname = "newSurname";
+            var newEmail = "joe@bob.com";
+
+            var user = new User(
+                            _id,
                             FullName,
                             GivenName,
                             Surname,
                             Email,
                             _command);
-            user.UpdateSurname(SurnameUpdate);
+            user.UpdateNameDetails(newGivenName, newSurname, newFullName, newEmail);
             var events = user.TakeEvents();
             Assert.Collection(
-                            events,
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserCreated created)
-                                {
-                                    Assert.Equal(_id, created.Id);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            },
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.SurnameUpdated surnameUpdated)
-                                {
-                                    Assert.Equal(_id, surnameUpdated.UserId);
-                                    Assert.Equal(SurnameUpdate, surnameUpdated.Surname);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            });
+                          events,
+                          e =>
+                          {
+                              if (e is UserMsgs.UserCreated created)
+                              {
+                                  Assert.Equal(_id, created.UserId);
+                              }
+                              else
+                              {
+                                  throw new Exception("wrong event.");
+                              }
+                          },
+                          e =>
+                          {
+                              if (e is UserMsgs.UserDetailsUpdated details)
+                              {
+                                  Assert.Equal(_id, details.UserId);
+                                  Assert.Equal(FullName, details.FullName);
+                                  Assert.Equal(GivenName, details.GivenName);
+                                  Assert.Equal(Surname, details.Surname);
+                                  Assert.Equal(Email, details.Email);
+                              }
+                              else
+                              {
+                                  throw new Exception("wrong event.");
+                              }
+                          },
+                          e =>
+                          {
+                              if (e is UserMsgs.UserDetailsUpdated details)
+                              {
+                                  Assert.Equal(_id, details.UserId);
+                                  Assert.Equal(newFullName, details.FullName);
+                                  Assert.Equal(newGivenName, details.GivenName);
+                                  Assert.Equal(newSurname, details.Surname);
+                                  Assert.Equal(newEmail, details.Email);
+                              }
+                              else
+                              {
+                                  throw new Exception("wrong event.");
+                              }
+                          });
         }
+
         [Fact]
-        public void cannot_updateSurName_with_empty_surname()
+        public void cannot_update_nameDetails_with_empty_strings()
         {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
+            var user = new User(
+                        _id,
+                        FullName,
+                        GivenName,
+                        Surname,
+                        Email,
+                        _command);
             Assert.Throws<ArgumentNullException>(
-                () => user.UpdateSurname(string.Empty));
+                () => user.UpdateNameDetails(fullName: string.Empty));
+            Assert.Throws<ArgumentNullException>(
+              () => user.UpdateNameDetails(givenName: string.Empty));
+            Assert.Throws<ArgumentNullException>(
+              () => user.UpdateNameDetails(surName: string.Empty));
+            Assert.Throws<ArgumentNullException>(
+              () => user.UpdateNameDetails(email: string.Empty));
 
         }
-        [Fact]
-        public void can_updateFullName()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            user.UpdateFullName(FullNameUpdate);
-            var events = user.TakeEvents();
-            Assert.Collection(
-                            events,
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserCreated created)
-                                {
-                                    Assert.Equal(_id, created.Id);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            },
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.FullNameUpdated fullNameUpdated)
-                                {
-                                    Assert.Equal(_id, fullNameUpdated.UserId);
-                                    Assert.Equal(FullNameUpdate, fullNameUpdated.FullName);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            });
-        }
-        [Fact]
-        public void cannot_updateFullName_with_empty_fullname()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            Assert.Throws<ArgumentNullException>(
-                () => user.UpdateFullName(string.Empty));
 
-        }
-        [Fact]
-        public void can_updateEmail()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            user.UpdateEmail(EmailUpdate);
-            var events = user.TakeEvents();
-            Assert.Collection(
-                            events,
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserCreated created)
-                                {
-                                    Assert.Equal(_id, created.Id);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            },
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.EmailUpdated emailUpdated)
-                                {
-                                    Assert.Equal(_id, emailUpdated.UserId);
-                                    Assert.Equal(EmailUpdate, emailUpdated.Email);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            });
-        }
-        [Fact]
-        public void cannot_updateEmail_with_empty_email()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            Assert.Throws<ArgumentNullException>(
-                () => user.UpdateEmail(string.Empty));
-
-        }
         [Fact]
         public void cannot_updateEmail_with_malformed_email()
         {
-            var user = new IdentityAgg(
+            var user = new User(
                             _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
                             FullName,
                             GivenName,
                             Surname,
                             Email,
                             _command);
             Assert.Throws<FormatException>(
-                () => user.UpdateEmail("Joe"));
+                () => user.UpdateNameDetails(email: "Joe"));
         }
-       
-        [Fact]
-        public void can_updateAuthDomain()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            user.UpdateAuthDomain(AuthDomainUpdate);
-            var events = user.TakeEvents();
-            Assert.Collection(
-                            events,
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserCreated created)
-                                {
-                                    Assert.Equal(_id, created.Id);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            },
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.AuthDomainUpdated authDomainUpdate)
-                                {
-                                    Assert.Equal(_id, authDomainUpdate.UserId);
-                                    Assert.Equal(AuthDomainUpdate, authDomainUpdate.AuthDomain);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            });
-        }
-        [Fact]
-        public void cannot_updateAuthDomain_with_empty_authdomain()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            Assert.Throws<ArgumentNullException>(
-                () => user.UpdateAuthDomain(string.Empty));
 
-        }
-        [Fact]
-        public void can_update_username()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            user.UpdateUserName(UserNameUpdate);
-            var events = user.TakeEvents();
-            Assert.Collection(
-                            events,
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserCreated created)
-                                {
-                                    Assert.Equal(_id, created.Id);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            },
-                            e =>
-                            {
-                                if (e is PolicyUserMsgs.UserNameUpdated userNameUpdate)
-                                {
-                                    Assert.Equal(_id, userNameUpdate.UserId);
-                                    Assert.Equal(UserNameUpdate, userNameUpdate.UserName);
-                                }
-                                else
-                                {
-                                    throw new Exception("wrong event.");
-                                }
-                            });
-        }
-        [Fact]
-        public void cannot_update_username_with_empty_username()
-        {
-            var user = new IdentityAgg(
-                            _id,
-                            _userSidFromAuthProvider,
-                            AuthProvider,
-                            AuthDomain,
-                            UserName,
-                            FullName,
-                            GivenName,
-                            Surname,
-                            Email,
-                            _command);
-            Assert.Throws<ArgumentNullException>(
-                () => user.UpdateUserName(string.Empty));
 
-        }        
+
     }
 }

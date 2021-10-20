@@ -17,6 +17,8 @@ namespace ReactiveDomain.Users.Domain
         private string _surname;
         private string _email;
         private readonly HashSet<string> _clientScopes = new HashSet<string>();
+        //SubjectId-Username
+        private Dictionary<string, string> _mappedAuthDomains = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private User()
         {
             RegisterEvents();
@@ -28,6 +30,7 @@ namespace ReactiveDomain.Users.Domain
             Register<UserMsgs.UserDetailsUpdated>(Apply);
             Register<UserMsgs.AddClientScope>(Apply);
             Register<UserMsgs.RemoveClientScope>(Apply);
+            Register<UserMsgs.AuthDomainMapped>(Apply);
         }
 
         private void Apply(UserMsgs.UserCreated evt)
@@ -50,6 +53,11 @@ namespace ReactiveDomain.Users.Domain
         {
             _clientScopes.Remove(evt.ClientScope);
         }
+        private void Apply(UserMsgs.AuthDomainMapped evt) {
+            if (!_mappedAuthDomains.ContainsKey(evt.SubjectId)) {
+                _mappedAuthDomains.Add(evt.SubjectId, evt.UserName);
+            }
+        }
         /// <summary>
         /// Create a new user.
         /// </summary>
@@ -66,12 +74,7 @@ namespace ReactiveDomain.Users.Domain
             // ReSharper disable once ObjectCreationAsStatement
             if (!string.IsNullOrEmpty(email))
                 new MailAddress(email);  // performs validation on the provided address.
-
             Ensure.NotNull(source, nameof(source));
-            Ensure.NotEmptyGuid(source.CorrelationId, nameof(source.CorrelationId));
-            if (source.CausationId == Guid.Empty)
-                Ensure.NotEmptyGuid(source.MsgId, nameof(source.MsgId));
-
             ((ICorrelatedEventSource)this).Source = source;
             Raise(new UserMsgs.UserCreated(id));
             Raise(new UserMsgs.UserDetailsUpdated(
@@ -88,6 +91,7 @@ namespace ReactiveDomain.Users.Domain
             string authDomain,
             string userName)
         {
+            if (_mappedAuthDomains.ContainsKey(subjectId)) { throw new ArgumentException("AuthDomain mapping already exists"); }
             Raise(new UserMsgs.AuthDomainMapped(Id, subjectId, authProvider, authDomain, userName));
         }
 
@@ -137,11 +141,14 @@ namespace ReactiveDomain.Users.Domain
             string fullName = null,
             string email = null)
         {
+
             if (IsChange(givenName, _givenName) ||
                 IsChange(surName, _surname) ||
                 IsChange(fullName, _fullName) ||
                 IsChange(email, _email))
             {
+                if (!string.IsNullOrEmpty(email))
+                    new MailAddress(email);  // performs validation on the provided address.
                 Raise(new UserMsgs.UserDetailsUpdated(
                             Id,
                             givenName ?? _givenName,
@@ -152,6 +159,7 @@ namespace ReactiveDomain.Users.Domain
         }
         private bool IsChange(string input, string existing) {
             if (input == null) { return false; }
+            Ensure.NotNullOrEmpty(input, nameof(input));
             return !string.Equals(input, existing, StringComparison.Ordinal);
         }
 
