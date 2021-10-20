@@ -21,9 +21,8 @@ namespace ReactiveDomain.Identity.ReadModels
             long? checkpoint;
             using (var reader = conn.GetReader(nameof(SubjectsRm), Handle))
             {
-                reader.Read<Domain.Subject>();
+                reader.Read<Domain.Subject>(() => Idle);
                 checkpoint = reader.Position;
-                while (!Idle) { };
             }
 
             //subscribe

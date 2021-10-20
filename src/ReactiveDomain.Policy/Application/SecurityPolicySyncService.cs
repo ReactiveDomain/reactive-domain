@@ -45,8 +45,7 @@ namespace ReactiveDomain.Policy.Application
             var appList = new Dictionary<string, Guid>();
             using (var appReader = conn.GetReader("AppReader", evt => { if (evt is ApplicationMsgs.ApplicationCreated @event) { appList.Add($"{@event.Name}-{@event.SecurityModelVersion}", @event.ApplicationId); } }))
             {
-                appReader.Read(typeof(ApplicationMsgs.ApplicationCreated));
-                while (!Idle) { };
+                appReader.Read(typeof(ApplicationMsgs.ApplicationCreated), () => Idle);
             }
             Guid appId;
             if (appList.ContainsKey($"{Policy.ApplicationName}-{Policy.SecurityModelVersion}"))
@@ -71,10 +70,9 @@ namespace ReactiveDomain.Policy.Application
             EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
             EventStream.Subscribe<ApplicationMsgs.RoleCreated>(this);
 
-            using (var appReader = conn.GetReader("appReader",Handle))
-            {       
-                appReader.Read<Domain.SecuredApplication>(appId);
-                while (!Idle) { };
+            using (var appReader = conn.GetReader("appReader", Handle))
+            {
+                appReader.Read<Domain.SecuredApplication>(appId, () => Idle);
             }
             Policy.OwningApplication.UpdateApplicationDetails(appId);
             Policy.OwningApplication.ClientSecret = _dbApp.ClientSecret;

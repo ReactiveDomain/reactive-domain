@@ -31,9 +31,8 @@ namespace ReactiveDomain.Identity.Stores
 
             using (var reader = conn.GetReader(nameof(ClientStore),Handle))
             {             
-                reader.Read<SecuredApplication>();
+                reader.Read<SecuredApplication>(()=> Idle);
                 checkpoint = reader.Position ?? StreamPosition.Start;
-                while (!Idle) { };
             }
             Start<SecuredApplication>(checkpoint);
         }

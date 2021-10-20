@@ -46,16 +46,14 @@ namespace ReactiveDomain.Policy.ReadModels
             EventStream.Subscribe<PolicyUserMsgs.UserReactivated>(this);
 
             //read
-            long ? appCheckpoint;
-            long ? userCheckpoint;
+            long? appCheckpoint;
+            long? userCheckpoint;
             using (var reader = conn.GetReader(nameof(FilteredPoliciesRM), Handle))
-            {               
-                reader.Read<Domain.SecuredApplication>();
+            {
+                reader.Read<Domain.SecuredApplication>(() => Idle);
                 appCheckpoint = reader.Position;
-                while (!Idle) { };
-                reader.Read<Domain.PolicyUser>();
+                reader.Read<Domain.PolicyUser>(() => Idle);
                 userCheckpoint = reader.Position;
-                while (!Idle) { };
             }
             //subscribe
             Start<Domain.SecuredApplication>(appCheckpoint);
@@ -148,9 +146,11 @@ namespace ReactiveDomain.Policy.ReadModels
         public void Handle(PolicyUserMsgs.UserDeactivated @event)
         {
 
-            if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)){
+            if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user))
+            {
                 var policy = _policies.Lookup(user.PolicyId);
-                if (policy.HasValue) {
+                if (policy.HasValue)
+                {
                     policy.Value.Users.Remove(user);
                 }
             }

@@ -26,9 +26,8 @@ namespace ReactiveDomain.Users.ReadModels
             EventStream.Subscribe<UserMsgs.UserEvent>(this);
             using (var reader = conn.GetReader(nameof(UsersRm), Handle))
             {               
-                reader.Read<User>();
-                position = reader.Position;
-                while (!Idle) { };
+                reader.Read<User>(()=> Idle);
+                position = reader.Position;               
             }
 
             Start<User>(checkpoint: position, blockUntilLive: true);

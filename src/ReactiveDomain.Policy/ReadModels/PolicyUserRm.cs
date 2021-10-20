@@ -40,10 +40,9 @@ namespace ReactiveDomain.Policy.ReadModels
             //read
             long? checkpoint;
             using (var reader = conn.GetReader(nameof(PolicyUserRm), Handle))
-            {               
-                reader.Read<Domain.PolicyUser>();
+            {
+                reader.Read<Domain.PolicyUser>(() => Idle);
                 checkpoint = reader.Position;
-                while (!Idle) { };
             }
             //subscribe
             Start<Domain.PolicyUser>(checkpoint);
@@ -126,7 +125,8 @@ namespace ReactiveDomain.Policy.ReadModels
 
         public void Handle(PolicyUserMsgs.RoleAdded @event)
         {
-            if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles)) {
+            if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles))
+            {
                 roles.Add(@event.RoleName);
             }
         }

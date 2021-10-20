@@ -21,8 +21,8 @@ namespace ReactiveDomain.Foundation
         protected readonly IEventSerializer Serializer;
         private readonly IStreamStoreConnection _streamStoreConnection;
         protected long StreamPosition;
-        protected bool firstEventRead;
-        public long? Position => firstEventRead ? StreamPosition : (long?)null;
+        protected bool FirstEventRead;
+        public long? Position => FirstEventRead ? StreamPosition : (long?)null;
         public Action<IMessage> Handle { get; set; }
         public string StreamName { get; private set; }
         private const int ReadPageSize = 500;
@@ -36,19 +36,19 @@ namespace ReactiveDomain.Foundation
         /// <param name="streamStoreConnection">The stream store to subscribe to</param>
         /// <param name="streamNameBuilder">The source for correct stream names based on aggregates and events</param>
         /// <param name="serializer">the serializer to apply to the evenets in the stream</param>
-        /// <param name="busName">The name to use for the internal bus (helpful in debugging)</param>
+        /// <param name="handle">The target handle read events are passed to</param>
         public StreamReader(
                 string name,
                 IStreamStoreConnection streamStoreConnection,
                 IStreamNameBuilder streamNameBuilder,
                 IEventSerializer serializer,
-                Action<IMessage> target)
+                Action<IMessage> handle)
         {
             ReaderName = name ?? nameof(StreamReader);
             _streamStoreConnection = streamStoreConnection ?? throw new ArgumentNullException(nameof(streamStoreConnection));
             _streamNameBuilder = streamNameBuilder ?? throw new ArgumentNullException(nameof(streamNameBuilder));
             Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            Handle = target;
+            Handle = handle;
         }
 
         /// <summary>
@@ -56,6 +56,7 @@ namespace ReactiveDomain.Foundation
         /// i.e. $et-[MessageType]
         /// </summary>
         /// <param name="tMessage">The message type used to generate the stream (projection) name</param>
+        /// <param name="completionCheck">Read will block until true to ensure processing has completed, use '()=> true' to continue without blocking. If cancelation or timeout is required it should be implemented in the completion method</param>
         /// <param name="checkpoint">The starting point to read from.</param>
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">Read the stream backwards</param>
@@ -63,6 +64,7 @@ namespace ReactiveDomain.Foundation
         /// <exception cref="ArgumentException"><paramref name="tMessage"/> must implement IMessage</exception>
         public bool Read(
             Type tMessage,
+            Func<bool> completionCheck,
             long? checkpoint = null,
             long? count = null,
             bool readBackwards = false)
@@ -74,6 +76,7 @@ namespace ReactiveDomain.Foundation
 
             return Read(
                 _streamNameBuilder.GenerateForEventType(tMessage.Name),
+                completionCheck,
                checkpoint,
                count,
                readBackwards);
@@ -84,17 +87,20 @@ namespace ReactiveDomain.Foundation
         /// i.e. $ce-[AggregateType]
         /// </summary>
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
+        /// <param name="completionCheck">Read will block until true to ensure processing has completed, use '()=> true' to continue without blocking. If cancelation or timeout is required it should be implemented in the completion method</param>
         /// <param name="checkpoint">The starting point to read from.</param>
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">Read the stream backwards</param>
         /// <returns>Returns true if any events were read from the stream</returns>
         public bool Read<TAggregate>(
+                        Func<bool> completionCheck,
                         long? checkpoint = null,
                         long? count = null,
                         bool readBackwards = false) where TAggregate : class, IEventSource
         {
             return Read(
                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
+               completionCheck,
                checkpoint,
                count,
                readBackwards);
@@ -107,18 +113,21 @@ namespace ReactiveDomain.Foundation
         /// </summary>
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
         /// <param name="id">Aggregate id to generate stream name.</param>
+        /// <param name="completionCheck">Read will block until true to ensure processing has completed, use '()=> true' to continue without blocking. If cancelation or timeout is required it should be implemented in the completion method</param>
         /// <param name="checkpoint">The starting point to read from.</param>
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">Read the stream backwards</param>
         /// <returns>Returns true if any events were read from the stream</returns>
         public bool Read<TAggregate>(
                         Guid id,
+                        Func<bool> completionCheck,
                         long? checkpoint = null,
                         long? count = null,
                         bool readBackwards = false) where TAggregate : class, IEventSource
         {
             return Read(
                  _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
+                 completionCheck,
                  checkpoint,
                  count,
                  readBackwards);
@@ -129,12 +138,14 @@ namespace ReactiveDomain.Foundation
         /// i.e. [StreamName]
         /// </summary>
         /// <param name="streamName">An exact stream name.</param>
+        /// <param name="completionCheck">Read will block until true to ensure processing has completed, use '()=> true' to continue without blocking. If cancelation or timeout is required it should be implemented in the completion method</param>
         /// <param name="checkpoint">The starting point to read from.</param>
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">Read the stream backwards</param>
         /// <returns>Returns true if any events were read from the stream</returns>
         public virtual bool Read(
                             string streamName,
+                            Func<bool> completionCheck,
                             long? checkpoint = null,
                             long? count = null,
                             bool readBackwards = false)
@@ -149,7 +160,7 @@ namespace ReactiveDomain.Foundation
                 throw new ArgumentException("Stream not found.", streamName);
 
             _cancelled = false;
-            firstEventRead = false;
+            FirstEventRead = false;
             StreamName = streamName;
             long sliceStart = checkpoint ?? (readBackwards ? -1 : 0);
             long remaining = count ?? long.MaxValue;
@@ -164,14 +175,15 @@ namespace ReactiveDomain.Foundation
                     : _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
 
                 if (!(currentSlice is StreamEventsSlice)) { break; }
-                firstEventRead = true;
+                FirstEventRead = true;
                 remaining -= currentSlice.Events.Length;
                 sliceStart = currentSlice.NextEventNumber;
 
                 Array.ForEach(currentSlice.Events, EventRead);
 
             } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
-            return firstEventRead;
+            if (FirstEventRead && completionCheck != null) { SpinWait.SpinUntil(() => { try { return completionCheck(); } catch { return true; } }); }
+            return FirstEventRead;
         }
         public bool ValidateStreamName(string streamName)
         {
@@ -184,7 +196,7 @@ namespace ReactiveDomain.Foundation
             if (_cancelled) return;
 
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
-            firstEventRead = true;
+            FirstEventRead = true;
 
             if (Serializer.Deserialize(recordedEvent) is IMessage @event)
             {

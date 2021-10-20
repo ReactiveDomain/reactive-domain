@@ -10,6 +10,7 @@ namespace ReactiveDomain.Users.Services
     /// The service that fronts the User aggregate.
     /// </summary>
     public class UserSvc :
+        TransientSubscriber,
         IHandleCommand<UserMsgs.CreateUser>,
         IHandleCommand<UserMsgs.Deactivate>,
         IHandleCommand<UserMsgs.Activate>,
@@ -25,16 +26,16 @@ namespace ReactiveDomain.Users.Services
         /// </summary>
         /// <param name="repo">The repository for interacting with the EventStore.</param>
         /// <param name="bus">The dispatcher.</param>
-        public UserSvc(IRepository repo, IDispatcher bus)
+        public UserSvc(IRepository repo, IDispatcher bus): base(bus)
         {
             _repo = new CorrelatedStreamStoreRepository(repo);
-            bus.Subscribe<UserMsgs.CreateUser>(this);
-            bus.Subscribe<UserMsgs.Deactivate>(this);
-            bus.Subscribe<UserMsgs.Activate>(this);
-            bus.Subscribe<UserMsgs.UpdateUserDetails>(this);
-            bus.Subscribe<UserMsgs.MapToAuthDomain>(this);
-            bus.Subscribe<UserMsgs.AddClientScope>(this);
-            bus.Subscribe<UserMsgs.RemoveClientScope>(this);
+            Subscribe<UserMsgs.CreateUser>(this);
+            Subscribe<UserMsgs.Deactivate>(this);
+            Subscribe<UserMsgs.Activate>(this);
+            Subscribe<UserMsgs.UpdateUserDetails>(this);
+            Subscribe<UserMsgs.MapToAuthDomain>(this);
+            Subscribe<UserMsgs.AddClientScope>(this);
+            Subscribe<UserMsgs.RemoveClientScope>(this);
         }
 
         /// <summary>
