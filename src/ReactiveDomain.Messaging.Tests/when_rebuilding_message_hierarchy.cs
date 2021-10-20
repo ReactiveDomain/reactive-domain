@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using ReactiveDomain.Messaging.Bus;
@@ -55,8 +56,12 @@ namespace ReactiveDomain.Messaging.Tests {
                 }
             }
 
-            AppDomain.CurrentDomain.Load("TestDynamicAssembly");
+            byte[] buffer = File.ReadAllBytes(_filePath);
+                      
+            AppDomain.CurrentDomain.Load(buffer);
+           
         }
+       
 #if(NET48)
         [Fact]
         public void can_dynamically_add_types_without_clearing_handlers()

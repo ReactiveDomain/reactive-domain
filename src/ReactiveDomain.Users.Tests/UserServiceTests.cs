@@ -1,11 +1,11 @@
 ﻿using System;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Policy;
 using ReactiveDomain.Testing;
 using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Domain.Aggregates;
-using ReactiveDomain.Users.Domain.Services;
 using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Users.Services;
 using ReactiveDomain.Users.Tests.Helpers;
 using Xunit;
 
@@ -19,7 +19,7 @@ namespace ReactiveDomain.Users.Tests
 
         private readonly MockRepositorySpecification _fixture;
         private readonly UserSvc _userSvc;
-        private readonly RoleSvc _roleSvc;
+        private readonly PolicySvc _policySvc;
 
         private readonly Guid _userId = Guid.NewGuid();
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
@@ -43,19 +43,15 @@ namespace ReactiveDomain.Users.Tests
         private const string RoleName = "Admin";
         private const string Application = "Kaleido";
         private const string HostIPAddress = "127.0.0.1";
-
+        /*
         public UserServiceTests()
         {
             _fixture = new MockRepositorySpecification();
             _userSvc = new UserSvc(_fixture.Schema, () => _fixture.GetListener(nameof(RoleServiceTests)), _fixture.Repository, _fixture.Dispatcher);
-            _roleSvc = new RoleSvc(() => _fixture.GetListener(nameof(RoleServiceTests)), _fixture.Repository, _fixture.Dispatcher);
+            _policySvc = new PolicySvc(() => _fixture.GetListener(nameof(RoleServiceTests)), _fixture.Repository, _fixture.Dispatcher);
         }
 
-        public void Dispose()
-        {
-            _userSvc.Dispose();
-            _roleSvc.Dispose();
-        }
+      
 
         [Fact]
         public void can_create_new_user()
@@ -795,6 +791,12 @@ namespace ReactiveDomain.Users.Tests
             _fixture.RepositoryEvents.WaitFor<UserMsgs.RoleAssigned>(TimeSpan.FromMilliseconds(100));
             _fixture.ClearQueues();
 
+        }
+        */
+        public void Dispose()
+        {
+            _userSvc?.Dispose();
+            _policySvc?.Dispose();
         }
     }
 

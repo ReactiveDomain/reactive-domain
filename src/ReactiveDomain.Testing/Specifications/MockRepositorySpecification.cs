@@ -13,6 +13,7 @@ namespace ReactiveDomain.Testing
         public IStreamNameBuilder StreamNameBuilder { get; }
         public IStreamStoreConnection StreamStoreConnection { get; }
         public IEventSerializer EventSerializer { get; }
+        public IConfiguredConnection ConfiguredConnection { get; }
         public string Schema { get; set; } = "Test";
 
         public MockRepositorySpecification()
@@ -22,6 +23,8 @@ namespace ReactiveDomain.Testing
             StreamStoreConnection.Connect();
             EventSerializer = new JsonMessageSerializer();
             MockRepository = new StreamStoreRepository(StreamNameBuilder, StreamStoreConnection, EventSerializer);
+
+            ConfiguredConnection = new ConfiguredConnection(StreamStoreConnection, StreamNameBuilder, EventSerializer);
 
             var connectorBus = new InMemoryBus("connector");
             StreamStoreConnection.SubscribeToAll(evt => {
