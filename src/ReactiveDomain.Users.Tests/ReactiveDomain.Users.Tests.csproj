@@ -28,6 +28,6 @@
       <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Reference Include="Microsoft.CSharp" Condition="'$(TargetFramework)'=='net48'" />
+      <Reference Include="Microsoft.CSharp" Version="4.7.0" />
     </ItemGroup>
   </Project>
