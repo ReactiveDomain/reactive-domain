@@ -50,7 +50,13 @@ namespace ReactiveDomain.Users.Services
                             command.Surname,
                             command.Email,
                             command);
-            _repo.Save(user);
+            try
+            {
+                _repo.Save(user);
+            }
+            catch (WrongExpectedVersionException _) {
+                throw new DuplicateUserException(command.UserId, command.FullName, command.Email);
+            }
             return command.Succeed();
         }
 
