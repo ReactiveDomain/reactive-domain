@@ -3,7 +3,7 @@
 namespace ReactiveDomain.Policy
 {
     /// <summary>
-    /// An attempt was made to add a duplicate user to the system.
+    /// An attempt was made to add a duplicate application to the system.
     /// </summary>
     public class DuplicateApplicationException : Exception
     {
