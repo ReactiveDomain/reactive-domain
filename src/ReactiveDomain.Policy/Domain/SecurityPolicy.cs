@@ -54,7 +54,7 @@ namespace ReactiveDomain.Policy.Domain
             if (roleId == Guid.Empty) {
                 roleId = Guid.NewGuid();
             }
-            if(string.IsNullOrWhiteSpace(roleName)) { throw new ArgumentNullException($"{nameof(roleId)} cannot be null, empty, or whitespace.");}
+            if(string.IsNullOrWhiteSpace(roleName)) { throw new ArgumentNullException($"{nameof(roleName)} cannot be null, empty, or whitespace.");}
             
             if (_rolesById.ContainsValue(roleName) || _rolesById.ContainsKey(roleId))
             {
