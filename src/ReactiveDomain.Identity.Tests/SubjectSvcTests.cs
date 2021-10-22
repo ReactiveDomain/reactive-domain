@@ -19,7 +19,7 @@ namespace ReactiveDomain.Identity.Tests
         private readonly Guid _userId = Guid.NewGuid();
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
         private const string AuthProvider = Constants.AuthenticationProviderAD;
-        private const string AuthDomain = "Perkinelmernet";
+        private const string AuthDomain = "Perkinelmer";
         private const string UserName = "jsmith";
         private const string GivenName = "John";
         private const string Surname = "Smith";
