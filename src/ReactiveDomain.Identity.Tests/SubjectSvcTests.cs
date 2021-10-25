@@ -36,7 +36,7 @@ namespace ReactiveDomain.Identity.Tests
 
         private readonly Guid _roleId = Guid.NewGuid();
         private const string RoleName = "Admin";
-        private const string Application = "Kaleido";
+        private const string Application = "TestApp1";
         private const string HostIPAddress = "127.0.0.1";
          * 
         [Fact]

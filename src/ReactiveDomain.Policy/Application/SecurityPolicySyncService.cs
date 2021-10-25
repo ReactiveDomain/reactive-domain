@@ -58,7 +58,7 @@ namespace ReactiveDomain.Policy.Application
                 var policyId = Policy.PolicyId == Guid.Empty ? Guid.NewGuid() : Policy.PolicyId;
                 var app = new Domain.SecuredApplication(appId, policyId, Policy.ApplicationName, Policy.SecurityModelVersion, Policy.OneRolePerUser, source);
                 //todo: encrypt this
-                app.AddSTSClientSecret($"{Guid.NewGuid()}@PKI");
+                app.AddSTSClientSecret($"{Guid.NewGuid()}@ReactiveDomain.Policy");
                 repo.Save(app);
             }
             //build RM for targeted app
@@ -120,9 +120,7 @@ namespace ReactiveDomain.Policy.Application
                         Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(policyUserId, user, conn, new List<string>()));
                     }
                 }
-            }
-            //todo: update/replace policy users as users are added and role assignments change ??
-            //Start<ApplicationRoot>(appId, blockUntilLive: true);
+            }         
         }
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)

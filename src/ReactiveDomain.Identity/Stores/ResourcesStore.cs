@@ -17,11 +17,7 @@ namespace ReactiveDomain.Identity
             _resources.IdentityResources.Add(new IdentityResource(
                 name: "openid",
                 userClaims: new[] { "sub" },
-                displayName: "Your user identifier"));
-            //_resources.IdentityResources.Add(new IdentityResource(
-            //    name: "profile",
-            //    userClaims: new[] { "name", "email", "website" },
-            //    displayName: "Your profile data"));
+                displayName: "Your user identifier"));          
             _resources.IdentityResources.Add(new IdentityResource(
                 name:"rd-policy",
                 userClaims:  new []{"policy-access", "rd-userid"},

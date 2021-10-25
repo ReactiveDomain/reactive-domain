@@ -11,7 +11,7 @@ namespace ReactiveDomain.Policy
         TransientSubscriber,
         IHandleCommand<ApplicationMsgs.CreateApplication> {
         private readonly IConfiguredConnection _conn;
-        private readonly IRepository _repo;
+        private readonly ICorrelatedRepository _repo;
         private readonly FilteredPoliciesRM _rm;
 
         public ApplicationSvc(
@@ -19,7 +19,7 @@ namespace ReactiveDomain.Policy
             ICommandSubscriber subscriber)
             : base(subscriber) {
             _conn = conn;
-            _repo = conn.GetRepository();
+            _repo = conn.GetCorrelatedRepository();
             _rm = new FilteredPoliciesRM(conn);
             Subscribe<ApplicationMsgs.CreateApplication>(this);
         }

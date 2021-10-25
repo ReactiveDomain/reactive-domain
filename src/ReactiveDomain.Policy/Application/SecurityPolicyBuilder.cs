@@ -64,7 +64,6 @@ namespace ReactiveDomain.Policy.Application
             public RoleBuilder(string name, SecurityPolicyBuilder policyBuilder)
             {
                 _policyBuilder = policyBuilder;
-               // if (_policyBuilder._roles.ContainsKey(name)) throw new DuplicateRoleException(name, policyBuilder._policyName);
                 _role = new Role(Guid.Empty, name, Guid.Empty);
                 _policyBuilder._roles.Add(name, _role);
             }
