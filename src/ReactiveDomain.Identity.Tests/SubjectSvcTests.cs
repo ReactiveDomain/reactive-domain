@@ -19,19 +19,19 @@ namespace ReactiveDomain.Identity.Tests
         private readonly Guid _userId = Guid.NewGuid();
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
         private const string AuthProvider = Constants.AuthenticationProviderAD;
-        private const string AuthDomain = "Perkinelmer";
+        private const string AuthDomain = "Company1";
         private const string UserName = "jsmith";
         private const string GivenName = "John";
         private const string Surname = "Smith";
         private const string FullName = "John Smith";
-        private const string Email = "john.smith@perkinelmer.com";
+        private const string Email = "john.smith@Company1.com";
         private const string AuthenticationError = "invalid username or password";
         private const string GiveNameUpdate = "John Update";
         private const string SurnameUpdate = "Smith Update";
         private const string FullNameUpdate = "John Smith Update";
-        private const string EmailUpdate = "john.smithUpdate@perkinelmer.com";
+        private const string EmailUpdate = "john.smithUpdate@Company1.com";
         private readonly string _userSidFromAuthProviderUpdate = Guid.NewGuid() + "_Update";
-        private const string AuthDomainUpdate = "Perkinelmernet Update";
+        private const string AuthDomainUpdate = "CompanyNet Update";
         private const string UserNameUpdate = "jsmithupdate";
 
         private readonly Guid _roleId = Guid.NewGuid();

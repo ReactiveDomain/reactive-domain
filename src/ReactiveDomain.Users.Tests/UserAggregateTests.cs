@@ -17,20 +17,22 @@ namespace ReactiveDomain.Users.Tests
 
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
         private const string AuthProvider = Constants.AuthenticationProviderAD;
-        private const string AuthDomain = "Perkinelmernet";
+        private const string AuthDomain = "CompanyNet";
         private const string UserName = "jsmith";
         private const string GivenName = "John";
         private const string Surname = "Smith";
         private const string FullName = "John Smith";
-        private const string Email = "john.smith@perkinelmer.com";
+        private const string Email = "john.smith@Company1.com";
         private const string HostIPAddress = "127.0.0.1";
         private const string GivenNameUpdate = "John Update";
         private const string SurnameUpdate = "Smith Update";
         private const string FullNameUpdate = "John Smith Update";
-        private const string EmailUpdate = "john.smithUpdate@perkinelmer.com";
+        private const string EmailUpdate = "john.smithUpdate@Company1.com";
         private readonly string UserSidFromAuthProviderUpdate = Guid.NewGuid().ToString() + "Update";
-        private readonly string AuthDomainUpdate = "Perkinelmernet Update";
+        private readonly string AuthDomainUpdate = "CompanyNet Update";
         private readonly string UserNameUpdate = "jsmith Update";
+        private const string ClientScope = "APPLICATION1";
+        private const string ClientScope2 = "APPLICATION2";
 
 
         [Fact]
@@ -400,11 +402,6 @@ namespace ReactiveDomain.Users.Tests
 
         }
 
-
-
-
-
-
         [Fact]
         public void can_update_name_details()
         {
@@ -501,8 +498,198 @@ namespace ReactiveDomain.Users.Tests
             Assert.Throws<FormatException>(
                 () => user.UpdateNameDetails(email: "Joe"));
         }
+        [Fact]
+        public void can_add_client_scope()
+        {
+            var user = new User(
+                              _id,
+                              FullName,
+                              GivenName,
+                              Surname,
+                              Email,
+                              _command);
+            user.AddClientScope(ClientScope); //add scope
+            user.AddClientScope(ClientScope2); //add second scope
+            user.AddClientScope(ClientScope); //add duplicate scope n.b. should be idempotent
 
+            var events = user.TakeEvents();
+            Assert.Collection(
+                            events,
+                            e =>
+                            {
+                                var created = Assert.IsType<UserMsgs.UserCreated>(e);
+                                Assert.Equal(_id, created.UserId);
+                            },
+                            e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
+                            e =>
+                            {
+                                var added = Assert.IsType<UserMsgs.ClientScopeAdded>(e);
+                                Assert.Equal(_id, added.UserId);
+                                Assert.Equal(ClientScope, added.ClientScope);
+                            },
+                            e =>
+                            {
+                                var added = Assert.IsType<UserMsgs.ClientScopeAdded>(e);
+                                Assert.Equal(_id, added.UserId);
+                                Assert.Equal(ClientScope2, added.ClientScope);
+                            }
+                            // idempotent add produces no second added event
+                           );
+        }
+        [Fact]
+        public void can_remove_client_scope()
+        {
+            var user = new User(
+                                 _id,
+                                 FullName,
+                                 GivenName,
+                                 Surname,
+                                 Email,
+                                 _command);
+            user.RemoveClientScope(ClientScope2); //no scopes should be idempotent
+            user.AddClientScope(ClientScope); //add scope
+            user.RemoveClientScope(ClientScope); //remove scope
+            user.RemoveClientScope(ClientScope); //second removal should be idempotent
+            user.AddClientScope(ClientScope); //can re-add
+            user.RemoveClientScope(ClientScope); //can remove re-added
 
+            var events = user.TakeEvents();
+            Assert.Collection(
+                            events,
+                            e =>
+                            {
+                                var created = Assert.IsType<UserMsgs.UserCreated>(e);
+                                Assert.Equal(_id, created.UserId);
+                            },
+                            e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
+                            // no scopes should be idempotent
+                            e => //add
+                            {
+                                var added = Assert.IsType<UserMsgs.ClientScopeAdded>(e);
+                                Assert.Equal(_id, added.UserId);
+                                Assert.Equal(ClientScope, added.ClientScope);
+                            },
+                            e => //remove
+                            {
+                                var removed = Assert.IsType<UserMsgs.ClientScopeRemoved>(e);
+                                Assert.Equal(_id, removed.UserId);
+                                Assert.Equal(ClientScope, removed.ClientScope);
+                            },
+                             // idempotent remove produces no second event
+                             e => //re-add
+                             {
+                                 var added = Assert.IsType<UserMsgs.ClientScopeAdded>(e);
+                                 Assert.Equal(_id, added.UserId);
+                                 Assert.Equal(ClientScope, added.ClientScope);
+                             },
+                            e => //removed re-added
+                            {
+                                var removed = Assert.IsType<UserMsgs.ClientScopeRemoved>(e);
+                                Assert.Equal(_id, removed.UserId);
+                                Assert.Equal(ClientScope, removed.ClientScope);
+                            }
+                           );
+        }
+        [Fact]
+        public void cannot_add_empty_client_scope()
+        {
+            var user = new User(
+                                _id,
+                                FullName,
+                                GivenName,
+                                Surname,
+                                Email,
+                                _command);
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope(null));
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope(string.Empty));
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope("\t"));
+        }
+        [Fact]
+        public void cannot_remove_empty_client_scope()
+        {
+            var user = new User(
+                               _id,
+                               FullName,
+                               GivenName,
+                               Surname,
+                               Email,
+                               _command);
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope(null));
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope(string.Empty));
+            Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope("\t"));
+        }
 
+        [Fact]
+        public void can_deactivate_user()
+        {
+            var user = new User(
+                              _id,
+                              FullName,
+                              GivenName,
+                              Surname,
+                              Email,
+                              _command);
+            user.Deactivate();
+            user.Deactivate();  //idempotent deactivation
+
+            var events = user.TakeEvents();
+            Assert.Collection(
+                            events,
+                            e =>
+                            {
+                                var created = Assert.IsType<UserMsgs.UserCreated>(e);
+                                Assert.Equal(_id, created.UserId);
+                            },
+                            e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
+                            e =>
+                            {
+                                var deactivated = Assert.IsType<UserMsgs.Deactivated>(e);
+                                Assert.Equal(_id, deactivated.UserId);
+                            }
+                            //idempotent deactivation
+                           );
+        }
+        [Fact]
+        public void can_reactivate_user()
+        {
+            var user = new User(
+                             _id,
+                             FullName,
+                             GivenName,
+                             Surname,
+                             Email,
+                             _command);
+            user.Deactivate();
+            user.Reactivate();
+            user.Reactivate(); //idempotent
+            user.Deactivate();
+
+            var events = user.TakeEvents();
+            Assert.Collection(
+                            events,
+                            e =>
+                            {
+                                var created = Assert.IsType<UserMsgs.UserCreated>(e);
+                                Assert.Equal(_id, created.UserId);
+                            },
+                            e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
+                            e =>
+                            {
+                                var deactivated = Assert.IsType<UserMsgs.Deactivated>(e);
+                                Assert.Equal(_id, deactivated.UserId);
+                            },
+                            e =>
+                            {
+                                var reactivated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, reactivated.UserId);
+                            },
+                            //idempotent reactivation
+                            e =>
+                            {
+                                var deactivated = Assert.IsType<UserMsgs.Deactivated>(e);
+                                Assert.Equal(_id, deactivated.UserId);
+                            }                           
+                           );
+        }
     }
 }

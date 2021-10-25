@@ -19,6 +19,7 @@ namespace ReactiveDomain.Users.Domain
         private readonly HashSet<string> _clientScopes = new HashSet<string>();
         //SubjectId-Username
         private Dictionary<string, string> _mappedAuthDomains = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private bool _isActive = true;
         private User()
         {
             RegisterEvents();
@@ -28,9 +29,11 @@ namespace ReactiveDomain.Users.Domain
         {
             Register<UserMsgs.UserCreated>(Apply);
             Register<UserMsgs.UserDetailsUpdated>(Apply);
-            Register<UserMsgs.AddClientScope>(Apply);
-            Register<UserMsgs.RemoveClientScope>(Apply);
+            Register<UserMsgs.ClientScopeAdded>(Apply);
+            Register<UserMsgs.ClientScopeRemoved>(Apply);
             Register<UserMsgs.AuthDomainMapped>(Apply);
+            Register<UserMsgs.Activated>(e => _isActive = true); ;
+            Register<UserMsgs.Deactivated>(e => _isActive = false);
         }
 
         private void Apply(UserMsgs.UserCreated evt)
@@ -45,11 +48,11 @@ namespace ReactiveDomain.Users.Domain
             _email = evt.Email;
         }
 
-        private void Apply(UserMsgs.AddClientScope evt)
+        private void Apply(UserMsgs.ClientScopeAdded evt)
         {
             _clientScopes.Add(evt.ClientScope);
         }
-        private void Apply(UserMsgs.RemoveClientScope evt)
+        private void Apply(UserMsgs.ClientScopeRemoved evt)
         {
             _clientScopes.Remove(evt.ClientScope);
         }
@@ -112,7 +115,7 @@ namespace ReactiveDomain.Users.Domain
         {
             if (string.IsNullOrWhiteSpace(scope)) { throw new ArgumentOutOfRangeException(nameof(scope), "Cannot add null, empty, or whitespace scope to User"); }
             scope = scope.ToUpper();
-            if (_clientScopes.Contains(scope)) { return; }
+            if (!_clientScopes.Contains(scope)) { return; }
             Raise(new UserMsgs.ClientScopeRemoved(Id, scope));
         }
 
@@ -122,6 +125,7 @@ namespace ReactiveDomain.Users.Domain
         /// </summary>
         public void Deactivate()
         {
+            if (_isActive == false) { return; }
             Raise(new UserMsgs.Deactivated(Id));
         }
 
@@ -130,6 +134,7 @@ namespace ReactiveDomain.Users.Domain
         /// </summary>
         public void Reactivate()
         {
+            if (_isActive == true) { return; }
             Raise(new UserMsgs.Activated(Id));
         }
         /// <summary>

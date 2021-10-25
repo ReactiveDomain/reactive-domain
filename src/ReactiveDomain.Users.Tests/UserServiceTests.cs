@@ -23,11 +23,11 @@ namespace ReactiveDomain.Users.Tests
         private const string GivenName = "John";
         private const string Surname = "Smith";
         private const string FullName = "John Smith";
-        private const string Email = "john.smith@perkinelmer.com";
+        private const string Email = "john.smith@Company1.com";
         private const string GiveNameUpdate = "John Update";
         private const string SurnameUpdate = "Smith Update";
         private const string FullNameUpdate = "John Smith Update";
-        private const string EmailUpdate = "john.smithUpdate@perkinelmer.com";
+        private const string EmailUpdate = "john.smithUpdate@Company1.com";
         private const string ClientScope = "APPLICATION1";
 
         public UserServiceTests()

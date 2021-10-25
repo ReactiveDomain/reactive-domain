@@ -22,13 +22,13 @@ namespace ReactiveDomain.Users.Tests
         private readonly string SubjectId = Guid.NewGuid().ToString();
         private readonly string SubjectId2 = Guid.NewGuid().ToString();
         private const string AuthProvider = Constants.AuthenticationProviderAD;
-        private const string AuthDomain = "Perkinelmernet";
+        private const string AuthDomain = "CompanyNet";
         private const string UserName = "jsmith";
         private const string UserName2 = "jsmith2";
         private const string GivenName = "John";
         private const string Surname = "Smith";
         private const string FullName = "John Smith";
-        private const string Email = "john.smith@perkinelmer.com";
+        private const string Email = "john.smith@Company1.com";
 
         public UsersRMTests()
         {
