@@ -19,7 +19,7 @@ namespace ReactiveDomain.Users.Domain
         private readonly HashSet<string> _clientScopes = new HashSet<string>();
         //SubjectId-Username
         private Dictionary<string, string> _mappedAuthDomains = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private bool _isActive = true;
+        private bool _isActive;
         private User()
         {
             RegisterEvents();
@@ -80,6 +80,7 @@ namespace ReactiveDomain.Users.Domain
             Ensure.NotNull(source, nameof(source));
             ((ICorrelatedEventSource)this).Source = source;
             Raise(new UserMsgs.UserCreated(id));
+            Raise(new UserMsgs.Activated(id));
             Raise(new UserMsgs.UserDetailsUpdated(
                                      id,
                                      givenName,

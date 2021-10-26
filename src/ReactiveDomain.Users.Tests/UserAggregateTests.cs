@@ -61,6 +61,11 @@ namespace ReactiveDomain.Users.Tests
                             },
                             e =>
                             {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
+                            },
+                            e =>
+                            {
                                 if (e is UserMsgs.UserDetailsUpdated details)
                                 {
                                     Assert.Equal(_id, details.UserId);
@@ -100,6 +105,11 @@ namespace ReactiveDomain.Users.Tests
                     {
                         throw new Exception("wrong event.");
                     }
+                },
+                e =>
+                {
+                    var activated = Assert.IsType<UserMsgs.Activated>(e);
+                    Assert.Equal(_id, activated.UserId);
                 },
                 e =>
                 {
@@ -144,6 +154,11 @@ namespace ReactiveDomain.Users.Tests
                 },
                 e =>
                 {
+                    var activated = Assert.IsType<UserMsgs.Activated>(e);
+                    Assert.Equal(_id, activated.UserId);
+                },
+                e =>
+                {
                     if (e is UserMsgs.UserDetailsUpdated details)
                     {
                         Assert.Equal(_id, details.UserId);
@@ -184,6 +199,11 @@ namespace ReactiveDomain.Users.Tests
                          throw new Exception("wrong event.");
                      }
                  },
+                e =>
+                {
+                    var activated = Assert.IsType<UserMsgs.Activated>(e);
+                    Assert.Equal(_id, activated.UserId);
+                },
                 e =>
                 {
                     if (e is UserMsgs.UserDetailsUpdated details)
@@ -265,6 +285,11 @@ namespace ReactiveDomain.Users.Tests
                             },
                             e =>
                             {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
+                            },
+                            e =>
+                            {
                                 if (e is UserMsgs.UserDetailsUpdated details)
                                 {
                                     Assert.Equal(_id, details.UserId);
@@ -329,6 +354,11 @@ namespace ReactiveDomain.Users.Tests
                                 {
                                     throw new Exception("wrong event.");
                                 }
+                            },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
                             },
                             e =>
                             {
@@ -432,6 +462,11 @@ namespace ReactiveDomain.Users.Tests
                                   throw new Exception("wrong event.");
                               }
                           },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
+                            },
                           e =>
                           {
                               if (e is UserMsgs.UserDetailsUpdated details)
@@ -520,6 +555,11 @@ namespace ReactiveDomain.Users.Tests
                                 var created = Assert.IsType<UserMsgs.UserCreated>(e);
                                 Assert.Equal(_id, created.UserId);
                             },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
+                            },
                             e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
                             e =>
                             {
@@ -560,6 +600,11 @@ namespace ReactiveDomain.Users.Tests
                             {
                                 var created = Assert.IsType<UserMsgs.UserCreated>(e);
                                 Assert.Equal(_id, created.UserId);
+                            },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
                             },
                             e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
                             // no scopes should be idempotent
@@ -640,6 +685,11 @@ namespace ReactiveDomain.Users.Tests
                                 var created = Assert.IsType<UserMsgs.UserCreated>(e);
                                 Assert.Equal(_id, created.UserId);
                             },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
+                            },
                             e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
                             e =>
                             {
@@ -671,6 +721,11 @@ namespace ReactiveDomain.Users.Tests
                             {
                                 var created = Assert.IsType<UserMsgs.UserCreated>(e);
                                 Assert.Equal(_id, created.UserId);
+                            },
+                            e =>
+                            {
+                                var activated = Assert.IsType<UserMsgs.Activated>(e);
+                                Assert.Equal(_id, activated.UserId);
                             },
                             e => Assert.IsType<UserMsgs.UserDetailsUpdated>(e),
                             e =>

@@ -58,6 +58,7 @@ namespace ReactiveDomain.Users.Tests
             _fixture
                 .RepositoryEvents
                 .AssertNext<UserMsgs.UserCreated>(cmd.CorrelationId)
+                .AssertNext<UserMsgs.Activated>(cmd.CorrelationId)
                 .AssertNext<UserMsgs.UserDetailsUpdated>(cmd.CorrelationId)
                 .AssertEmpty();
         }
@@ -105,12 +106,27 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_remove_client_scope_from_user()
         {
+            //given
             AddUser();
+            var givenEvt = _fixture.EventSerializer.Serialize(MessageBuilder.New(
+              () => new UserMsgs.ClientScopeAdded(
+                  _userId,ClientScope)));
 
+            var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(User), _userId);
+            _fixture.StreamStoreConnection.AppendToStream(
+                stream,
+                ExpectedVersion.Any,
+                null,
+                new[] { givenEvt });
+            _fixture.RepositoryEvents.WaitFor<UserMsgs.ClientScopeAdded>(TimeSpan.FromMilliseconds(100));
+            _fixture.ClearQueues();
+
+
+            //when
             var cmd = MessageBuilder.New(
                 () => new UserMsgs.RemoveClientScope(_userId, ClientScope));
             _fixture.Dispatcher.Send(cmd);
-
+            //then
             _fixture.RepositoryEvents.WaitFor<UserMsgs.ClientScopeRemoved>(TimeSpan.FromMilliseconds(100));
             _fixture
                 .TestQueue
@@ -150,13 +166,28 @@ namespace ReactiveDomain.Users.Tests
         [Fact]
         public void can_activate_user()
         {
+            //given
             AddUser();
+            var evt = _fixture.EventSerializer.Serialize(MessageBuilder.New(
+               () => new UserMsgs.Deactivated(
+                   _userId)));
 
+            var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(User), _userId);
+            _fixture.StreamStoreConnection.AppendToStream(
+                stream,
+                ExpectedVersion.Any,
+                null,
+                new[] { evt });
+            _fixture.RepositoryEvents.WaitFor<UserMsgs.Deactivated>(TimeSpan.FromMilliseconds(100));
+            _fixture.ClearQueues();
+
+            //when
             var cmd = MessageBuilder.New(
                 () => new UserMsgs.Activate(_userId));
             _fixture.Dispatcher.Send(cmd);
 
             _fixture.RepositoryEvents.WaitFor<UserMsgs.Activated>(TimeSpan.FromMilliseconds(100));
+            //then
             _fixture
                 .TestQueue
                 .AssertNext<UserMsgs.Activate>(cmd.CorrelationId)
@@ -174,7 +205,7 @@ namespace ReactiveDomain.Users.Tests
             AddUserDetails();
 
             var cmd = MessageBuilder.New(
-                () => new UserMsgs.UpdateUserDetails(_userId, GiveNameUpdate,SurnameUpdate,FullNameUpdate,EmailUpdate));
+                () => new UserMsgs.UpdateUserDetails(_userId, GiveNameUpdate, SurnameUpdate, FullNameUpdate, EmailUpdate));
             _fixture.Dispatcher.Send(cmd);
 
             _fixture.RepositoryEvents.WaitFor<UserMsgs.UserDetailsUpdated>(TimeSpan.FromMilliseconds(100));
@@ -196,29 +227,33 @@ namespace ReactiveDomain.Users.Tests
             AssertEx.CommandThrows<AggregateNotFoundException>(
                 () => _fixture.Dispatcher.Send(cmd));
         }
-       
 
-                
+
+
 
 
         private void AddUser()
         {
-            var evt = MessageBuilder.New(
+            var evt = _fixture.EventSerializer.Serialize(MessageBuilder.New(
                 () => new UserMsgs.UserCreated(
-                    _userId));
+                    _userId)));
+            var evt2 = _fixture.EventSerializer.Serialize(MessageBuilder.New(
+                () => new UserMsgs.Activated(
+                    _userId)));
+
             var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(User), _userId);
             _fixture.StreamStoreConnection.AppendToStream(
                 stream,
                 ExpectedVersion.Any,
                 null,
-                _fixture.EventSerializer.Serialize(evt));
-            _fixture.RepositoryEvents.WaitFor<UserMsgs.UserCreated>(TimeSpan.FromMilliseconds(200));
+                new[] { evt, evt2 });
+            _fixture.RepositoryEvents.WaitFor<UserMsgs.Activated>(TimeSpan.FromMilliseconds(200));
             _fixture.ClearQueues();
         }
         private void AddUserDetails()
         {
             var evt = MessageBuilder.New(
-                () => new UserMsgs.UserDetailsUpdated(_userId, GivenName,  Surname,  FullName,  Email));
+                () => new UserMsgs.UserDetailsUpdated(_userId, GivenName, Surname, FullName, Email));
             var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(User), _userId);
             _fixture.StreamStoreConnection.AppendToStream(
                 stream,
