@@ -43,5 +43,6 @@
     <ItemGroup>
       <ProjectReference Include="..\ReactiveDomain.Identity\ReactiveDomain.Identity.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
     </ItemGroup>
   </Project>
