@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
-    <Version>0.8.23-beta58</Version>
     <RepositoryUrl>c:\packages\</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>

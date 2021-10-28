@@ -21,7 +21,7 @@ namespace ReactiveDomain.Users.Tests
         private readonly Guid _id2 = Guid.NewGuid();
         private readonly string SubjectId = Guid.NewGuid().ToString();
         private readonly string SubjectId2 = Guid.NewGuid().ToString();
-        private const string AuthProvider = Constants.AuthenticationProviderAD;
+        private const string AuthProvider = "AD";
         private const string AuthDomain = "CompanyNet";
         private const string UserName = "jsmith";
         private const string UserName2 = "jsmith2";

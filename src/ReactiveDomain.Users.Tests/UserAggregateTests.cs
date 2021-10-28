@@ -16,21 +16,13 @@ namespace ReactiveDomain.Users.Tests
 
 
         private readonly string _userSidFromAuthProvider = Guid.NewGuid().ToString();
-        private const string AuthProvider = Constants.AuthenticationProviderAD;
+        private const string AuthProvider = "AD";
         private const string AuthDomain = "CompanyNet";
         private const string UserName = "jsmith";
         private const string GivenName = "John";
         private const string Surname = "Smith";
         private const string FullName = "John Smith";
-        private const string Email = "john.smith@Company1.com";
-        private const string HostIPAddress = "127.0.0.1";
-        private const string GivenNameUpdate = "John Update";
-        private const string SurnameUpdate = "Smith Update";
-        private const string FullNameUpdate = "John Smith Update";
-        private const string EmailUpdate = "john.smithUpdate@Company1.com";
-        private readonly string UserSidFromAuthProviderUpdate = Guid.NewGuid().ToString() + "Update";
-        private readonly string AuthDomainUpdate = "CompanyNet Update";
-        private readonly string UserNameUpdate = "jsmith Update";
+        private const string Email = "john.smith@Company1.com";       
         private const string ClientScope = "APPLICATION1";
         private const string ClientScope2 = "APPLICATION2";
 

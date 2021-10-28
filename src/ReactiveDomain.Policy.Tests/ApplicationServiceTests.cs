@@ -21,7 +21,7 @@ namespace ReactiveDomain.Users.Tests
         private readonly ApplicationSvc _applicationSvc;
 
         private readonly Guid _id = Guid.NewGuid();
-        private const string Application = "Kaleido";
+        private const string Application = "SingleRoleApp";
         private const bool OneRolePerUser = true;
         private readonly List<string> _roles = new List<string> { "SecAdmin", "Admin", "Editor", "Operator" };
         private const string SecAdminRole = "SecAdmin";
