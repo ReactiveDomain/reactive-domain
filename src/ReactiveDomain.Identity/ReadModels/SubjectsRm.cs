@@ -28,16 +28,39 @@ namespace ReactiveDomain.Identity.ReadModels
             //subscribe
             Start<Domain.Subject>(checkpoint, true);
         }
-        public Dictionary<Guid, Guid> SubjectIdByUserId = new Dictionary<Guid, Guid>();
+        public bool TryGetSubjectIdForUser(Guid userId, string provider, string domain, out Guid subjectId)
+        {
+            try
+            {
+                if (Subjects.TryGetValue($"{provider}-{domain}", out var subList))
+                {
+                   return subList.TryGetValue(userId, out subjectId);
+                }
+            }
+            catch
+            {
+                subjectId = Guid.Empty;
+                return false;
+            }
+            return false;
+        }
+        //{domain-{userId-subjectId}}
+        internal readonly Dictionary<string, Dictionary<Guid, Guid>> Subjects = new Dictionary<string, Dictionary<Guid, Guid>>();
         public void Handle(SubjectMsgs.SubjectCreated @event)
         {
-            if (SubjectIdByUserId.ContainsKey(@event.UserId))
+            if (!Subjects.TryGetValue($"{ @event.AuthProvider}-{ @event.AuthDomain}", out var subList))
             {
-                SubjectIdByUserId[@event.UserId] = @event.SubjectId;
+                subList = new Dictionary<Guid, Guid>();
+                Subjects.Add($"{ @event.AuthProvider}-{ @event.AuthDomain}", subList);
+            }
+
+            if (subList.TryGetValue(@event.UserId, out var _))
+            {
+                subList[@event.UserId] = @event.SubjectId;
             }
             else
             {
-                SubjectIdByUserId.Add(@event.UserId, @event.SubjectId);
+                subList.Add(@event.UserId, @event.SubjectId);
             }
         }
     }

@@ -39,24 +39,7 @@ namespace ReactiveDomain.Identity.Stores
 
         private readonly Dictionary<Guid, Client> _clientsByAppId = new Dictionary<Guid, Client>();
         private readonly Dictionary<string, Client> _clientsByClientId = new Dictionary<string, Client>();
-        /* {
-
-            new  Client {
-                ClientId = "client",
-                AllowedGrantTypes = {OidcConstants.GrantTypes.ClientCredentials},
-                ClientSecrets = { new Secret("secret".ToSha256()) },
-                AllowedScopes = { "api2", "api1" }
-            },
-            new  Client {
-                ClientId = "Elbe.Authentication",
-                AllowedGrantTypes = {OidcConstants.GrantTypes.ClientCredentials, OidcConstants.GrantTypes.AuthorizationCode},
-                ClientSecrets = { new Secret("4BA85604-A18C-48A4-845E-0A59AA9185AE@PKI".ToSha256()) },
-                AllowedScopes = { "openid", "profile" },
-                RedirectUris = {"http://localhost/elbe","https://localhost/elbe"},
-            }
-
-        };
-        */
+      
         public async Task<Client> FindClientByIdAsync(string clientId)
         {
             _clientsByClientId.TryGetValue(clientId, out var client);

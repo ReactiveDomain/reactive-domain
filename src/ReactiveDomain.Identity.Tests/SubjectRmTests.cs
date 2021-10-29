@@ -16,10 +16,11 @@ namespace ReactiveDomain.Identity.Tests
     {
         private readonly MockRepositorySpecification _fixture;
         private readonly SubjectsRm _rm;
-        private Dictionary<Guid, Guid> _subjectByUser = new Dictionary<Guid, Guid>(); //userId-subjectId
-       
+        private Dictionary<string, Dictionary<Guid, Guid>> _subjects = new Dictionary<string, Dictionary<Guid, Guid>>(); //probider/domain-userId-subjectId
+
         private string authProvider = "AD";
-        private string authDomain = "LocalHost";
+        private string authProvider2 = "Google";
+        private string authDomain = "MyDomain";
         public SubjectRmTests()
         {
             _fixture = new MockRepositorySpecification();
@@ -29,41 +30,88 @@ namespace ReactiveDomain.Identity.Tests
         [Fact]
         public void readmodel_lists_existing_subjects()
         {
-            Assert.Equal(_subjectByUser, _rm.SubjectIdByUserId);
+            Assert.Equal(_subjects, _rm.Subjects);
         }
         [Fact]
         public void readmodel_lists_added_subjects()
         {
             AddNewSubject();
-            Assert.Equal(_subjectByUser, _rm.SubjectIdByUserId);
+            Assert.Equal(_subjects, _rm.Subjects);
+        }
+
+        [Fact]
+        public void readmodel_lists_multiple_domains()
+        {
+            AddNewSubject(provider: authProvider2, domain: "other1");
+            AddNewSubject(provider: authProvider2, domain: "other2");
+            Assert.Equal(_subjects, _rm.Subjects);
         }
         [Fact]
-        public void readmodel_lists_multiple_subjects_per_user()
+        public void can_get_subject_ids()
         {
-            var userId =Guid.NewGuid();
-            AddNewSubject(userId);
-            AddNewSubject(userId);
-            Assert.Equal(_subjectByUser, _rm.SubjectIdByUserId);
+            var user1 = Guid.NewGuid();
+            var user2 = Guid.NewGuid();
+            var user3 = Guid.NewGuid();
+            var sub1 = AddNewSubject(user1, provider: authProvider2, domain: "other1");
+            var sub2 = AddNewSubject(user2, provider: authProvider2, domain: "other2");
+            var sub3 = AddNewSubject(user3);
+
+            Assert.True(_rm.TryGetSubjectIdForUser(user1, authProvider2, "other1", out Guid testSub));
+            Assert.Equal(sub1, testSub);
+            Assert.True(_rm.TryGetSubjectIdForUser(user2, authProvider2, "other2", out testSub));
+            Assert.Equal(sub2, testSub);
+            Assert.True(_rm.TryGetSubjectIdForUser(user3, authProvider, authDomain, out testSub));
+            Assert.Equal(sub3, testSub);
+        }
+        [Fact]
+        public void missing_sub_id_returns_false()
+        {
+            Assert.False(_rm.TryGetSubjectIdForUser(Guid.NewGuid(), authProvider, authDomain, out Guid testSub));
+            Assert.Equal(Guid.Empty, testSub);
+        }
+        [Fact]
+        public void wrong_domain_returns_false()
+        {
+            var user1 = Guid.NewGuid();
+            var sub1 = AddNewSubject(user1, authProvider, authDomain);
+            //no
+            Assert.False(_rm.TryGetSubjectIdForUser(user1, authProvider, "other1", out Guid testSub));
+            Assert.Equal(Guid.Empty, testSub);
+            //no
+            Assert.False(_rm.TryGetSubjectIdForUser(user1, authProvider2, authDomain, out testSub));
+            Assert.Equal(Guid.Empty, testSub);
+            //yes
+            Assert.True(_rm.TryGetSubjectIdForUser(user1, authProvider, authDomain, out testSub));
+            Assert.Equal(sub1, testSub);
+
         }
         private void AddSubjects(int count)
         {
             for (int i = 0; i < count; i++) { AddNewSubject(); }
         }
-        private void AddNewSubject(Guid? userId = null)
+        private Guid AddNewSubject(Guid? specifiedUserId = null, string provider = null, string domain = null)
         {
             var subjectId = Guid.NewGuid();
-            if (userId == null) { userId = Guid.NewGuid(); }
-            _subjectByUser.Add(userId.Value, subjectId);
+            var userId = specifiedUserId ?? Guid.NewGuid();
+
+            if (!_subjects.TryGetValue($"{provider ?? authProvider}-{domain ?? authDomain}", out var subjects))
+            {
+                subjects = new Dictionary<Guid, Guid>();
+                _subjects.Add($"{provider ?? authProvider}-{domain ?? authDomain}", subjects);
+            }
+            subjects.Add(userId, subjectId);
+
             var evt = MessageBuilder.New(
-              () => new SubjectMsgs.SubjectCreated(subjectId, userId.Value, subjectId.ToString(), authProvider, authDomain));
+              () => new SubjectMsgs.SubjectCreated(subjectId, userId, subjectId.ToString(), provider ?? authProvider, domain ?? authDomain));
             var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(Subject), subjectId);
             _fixture.StreamStoreConnection.AppendToStream(
                 stream,
                 ExpectedVersion.Any,
                 null,
-                new[] { _fixture.EventSerializer.Serialize(evt)});
-            _fixture.RepositoryEvents.WaitFor<SubjectMsgs.SubjectCreated>(TimeSpan.FromMilliseconds(100));          
+                new[] { _fixture.EventSerializer.Serialize(evt) });
+            _fixture.RepositoryEvents.WaitFor<SubjectMsgs.SubjectCreated>(TimeSpan.FromMilliseconds(100));
             _fixture.ClearQueues();
+            return subjectId;
         }
     }
 }
