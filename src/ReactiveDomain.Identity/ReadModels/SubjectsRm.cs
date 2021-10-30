@@ -28,11 +28,14 @@ namespace ReactiveDomain.Identity.ReadModels
             //subscribe
             Start<Domain.Subject>(checkpoint, true);
         }
+        public string GetDomainCategory(string provider, string domain) {
+            return $"{provider}-{domain}";
+        }
         public bool TryGetSubjectIdForUser(Guid userId, string provider, string domain, out Guid subjectId)
         {
             try
             {
-                if (Subjects.TryGetValue($"{provider}-{domain}", out var subList))
+                if (Subjects.TryGetValue(GetDomainCategory(provider, domain), out var subList))
                 {
                    return subList.TryGetValue(userId, out subjectId);
                 }
@@ -44,14 +47,14 @@ namespace ReactiveDomain.Identity.ReadModels
             }
             return false;
         }
-        //{domain-{userId-subjectId}}
+        //{domainCategory-{userId-subjectId}}
         internal readonly Dictionary<string, Dictionary<Guid, Guid>> Subjects = new Dictionary<string, Dictionary<Guid, Guid>>();
         public void Handle(SubjectMsgs.SubjectCreated @event)
         {
-            if (!Subjects.TryGetValue($"{ @event.AuthProvider}-{ @event.AuthDomain}", out var subList))
+            if (!Subjects.TryGetValue(GetDomainCategory(@event.AuthProvider,@event.AuthDomain), out var subList))
             {
                 subList = new Dictionary<Guid, Guid>();
-                Subjects.Add($"{ @event.AuthProvider}-{ @event.AuthDomain}", subList);
+                Subjects.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subList);
             }
 
             if (subList.TryGetValue(@event.UserId, out var _))

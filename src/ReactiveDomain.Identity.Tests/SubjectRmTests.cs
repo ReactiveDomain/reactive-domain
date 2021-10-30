@@ -5,9 +5,6 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ReactiveDomain.Identity.Tests
@@ -21,6 +18,7 @@ namespace ReactiveDomain.Identity.Tests
         private string authProvider = "AD";
         private string authProvider2 = "Google";
         private string authDomain = "MyDomain";
+       
         public SubjectRmTests()
         {
             _fixture = new MockRepositorySpecification();
