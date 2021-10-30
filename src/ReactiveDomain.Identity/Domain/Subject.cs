@@ -54,43 +54,47 @@ namespace ReactiveDomain.Identity.Domain
         /// <summary>
         /// Log the fact that a user has been successfully authenticated.
         /// </summary>
-        public void Authenticated(string hostIpAddress)
+        public void Authenticated(string hostIpAddress, string clientId)
         {
             Raise(new SubjectMsgs.Authenticated(
                         Id,
                         DateTime.UtcNow,
-                        hostIpAddress));
+                        hostIpAddress,
+                        clientId));
         }
       
         /// <summary>
         /// Log the fact that a user has not been successfully authenticated because account is locked.
         /// </summary>
-        public void NotAuthenticatedAccountLocked(string hostIpAddress)
+        public void NotAuthenticatedAccountLocked(string hostIpAddress, string clientId)
         {
             Raise(new SubjectMsgs.AuthenticationFailedAccountLocked(
                         Id,
                         DateTime.UtcNow,
-                        hostIpAddress));
+                        hostIpAddress,
+                        clientId));
         }
         /// <summary>
         /// Log the fact that a user has not been successfully authenticated because account is disabled.
         /// </summary>
-        public void NotAuthenticatedAccountDisabled(string hostIpAddress)
+        public void NotAuthenticatedAccountDisabled(string hostIpAddress, string clientId)
         {
             Raise(new SubjectMsgs.AuthenticationFailedAccountDisabled(
                         Id,
                         DateTime.UtcNow,
-                        hostIpAddress));
+                        hostIpAddress,
+                        clientId));
         }
         /// <summary>
         /// Log the fact that a user has not been successfully authenticated because invalid credentials were supplied.
         /// </summary>
-        public void NotAuthenticatedInvalidCredentials(string hostIpAddress)
+        public void NotAuthenticatedInvalidCredentials(string hostIpAddress, string clientId)
         {
             Raise(new SubjectMsgs.AuthenticationFailedInvalidCredentials(
                         Id,
                         DateTime.UtcNow,
-                        hostIpAddress));
+                        hostIpAddress,
+                        clientId));
         }
     }
 }

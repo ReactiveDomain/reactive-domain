@@ -109,7 +109,7 @@ namespace ReactiveDomain.Identity.Tests
                 ExpectedVersion.Any,
                 null,
                 new[] { _fixture.EventSerializer.Serialize(evt) });
-            _fixture.RepositoryEvents.WaitFor<SubjectMsgs.SubjectCreated>(TimeSpan.FromMilliseconds(100));
+            _fixture.RepositoryEvents.WaitFor<SubjectMsgs.SubjectCreated>(TimeSpan.FromMilliseconds(200));
             _fixture.ClearQueues();
             return subjectId;
         }

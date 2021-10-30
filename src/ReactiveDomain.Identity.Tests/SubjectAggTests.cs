@@ -21,6 +21,7 @@ namespace ReactiveDomain.Identity.Tests
         private string authProvider = "AD";
         private string authDomain = "LocalHost";
         private string hostIpAddress = "127.0.0.1";
+        private string clientId = "Application1";
 
         [Fact]
         public void can_create_subject()
@@ -58,7 +59,7 @@ namespace ReactiveDomain.Identity.Tests
         {
 
             var sub = new Subject(_subjectId, _userId, subClaim, authProvider, authDomain, _command);
-            sub.Authenticated(hostIpAddress);
+            sub.Authenticated(hostIpAddress, clientId);
 
             var events = ((IEventSource)sub).TakeEvents();
             Assert.Collection(
@@ -69,6 +70,7 @@ namespace ReactiveDomain.Identity.Tests
                                 var authenticated = Assert.IsType<SubjectMsgs.Authenticated>(e);
                                 Assert.Equal(_subjectId, authenticated.SubjectId);
                                 Assert.Equal(hostIpAddress, authenticated.HostIpAddress);
+                                Assert.Equal(clientId, authenticated.ClientId);
                             });
         }
 
@@ -77,7 +79,7 @@ namespace ReactiveDomain.Identity.Tests
         {
 
             var sub = new Subject(_subjectId, _userId, subClaim, authProvider, authDomain, _command);
-            sub.NotAuthenticatedAccountLocked(hostIpAddress);
+            sub.NotAuthenticatedAccountLocked(hostIpAddress, clientId);
 
             var events = ((IEventSource)sub).TakeEvents();
             Assert.Collection(
@@ -88,6 +90,7 @@ namespace ReactiveDomain.Identity.Tests
                                 var authenticated = Assert.IsType<SubjectMsgs.AuthenticationFailedAccountLocked>(e);
                                 Assert.Equal(_subjectId, authenticated.SubjectId);
                                 Assert.Equal(hostIpAddress, authenticated.HostIpAddress);
+                                Assert.Equal(clientId, authenticated.ClientId);
                             });
         }
         [Fact]
@@ -95,7 +98,7 @@ namespace ReactiveDomain.Identity.Tests
         {
 
             var sub = new Subject(_subjectId, _userId, subClaim, authProvider, authDomain, _command);
-            sub.NotAuthenticatedAccountDisabled(hostIpAddress);
+            sub.NotAuthenticatedAccountDisabled(hostIpAddress, clientId);
 
             var events = ((IEventSource)sub).TakeEvents();
             Assert.Collection(
@@ -106,6 +109,7 @@ namespace ReactiveDomain.Identity.Tests
                                 var authenticated = Assert.IsType<SubjectMsgs.AuthenticationFailedAccountDisabled>(e);
                                 Assert.Equal(_subjectId, authenticated.SubjectId);
                                 Assert.Equal(hostIpAddress, authenticated.HostIpAddress);
+                                Assert.Equal(clientId, authenticated.ClientId);
                             });
         }
         [Fact]
@@ -113,7 +117,7 @@ namespace ReactiveDomain.Identity.Tests
         {
 
             var sub = new Subject(_subjectId, _userId, subClaim, authProvider, authDomain, _command);
-            sub.NotAuthenticatedInvalidCredentials(hostIpAddress);
+            sub.NotAuthenticatedInvalidCredentials(hostIpAddress, clientId);
 
             var events = ((IEventSource)sub).TakeEvents();
             Assert.Collection(
@@ -124,7 +128,8 @@ namespace ReactiveDomain.Identity.Tests
                                 var authenticated = Assert.IsType<SubjectMsgs.AuthenticationFailedInvalidCredentials>(e);
                                 Assert.Equal(_subjectId, authenticated.SubjectId);
                                 Assert.Equal(hostIpAddress, authenticated.HostIpAddress);
+                                Assert.Equal(clientId, authenticated.ClientId);
                             });
-        }       
+        }
     }
 }

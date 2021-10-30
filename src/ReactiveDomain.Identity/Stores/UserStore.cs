@@ -81,7 +81,7 @@ namespace ReactiveDomain.Identity.Stores
             return userId;
         }
         //return the allowed client scopes the user has access to 
-        public List<Claim> GetAdditionalClaims(UserPrincipal retrievedUser, string domain, string authProvider, Guid userId)
+        public List<Claim> GetAdditionalClaims(Guid userId)
         {
             var claimList = new List<Claim>();
             claimList.Add(new Claim("rd-userid", userId.ToString()));
@@ -96,45 +96,45 @@ namespace ReactiveDomain.Identity.Stores
         }
 
         //Add events to the Subject for tracking the authentication status results
-        public void UserAuthenticated(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress)
+        public void UserAuthenticated(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId) &&
                 _subjectsRm.TryGetSubjectIdForUser(userId, authProvider, domain, out var subId))
             {
                 var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
-                subject.Authenticated(hostIpAddress);
+                subject.Authenticated(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
         }
-        public void UserProvidedInvalidCredentials(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress)
+        public void UserProvidedInvalidCredentials(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId) &&
                    _subjectsRm.TryGetSubjectIdForUser(userId, authProvider, domain, out var subId))
             {
                 var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
-                subject.NotAuthenticatedInvalidCredentials(hostIpAddress);
+                subject.NotAuthenticatedInvalidCredentials(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
 
         }
-        public void UserAccountLocked(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress)
+        public void UserAccountLocked(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId) &&
                   _subjectsRm.TryGetSubjectIdForUser(userId, authProvider, domain, out var subId))
             {
                 var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
-                subject.NotAuthenticatedAccountLocked(hostIpAddress);
+                subject.NotAuthenticatedAccountLocked(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
 
         }
-        public void UserAccountDisabled(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress)
+        public void UserAccountDisabled(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
             if (_usersRm.HasUser(retrievedUser.Sid.Value, domain, out Guid userId) &&
                 _subjectsRm.TryGetSubjectIdForUser(userId, authProvider, domain, out var subId))
             {
                 var subject = _repo.GetById<Subject>(subId, new CorrelatedRoot());
-                subject.NotAuthenticatedAccountDisabled(hostIpAddress);
+                subject.NotAuthenticatedAccountDisabled(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
 
