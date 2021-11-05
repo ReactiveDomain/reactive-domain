@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Domain;
+using ReactiveDomain.Identity.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
@@ -17,8 +19,10 @@ namespace ReactiveDomain.Policy.Application
     public class SecurityPolicySyncService :
         ReadModelBase,
         IHandle<ApplicationMsgs.ApplicationCreated>,
-        IHandle<ApplicationMsgs.STSClientDetailsAdded>,
-        IHandle<ApplicationMsgs.STSClientSecretAdded>,
+        IHandle<ApplicationMsgs.ClientRegistrationAdded>,
+        IHandle<ClientMsgs.ClientCreated>,
+        IHandle<ClientMsgs.ClientSecretAdded>,
+        IHandle<ClientMsgs.ClientSecretRemoved>,
         IHandle<ApplicationMsgs.PolicyCreated>,
         IHandle<ApplicationMsgs.RoleCreated>
     {
@@ -27,6 +31,7 @@ namespace ReactiveDomain.Policy.Application
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
         private SecuredApplication _dbApp;
+        private Guid _primaryClientId;
 
 
         /// <summary>
@@ -57,15 +62,20 @@ namespace ReactiveDomain.Policy.Application
                 appId = Guid.NewGuid();
                 var policyId = Policy.PolicyId == Guid.Empty ? Guid.NewGuid() : Policy.PolicyId;
                 var app = new Domain.SecuredApplication(appId, policyId, Policy.ApplicationName, Policy.SecurityModelVersion, Policy.OneRolePerUser, source);
-                //todo: encrypt this
-                app.AddSTSClientSecret($"{Guid.NewGuid()}@ReactiveDomain.Policy");
+                _primaryClientId = Guid.NewGuid();
+                
                 repo.Save(app);
+                //todo: encrypt this
+                var client = new Client(_primaryClientId, appId, Policy.ApplicationName, $"{Guid.NewGuid()}@ReactiveDomain.Policy");
+                repo.Save(client);
             }
             //build RM for targeted app
 
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
-            EventStream.Subscribe<ApplicationMsgs.STSClientSecretAdded>(this);
-            EventStream.Subscribe<ApplicationMsgs.STSClientDetailsAdded>(this);
+            EventStream.Subscribe<ApplicationMsgs.ClientRegistrationAdded>(this);
+            EventStream.Subscribe<ClientMsgs.ClientCreated>(this);
+            EventStream.Subscribe<ClientMsgs.ClientSecretAdded>(this);
+            EventStream.Subscribe<ClientMsgs.ClientSecretRemoved>(this);
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
             EventStream.Subscribe<ApplicationMsgs.PolicyCreated>(this);
             EventStream.Subscribe<ApplicationMsgs.RoleCreated>(this);
@@ -135,18 +145,30 @@ namespace ReactiveDomain.Policy.Application
                     @event.OneRolePerUser
                 );
         }
-
-        public void Handle(ApplicationMsgs.STSClientDetailsAdded @event)
+        public void Handle(ClientMsgs.ClientCreated @event)
         {
-            if (_dbApp.Id != @event.ApplicationId) { return; }
-            _dbApp.ClientSecret = @event.EncryptedClientSecret;
-            _dbApp.RedirectionUris = @event.RedirectUris;
+            throw new NotImplementedException();
+           
+        }
+        public void Handle(ApplicationMsgs.ClientRegistrationAdded @event)
+        {
+            throw new NotImplementedException();
+            //if (_dbApp.Id != @event.ApplicationId) { return; }
+            //_dbApp.ClientSecret = @event.EncryptedClientSecret;
+            //_dbApp.RedirectionUris = @event.RedirectUris;
         }
 
-        public void Handle(ApplicationMsgs.STSClientSecretAdded @event)
+        public void Handle(ClientMsgs.ClientSecretAdded @event)
         {
-            if (_dbApp.Id != @event.ApplicationId) { return; }
-            _dbApp.ClientSecret = @event.EncryptedClientSecret;
+            throw new NotImplementedException();
+            //if (_dbApp.Id != @event.ApplicationId) { return; }
+            //_dbApp.ClientSecret = @event.EncryptedClientSecret;
+        }
+        public void Handle(ClientMsgs.ClientSecretRemoved @event)
+        {
+            throw new NotImplementedException();
+            //if (_dbApp.Id != @event.ApplicationId) { return; }
+            //_dbApp.ClientSecret = @event.EncryptedClientSecret;
         }
         public void Handle(ApplicationMsgs.PolicyCreated @event)
         {

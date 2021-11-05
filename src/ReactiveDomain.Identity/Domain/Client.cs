@@ -1,0 +1,96 @@
+﻿using ReactiveDomain.Identity.Messages;
+using ReactiveDomain.Util;
+using System;
+using static ReactiveDomain.Identity.Messages.ClientMsgs;
+
+namespace ReactiveDomain.Identity.Domain
+{
+
+    public class Client : AggregateRoot
+    {
+        public string ClientName => _clientName;
+        private string _clientName;
+        private Client()
+        {
+            RegisterEvents();
+        }
+
+        private void RegisterEvents()
+        {
+            Register<ClientCreated>(@event => { Id = @event.ClientId; _clientName = @event.ClientName; });
+            Register<ClientSecretAdded>(@event => { });
+            Register<ClientSecretRemoved>(@event => { });
+        }
+
+        //constructor for Elbe client
+        public Client(
+                Guid id,
+                Guid applicationId,
+                string clientName, //todo: value object?
+                string encryptedClientSecret)
+        {
+            Ensure.NotEmptyGuid(id, nameof(id));
+            Ensure.NotEmptyGuid(applicationId, nameof(applicationId));
+            Ensure.NotNullOrEmpty(clientName, nameof(clientName));
+            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
+            //todo: move url definitions into Elbe when adding the secret store
+            Raise(new ClientCreated(
+                  Id,
+                  applicationId,
+                  clientName,
+                  new[] { "client_credentials", "password", "authorization_code" },
+                  new[] { "openid", "profile", "rd-policy", "enabled-policies" },
+                  new[] { "http://localhost/elbe", "/root/signin-google" },
+                  new[] { "http://localhost/elbe" },
+                   "http://localhost/elbe"
+                  ));
+
+            Raise(new ClientSecretAdded(id, encryptedClientSecret));
+
+        }
+
+        /// <summary>
+        /// Create a new client registration for identity server.
+        /// </summary>
+        public Client(
+                Guid id,
+                Guid applicationId,
+                string clientName,
+                string[] grantTypes,
+                string encryptedClientSecret,
+                string[] allowedScopes,
+                string[] redirectUris,
+                string[] postLogoutRedirectUris,
+                string frontChannelLogoutUri) : this()
+        {
+            Ensure.NotEmptyGuid(id, nameof(id));
+            Ensure.NotEmptyGuid(applicationId, nameof(applicationId));
+            Ensure.NotNullOrEmpty(clientName, nameof(clientName));
+            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
+
+            Raise(new ClientCreated(
+                id,
+                applicationId,
+                 clientName,
+                 grantTypes,
+                 allowedScopes,
+                 redirectUris,
+                 postLogoutRedirectUris,
+                 frontChannelLogoutUri));
+
+            Raise(new ClientSecretAdded(id, encryptedClientSecret));
+        }
+        public void AddClientSecret(string encryptedClientSecret)
+        {
+            //todo: when adding encryption, make this idempotent
+            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
+            Raise(new ClientSecretAdded(Id, encryptedClientSecret));
+        }
+        public void RemoveClientSecret(string encryptedClientSecret)
+        {
+            //todo: when adding encryption, check for existence
+            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
+            Raise(new ClientSecretRemoved(Id, encryptedClientSecret));
+        }
+    }
+}

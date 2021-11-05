@@ -1,6 +1,6 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Identity.Messages;
-using ReactiveDomain.Messaging;
+using System.DirectoryServices.AccountManagement;
 using ReactiveDomain.Messaging.Bus;
 using System;
 using System.Collections.Generic;
@@ -35,7 +35,7 @@ namespace ReactiveDomain.Identity.ReadModels
         {
             try
             {
-                if (Subjects.TryGetValue(GetDomainCategory(provider, domain), out var subList))
+                if (SubjectsByUserId.TryGetValue(GetDomainCategory(provider, domain), out var subList))
                 {
                    return subList.TryGetValue(userId, out subjectId);
                 }
@@ -47,14 +47,34 @@ namespace ReactiveDomain.Identity.ReadModels
             }
             return false;
         }
+        public bool TryGetSubjectIdForPrinciple(IPrinciple principle, out Guid subjectId)
+        {  
+            try
+            {
+              
+                if (SubjectsBySubClaim.TryGetValue(GetDomainCategory(principle.Provider, principle.Domain), out var subList))
+                {
+                    return subList.TryGetValue(principle.SId, out subjectId);
+                }
+            }
+            catch
+            {
+                subjectId = Guid.Empty;
+                return false;
+            }
+            return false;
+        }
+
         //{domainCategory-{userId-subjectId}}
-        internal readonly Dictionary<string, Dictionary<Guid, Guid>> Subjects = new Dictionary<string, Dictionary<Guid, Guid>>();
+        internal readonly Dictionary<string, Dictionary<Guid, Guid>> SubjectsByUserId = new Dictionary<string, Dictionary<Guid, Guid>>();
+        //{domainCategory-{sid-subjectId}}
+        internal readonly Dictionary<string, Dictionary<string, Guid>> SubjectsBySubClaim = new Dictionary<string, Dictionary<string, Guid>>();
         public void Handle(SubjectMsgs.SubjectCreated @event)
         {
-            if (!Subjects.TryGetValue(GetDomainCategory(@event.AuthProvider,@event.AuthDomain), out var subList))
+            if (!SubjectsByUserId.TryGetValue(GetDomainCategory(@event.AuthProvider,@event.AuthDomain), out var subList))
             {
                 subList = new Dictionary<Guid, Guid>();
-                Subjects.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subList);
+                SubjectsByUserId.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subList);
             }
 
             if (subList.TryGetValue(@event.UserId, out var _))
@@ -64,6 +84,20 @@ namespace ReactiveDomain.Identity.ReadModels
             else
             {
                 subList.Add(@event.UserId, @event.SubjectId);
+            }
+            if (!SubjectsBySubClaim.TryGetValue(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), out var subjectsByClaim))
+            {
+                subjectsByClaim = new Dictionary<string, Guid>();
+                SubjectsBySubClaim.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subjectsByClaim);
+            }
+
+            if (subjectsByClaim.TryGetValue(@event.SubClaim, out var _))
+            {
+                subjectsByClaim[@event.SubClaim] = @event.SubjectId;
+            }
+            else
+            {
+                subjectsByClaim.Add(@event.SubClaim, @event.SubjectId);
             }
         }
     }

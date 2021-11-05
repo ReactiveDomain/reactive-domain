@@ -13,12 +13,12 @@ namespace ReactiveDomain.Identity.Tests
     {
         private readonly MockRepositorySpecification _fixture;
         private readonly SubjectsRm _rm;
-        private Dictionary<string, Dictionary<Guid, Guid>> _subjects = new Dictionary<string, Dictionary<Guid, Guid>>(); //probider/domain-userId-subjectId
+        private Dictionary<string, Dictionary<Guid, Guid>> _subjects = new Dictionary<string, Dictionary<Guid, Guid>>(); //{provider/domain}-{userId-subjectId}
 
         private string authProvider = "AD";
         private string authProvider2 = "Google";
         private string authDomain = "MyDomain";
-       
+
         public SubjectRmTests()
         {
             _fixture = new MockRepositorySpecification();
@@ -28,21 +28,23 @@ namespace ReactiveDomain.Identity.Tests
         [Fact]
         public void readmodel_lists_existing_subjects()
         {
-            Assert.Equal(_subjects, _rm.Subjects);
+            Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
         [Fact]
         public void readmodel_lists_added_subjects()
         {
             AddNewSubject();
-            Assert.Equal(_subjects, _rm.Subjects);
+            Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
 
         [Fact]
         public void readmodel_lists_multiple_domains()
         {
+            var userId = Guid.NewGuid();
+            AddNewSubject(userId, provider: authProvider, domain: authDomain);
             AddNewSubject(provider: authProvider2, domain: "other1");
             AddNewSubject(provider: authProvider2, domain: "other2");
-            Assert.Equal(_subjects, _rm.Subjects);
+            Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
         [Fact]
         public void can_get_subject_ids()
@@ -53,13 +55,22 @@ namespace ReactiveDomain.Identity.Tests
             var sub1 = AddNewSubject(user1, provider: authProvider2, domain: "other1");
             var sub2 = AddNewSubject(user2, provider: authProvider2, domain: "other2");
             var sub3 = AddNewSubject(user3);
-
-            Assert.True(_rm.TryGetSubjectIdForUser(user1, authProvider2, "other1", out Guid testSub));
+            Guid testSub = Guid.Empty;
+            AssertEx.IsOrBecomesTrue(()=> _rm.TryGetSubjectIdForUser(user1, authProvider2, "other1", out testSub));
             Assert.Equal(sub1, testSub);
             Assert.True(_rm.TryGetSubjectIdForUser(user2, authProvider2, "other2", out testSub));
             Assert.Equal(sub2, testSub);
             Assert.True(_rm.TryGetSubjectIdForUser(user3, authProvider, authDomain, out testSub));
             Assert.Equal(sub3, testSub);
+        }
+        [Fact]
+        public void can_get_subject_id_for_principle()
+        {
+            var userId = Guid.NewGuid();            
+            var subjectId = AddNewSubject(userId, provider: authProvider, domain: authDomain);
+            var user = new MockPrinciple { Provider = authProvider, Domain = authDomain, SId = userId.ToString() };
+            Assert.True(_rm.TryGetSubjectIdForPrinciple(user, out var id));
+            Assert.Equal(subjectId, id);
         }
         [Fact]
         public void missing_sub_id_returns_false()
@@ -100,7 +111,7 @@ namespace ReactiveDomain.Identity.Tests
             subjects.Add(userId, subjectId);
 
             var evt = MessageBuilder.New(
-              () => new SubjectMsgs.SubjectCreated(subjectId, userId, subjectId.ToString(), provider ?? authProvider, domain ?? authDomain));
+              () => new SubjectMsgs.SubjectCreated(subjectId, userId, userId.ToString(), provider ?? authProvider, domain ?? authDomain));
             var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(Subject), subjectId);
             _fixture.StreamStoreConnection.AppendToStream(
                 stream,

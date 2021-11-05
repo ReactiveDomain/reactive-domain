@@ -10,9 +10,8 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.ReadModels;
-using ReactiveDomain.Users.Services;
 
-namespace ReactiveDomain.Identity.Stores
+namespace ReactiveDomain.Users.Services
 {
     public class UserStore
     {

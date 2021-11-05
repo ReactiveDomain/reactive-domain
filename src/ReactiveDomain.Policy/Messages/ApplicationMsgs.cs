@@ -248,58 +248,41 @@ namespace ReactiveDomain.Policy.Messages
                 PolicyId = policyId;
             }
         }
-        public class STSClientDetailsAdded : Event
+        /// <summary>
+        /// Add a client registration for the token server
+        /// </summary>
+        public class AddClientRegistration : Command
         {
+            /// <summary>The unique ID of the added client.</summary>
+            public readonly Guid ClientId;
+            /// <summary>The Application Id.</summary>
             public readonly Guid ApplicationId;
-            public readonly string ClientId;
-            public readonly string[] GrantTypes;
-            public readonly string EncryptedClientSecret;
-            public readonly string[] AllowedScopes;
-            public readonly string[] RedirectUris;
-            public readonly string[] PostLogoutRedirectUris;
-            public readonly string FrontChannelLogoutUri;
 
-            public STSClientDetailsAdded(
-                Guid applicationId,
-                string clientId,
-                string[] grantTypes,
-                string encryptedClientSecret,
-                string[] allowedScopes,
-                string[] redirectUris,
-                string[] postLogoutRedirectUris,
-                string frontChannelLogoutUri)
+            public AddClientRegistration(
+                Guid clientId,
+                Guid applicationId)
             {
-                ApplicationId = applicationId;
                 ClientId = clientId;
-                GrantTypes = grantTypes;
-                EncryptedClientSecret = encryptedClientSecret;
-                AllowedScopes = allowedScopes;
-                RedirectUris = redirectUris;
-                PostLogoutRedirectUris = postLogoutRedirectUris;
-                FrontChannelLogoutUri = frontChannelLogoutUri;
+                ApplicationId = applicationId;
             }
         }
-        public class STSClientSecretAdded : Event
+
+        /// <summary>
+        /// Client registration for the token server Added
+        /// </summary>
+        public class ClientRegistrationAdded : Event
         {
-
+            /// <summary>The unique ID of the added client.</summary>
+            public readonly Guid ClientId;
+            /// <summary>The Application Id.</summary>
             public readonly Guid ApplicationId;
-            public readonly string EncryptedClientSecret;
-
-            public STSClientSecretAdded(Guid applicationId, string encryptedClientSecret)
+          
+            public ClientRegistrationAdded(
+                Guid clientId,               
+                Guid applicationId)
             {
+                ClientId = clientId;
                 ApplicationId = applicationId;
-                EncryptedClientSecret = encryptedClientSecret;
-            }
-        }
-        public class STSClientSecretRemoved : Event
-        {
-            public readonly Guid ApplicationId;
-            public readonly string EncryptedClientSecret;
-
-            public STSClientSecretRemoved(Guid applicationId, string encryptedClientSecret)
-            {
-                ApplicationId = applicationId;
-                EncryptedClientSecret = encryptedClientSecret;
             }
         }
 

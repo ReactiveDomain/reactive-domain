@@ -1,7 +1,6 @@
 ﻿using System;
 using ReactiveDomain.Identity.Messages;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Identity.Domain

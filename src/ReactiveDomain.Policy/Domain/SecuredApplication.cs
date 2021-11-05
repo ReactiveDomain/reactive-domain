@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using ReactiveDomain.Identity.Domain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
+using static ReactiveDomain.Policy.Messages.ApplicationMsgs;
 
 [assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
 namespace ReactiveDomain.Policy.Domain
@@ -12,13 +14,13 @@ namespace ReactiveDomain.Policy.Domain
     /// <summary>
     /// Aggregate for a Application.
     /// </summary>
-   
+
     internal class SecuredApplication : AggregateRoot
     {
         private readonly Dictionary<Guid, SecurityPolicy> _policies = new Dictionary<Guid, SecurityPolicy>();
         private readonly HashSet<string> _policyNames = new HashSet<string>();
-        private string _clientId;
-        private bool _stsClientDetailsConfigured;
+        private HashSet<Guid> _clientRegistrations = new HashSet<Guid>();
+        private string _clientPrefix;
         public bool OneRolePerUser;
         // ReSharper disable once UnusedMember.Local
         // used via reflection in the repository
@@ -29,20 +31,20 @@ namespace ReactiveDomain.Policy.Domain
 
         private void RegisterEvents()
         {
-            Register<ApplicationMsgs.ApplicationCreated>(Apply);
-            Register<ApplicationMsgs.PolicyCreated>(Apply);
-            Register<ApplicationMsgs.STSClientDetailsAdded>(Apply);
+            Register<ApplicationCreated>(Apply);
+            Register<PolicyCreated>(Apply);
+            Register<ClientRegistrationAdded>(Apply);
         }
         //Apply State Changes
-        private void Apply(ApplicationMsgs.ApplicationCreated @event)
+        private void Apply(ApplicationCreated @event)
         {
 
             Id = @event.ApplicationId;
-            _clientId = @event.Name;
+            _clientPrefix = @event.Name;
             OneRolePerUser = @event.OneRolePerUser;
         }
 
-        private void Apply(ApplicationMsgs.PolicyCreated @event)
+        private void Apply(PolicyCreated @event)
         {
             var policy = new SecurityPolicy(@event.PolicyId, @event.ClientId, this);
             if (DefaultPolicy == null) { DefaultPolicy = policy; }
@@ -50,9 +52,9 @@ namespace ReactiveDomain.Policy.Domain
             _policyNames.Add(@event.ClientId);
         }
 
-        private void Apply(ApplicationMsgs.STSClientDetailsAdded @event)
+        private void Apply(ClientRegistrationAdded @event)
         {
-            _stsClientDetailsConfigured = true;
+            _clientRegistrations.Add(@event.ClientId);
         }
         //Public Methods
 
@@ -74,12 +76,12 @@ namespace ReactiveDomain.Policy.Domain
             Ensure.NotNullOrEmpty(version, nameof(version));
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source));
             RegisterEvents();
-            Raise(new ApplicationMsgs.ApplicationCreated(
+            Raise(new ApplicationCreated(
                          id,
                          defaultClientId,
                          version,
                          oneRolePerUser));
-            Raise(new ApplicationMsgs.PolicyCreated(defaultPolicyId, defaultClientId, id, oneRolePerUser));
+            Raise(new PolicyCreated(defaultPolicyId, defaultClientId, id, oneRolePerUser));
         }
 
         /// <summary>
@@ -88,7 +90,7 @@ namespace ReactiveDomain.Policy.Domain
         public void Retire()
         {
             // Event should be idempotent in RMs, so no validation necessary.
-            Raise(new ApplicationMsgs.ApplicationRetired(Id));
+            Raise(new ApplicationRetired(Id));
         }
 
         /// <summary>
@@ -97,7 +99,7 @@ namespace ReactiveDomain.Policy.Domain
         public void Unretire()
         {
             // Event should be idempotent in RMs, so no validation necessary.
-            Raise(new ApplicationMsgs.ApplicationUnretired(Id));
+            Raise(new ApplicationUnretired(Id));
         }
         public SecurityPolicy DefaultPolicy { get; private set; }
         public IReadOnlyList<SecurityPolicy> Policies => _policies.Values.ToList().AsReadOnly();
@@ -112,34 +114,11 @@ namespace ReactiveDomain.Policy.Domain
             Raise(new ApplicationMsgs.PolicyCreated(policyId, policyName, Id, OneRolePerUser));
             return _policies[policyId];
         }
-        public void AddSTSClientSecret(
-            string encryptedClientSecret)
+        public void AddClientRegistration(Client client)
         {
-            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
-            if (_stsClientDetailsConfigured)
-            {
-                Raise(new ApplicationMsgs.STSClientSecretAdded(Id, encryptedClientSecret));
-            }
-            else
-            {
-                Raise(new ApplicationMsgs.STSClientDetailsAdded(
-                    Id,
-                    _clientId,
-                    new[] { "client_credentials", "password", "authorization_code" },
-                    encryptedClientSecret,
-                    new[] { "openid", "profile", "rd-policy", "enabled-policies" },
-                    new[] { "http://localhost/elbe", "/root/signin-google" },
-                    new[] { "http://localhost/elbe" },
-                     "http://localhost/elbe" 
-                    ));
-            }
-        }
-
-        public void RemoveSTSClientSecret(
-            string encryptedClientSecret)
-        {
-            Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
-            Raise(new ApplicationMsgs.STSClientSecretRemoved(Id, encryptedClientSecret));
+            Ensure.True(() => client.ClientName.StartsWith(_clientPrefix, StringComparison.OrdinalIgnoreCase), "Client name mismatch");
+            if (_clientRegistrations.Contains(client.Id)) { return; }
+            Raise(new ClientRegistrationAdded(client.Id, Id));
         }
     }
 }
