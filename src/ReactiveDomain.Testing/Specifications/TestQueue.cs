@@ -114,7 +114,7 @@ namespace ReactiveDomain.Testing
             var msgType = typeof(T);
             do
             {
-                if (SpinWait.SpinUntil(() => HandledTypes.Any(t => msgType.IsAssignableFrom(t)), 50))
+                if (SpinWait.SpinUntil(() => _handledTypes.Any(t => msgType.IsAssignableFrom(t)), 50))
                 {
                     return;
                 }
