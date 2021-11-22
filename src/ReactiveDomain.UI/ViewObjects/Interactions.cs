@@ -2,13 +2,18 @@
 
 namespace ReactiveDomain.UI
 {
+    /// <summary>
+    /// A wrapper for ReactiveUI Interactions that re-implements the legacy recovery options.
+    /// </summary>
     public static class Interactions
     {
+        /// <summary>
+        /// A wrapper for a <see cref="UserError"/> with custom recovery options to cancel, retry, or fail.
+        /// </summary>
         public static readonly Interaction<UserError, RecoveryOptionResult> Errors = new Interaction<UserError, RecoveryOptionResult>();
 
         /// <summary>
-        /// RecoveryOptionResult describes to the code throwing the error what to do
-        /// once the error is resolved. This is adapted from legacy UserError code.
+        /// Describes to the code throwing the error what to do once the error is resolved.
         /// </summary>
         public enum RecoveryOptionResult
         {
