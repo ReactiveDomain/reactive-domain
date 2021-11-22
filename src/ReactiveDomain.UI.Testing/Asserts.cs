@@ -14,7 +14,7 @@ namespace ReactiveDomain.UI.Testing
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CanExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(Xunit.Assert.True)) { }
+            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(x => Xunit.Assert.True(x))) { }
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace ReactiveDomain.UI.Testing
         /// <param name="cmd">The command whose CanExecute is to be compared</param>
         public static void CannotExecute<TIn, TOut>(ReactiveCommand<TIn, TOut> cmd)
         {
-            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(Xunit.Assert.False)) { }
+            using (cmd.CanExecute.Replay(1).RefCount().ObserveOn(RxApp.MainThreadScheduler).Subscribe(x => Xunit.Assert.False(x))) { }
         }
     }
 }
