@@ -1,6 +1,8 @@
 ﻿using ReactiveDomain.Identity.Messages;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 using System;
+using System.Collections.Generic;
 using static ReactiveDomain.Identity.Messages.ClientMsgs;
 
 namespace ReactiveDomain.Identity.Domain
@@ -8,8 +10,11 @@ namespace ReactiveDomain.Identity.Domain
 
     public class Client : AggregateRoot
     {
-        public string ClientName => _clientName;
-        private string _clientName;
+        public string ClientName { get; private set; }
+        public string[] RedirectUris { get; private set; }
+        public string[] LogoutRedirectUris { get; private set; }
+        public string FrontChannlLogoutUri { get; private set; }
+       
         private Client()
         {
             RegisterEvents();
@@ -17,7 +22,13 @@ namespace ReactiveDomain.Identity.Domain
 
         private void RegisterEvents()
         {
-            Register<ClientCreated>(@event => { Id = @event.ClientId; _clientName = @event.ClientName; });
+            Register<ClientCreated>(@event => { 
+                Id = @event.ClientId; 
+                ClientName = @event.ClientName;
+                RedirectUris = @event.RedirectUris;
+                LogoutRedirectUris = @event.PostLogoutRedirectUris;
+                FrontChannlLogoutUri = @event.FrontChannelLogoutUri;
+            });
             Register<ClientSecretAdded>(@event => { });
             Register<ClientSecretRemoved>(@event => { });
         }
@@ -27,12 +38,21 @@ namespace ReactiveDomain.Identity.Domain
                 Guid id,
                 Guid applicationId,
                 string clientName, //todo: value object?
-                string encryptedClientSecret)
+                string encryptedClientSecret,
+                string[] redirectUris,
+                string[] logoutRedirectUris,
+                string frontChannlLogoutUri,
+                ICorrelatedMessage source)
+                : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
             Ensure.NotEmptyGuid(applicationId, nameof(applicationId));
             Ensure.NotNullOrEmpty(clientName, nameof(clientName));
             Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
+            Ensure.NotNullOrEmpty(redirectUris, nameof(frontChannlLogoutUri));
+            Ensure.NotNullOrEmpty(logoutRedirectUris, nameof(logoutRedirectUris));
+            Ensure.NotNullOrEmpty(frontChannlLogoutUri, nameof(redirectUris));
+            Ensure.NotNull(source, nameof(source));
             //todo: move url definitions into Elbe when adding the secret store
             Raise(new ClientCreated(
                   Id,
@@ -40,11 +60,11 @@ namespace ReactiveDomain.Identity.Domain
                   clientName,
                   new[] { "client_credentials", "password", "authorization_code" },
                   new[] { "openid", "profile", "rd-policy", "enabled-policies" },
-                  new[] { "http://localhost/elbe", "/root/signin-google" },
-                  new[] { "http://localhost/elbe" },
-                   "http://localhost/elbe"
+                  redirectUris,
+                  logoutRedirectUris,
+                  frontChannlLogoutUri
                   ));
-
+           
             Raise(new ClientSecretAdded(id, encryptedClientSecret));
 
         }

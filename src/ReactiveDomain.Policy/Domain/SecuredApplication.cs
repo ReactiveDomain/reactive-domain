@@ -101,7 +101,7 @@ namespace ReactiveDomain.Policy.Domain
             // Event should be idempotent in RMs, so no validation necessary.
             Raise(new ApplicationUnretired(Id));
         }
-        public SecurityPolicy DefaultPolicy { get; private set; }
+        public SecurityPolicy DefaultPolicy { get; private set; }        
         public IReadOnlyList<SecurityPolicy> Policies => _policies.Values.ToList().AsReadOnly();
         public SecurityPolicy AddAdditionalPolicy(Guid policyId, string policyName)
         {
@@ -117,8 +117,10 @@ namespace ReactiveDomain.Policy.Domain
         public void AddClientRegistration(Client client)
         {
             Ensure.True(() => client.ClientName.StartsWith(_clientPrefix, StringComparison.OrdinalIgnoreCase), "Client name mismatch");
-            if (_clientRegistrations.Contains(client.Id)) { return; }
-            Raise(new ClientRegistrationAdded(client.Id, Id));
+            if (!_clientRegistrations.Contains(client.Id))
+            {
+                Raise(new ClientRegistrationAdded(client.Id, Id));
+            }
         }
     }
 }

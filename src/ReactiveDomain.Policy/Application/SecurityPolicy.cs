@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Identity.Domain;
 using ReactiveDomain.Users.ReadModels;
 
 namespace ReactiveDomain.Policy.Application
@@ -16,24 +17,30 @@ namespace ReactiveDomain.Policy.Application
         private Guid _currentUser;
         public PolicyUser CurrentUser { get; private set; }
         public SecuredApplication OwningApplication { get; }
+        public Client Client { get; }
+
         public IReadOnlyList<Role> Roles => _roles.AsReadOnly();
 
         public string ApplicationName => OwningApplication.Name;
         public string SecurityModelVersion => OwningApplication.SecurityModelVersion;
         public bool OneRolePerUser => OwningApplication.OneRolePerUser;
         public string ClientId => OwningApplication.Name;
-        public string[] RedirectionUris => OwningApplication.RedirectionUris;
+        public string[] RedirectionUris => Client.RedirectUris;
+        public string[] LogoutRedirectUris => Client.LogoutRedirectUris;
+        public string frontChannlLogoutUri => Client.FrontChannlLogoutUri;
         public string ClientSecret => OwningApplication.ClientSecret;
 
         public SecurityPolicy(
             string policyName,
             Guid policyId,
             SecuredApplication owningApplication,
+            Client client,
             List<Role> roles = null)
         {
             PolicyName = policyName;
             PolicyId = policyId;
             OwningApplication = owningApplication;
+            Client = client;
             _roles = roles ?? new List<Role>();
         }
 

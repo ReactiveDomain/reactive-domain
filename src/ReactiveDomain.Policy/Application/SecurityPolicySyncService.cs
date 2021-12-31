@@ -30,8 +30,9 @@ namespace ReactiveDomain.Policy.Application
         public SecurityPolicy Policy;
 
         private readonly Dictionary<Guid, Role> _roles = new Dictionary<Guid, Role>();
-        private SecuredApplication _dbApp;
+        private SecuredApplication _persistedApplication;
         private Guid _primaryClientId;
+
 
 
         /// <summary>
@@ -63,10 +64,14 @@ namespace ReactiveDomain.Policy.Application
                 var policyId = Policy.PolicyId == Guid.Empty ? Guid.NewGuid() : Policy.PolicyId;
                 var app = new Domain.SecuredApplication(appId, policyId, Policy.ApplicationName, Policy.SecurityModelVersion, Policy.OneRolePerUser, source);
                 _primaryClientId = Guid.NewGuid();
-                
+
                 repo.Save(app);
+
+                var redirectUris = new[] { "http://localhost/elbe", "/root/signin-google" };
+                var logoutRedirectUris = new[] { "http://localhost/elbe" };
+                var frontChannlLogoutUri = "http://localhost/elbe";
                 //todo: encrypt this
-                var client = new Client(_primaryClientId, appId, Policy.ApplicationName, $"{Guid.NewGuid()}@ReactiveDomain.Policy");
+                var client = new Client(_primaryClientId, appId, Policy.ApplicationName, $"{Guid.NewGuid()}@ReactiveDomain.Policy", redirectUris, logoutRedirectUris, frontChannlLogoutUri, source);
                 repo.Save(client);
             }
             //build RM for targeted app
@@ -85,9 +90,9 @@ namespace ReactiveDomain.Policy.Application
                 appReader.Read<Domain.SecuredApplication>(appId, () => Idle);
             }
             Policy.OwningApplication.UpdateApplicationDetails(appId);
-            Policy.OwningApplication.ClientSecret = _dbApp.ClientSecret;
-            Policy.OwningApplication.RedirectionUris = _dbApp.RedirectionUris;
-            Policy.PolicyId = _dbApp.Policies.First().PolicyId; //todo:add multi policy support
+            Policy.OwningApplication.ClientSecret = _persistedApplication.ClientSecret;
+            Policy.OwningApplication.RedirectionUris = _persistedApplication.RedirectionUris;
+            Policy.PolicyId = _persistedApplication.Policies.First().PolicyId; //todo:add multi policy support
 
             //enrich db with roles from the base policy, if any are missing
             foreach (var role in Policy.Roles)
@@ -130,14 +135,14 @@ namespace ReactiveDomain.Policy.Application
                         Policy.AddOrUpdateUser(Policy.GetPolicyUserFrom(policyUserId, user, conn, new List<string>()));
                     }
                 }
-            }         
+            }
         }
 
         public void Handle(ApplicationMsgs.ApplicationCreated @event)
         {
-            if (_dbApp != null) { return; }
+            if (_persistedApplication != null) { return; }
 
-            _dbApp =
+            _persistedApplication =
                 new SecuredApplication(
                     @event.ApplicationId,
                     @event.Name,
@@ -148,7 +153,7 @@ namespace ReactiveDomain.Policy.Application
         public void Handle(ClientMsgs.ClientCreated @event)
         {
             throw new NotImplementedException();
-           
+
         }
         public void Handle(ApplicationMsgs.ClientRegistrationAdded @event)
         {
@@ -172,13 +177,14 @@ namespace ReactiveDomain.Policy.Application
         }
         public void Handle(ApplicationMsgs.PolicyCreated @event)
         {
-            if (_dbApp.Id != @event.ApplicationId) { return; }
-            _dbApp.AddPolicy(
-                new SecurityPolicy(
-                    @event.ClientId,
-                    @event.PolicyId, _dbApp
-                )
-            );
+            throw new NotImplementedException();
+            //if (_persistedApplication.Id != @event.ApplicationId) { return; }
+            //_persistedApplication.AddPolicy(
+            //    new SecurityPolicy(
+            //        @event.ClientId,
+            //        @event.PolicyId, _persistedApplication
+            //    )
+            //);
         }
 
         /// <summary>

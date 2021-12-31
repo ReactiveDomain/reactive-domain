@@ -22,7 +22,7 @@ namespace ReactiveDomain.Policy.Application
             _policyName = policyName;
             _app = new SecuredApplication(
                 Guid.Empty,
-                Assembly.GetEntryAssembly()?.GetName().Name,              
+                Assembly.GetEntryAssembly()?.GetName().Name,
                 Assembly.GetEntryAssembly()?.GetName().Version?.ToString(),
                 false);
         }
@@ -49,14 +49,34 @@ namespace ReactiveDomain.Policy.Application
             }
             return this;
         }
-        
+
         public SecurityPolicyBuilder WithUserResolver(Func<ClaimsPrincipal, UserDTO> findUserFunc)
         {
             _findUserFunc = findUserFunc;
             return this;
         }
 
-
+        public class ClientBuilder
+        {
+            string[] _redirectionUris = null;
+            public ClientBuilder WithRedirectionUris(params string[] uris)
+            {
+                _redirectionUris = uris;
+                return this;
+            }
+            string[] _postLogoutUris = null;
+            public ClientBuilder WithPostLogoutUris(params string[] uris)
+            {
+                _postLogoutUris = uris;
+                return this;
+            }
+            string _fontChannelLogoutUri = null;
+            public ClientBuilder WithFrontChannelLogoutUri(string fontChannelLogoutUri)
+            {
+                _fontChannelLogoutUri = fontChannelLogoutUri;
+                return this;
+            }
+        }
         public class RoleBuilder
         {
             private readonly SecurityPolicyBuilder _policyBuilder;
@@ -79,15 +99,29 @@ namespace ReactiveDomain.Policy.Application
 
         public SecurityPolicy Build()
         {
-            _isBuilt = true;
-          
-            var policy = new SecurityPolicy(
-                                _policyName,
-                                Guid.Empty,
-                                _app,
-                                _roles.Values.ToList());
-            Dispose();
-            return policy;
+            throw new NotImplementedException();
+            //_isBuilt = true;
+            //var client = new Identity.Domain.Client(
+            //    Guid.NewGuid(),
+
+            //    );
+            //Guid id,
+            //    Guid applicationId,
+            //    string clientName, //todo: value object?
+            //    string encryptedClientSecret,
+            //    string[] redirectUris,
+            //    string[] logoutRedirectUris,
+            //    string frontChannlLogoutUri,
+            //    ICorrelatedMessage source)
+            //throw new NotImplementedException();
+            //var policy = new SecurityPolicy(
+            //                    _policyName,
+            //                    Guid.Empty,
+            //                    _app,
+            //                    client,
+            //                    _roles.Values.ToList());
+            //Dispose();
+            //return policy;
         }
 
         public void Dispose()
