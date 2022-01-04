@@ -42,8 +42,6 @@ namespace ReactiveDomain.Policy.Domain
             }
         }
 
-
-
         //Public methods
         /// <summary>
         /// Add a new role.

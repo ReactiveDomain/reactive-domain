@@ -4,7 +4,14 @@
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
     </PropertyGroup>
-  
+    <ItemGroup>
+      <Compile Remove="ApplicationAggregateTests.cs" />
+      <Compile Remove="ApplicationServiceTests.cs" />
+      <Compile Remove="ExternalProviderAggregateTests.cs" />
+      <Compile Remove="RoleAggregateTests.cs" />
+      <Compile Remove="RoleServiceTests.cs" />
+      <Compile Remove="UserEntitlementRMTests.cs" />
+    </ItemGroup>   
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="xunit" Version="2.4.1" />
@@ -20,7 +27,13 @@
       <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
     </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+      <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
     </ItemGroup>   
   </Project>

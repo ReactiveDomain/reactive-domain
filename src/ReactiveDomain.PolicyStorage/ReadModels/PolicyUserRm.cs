@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using DynamicData;
 using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Policy.Application;
 using ReactiveDomain.Policy.Messages;
-using ReactiveDomain.Users;
-using ReactiveDomain.Users.ReadModels;
 
 
 namespace ReactiveDomain.Policy.ReadModels

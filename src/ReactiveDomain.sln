@@ -43,6 +43,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Identity.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy.Tests", "ReactiveDomain.Policy.Tests\ReactiveDomain.Policy.Tests.csproj", "{B8982E2B-B65B-4F69-8244-90A5DD588852}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyStorage", "ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj", "{C3C15430-586B-4A0F-955C-F7B27D36CBF6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyStorage.Tests", "ReactiveDomain.PolicyStorage.Tests\ReactiveDomain.PolicyStorage.Tests.csproj", "{4E728859-9A50-48F8-A2AD-C63C7682C0DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +121,14 @@ Global
 		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
