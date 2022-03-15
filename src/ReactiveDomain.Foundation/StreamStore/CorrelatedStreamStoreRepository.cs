@@ -72,6 +72,33 @@ namespace ReactiveDomain.Foundation {
             }
         }
 
+        /// <summary>
+        /// Soft delete the aggregate. Its stream can be re-created by appending new events.
+        /// </summary>
+        /// <param name="aggregate">The aggregate to be deleted.</param>
+        public void Delete(IEventSource aggregate) {
+            if (_cache != null) {
+                _cache.Delete(aggregate);
+            }
+            else {
+                _repository.Delete(aggregate);
+            }
+        }
+
+        /// <summary>
+        /// Hard delete the aggregate. This permanently deletes the aggregate's stream.
+        /// </summary>
+        /// <param name="aggregate">The aggregate to be deleted.</param>
+        public void HardDelete(IEventSource aggregate)
+        {
+            if (_cache != null) {
+                _cache.HardDelete(aggregate);
+            }
+            else {
+                _repository.HardDelete(aggregate);
+            }
+        }
+
         protected virtual void Dispose(bool disposing) {
             if (disposing) {
                 _cache?.Dispose();

@@ -7,5 +7,7 @@ namespace ReactiveDomain.Foundation
         TAggregate GetById<TAggregate>(Guid id, int version = int.MaxValue) where TAggregate : class, IEventSource;
 		void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource;
         void Save(IEventSource aggregate);
+        void Delete(IEventSource aggregate);
+        void HardDelete(IEventSource aggregate);
     }
 }

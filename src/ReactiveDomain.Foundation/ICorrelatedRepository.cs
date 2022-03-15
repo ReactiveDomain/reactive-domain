@@ -9,5 +9,7 @@ namespace ReactiveDomain.Foundation {
         TAggregate GetById<TAggregate>(Guid id, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
         TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
         void Save(IEventSource aggregate);
+        void Delete(IEventSource aggregate);
+        void HardDelete(IEventSource aggregate);
     }
 }

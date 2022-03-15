@@ -133,6 +133,7 @@ namespace ReactiveDomain
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
         /// <param name="userCredentials">User credentials to use for the operation.</param>
+        /// <param name="resolveLinkTos">If true, resolve link events.</param>
         /// <returns>An IDisposable that can be used to close the subscription.</returns>
         IDisposable SubscribeToAll(
             Action<RecordedEvent> eventAppeared,
@@ -149,6 +150,8 @@ namespace ReactiveDomain
             UserCredentials userCredentials = null,
             bool resolveLinkTos = true);
 
-        void DeleteStream(string stream, int expectedVersion, UserCredentials credentials = null);
+        void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null);
+
+        void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null);
     }
 }
