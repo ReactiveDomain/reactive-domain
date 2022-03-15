@@ -33,26 +33,30 @@ namespace ReactiveDomain.EventStore {
         public IStreamStoreConnection Connection { get; private set; }
 
         public void SetupEventStore(DirectoryInfo installPath, string additionalArgs = null) {
-            var args = $" --config=\"./config.yaml\" {additionalArgs ?? ""}";
+            var config = "config.yaml";
 
             SetupEventStore(installPath,
-                args,
+                config,
                 new UserCredentials("admin", "changeit"),
                 IPAddress.Parse("127.0.0.1"),
                 tcpPort: 1113,
                 windowStyle: ProcessWindowStyle.Hidden,
-                opt: StartConflictOption.Connect);
+                opt: StartConflictOption.Connect,
+                additionalArgs:additionalArgs);
         }
         public void SetupEventStore(
                                 DirectoryInfo installPath,
-                                string args,
+                                string config,
                                 UserCredentials credentials,
                                 IPAddress server,
                                 int tcpPort,
                                 ProcessWindowStyle windowStyle,
-                                StartConflictOption opt) {
-            Ensure.NotNullOrEmpty(args, "args");
+                                StartConflictOption opt,
+                                string additionalArgs = null) {
+            Ensure.NotNullOrEmpty(config, "config");
             Ensure.NotNull(credentials, "credentials");
+
+            var args = $" --config=\"./{config}\" {additionalArgs ?? ""}";
 
             var fullPath = Path.Combine(installPath.FullName, "EventStore.ClusterNode.exe");
 
