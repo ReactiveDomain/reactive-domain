@@ -11,7 +11,7 @@ Contributions can take many forms: open an issue, contribute code, enhance the d
 Found a bug in the code or documentation? Submit an issue. Even better, submit a Pull Request to fix it!
 
 ## <a href="requests"></a>Feature Requests
-We welcome well-considered feature requests. For **major features**, please engage with us in Slack first to discuss it and work out the details. For **minor features**, feel free to submit a Pull Request right away.
+We welcome well-considered feature requests. For **major features**, please engage with us in [Slack](https://reactivedomain.slack.com) first to discuss it and work out the details. For **minor features**, feel free to submit a Pull Request right away.
 
 ## <a href="code"></a>Coding
 ### Development Environment
