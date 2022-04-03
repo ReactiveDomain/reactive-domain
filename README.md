@@ -12,4 +12,4 @@ The framework is highly opinionated. It focuses on using a small number of consi
 
 ## Contributing
 
-Pull requests are welcome! Take a look at the open issues, join our [discussion on Slack](https://reactivedomain.slack.com), or contribute in an area where you see a need. Contributors and participants on our Slack channels are expected to abide by the project's [code of conduct](CODE_OF_CONDUCT.md).
+Pull requests are welcome! Take a look at the open issues, join our [discussion on Slack](https://reactivedomain.slack.com), or contribute in an area where you see a need. Contributors and participants on our Slack channels are expected to abide by the project's [code of conduct](CODE_OF_CONDUCT.md). Read the full guidelines on [contributing](CONTRIBUTING.md).
