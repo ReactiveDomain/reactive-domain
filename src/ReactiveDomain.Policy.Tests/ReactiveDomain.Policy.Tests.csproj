@@ -4,6 +4,9 @@
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
     </PropertyGroup>
+    <ItemGroup>
+      <Compile Remove="PolicyMapTest.cs" />
+    </ItemGroup>
   
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />

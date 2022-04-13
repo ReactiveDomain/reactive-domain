@@ -8,7 +8,7 @@ using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using RD = ReactiveDomain.Users.Domain ;
+using RD = ReactiveDomain.Users.Domain;
 using ReactiveDomain.Users.Messages;
 
 namespace ReactiveDomain.Users.Services
@@ -37,15 +37,24 @@ namespace ReactiveDomain.Users.Services
             Start<RD.Client>(checkpoint);
         }
 
-        private readonly Dictionary<string, Client> _clientsByClientName = new Dictionary<string, Client>();
+        private readonly Dictionary<string, Client> _clientsByClientName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<Guid, string> _clientNameById = new Dictionary<Guid, string>();
-        public async Task<Client> FindClientByIdAsync(string clientName)
+        public async Task<Client> FindClientByIdAsync(string clientId)
         {
+            var clientName = string.Empty;
+            if (Guid.TryParse(clientId, out Guid parsed) && _clientNameById.ContainsKey(parsed))
+            {
+                clientName = _clientNameById[parsed];
+            }
             _clientsByClientName.TryGetValue(clientName, out var client);
             return await Task.FromResult(client);
         }
 
-
+        public Client FindClientByName(string clientName)
+        {  
+            _clientsByClientName.TryGetValue(clientName, out var client);
+            return client;
+        }
         public IReadOnlyList<Client> Clients => _clientsByClientName.Values.ToList().AsReadOnly();
         public void Handle(ClientMsgs.ClientCreated @event)
         {

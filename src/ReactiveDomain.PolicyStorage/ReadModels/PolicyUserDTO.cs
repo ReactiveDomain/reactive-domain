@@ -12,15 +12,16 @@ namespace ReactiveDomain.Policy.ReadModels
         public Guid UserId { get; }
         public Guid PolicyId { get; }
         public bool OneRolePerUser { get; }
-        public IObservableCache<RoleDTO, Guid> Roles;
-        private ISourceCache<RoleDTO, Guid> _roles = new SourceCache<RoleDTO, Guid>(t => t.Id);
+        public IObservableCache<RoleDTO, Guid> RolesCache;
+        private ISourceCache<RoleDTO, Guid> _rolesSource = new SourceCache<RoleDTO, Guid>(t => t.Id);       
+        public HashSet<RoleDTO> Roles = new HashSet<RoleDTO>();
         public PolicyUserDTO(Guid policyUserId, Guid userId, Guid policyId, bool oneRolePerUser, List<RoleDTO> roles = null)
         {
             PolicyUserId = policyUserId;
             UserId = userId;
             PolicyId = policyId;
             OneRolePerUser = oneRolePerUser;
-            Roles = _roles.AsObservableCache();
+            RolesCache = _rolesSource.AsObservableCache();
             AddRoles(roles);
         }
 
@@ -29,7 +30,7 @@ namespace ReactiveDomain.Policy.ReadModels
             PolicyUserId = @event.PolicyUserId;
             UserId = @event.UserId;
             PolicyId = @event.PolicyId;
-            Roles = _roles.AsObservableCache();
+            RolesCache = _rolesSource.AsObservableCache();
             OneRolePerUser = @event.OneRolePerUser;
         }
         public void AddRoles(List<RoleDTO> roles)
@@ -50,14 +51,18 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (role == null) { return; }
             if (OneRolePerUser) {
-                _roles.Clear();
+                _rolesSource.Clear();
+                Roles.Clear();
             }
-            _roles.AddOrUpdate(role);
+            _rolesSource.AddOrUpdate(role);
+            Roles.Add(role);
         }
 
         public void RemoveRole(Guid roleId)
         {
-            _roles.Remove(roleId);
+            _rolesSource.Remove(roleId);
+            var role = Roles.First(x => x.Id == roleId);
+            Roles.Remove(role);
         }
     }
 }

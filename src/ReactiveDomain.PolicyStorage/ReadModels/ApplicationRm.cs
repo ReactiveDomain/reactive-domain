@@ -24,7 +24,7 @@ namespace ReactiveDomain.Policy.ReadModels
         private readonly SourceCache<PolicyDTO, Guid> _policies = new SourceCache<PolicyDTO, Guid>(x => x.PolicyId);
         private readonly Dictionary<Guid, ApplicationDTO> _appById = new Dictionary<Guid, ApplicationDTO>();
         private readonly Dictionary<string, ApplicationDTO> _appByName = new Dictionary<string, ApplicationDTO>();
-         private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
+        private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
         private readonly Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
 
 
@@ -80,6 +80,10 @@ namespace ReactiveDomain.Policy.ReadModels
             var app = _appByName[appName];
             return _policies.Items.Where(p => p.ApplicationId == app.ApplicationId).ToList();
         }
+        public PolicyUserDTO GetPolicyUserByuserId(Guid userId)
+        {
+            return _policyUsers.Values.FirstOrDefault(u => u.UserId == userId);
+        }
         /// <summary>
         /// Gets whether there is already a secured application with the given name and version.
         /// </summary>
@@ -105,7 +109,7 @@ namespace ReactiveDomain.Policy.ReadModels
                 _policies.AddOrUpdate(new PolicyDTO(@event));
             }
         }
-          public void Handle(ApplicationMsgs.RoleCreated @event)
+        public void Handle(ApplicationMsgs.RoleCreated @event)
         {
             var policy = _policies.Lookup(@event.PolicyId);
             if (policy.HasValue && !_roles.ContainsKey(@event.RoleId))
@@ -132,7 +136,7 @@ namespace ReactiveDomain.Policy.ReadModels
             if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
                 _roles.TryGetValue(@event.RoleId, out var role))
             {
-                if (user.Roles.Keys.Contains(@event.RoleId)) { return; }
+                if (user.RolesCache.Keys.Contains(@event.RoleId)) { return; }
                 user.AddRole(role);
             }
         }

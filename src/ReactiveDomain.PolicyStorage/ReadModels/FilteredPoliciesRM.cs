@@ -131,7 +131,7 @@ namespace ReactiveDomain.Policy.ReadModels
             if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
                 _roles.TryGetValue(@event.RoleId, out var role))
             {
-                if (user.Roles.Keys.Contains(@event.RoleId)) { return; }
+                if (user.RolesCache.Keys.Contains(@event.RoleId)) { return; }
                 user.AddRole(role);
             }
         }
