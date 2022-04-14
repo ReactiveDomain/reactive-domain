@@ -1,4 +1,4 @@
-﻿//#define Attach
+﻿#define Attach
 using System;
 using Microsoft.Extensions.Configuration;
 using System.Net;
@@ -18,6 +18,7 @@ using System.DirectoryServices.AccountManagement;
 using ReactiveDomain.Users.ReadModels;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Policy.Domain;
+using System.Text;
 
 namespace PolicyTool
 {
@@ -48,28 +49,32 @@ namespace PolicyTool
 
             ConnectToEs();
 
+            //Root CMD w/ global required AppName
             var appName = new Option<string>(
                        name: "--app-name",
                        description: "Taget Application name.");
             appName.IsRequired = true;
 
-            var clientSecret = new Option<string>(
-                       name: "--secret",
-                       description: "Client secret.",
-                       getDefaultValue: () => "ChangeIt");
-            clientSecret.IsRequired = true;
-
             var rootCommand = new RootCommand("Policy tool");
             rootCommand.AddGlobalOption(appName);
 
+            //Add App CMD
+            var clientSecret = new Option<string>(
+                      name: "--secret",
+                      description: "Client secret.",
+                      getDefaultValue: () => "ChangeIt");
+            clientSecret.IsRequired = true;
             var addApp = new Command("add-app", "Add a new application.");
             addApp.AddOption(clientSecret);
 
+            // Show App CMD
             var showApp = new Command("show-app", "Display app details.");
 
+            // Add Secret CMD
             var addSecret = new Command("add-secret", "Add a new application secret.");
             addSecret.AddOption(clientSecret);
 
+            // Add User CMD
             var roles = new Option<string[]>(
                       name: "--roles",
                       description: "List of Roles.");
@@ -77,6 +82,10 @@ namespace PolicyTool
             roles.AllowMultipleArgumentsPerToken = true;
             var addRoles = new Command("add-roles", "Idempotently add roles to an application");
             addRoles.AddOption(roles);
+
+            //Get-Config CMD
+            var getConfig = new Command("get-config", "Get the config settings need for the configured App");
+
 
             var userName = new Option<string>(
                       name: "--user-name",
@@ -101,6 +110,7 @@ namespace PolicyTool
             var userRm = new UsersRm(EsConnection);
             var subjectsRm = new SubjectsRm(EsConnection);
             var userSvc = new UserSvc(EsConnection.GetRepository(), mainBus);
+            var clientStore = new ClientStore(EsConnection);
             addApp.SetHandler(
                 (string name, string secret) =>
                 {
@@ -133,14 +143,12 @@ namespace PolicyTool
             showApp.SetHandler(
                 (string name) =>
                 {
-
                     try
                     {
                         var app = appRm.GetApplication(name);
                         Console.WriteLine(app);
                         var pol = appRm.GetPolicies(name).First();
                         Console.WriteLine(pol);
-
                     }
                     catch
                     {
@@ -249,12 +257,19 @@ namespace PolicyTool
                     }
                 }
                 , appName, userName, domain, roles);
-
+            getConfig.SetHandler(
+                (string appName) =>
+                {
+                    var app = appRm.GetApplication(appName);   
+                    var config = clientStore.GetAppConfig(app.ApplicationId);
+                    Console.WriteLine(config);
+                }, appName);
             rootCommand.AddCommand(addApp);
             rootCommand.AddCommand(showApp);
             rootCommand.AddCommand(addSecret);
             rootCommand.AddCommand(addRoles);
             rootCommand.AddCommand(addUser);
+            rootCommand.AddCommand(getConfig);
 
             rootCommand.Invoke(args);
             return 0;

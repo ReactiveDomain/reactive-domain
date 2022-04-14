@@ -10,6 +10,7 @@ using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using RD = ReactiveDomain.Users.Domain;
 using ReactiveDomain.Users.Messages;
+using System.Text;
 
 namespace ReactiveDomain.Users.Services
 {
@@ -39,6 +40,19 @@ namespace ReactiveDomain.Users.Services
 
         private readonly Dictionary<string, Client> _clientsByClientName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<Guid, string> _clientNameById = new Dictionary<Guid, string>();
+        private readonly Dictionary<Guid, Guid> _clientIdByAppId = new Dictionary<Guid, Guid>();
+        private readonly Dictionary<Guid, List<string>> _clientSecretsByClientId = new Dictionary<Guid, List<string>>();
+        public string GetAppConfig(Guid AppId)
+        {
+            _clientIdByAppId.TryGetValue(AppId, out var clientId);
+            if (clientId == Guid.Empty) { return $"Client not found for App:{AppId}"; }
+            var sb = new StringBuilder();
+            sb.AppendLine($"\"ClientId\": \"{clientId.ToString("N")}\"");
+            sb.AppendLine($"\"ClientSecret\": \"{_clientSecretsByClientId[clientId].Last()}\"");
+            _clientNameById.TryGetValue(clientId, out var clientName);
+            sb.AppendLine($"\"PolicyName\": \"{clientName}\"");
+            return sb.ToString();
+        }
         public async Task<Client> FindClientByIdAsync(string clientId)
         {
             var clientName = string.Empty;
@@ -51,7 +65,7 @@ namespace ReactiveDomain.Users.Services
         }
 
         public Client FindClientByName(string clientName)
-        {  
+        {
             _clientsByClientName.TryGetValue(clientName, out var client);
             return client;
         }
@@ -75,6 +89,8 @@ namespace ReactiveDomain.Users.Services
                  };
             _clientsByClientName.Add(@event.ClientName, client);
             _clientNameById.Add(@event.ClientId, @event.ClientName);
+            _clientIdByAppId.Add(@event.ApplicationId, @event.ClientId);
+            _clientSecretsByClientId.Add(@event.ClientId, new List<string>());
         }
 
         public void Handle(ClientMsgs.ClientSecretAdded @event)
@@ -83,7 +99,7 @@ namespace ReactiveDomain.Users.Services
             {
                 _clientsByClientName[name].ClientSecrets.Add(new Secret(@event.EncryptedClientSecret.ToSha256()));
             }
-
+            _clientSecretsByClientId[@event.ClientId].Add(@event.EncryptedClientSecret);
         }
 
         public void Handle(ClientMsgs.ClientSecretRemoved @event)
@@ -92,6 +108,7 @@ namespace ReactiveDomain.Users.Services
             {
                 _clientsByClientName[name].ClientSecrets.Remove(new Secret(@event.EncryptedClientSecret.ToSha256()));
             }
+            _clientSecretsByClientId[@event.ClientId].Remove(@event.EncryptedClientSecret);
         }
     }
 }
