@@ -1,4 +1,4 @@
-﻿#define Attach
+﻿//#define Attach
 using System;
 using Microsoft.Extensions.Configuration;
 using System.Net;
@@ -19,6 +19,7 @@ using ReactiveDomain.Users.ReadModels;
 using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Policy.Domain;
 using System.Text;
+using RDMsg = ReactiveDomain.Messaging;
 
 namespace PolicyTool
 {
@@ -115,14 +116,13 @@ namespace PolicyTool
                 (string name, string secret) =>
                 {
                     var appId = Guid.NewGuid();
-                    var version = "1.0";
-                    var cmd = new ApplicationMsgs.CreateApplication(
+                    var version = "1.0";                   
+                    var cmd = RDMsg.MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(
                               appId,
                               Guid.NewGuid(),
                               name,
                               version,
-                              false);
-                    cmd.CorrelationId = Guid.NewGuid();
+                              false));
                     if (mainBus.TrySend(cmd, out var _))
                     {
                         //todo: wrap this in a service
@@ -261,7 +261,13 @@ namespace PolicyTool
                 (string appName) =>
                 {
                     var app = appRm.GetApplication(appName);   
-                    var config = clientStore.GetAppConfig(app.ApplicationId);
+                    var config = new StringBuilder();
+                    config.AppendLine("\"RdPolicyConfig\": {");
+                    config.AppendLine("\"TokenServer\": \"[Token Server URL]\",");
+                    config.AppendLine("\"ESConnection\": \"[ES Connection String]\",");
+                    config.AppendLine( $"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
+                    config.Append(clientStore.GetAppConfig(app.ApplicationId));
+                    
                     Console.WriteLine(config);
                 }, appName);
             rootCommand.AddCommand(addApp);
@@ -292,7 +298,7 @@ namespace PolicyTool
             string esPwd = AppConfig.GetValue<string>("EventStorePassword");
             string esIpAddress = AppConfig.GetValue<string>("EventStoreIPAddress");
             int esPort = AppConfig.GetValue<int>("EventStorePort");
-            string schema = AppConfig.GetValue<string>("EventStoreSchema");
+            string schema = AppConfig.GetValue<string>("PolicySchema");
             var tcpEndpoint = new IPEndPoint(IPAddress.Parse(esIpAddress), esPort);
 
             var settings = ES.ConnectionSettings.Create()

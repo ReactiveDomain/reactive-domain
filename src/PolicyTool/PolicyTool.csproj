@@ -5,10 +5,7 @@
     <IsPackable>true</IsPackable>  
     <StartupObject>PolicyTool.Program</StartupObject>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>    
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Program.old.cs" />
-  </ItemGroup>
+  </PropertyGroup>  
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />

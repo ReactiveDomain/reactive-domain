@@ -15,7 +15,7 @@ namespace ReactiveDomain.Policy
         public PolicyDispatcher(IDispatcher dispatcher, Func<UserPolicy> getPolicy)
         {
             Ensure.NotNull(dispatcher, nameof(dispatcher));
-            Ensure.NotNull(getPolicy, nameof(getPolicy));            
+            Ensure.NotNull(getPolicy, nameof(getPolicy));
             _dispatcher = dispatcher;
             _getPolicy = getPolicy;
         }
@@ -28,34 +28,34 @@ namespace ReactiveDomain.Policy
             else
             {
                 var fail = (Fail)command.Fail(new AuthorizationException(command.GetType(), exceptionMsg));
-                throw new CommandException(exceptionMsg ?? fail.Exception.Message, fail.Exception, command); 
-            }            
+                throw new CommandException(exceptionMsg ?? fail.Exception.Message, fail.Exception, command);
+            }
         }
         public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
         {
             if (_getPolicy().HasPermission(command.GetType()))
             {
-                return _dispatcher.TrySend(command, out response, responseTimeout, ackTimeout);               
+                return _dispatcher.TrySend(command, out response, responseTimeout, ackTimeout);
             }
             else
-            {               
+            {
                 response = command.Fail(new AuthorizationException(command.GetType(), null));
                 return false;
-            }            
+            }
         }
         public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
-        {            
+        {
             if (_getPolicy().HasPermission(command.GetType()))
             {
                 return _dispatcher.TrySendAsync(command, responseTimeout, ackTimeout);
             }
             else
-            {              
+            {
                 return false;
             }
         }
         public bool TrySendAsync(ICommand command, out AuthorizationException exception, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
-        {           
+        {
             if (_getPolicy().HasPermission(command.GetType()))
             {
                 exception = null;
@@ -75,7 +75,7 @@ namespace ReactiveDomain.Policy
         public IDisposable SubscribeToAll(IHandle<IMessage> handler)
         {
             return _dispatcher.SubscribeToAll(handler);
-        }        
+        }
 
         bool ISubscriber.HasSubscriberFor<T>(bool includeDerived)
         {
@@ -96,7 +96,8 @@ namespace ReactiveDomain.Policy
         void ISubscriber.Unsubscribe<T>(IHandle<T> handler)
         {
             _dispatcher.Unsubscribe(handler);
-        }        public void Dispose()
+        }
+        public void Dispose()
         {
             _dispatcher.Dispose();
         }

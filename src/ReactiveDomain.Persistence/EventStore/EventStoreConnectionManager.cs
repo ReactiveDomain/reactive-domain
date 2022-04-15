@@ -221,7 +221,6 @@ namespace ReactiveDomain.EventStore
                 .KeepReconnecting()
                 .KeepRetrying()
                 .UseConsoleLogger()
-                //.If(() => !useTlsConnection, (x) => x..UseSslConnection(tlsCertificateHostName, validateTlsCertificate))
                 .If(() => !useTlsConnection, (x) => x.DisableTls())
                 .If(() => !useTlsConnection, (x) => x.DisableServerCertificateValidation())
                 .If(() => verboseLogging, (x) => x.EnableVerboseLogging())

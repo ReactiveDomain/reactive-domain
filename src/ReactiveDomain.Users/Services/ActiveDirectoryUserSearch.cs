@@ -16,11 +16,11 @@ namespace ReactiveDomain.Users.Services
                 //For more details on this refer to https://github.com/dotnet/corefx/issues/26779
                 if (principalContext.ContextType == ContextType.Machine)
                 {
-                    // Remove the leading & trailing * (this comes when called from Elbe.WPF)
+                    // Remove the leading & trailing * 
                     userName = userName.Trim('*');
                     var users = searcher.FindAll().Where(x =>
                     {
-                        // .net 4.8 doesn't have case insensitive version of Contains(), but dotnet core does. Since Elbe is targeted for both frameworks, I had the use IndexOf to achieve
+                        // .net 4.8 doesn't have case insensitive version of Contains(), but dotnet core does. Since this is targeted for both frameworks, I had the use IndexOf to achieve
                         // a case insensitive behavior. Other option would be to write an extension method, which would be doing the same thing (calling IndexOf).
                         return x.SamAccountName.IndexOf(userName, StringComparison.InvariantCultureIgnoreCase) >= 0;
                     });
