@@ -36,7 +36,6 @@ namespace PolicyTool
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Program only valid on Windows with AD")]
         static int Main(string[] args)
-        //public static int Main(string[] args)
         {
 
 #if Attach
@@ -126,6 +125,7 @@ namespace PolicyTool
                     if (mainBus.TrySend(cmd, out var _))
                     {
                         //todo: wrap this in a service
+                        //todo: look at making this a corlated mesage
                         var client = new ReactiveDomain.Users.Domain.Client(
                             Guid.NewGuid(),
                             appId,
