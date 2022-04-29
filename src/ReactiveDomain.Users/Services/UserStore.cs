@@ -119,7 +119,6 @@ namespace ReactiveDomain.Users.Services
                 subject.NotAuthenticatedInvalidCredentials(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
-
         }
         public void UserAccountLocked(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
@@ -130,7 +129,6 @@ namespace ReactiveDomain.Users.Services
                 subject.NotAuthenticatedAccountLocked(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
-
         }
         public void UserAccountDisabled(UserPrincipal retrievedUser, string domain, string authProvider, string hostIpAddress, string clientId)
         {
@@ -141,8 +139,6 @@ namespace ReactiveDomain.Users.Services
                 subject.NotAuthenticatedAccountDisabled(hostIpAddress, clientId);
                 _repo.Save(subject);
             }
-
         }
-
     }
 }
