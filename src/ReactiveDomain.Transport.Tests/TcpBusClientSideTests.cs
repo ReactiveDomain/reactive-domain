@@ -14,25 +14,25 @@ using Xunit;
 namespace ReactiveDomain.Transport.Tests
 {
     [Collection("TCP bus tests")]
-    public class TcpBusClientSideTests
+    public class TcpBusClientSideTests : IDisposable
     {
-        private readonly string _shortProp = "abc";
+        private const string ShortProp = "abc";
         // 16kb is large enough to cause the transport to split up the frame.
         // It would be better if we did the splitting manually so we were sure it really happened.
         // Would require mocking more things.
         private readonly string _longProp = string.Join("", Enumerable.Repeat("a", 16 * 1024));
 
         private readonly Dispatcher _localBus = new Dispatcher("local");
+        private readonly IList<IDisposable> _subscriptions = new List<IDisposable>();
+        private readonly TcpBusServerSide _tcpBusServerSide;
+        private readonly TcpBusClientSide _tcpBusClientSide;
+        private readonly TaskCompletionSource<IMessage> _tcs;
 
-        [Fact]
-        public void can_handle_split_frames()
+        public TcpBusClientSideTests()
         {
             var hostAddress = IPAddress.Loopback;
             var port = 10000;
-            var tcs = new TaskCompletionSource<IMessage>();
-
-            var handler = new WoftamCommandHandler(_longProp, true);
-            var subscription = _localBus.Subscribe(handler);
+            _tcs = new TaskCompletionSource<IMessage>();
 
             // server side
             var serverInbound = new QueuedHandler(
@@ -41,24 +41,24 @@ namespace ReactiveDomain.Transport.Tests
                 true,
                 TimeSpan.FromMilliseconds(1000));
 
-            var tcpBusServerSide = new TcpBusServerSide(
+            _tcpBusServerSide = new TcpBusServerSide(
                 hostAddress,
                 port,
                 inboundNondiscardingMessageTypes: new[] { typeof(WoftamCommand) },
                 inboundNondiscardingMessageQueuedHandler: serverInbound);
 
-            _localBus.SubscribeToAll(tcpBusServerSide);
+            _localBus.SubscribeToAll(_tcpBusServerSide);
 
             serverInbound.Start();
 
             // client side
             var clientInbound = new QueuedHandler(
-                new AdHocHandler<IMessage>(tcs.SetResult),
+                new AdHocHandler<IMessage>(_tcs.SetResult),
                 "InboundMessageQueuedHandler",
                 true,
                 TimeSpan.FromMilliseconds(1000));
 
-            var tcpBusClientSide = new TcpBusClientSide(
+            _tcpBusClientSide = new TcpBusClientSide(
                 hostAddress,
                 port,
                 inboundNondiscardingMessageTypes: new[] { typeof(CommandResponse) },
@@ -70,21 +70,50 @@ namespace ReactiveDomain.Transport.Tests
 
             // wait for tcp connection to be established (maybe an api to detect this would be nice)
             Thread.Sleep(TimeSpan.FromMilliseconds(200));
+        }
+
+        [Fact]
+        public void can_send_command()
+        {
+            var handler = new WoftamCommandHandler(_longProp);
+            _subscriptions.Add(_localBus.Subscribe(handler));
 
             // First send the command to server so it knows where to send the response.
-            // We don't need either of these properties to be large since we're only testing
-            // message splitting from server to client.
-            tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(_shortProp)));
+            _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
 
             // expect to receive it on the client side
-            var gotMessage = tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
             Assert.True(gotMessage);
-            var response = Assert.IsType<WoftamCommandResponse>(tcs.Task.Result);
-            Assert.Equal(_longProp, response.PropertyA);
+            Assert.IsType<Success>(_tcs.Task.Result);
+        }
 
-            subscription.Dispose();
-            tcpBusClientSide.Dispose();
-            tcpBusServerSide.Dispose();
+        [Fact]
+        public void can_handle_split_frames() // Also tests custom deserializer
+        {
+            var handler = new WoftamCommandHandler(_longProp) { ReturnCustomResponse = true };
+            _subscriptions.Add(_localBus.Subscribe(handler));
+
+            // First send the command to server so it knows where to send the response.
+            // We don't need this properties to be large since we're only testing message
+            // splitting from server to client.
+            _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
+
+            // expect to receive it on the client side
+            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+            Assert.True(gotMessage);
+            var response = Assert.IsType<WoftamCommandResponse>(_tcs.Task.Result);
+            Assert.Equal(_longProp, response.PropertyA);
+        }
+
+        public void Dispose()
+        {
+            foreach (var subscription in _subscriptions)
+            {
+                subscription.Dispose();
+            }
+            _localBus?.Dispose();
+            _tcpBusClientSide.Dispose();
+            _tcpBusServerSide.Dispose();
         }
     }
 
@@ -165,16 +194,15 @@ namespace ReactiveDomain.Transport.Tests
     public class WoftamCommandHandler : IHandleCommand<WoftamCommand>
     {
         private readonly string _prop;
-        private readonly bool _returnCustomResponse;
+        public bool ReturnCustomResponse { get; set; }
 
-        public WoftamCommandHandler(string prop, bool returnCustomResponse)
+        public WoftamCommandHandler(string prop)
         {
             _prop = prop;
-            _returnCustomResponse = returnCustomResponse;
         }
         public CommandResponse Handle(WoftamCommand command)
         {
-            return _returnCustomResponse ? new WoftamCommandResponse(command, _prop) : command.Succeed();
+            return ReturnCustomResponse ? new WoftamCommandResponse(command, _prop) : command.Succeed();
         }
     }
 }
