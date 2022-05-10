@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -10,6 +9,7 @@ using Xunit;
 
 namespace ReactiveDomain.Transport.Tests
 {
+    [Collection("TCP bus tests")]
     public class TcpBusServerSideTests
     {
         [Fact]
@@ -31,16 +31,16 @@ namespace ReactiveDomain.Transport.Tests
                 true,
                 TimeSpan.FromMilliseconds(1000));
 
-            var tcpBusServerSide = new TcpBusServerSide(hostAddress, port, null)
-            {
-                InboundMessageQueuedHandler = serverInbound,
-                InboundSpamMessageTypes = new List<Type>(),
-            };
+            var tcpBusServerSide = new TcpBusServerSide(
+                hostAddress,
+                port,
+                inboundNondiscardingMessageTypes: new[] { typeof(WoftamEvent) },
+                inboundNondiscardingMessageQueuedHandler: serverInbound);
 
             serverInbound.Start();
 
             // client side
-            var tcpBusClientSide = new TcpBusClientSide(null, hostAddress, port);
+            var tcpBusClientSide = new TcpBusClientSide(hostAddress, port);
 
             // wait for tcp connection to be established (maybe an api to detect this would be nice)
             Thread.Sleep(TimeSpan.FromMilliseconds(200));
@@ -54,6 +54,9 @@ namespace ReactiveDomain.Transport.Tests
             var evt = Assert.IsType<WoftamEvent>(tcs.Task.Result);
             Assert.Equal(prop1, evt.Property1);
             Assert.Equal(prop2, evt.Property2);
+
+            tcpBusClientSide.Dispose();
+            tcpBusServerSide.Dispose();
         }
     }
 }

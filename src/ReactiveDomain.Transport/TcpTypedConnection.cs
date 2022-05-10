@@ -35,14 +35,9 @@ namespace ReactiveDomain.Transport
                                   IMessageFormatter<T> formatter,
                                   IMessageFramer framer)
         {
-            if (formatter == null)
-                throw new ArgumentNullException("formatter");
-            if (framer == null)
-                throw new ArgumentNullException("framer");
-
             _connection = connection;
-            _formatter = formatter;
-            _framer = framer;
+            _formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
+            _framer = framer ?? throw new ArgumentNullException(nameof(framer));
 
             connection.ConnectionClosed += OnConnectionClosed;
 
@@ -70,10 +65,7 @@ namespace ReactiveDomain.Transport
             if (_receiveCallback != null)
                 throw new InvalidOperationException("ReceiveAsync should be called just once.");
 
-            if (callback == null)
-                throw new ArgumentNullException("callback");
-
-            _receiveCallback = callback;
+            _receiveCallback = callback ?? throw new ArgumentNullException(nameof(callback));
 
             _connection.ReceiveAsync(OnRawDataReceived);
         }
@@ -82,7 +74,7 @@ namespace ReactiveDomain.Transport
         {
             try
             {
-                _framer.UnFrameData(data);
+                _framer.UnFrameData(connection.ConnectionId, data);
             }
             catch (PackageFramingException exc)
             {
@@ -93,7 +85,7 @@ namespace ReactiveDomain.Transport
             connection.ReceiveAsync(OnRawDataReceived);
         }
 
-        private void IncomingMessageArrived(ArraySegment<byte> message)
+        private void IncomingMessageArrived(Guid connectionId, ArraySegment<byte> message)
         {
             _receiveCallback(this, _formatter.From(message));
         }

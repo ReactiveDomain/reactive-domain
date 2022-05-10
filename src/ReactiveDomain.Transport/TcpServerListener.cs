@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using ReactiveDomain.Logging;
@@ -26,7 +24,7 @@ namespace ReactiveDomain.Transport
             _listeningSocket = new Socket(serverEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             _acceptSocketArgsPool = new SocketArgsPool("TcpServerListener.AcceptSocketArgsPool",
-                                                       TcpConfiguration.ConcurrentAccepts*2,
+                                                       TcpConfiguration.ConcurrentAccepts * 2,
                                                        CreateAcceptSocketArgs);
         }
 
@@ -51,7 +49,7 @@ namespace ReactiveDomain.Transport
             }
             catch (Exception ex)
             {
-                Log.InfoException(ex,"Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
+                Log.InfoException(ex, "Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
                 Helper.EatException(() => _listeningSocket.Close(TcpConfiguration.SocketCloseTimeoutMs));
                 throw;
             }

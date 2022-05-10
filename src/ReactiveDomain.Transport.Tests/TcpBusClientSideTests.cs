@@ -1,70 +1,180 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Transport.Serialization;
+using Xunit;
 
 namespace ReactiveDomain.Transport.Tests
 {
+    [Collection("TCP bus tests")]
     public class TcpBusClientSideTests
     {
-        private IPAddress _hostAddress;
-        private IDispatcher _commandBus;
-        private IPAddress _clientAddress;
-        private MockTcpConnection _clientTcpConnection;
-        private const int CommandPort = 10660;
+        private readonly string _shortProp = "abc";
+        // 16kb is large enough to cause the transport to split up the frame.
+        // It would be better if we did the splitting manually so we were sure it really happened.
+        // Would require mocking more things.
+        private readonly string _longProp = string.Join("", Enumerable.Repeat("a", 16 * 1024));
 
-        public TcpBusClientSideTests()
+        private readonly Dispatcher _localBus = new Dispatcher("local");
+
+        [Fact]
+        public void can_handle_split_frames()
         {
-            _commandBus = new Dispatcher("TestBus");
-            _hostAddress = IPAddress.Loopback;
-            _clientAddress = IPAddress.Loopback;
-            _clientTcpConnection = MockTcpConnection.CreateConnectingTcpConnection(Guid.NewGuid(),
-                new IPEndPoint(_hostAddress, CommandPort),
-                new TcpClientConnector(),
-                TimeSpan.FromSeconds(120),
-                conn =>
-                {
-                },
-                (conn, err) =>
-                {
-                },
-                verbose: true);
+            var hostAddress = IPAddress.Loopback;
+            var port = 10000;
+            var tcs = new TaskCompletionSource<IMessage>();
 
+            var handler = new WoftamCommandHandler(_longProp, true);
+            var subscription = _localBus.Subscribe(handler);
+
+            // server side
+            var serverInbound = new QueuedHandler(
+                new AdHocHandler<IMessage>(m => { if (m is Command cmd) _localBus.TrySend(cmd, out _); }),
+                "InboundMessageServerHandler",
+                true,
+                TimeSpan.FromMilliseconds(1000));
+
+            var tcpBusServerSide = new TcpBusServerSide(
+                hostAddress,
+                port,
+                inboundNondiscardingMessageTypes: new[] { typeof(WoftamCommand) },
+                inboundNondiscardingMessageQueuedHandler: serverInbound);
+
+            _localBus.SubscribeToAll(tcpBusServerSide);
+
+            serverInbound.Start();
+
+            // client side
+            var clientInbound = new QueuedHandler(
+                new AdHocHandler<IMessage>(tcs.SetResult),
+                "InboundMessageQueuedHandler",
+                true,
+                TimeSpan.FromMilliseconds(1000));
+
+            var tcpBusClientSide = new TcpBusClientSide(
+                hostAddress,
+                port,
+                inboundNondiscardingMessageTypes: new[] { typeof(CommandResponse) },
+                inboundNondiscardingMessageQueuedHandler: clientInbound,
+                messageSerializers: new Dictionary<Type, IMessageSerializer>
+                    { { typeof(WoftamCommandResponse), new WoftamCommandResponse.Serializer() } });
+
+            clientInbound.Start();
+
+            // wait for tcp connection to be established (maybe an api to detect this would be nice)
+            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+
+            // First send the command to server so it knows where to send the response.
+            // We don't need either of these properties to be large since we're only testing
+            // message splitting from server to client.
+            tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(_shortProp)));
+
+            // expect to receive it on the client side
+            var gotMessage = tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+            Assert.True(gotMessage);
+            var response = Assert.IsType<WoftamCommandResponse>(tcs.Task.Result);
+            Assert.Equal(_longProp, response.PropertyA);
+
+            subscription.Dispose();
+            tcpBusClientSide.Dispose();
+            tcpBusServerSide.Dispose();
         }
-        ~TcpBusClientSideTests()
+    }
+
+    public class WoftamCommand : Command
+    {
+        public readonly string Property1;
+
+        public WoftamCommand(string property1)
         {
-            _clientTcpConnection.Close("I'm done.");
+            Property1 = property1;
+        }
+    }
+
+    public class WoftamCommandResponse : Success
+    {
+        public readonly string PropertyA;
+
+        public WoftamCommandResponse(WoftamCommand source, string propertyA)
+            : base(source)
+        {
+            PropertyA = propertyA;
         }
 
-        // Sigh... at this point, there are no commands defined in ReactiveDomain, so I have nothing with
-        // which to test.  
+        public class Serializer : IMessageSerializer
+        {
+            public IMessage DeserializeMessage(string json, Type messageType)
+            {
+                var reader = new JsonTextReader(new StringReader(json));
+                var propA = "";
+                var correlationId = Guid.Empty;
+                var causationId = Guid.Empty;
+                WoftamCommand sourceCommand = null;
+                while (reader.Read())
+                {
+                    if (reader.TokenType == JsonToken.PropertyName)
+                    {
+                        if (reader.Value.ToString() == nameof(PropertyA))
+                        {
+                            reader.Read();
+                            propA = reader.Value.ToString();
+                        }
+                        else if (reader.Value.ToString() == "CorrelationId")
+                        {
+                            reader.Read();
+                            correlationId = Guid.Parse(reader.Value.ToString());
+                        }
+                        else if (reader.Value.ToString() == "CausationId")
+                        {
+                            reader.Read();
+                            causationId = Guid.Parse(reader.Value.ToString());
+                        }
+                        else if (reader.Value.ToString() == "SourceCommand")
+                        {
+                            reader.Read();
+                            var serializer = new JsonSerializer();
+                            sourceCommand = serializer.Deserialize<WoftamCommand>(reader);
+                            break;
+                        }
+                    }
+                }
+                if (sourceCommand is null)
+                    throw new JsonSerializationException("Could not deserialize WoftamCommandResponse.");
+                var response = new WoftamCommandResponse(sourceCommand, propA);
+                if (correlationId != Guid.Empty)
+                    response.CorrelationId = correlationId;
+                if (causationId != Guid.Empty)
+                    response.CausationId = causationId;
+                return response;
+            }
 
-        //[Fact]
-        //public void handle_command_test()
-        //{
-        //    // Set up the TcpBusClientSide that I will test, and also hook up the LengthPrefixMessageFramer
-        //    var tcpBusClientSide = new TcpBusClientSide(_hostAddress, _commandBus, _clientAddress, 10000, _clientTcpConnection);
-        //    tcpBusClientSide._framer.RegisterMessageArrivedCallback(tcpBusClientSide.TcpMessageArrived);
-        //    Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
-        //    callback = (x, data) =>
-        //    {
-        //        tcpBusClientSide._framer.UnFrameData(data);
-        //        _clientTcpConnection.ReceiveAsync(callback);
-        //    };
-        //    _clientTcpConnection.ReceiveAsync(callback);
+            public string SerializeMessage(IMessage message)
+            {
+                return JsonConvert.SerializeObject(message, Json.JsonSettings);
+            }
+        }
+    }
 
-        //    _clientTcpConnection.SentData = null;
-        //    var cmd = new ImageProcess.Decolorize(true, Guid.NewGuid(), null);
+    public class WoftamCommandHandler : IHandleCommand<WoftamCommand>
+    {
+        private readonly string _prop;
+        private readonly bool _returnCustomResponse;
 
-        //    var cmdResponse = tcpBusClientSide.Handle(cmd);
-
-        //    var expectedSentData = tcpBusClientSide._framer.FrameData((new TcpMessage(cmd).AsArraySegment()));
-        //    var expectedCmdResponse = cmd.Succeed();
-        //    Assert.NotNull(_clientTcpConnection.SentData);
-        //    Assert.Equal(expectedSentData.ToArray(), _clientTcpConnection.SentData.ToArray());
-        //    Assert.NotNull(cmdResponse);
-        //    Assert.Equal(expectedCmdResponse.Succeeded, cmdResponse.Succeeded);
-        //    Assert.Equal(expectedCmdResponse.Error, cmdResponse.Error);
-        //}
-
+        public WoftamCommandHandler(string prop, bool returnCustomResponse)
+        {
+            _prop = prop;
+            _returnCustomResponse = returnCustomResponse;
+        }
+        public CommandResponse Handle(WoftamCommand command)
+        {
+            return _returnCustomResponse ? new WoftamCommandResponse(command, _prop) : command.Succeed();
+        }
     }
 }
