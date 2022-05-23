@@ -21,8 +21,8 @@ namespace ReactiveDomain.Transport.Framing
 
         private byte[] _messageBuffer;
         private ParserState _currentState = ParserState.AwaitingStx;
-        private int _bufferIndex = 0;
-        private Action<ArraySegment<byte>> _receivedHandler;
+        private int _bufferIndex;
+        private Action<Guid, ArraySegment<byte>> _receivedHandler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StxEtxMessageFramer"/> class.
@@ -35,27 +35,28 @@ namespace ReactiveDomain.Transport.Framing
             _currentState = ParserState.AwaitingStx;
         }
 
-        public void UnFrameData(IEnumerable<ArraySegment<byte>> data)
+        public void UnFrameData(Guid routeId, IEnumerable<ArraySegment<byte>> data)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
 
             foreach (ArraySegment<byte> buffer in data)
             {
-                Parse(buffer);
+                Parse(routeId, buffer);
             }
         }
 
-        public void UnFrameData(ArraySegment<byte> data)
+        public void UnFrameData(Guid routeId, ArraySegment<byte> data)
         {
-            Parse(data);
+            Parse(routeId, data);
         }
 
         /// <summary>
         /// Parses a stream chunking based on STX/ETX framing. Calls are re-entrant and hold state internally.
         /// </summary>
+        /// <param name="routeId">The ID of the source from which the data were routed.</param>
         /// <param name="bytes">A byte array of data to append</param>
-        private void Parse(ArraySegment<byte> bytes)
+        private void Parse(Guid routeId, ArraySegment<byte> bytes)
         {
             byte[] data = bytes.Array;
             for (int i = bytes.Offset; i < bytes.Offset + bytes.Count; i++)
@@ -80,7 +81,7 @@ namespace ReactiveDomain.Transport.Framing
                 {
                     _currentState = ParserState.AwaitingStx;
                     if (_receivedHandler != null)
-                        _receivedHandler(new ArraySegment<byte>(_messageBuffer, 0, _bufferIndex));
+                        _receivedHandler(routeId, new ArraySegment<byte>(_messageBuffer, 0, _bufferIndex));
                     _bufferIndex = 0;
                 }
             }
@@ -93,11 +94,9 @@ namespace ReactiveDomain.Transport.Framing
             yield return ETXBUFFER;
         }
 
-        public void RegisterMessageArrivedCallback(Action<ArraySegment<byte>> handler)
+        public void RegisterMessageArrivedCallback(Action<Guid, ArraySegment<byte>> handler)
         {
-            if (handler == null)
-                throw new ArgumentNullException("handler");
-            _receivedHandler = handler;
+            _receivedHandler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
     }
 }
