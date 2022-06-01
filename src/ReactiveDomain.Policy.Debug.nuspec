@@ -1,0 +1,40 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ReactiveDomain.Policy</id>
+    <version>0.8.22.0</version>
+    <authors>PerkinElmer,Linedata</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>Package includes all ReactiveDomain Identity and Policy assemblies</description>       
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="ReactiveDomain" version="0.8.23" exclude="Build,Analyzers" />
+        <dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices" version="5.0.0" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices.AccountManagement" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <references>
+      <group targetFramework=".NETStandard2.0">
+        <reference file="ReactiveDomain.Policy.dll" />
+        <reference file="ReactiveDomain.PolicyStorage.dll" />
+        <reference file="ReactiveDomain.IdentityStorage.dll" />
+      </group>
+    </references>
+  </metadata>
+  <files>
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.dll" target="ref\netstandard2.0" />
+    
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.PolicyStorage.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.PolicyStorage.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.PolicyStorage.dll" target="ref\netstandard2.0" />
+    
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.IdentityStorage.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.IdentityStorage.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.IdentityStorage.dll" target="ref\netstandard2.0" />
+  </files>
+</package>

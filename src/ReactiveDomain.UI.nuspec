@@ -10,27 +10,13 @@
     <description>Package includes ReactiveDomain UI assembly</description>
     <copyright>Copyright © 2014-2022 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
-        <dependency id="ReactiveDomain" version="0.8.23.0" exclude="Build,Analyzers" />
-        <dependency id="reactiveui" version="7.4.0" exclude="Build,Analyzers" />
-      </group>
-      <group targetFramework=".NETFramework4.7.2">
-        <dependency id="ReactiveDomain" version="0.8.23.0" exclude="Build,Analyzers" />
-        <dependency id="reactiveui" version="9.22.1" exclude="Build,Analyzers" />
-      </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETFramework48">
         <dependency id="ReactiveDomain" version="0.8.23.0" exclude="Build,Analyzers" />
         <dependency id="reactiveui" version="9.22.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
-      <group targetFramework=".NETFramework4.5.2">
-        <reference file="ReactiveDomain.UI.dll" />
-      </group>
-      <group targetFramework=".NETFramework4.7.2">
-        <reference file="ReactiveDomain.UI.dll" />
-      </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETFramework48">
         <reference file="ReactiveDomain.UI.dll" />
       </group>
     </references>
@@ -39,11 +25,8 @@
     </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="..\bld\Release\net452\ReactiveDomain.UI.dll" target="lib\net452" />
-    <file src="..\bld\Release\net452\ReactiveDomain.UI.dll" target="ref\net452" />
-    <file src="..\bld\Release\net472\ReactiveDomain.UI.dll" target="lib\net472" />
-    <file src="..\bld\Release\net472\ReactiveDomain.UI.dll" target="ref\net472" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.UI.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Release\netstandard2.0\ReactiveDomain.UI.dll" target="ref\netstandard2.0" />
+    <file src="..\bld\Release\net48\ReactiveDomain.UI.dll" target="lib\net48" />
+    <file src="..\bld\Release\net48\ReactiveDomain.UI.pdb" target="lib\net48" />
+    <file src="..\bld\Release\net48\ReactiveDomain.UI.dll" target="ref\net48" />
   </files>
 </package>

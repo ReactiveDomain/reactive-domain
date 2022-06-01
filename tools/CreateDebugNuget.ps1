@@ -41,6 +41,7 @@ Copy-Item -Path $buildDir -Destination $tempBuildDir -Recurse
 
 #source nuspec file paths
 $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
+$sourceRDPolicyNuspec = Join-Path $sourceDir "ReactiveDomain.Policy.Debug.nuspec"
 $sourceRDTestNuspec = Join-Path $sourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $sourceRDUINuspec = Join-Path $sourceDir "ReactiveDomain.UI.Debug.nuspec"
 $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
@@ -48,6 +49,7 @@ $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nu
 
 #target nuspec file paths in temp dir
 $ReactiveDomainNuspec = Join-Path $tempSourceDir "ReactiveDomain.Debug.nuspec"
+$ReactiveDomainPolicyNuspec = Join-Path $tempSourceDir "ReactiveDomain.Policy.Debug.nuspec"
 $ReactiveDomainTestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $ReactiveDomainUINuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Debug.nuspec"
 $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
@@ -55,6 +57,7 @@ $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Tes
 
 #copy nuspec files to temp
 Copy-Item $sourceRDNuspec -Destination $ReactiveDomainNuspec
+Copy-Item $sourceRDPolicyNuspec -Destination $ReactiveDomainPolicyNuspec
 Copy-Item $sourceRDTestNuspec -Destination $ReactiveDomainTestingNuspec
 Copy-Item $sourceRDUINuspec -Destination $ReactiveDomainUINuspec
 Copy-Item $sourceRDUITestNuspec -Destination $ReactiveDomainUITestingNuspec
@@ -86,15 +89,16 @@ $RDTransportProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Transport\React
 $ReactiveDomainTestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
 $RDUIProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
 $RDUITestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
-$RDUsersProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Users.csproj"
-$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
-$RDIdentityProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Identity\ReactiveDomain.Identity.csproj"
+$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Policy.csproj"
+$RDPolicyStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.PolicyStorage.csproj"
+$RDIdentityStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Identity\ReactiveDomain.IdentityStorage.csproj"
 
 $nuget = $ReactiveDomainRepo + "\src\.nuget\nuget.exe"
 
 Write-Host ("Reactive Domain version is " + $RDVersion)
 Write-Host ("Build type is " + $buildType)
 Write-Host ("ReactiveDomain nuspec file is " + $ReactiveDomainNuspec)
+Write-Host ("ReactiveDomain.Policy nuspec file is " + $ReactiveDomainPolicyNuspec)
 Write-Host ("ReactiveDomain.Testing nuspec file is " + $ReactiveDomainTestingNuspec)
 Write-Host ("ReactiveDomain.UI nuspec file is " + $ReactiveDomainUINuspec)
 Write-Host ("ReactiveDomain.UI.Testing nuspec file is " + $ReactiveDomainUITestingNuspec)
@@ -158,11 +162,6 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
         $compOperator = "!="
     }
 
-    if ($currentCondition -match "net472")
-    {
-        $currentFramework = "net472"
-    }
-
     if ($currentCondition -match "netstandard2.0")
     {
         $currentFramework = "netstandard2.0"
@@ -191,10 +190,31 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
     
+    $f48 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net48']"
+    $framework48Nodes = $f48.Node.ChildNodes
+
     #netstandard2.0 processing
     $netstandard20 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='.NETStandard2.0']"
     $netstandard20Nodes = $netstandard20.Node.ChildNodes
     
+    foreach($refnode in $framework48Nodes)
+    {
+        if ( $refnode.id -match "ReactiveDomain")
+        {
+            $refnode.version = $RDVersion
+            continue
+        }
+
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net48"
+        if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net48") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net48")) -and
+            ($pRef.version -ne ""))
+        {
+            $refnode.version = $pRef.Version
+        }      
+    }   
+
     foreach($refnode in $netstandard20Nodes)
     {
         if ( $refnode.id -match "ReactiveDomain")
@@ -226,9 +246,11 @@ UpdateDependencyVersions $ReactiveDomainNuspec $RDFoundationProject
 UpdateDependencyVersions $ReactiveDomainNuspec $RDMessagingProject  
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPersistenceProject 
 UpdateDependencyVersions $ReactiveDomainNuspec $RDTransportProject 
-UpdateDependencyVersions $ReactiveDomainNuspec $RDUsersProject 
+
+# These all go into updating the main ReactiveDomain.Policy.nuspec 
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyProject 
-UpdateDependencyVersions $ReactiveDomainNuspec $RDIdentityProject 
+UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyStorageProject 
+UpdateDependencyVersions $ReactiveDomainNuspec $RDIdentityStorageProject 
 
 # These go into updating the ReactiveDomainUI.nuspec
 UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 
@@ -248,6 +270,7 @@ Write-Host "Version string to use: " + $RDVersion
 Write-Host "RD-Vuspec: " + $ReactiveDomainNuspec
 
 & $nuget pack $ReactiveDomainNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainPolicyNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
 & $nuget pack $ReactiveDomainTestingNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
 & $nuget pack $ReactiveDomainUINuspec -Version $RDVersion -OutputDirectory $nupkgsDir
 & $nuget pack $ReactiveDomainUITestingNuspec -Version $RDVersion -OutputDirectory $nupkgsDir

@@ -11,20 +11,20 @@
     <copyright>Copyright © 2014-2022 PerkinElmer, Linedata Inc.</copyright>
 
     <dependencies>     
-      <group targetFramework="net472">
+      <group targetFramework="net48">
         <dependency id="ReactiveDomain" version="0.8.22.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="8.7.2" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>      
-      <group targetFramework="net472">
+      <group targetFramework="net48">
         <reference file="ReactiveDomain.UI.dll" />
       </group>
     </references>    
   </metadata>
   <files>
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.dll" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.dll" target="ref\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.pdb" target="lib\net472" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.dll" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.pdb" target="lib\net48" />
   </files>
 </package>

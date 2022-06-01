@@ -11,21 +11,21 @@
     <copyright>Copyright © 2014-2022 PerkinElmer, Linedata Inc.</copyright>
 
     <dependencies>
-      <group targetFramework="net472">
+      <group targetFramework="net48">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveDomain.Testing" version="0.8.22.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveDomain.UI" version="0.8.22.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>     
-      <group targetFramework="net472">
+      <group targetFramework="net48">
         <reference file="ReactiveDomain.UI.Testing.dll" />
       </group>
     </references>   
   </metadata>
   <files>
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.Testing.dll" target="lib\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.Testing.dll" target="ref\net472" />
-    <file src="..\bld\Debug\net472\ReactiveDomain.UI.Testing.pdb" target="lib\net472" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.dll" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.pdb" target="lib\net48" />
   </files>
 </package>
