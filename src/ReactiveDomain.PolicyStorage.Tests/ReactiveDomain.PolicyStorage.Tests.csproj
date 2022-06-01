@@ -30,7 +30,6 @@
       <ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
-      <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
       <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />

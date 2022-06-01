@@ -18,6 +18,5 @@
     <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Users\ReactiveDomain.Users.csproj" />
   </ItemGroup>
 </Project>
