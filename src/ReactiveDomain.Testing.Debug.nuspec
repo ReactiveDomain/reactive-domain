@@ -19,7 +19,7 @@
       </group>
     </dependencies>
     <references>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework="netstandard2.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
     </references>

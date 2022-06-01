@@ -8,7 +8,7 @@
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Identity and Policy assemblies</description>       
     <dependencies>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework="netstandard2.0">
         <dependency id="ReactiveDomain" version="0.8.23" exclude="Build,Analyzers" />
         <dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
         <dependency id="System.DirectoryServices" version="5.0.0" exclude="Build,Analyzers"/>
@@ -17,7 +17,7 @@
       </group>
     </dependencies>
     <references>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework="netstandard2.0">
         <reference file="ReactiveDomain.Policy.dll" />
         <reference file="ReactiveDomain.PolicyStorage.dll" />
         <reference file="ReactiveDomain.IdentityStorage.dll" />

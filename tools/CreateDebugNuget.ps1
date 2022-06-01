@@ -89,9 +89,9 @@ $RDTransportProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Transport\React
 $ReactiveDomainTestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
 $RDUIProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
 $RDUITestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
-$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Users\ReactiveDomain.Policy.csproj"
-$RDPolicyStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.PolicyStorage.csproj"
-$RDIdentityStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Identity\ReactiveDomain.IdentityStorage.csproj"
+$RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
+$RDPolicyStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj"
+$RDIdentityStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj"
 
 $nuget = $ReactiveDomainRepo + "\src\.nuget\nuget.exe"
 
@@ -185,7 +185,7 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
 #
 function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 {
-    Write-Host "Updating dependency versions of: " $Nuspec
+    Write-Host ("Updating dependency versions from " + $CsProj) 
 
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
@@ -194,7 +194,7 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
     $framework48Nodes = $f48.Node.ChildNodes
 
     #netstandard2.0 processing
-    $netstandard20 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='.NETStandard2.0']"
+    $netstandard20 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='netstandard2.0']"
     $netstandard20Nodes = $netstandard20.Node.ChildNodes
     
     foreach($refnode in $framework48Nodes)
@@ -248,9 +248,9 @@ UpdateDependencyVersions $ReactiveDomainNuspec $RDPersistenceProject
 UpdateDependencyVersions $ReactiveDomainNuspec $RDTransportProject 
 
 # These all go into updating the main ReactiveDomain.Policy.nuspec 
-UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyProject 
-UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyStorageProject 
-UpdateDependencyVersions $ReactiveDomainNuspec $RDIdentityStorageProject 
+UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDPolicyProject 
+UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDPolicyStorageProject 
+UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDIdentityStorageProject 
 
 # These go into updating the ReactiveDomainUI.nuspec
 UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 

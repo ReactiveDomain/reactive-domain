@@ -53,12 +53,12 @@ $ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Test
 $RDCoreProject = $PSScriptRoot + "\..\src\ReactiveDomain.Core\ReactiveDomain.Core.csproj"
 $RDFoundationProject = $PSScriptRoot + "\..\src\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj"
 $RDMessagingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj"
-$RDPersistenceProject = $PSScriptRoot + "\..\src\ReactiveDomain.Policy\ReactiveDomain.Persistence.csproj"
+$RDPersistenceProject = $PSScriptRoot + "\..\src\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj"
 $RDTransportProject = $PSScriptRoot + "\..\src\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj"
 
-$RDPolicyProject = $PSScriptRoot + "\..\src\ReactiveDomain.Messaging\ReactiveDomain.Policy.csproj"
-$RDPolicyStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.User\ReactiveDomain.PolicyStorage.csproj"
-$RDIdentityStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.Identity\ReactiveDomain.IdentityStorage.csproj"
+$RDPolicyProject = $PSScriptRoot + "\..\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
+$RDPolicyStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj"
+$RDIdentityStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj"
 
 $ReactiveDomainTestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
 $RDUIProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
@@ -160,7 +160,7 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
 #
 function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 {
-    Write-Host "Updating dependency versions of: " $Nuspec
+    Write-Host ("Updating dependency versions from " + $CsProj) 
 
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
