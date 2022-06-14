@@ -175,7 +175,7 @@ namespace ReactiveDomain.Foundation
                     : _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
 
                 if (!(currentSlice is StreamEventsSlice)) { break; }
-                FirstEventRead = true;
+                if (currentSlice.Events.Length > 0) { FirstEventRead = true; }
                 remaining -= currentSlice.Events.Length;
                 sliceStart = currentSlice.NextEventNumber;
 
@@ -220,7 +220,7 @@ namespace ReactiveDomain.Foundation
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
-                return;           
+                return;
             _disposed = true;
         }
         #endregion

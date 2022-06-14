@@ -1,7 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ci.build.imports" />
-  <PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' != 'Debug' ">
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup>
     <IsPackable>True</IsPackable>
   </PropertyGroup>
   <ItemGroup>

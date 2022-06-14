@@ -134,7 +134,7 @@ namespace ReactiveDomain.Testing.EventStore
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
 
 
-                Assert.False(reader.Read("missing_stream", () => true));
+                Assert.False(reader.Read($"missing_stream-{Guid.NewGuid().ToString("N")}", () => true));
 
                 var deleteStream = $"deleteStream-{Guid.NewGuid().ToString()}";
                 AppendEvents(1, conn, deleteStream);

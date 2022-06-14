@@ -1,4 +1,4 @@
-#define LIVE_ES_CONNECTION
+//#define LIVE_ES_CONNECTION
 
 using System;
 using ReactiveDomain.EventStore;
