@@ -30,7 +30,7 @@ namespace ReactiveDomain.Users.Domain
             string authProvider,
             string authDomain,
             ICorrelatedMessage source)
-            : this()
+            : base(source)
         {
             Ensure.NotEmptyGuid(id, nameof(id));
             Ensure.NotNullOrEmpty(authProvider, nameof(authProvider));
@@ -41,8 +41,8 @@ namespace ReactiveDomain.Users.Domain
             Ensure.NotEmptyGuid(source.CorrelationId, nameof(source.CorrelationId));
             if (source.CausationId == Guid.Empty)
                 Ensure.NotEmptyGuid(source.MsgId, nameof(source.MsgId));
-
-            ((ICorrelatedEventSource)this).Source = source;
+           
+            RegisterEvents();
             Raise(new SubjectMsgs.SubjectCreated(
                          id,
                          userId,
