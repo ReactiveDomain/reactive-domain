@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
     <ProjectReference Include="..\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj" />
   </ItemGroup>
 </Project>
