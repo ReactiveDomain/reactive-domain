@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain.UI.Testing</id>
-    <version>0.8.22.0</version>
+    <version>0.9.0.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -13,8 +13,8 @@
     <dependencies>
       <group targetFramework="net48">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.Testing" version="0.8.22.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.8.22.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.Testing" version="0.9.0.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.UI" version="0.9.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>     
