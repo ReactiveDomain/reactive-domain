@@ -1,12 +1,8 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Domain;
 using ReactiveDomain.Policy.Messages;
-using ReactiveDomain.Users.Tests.Helpers;
+using ReactiveDomain.Policy.Tests.Helpers;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ReactiveDomain.PolicyStorage.Tests

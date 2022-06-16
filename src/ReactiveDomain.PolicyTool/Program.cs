@@ -13,13 +13,13 @@ using System.Diagnostics;
 using System.Threading;
 using System.Linq;
 using ReactiveDomain.Policy;
-using ReactiveDomain.Users.Services;
 using System.DirectoryServices.AccountManagement;
-using ReactiveDomain.Users.ReadModels;
-using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Policy.Domain;
 using System.Text;
 using RDMsg = ReactiveDomain.Messaging;
+using ReactiveDomain.IdentityStorage.Services;
+using ReactiveDomain.IdentityStorage.ReadModels;
+using ReactiveDomain.IdentityStorage.Messages;
 
 namespace PolicyTool
 {
@@ -126,7 +126,7 @@ namespace PolicyTool
                     {
                         //todo: wrap this in a service
                         //todo: look at making this a corlated mesage
-                        var client = new ReactiveDomain.Users.Domain.Client(
+                        var client = new ReactiveDomain.IdentityStorage.Domain.Client(
                             Guid.NewGuid(),
                             appId,
                             name,

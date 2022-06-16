@@ -3,8 +3,6 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
-    <RepositoryUrl>c:\packages\</RepositoryUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
    <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
