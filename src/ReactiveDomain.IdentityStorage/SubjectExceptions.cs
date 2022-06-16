@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.IdentityStorage
 {
     /// <summary>
     /// An attempt was made to add a duplicate subject to the system.

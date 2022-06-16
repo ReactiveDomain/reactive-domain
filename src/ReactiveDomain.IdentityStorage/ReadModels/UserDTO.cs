@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.IdentityStorage.ReadModels
 {
     public class UserDTO :
                 IHandle<UserMsgs.Deactivated>,

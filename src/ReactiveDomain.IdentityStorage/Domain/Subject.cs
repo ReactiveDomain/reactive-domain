@@ -1,9 +1,9 @@
 ﻿using System;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Domain
+namespace ReactiveDomain.IdentityStorage.Domain
 {
     /// <summary>
     /// User authentication and login.

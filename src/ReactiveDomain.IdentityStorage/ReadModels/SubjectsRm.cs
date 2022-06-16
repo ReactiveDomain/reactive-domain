@@ -1,12 +1,11 @@
-﻿using ReactiveDomain.Foundation;
-using System.DirectoryServices.AccountManagement;
-using ReactiveDomain.Messaging.Bus;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
+using ReactiveDomain.Foundation;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
+using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.IdentityStorage.ReadModels
 {
     public class SubjectsRm :
         ReadModelBase,

@@ -1,10 +1,10 @@
 ﻿using ReactiveDomain.Foundation;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     /// <summary>
     /// The service that fronts the User aggregate.

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Users
+namespace ReactiveDomain.IdentityStorage
 {
     /// <summary>
     /// An attempt was made to add a duplicate user to the system.

@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using IdentityModel;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using RD = ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
-using System.Text;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     public class ClientStore :
         ReadModelBase,
@@ -32,10 +30,10 @@ namespace ReactiveDomain.Users.Services
 
             using (var reader = conn.GetReader(nameof(ClientStore), Handle))
             {
-                reader.Read<RD.Client>(() => Idle);
+                reader.Read<IdentityStorage.Domain.Client>(() => Idle);
                 checkpoint = reader.Position ?? StreamPosition.Start;
             }
-            Start<RD.Client>(checkpoint);
+            Start<IdentityStorage.Domain.Client>(checkpoint);
         }
 
         private readonly Dictionary<string, Client> _clientsByClientName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);

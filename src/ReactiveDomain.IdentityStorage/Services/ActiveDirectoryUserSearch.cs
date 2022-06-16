@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     public static class ActiveDirectoryUserSearch
     {

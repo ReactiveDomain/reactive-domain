@@ -1,8 +1,8 @@
-﻿using ReactiveDomain.Users.ReadModels;
-using ReactiveDomain.Util;
+﻿using ReactiveDomain.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ReactiveDomain.IdentityStorage.ReadModels;
 
 namespace ReactiveDomain.Policy
 {

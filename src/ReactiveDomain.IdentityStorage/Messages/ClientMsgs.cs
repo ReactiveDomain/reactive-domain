@@ -1,8 +1,7 @@
-﻿using ReactiveDomain.Messaging;
-using System;
+﻿using System;
+using ReactiveDomain.Messaging;
 
-
-namespace ReactiveDomain.Users.Messages
+namespace ReactiveDomain.IdentityStorage.Messages
 {
     public class ClientMsgs
     {

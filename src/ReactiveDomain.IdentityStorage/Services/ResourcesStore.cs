@@ -6,7 +6,7 @@ using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     public class ResourcesStore : IResourceStore
     {

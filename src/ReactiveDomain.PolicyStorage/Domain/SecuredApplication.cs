@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
-using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Util;
 using static ReactiveDomain.Policy.Messages.ApplicationMsgs;
 
-[assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
+[assembly: InternalsVisibleTo("ReactiveDomain.IdentityStorage")]
 namespace ReactiveDomain.Policy.Domain
 {
     /// <summary>

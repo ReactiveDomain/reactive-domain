@@ -1,7 +1,7 @@
-﻿using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using System;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
 using Xunit;
 
 namespace ReactiveDomain.Users.Tests

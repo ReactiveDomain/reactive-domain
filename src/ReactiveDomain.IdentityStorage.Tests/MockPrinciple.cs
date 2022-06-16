@@ -1,5 +1,4 @@
-﻿using ReactiveDomain.Users.ReadModels;
-
+﻿using ReactiveDomain.IdentityStorage.ReadModels;
 
 namespace ReactiveDomain.Users.Tests
 {

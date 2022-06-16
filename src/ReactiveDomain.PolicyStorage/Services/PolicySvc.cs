@@ -5,7 +5,6 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Domain;
 using ReactiveDomain.Policy.Messages;
-using ReactiveDomain.Users.Domain;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Policy

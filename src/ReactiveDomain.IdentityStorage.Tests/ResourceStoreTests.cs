@@ -1,4 +1,5 @@
 ﻿using IdentityServer4.Models;
+using ReactiveDomain.IdentityStorage.Services;
 using Xunit;
 
 namespace ReactiveDomain.Users.Services
