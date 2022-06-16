@@ -1,6 +1,6 @@
 ﻿using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Users.Tests.Helpers
+namespace ReactiveDomain.Policy.Tests.Helpers
 {
     class TestMessages
     {

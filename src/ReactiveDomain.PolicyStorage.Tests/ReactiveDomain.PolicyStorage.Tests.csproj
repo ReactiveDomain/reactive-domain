@@ -3,6 +3,7 @@
     <PropertyGroup>
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
+      <RootNamespace>ReactiveDomain.Policy.Tests</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
       <Compile Remove="ApplicationAggregateTests.cs" />

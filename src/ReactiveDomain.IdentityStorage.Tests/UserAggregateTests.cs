@@ -1,7 +1,7 @@
 using System;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Users.Tests.Helpers;
 using Xunit;
 

@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using DynamicData;
 using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
 
-namespace ReactiveDomain.Users.ReadModels
+namespace ReactiveDomain.IdentityStorage.ReadModels
 {
     public class UsersRm :
         ReadModelBase,

@@ -4,6 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    <RootNamespace>ReactiveDomain.Policy</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DynamicData" Version="7.1.17" />

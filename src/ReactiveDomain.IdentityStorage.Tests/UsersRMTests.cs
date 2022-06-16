@@ -1,9 +1,9 @@
 ﻿using System;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
+using ReactiveDomain.IdentityStorage.ReadModels;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.ReadModels;
 using Xunit;
 
 namespace ReactiveDomain.Users.Tests

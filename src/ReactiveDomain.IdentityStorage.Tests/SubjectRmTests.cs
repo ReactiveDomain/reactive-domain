@@ -1,10 +1,10 @@
-﻿using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.ReadModels;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 using System;
 using System.Collections.Generic;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
+using ReactiveDomain.IdentityStorage.ReadModels;
 using Xunit;
 
 namespace ReactiveDomain.Users.Tests

@@ -5,8 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using IdentityModel;
 
-
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     public class ValidationResult
     {

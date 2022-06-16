@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Claims;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.IdentityStorage.Domain;
+using ReactiveDomain.IdentityStorage.Messages;
+using ReactiveDomain.IdentityStorage.ReadModels;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Messaging.Messages;
-using ReactiveDomain.Users.Domain;
-using ReactiveDomain.Users.Messages;
-using ReactiveDomain.Users.ReadModels;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Services
 {
     public class UserStore
     {

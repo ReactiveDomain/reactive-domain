@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using ReactiveDomain.Foundation.Domain;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
-[assembly: InternalsVisibleTo("ReactiveDomain.Identity")]
+[assembly: InternalsVisibleTo("ReactiveDomain.IdentityStorage")]
 namespace ReactiveDomain.Policy.Domain
 {
 

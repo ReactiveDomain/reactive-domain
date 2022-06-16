@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Mail;
+using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Messages;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Users.Domain
+namespace ReactiveDomain.IdentityStorage.Domain
 {
     /// <summary>
     /// Aggregate for a User.

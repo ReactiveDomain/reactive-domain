@@ -1,11 +1,9 @@
-﻿using ReactiveDomain.Messaging;
+﻿using System;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
-using System;
-using System.Collections.Generic;
-using static IdentityModel.OidcConstants;
-using static ReactiveDomain.Users.Messages.ClientMsgs;
+using static ReactiveDomain.IdentityStorage.Messages.ClientMsgs;
 
-namespace ReactiveDomain.Users.Domain
+namespace ReactiveDomain.IdentityStorage.Domain
 {
 
     public class Client : AggregateRoot
@@ -33,42 +31,6 @@ namespace ReactiveDomain.Users.Domain
             Register<ClientSecretAdded>(@event => { });
             Register<ClientSecretRemoved>(@event => { });
         }
-
-        ////constructor for Elbe client
-        //public Client(
-        //        Guid id,
-        //        Guid applicationId,
-        //        string clientName, //todo: value object?
-        //        string encryptedClientSecret,
-        //        string[] redirectUris,
-        //        string[] logoutRedirectUris,
-        //        string frontChannlLogoutUri,
-        //        ICorrelatedMessage source)
-        //        : base(source)
-        //{
-        //    Ensure.NotEmptyGuid(id, nameof(id));
-        //    Ensure.NotEmptyGuid(applicationId, nameof(applicationId));
-        //    Ensure.NotNullOrEmpty(clientName, nameof(clientName));
-        //    Ensure.NotNullOrEmpty(encryptedClientSecret, nameof(encryptedClientSecret));
-        //    Ensure.NotNullOrEmpty(redirectUris, nameof(frontChannlLogoutUri));
-        //    Ensure.NotNullOrEmpty(logoutRedirectUris, nameof(logoutRedirectUris));
-        //    Ensure.NotNullOrEmpty(frontChannlLogoutUri, nameof(redirectUris));
-        //    Ensure.NotNull(source, nameof(source));
-        //    //todo: move url definitions into Elbe when adding the secret store
-        //    Raise(new ClientCreated(
-        //          id,
-        //          applicationId,
-        //          clientName,
-        //          new[] { "client_credentials", "password", "authorization_code" },
-        //          new[] { "openid", "profile", "rd-policy", "enabled-policies" },
-        //          redirectUris,
-        //          logoutRedirectUris,
-        //          frontChannlLogoutUri
-        //          ));
-
-        //    Raise(new ClientSecretAdded(id, encryptedClientSecret));
-
-        //}
 
         /// <summary>
         /// Create a new client registration for identity server.

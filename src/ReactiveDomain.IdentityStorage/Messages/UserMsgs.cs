@@ -1,7 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Users.Messages
+namespace ReactiveDomain.IdentityStorage.Messages
 {
 
     /// <summary>
