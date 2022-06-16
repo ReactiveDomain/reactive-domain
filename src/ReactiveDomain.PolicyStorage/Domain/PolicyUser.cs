@@ -89,9 +89,11 @@ namespace ReactiveDomain.Policy.Domain
         }
 
         public void AddRole(string roleName, Guid roleId) {
+            if(_roles.Contains((roleName,roleId))){ return; }
             Raise(new PolicyUserMsgs.RoleAdded(Id, roleId, roleName));
         }
         public void RemoveRole(string roleName, Guid roleId) {
+             if(!_roles.Contains((roleName,roleId))){ return; }
             Raise(new PolicyUserMsgs.RoleRemoved(Id, roleId, roleName));
         }
 
