@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
@@ -13,9 +14,12 @@
     <PackageReference Include="EventStore.Client" Version="21.2.2" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
     <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22114.1" />
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.22114.1" />
-    <PackageReference Include="ReactiveDomain" Version="0.8.23-beta259" NoWarn="NU1701" />
-  </ItemGroup>
+     </ItemGroup>  
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+ </ItemGroup>
   
   <ItemGroup>
     <None Update="appsettings.json">

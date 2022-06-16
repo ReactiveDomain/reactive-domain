@@ -55,6 +55,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.IdentityStor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.IdentityStorage.Tests", "ReactiveDomain.IdentityStorage.Tests\ReactiveDomain.IdentityStorage.Tests.csproj", "{46F5E314-9AAF-419D-A261-940D55CD0FC9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyTool", "ReactiveDomain.PolicyTool\ReactiveDomain.PolicyTool.csproj", "{44879F67-D0AD-4D81-B680-CB01FBC5B75F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,10 @@ Global
 		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
