@@ -24,6 +24,10 @@
         <reference file="ReactiveDomain.IdentityStorage.dll" />
       </group>
     </references>
+    <contentFiles>
+      <files include="..\bld\pub\ReactiveDomain.PolicyTool.exe" buildAction="None" copyToOutput="true" />
+      <files include="..\bld\pub\appsettings.json" buildAction="None" copyToOutput="true" />
+    </contentFiles>
   </metadata>
   <files>
     <file src="..\bld\pub\ReactiveDomain.PolicyTool.exe" target="PolicyTool.exe" />
