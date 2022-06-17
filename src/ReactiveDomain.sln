@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28711.60
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31808.319
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Messaging", "ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj", "{3BAF7404-334D-4FD3-97A5-4D15F3049334}"
 EndProject
@@ -12,10 +12,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Transport", "ReactiveDomain.Transport\ReactiveDomain.Transport.csproj", "{9FABB30A-D78F-44E1-AE75-3341DA47661F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Transport.Tests", "ReactiveDomain.Transport.Tests\ReactiveDomain.Transport.Tests.csproj", "{64019A5E-C83F-45C4-BD31-76E344DBB65D}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger", "ReactiveDomain.PrivateLedger\ReactiveDomain.PrivateLedger.csproj", "{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PrivateLedger.Tests", "ReactiveDomain.PrivateLedger.Tests\ReactiveDomain.PrivateLedger.Tests.csproj", "{C39A595E-7D1A-44B4-B341-3BC7300544E7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Foundation.Tests", "ReactiveDomain.Foundation.Tests\ReactiveDomain.Foundation.Tests.csproj", "{7BC72991-F211-4487-8BF4-364A12CF4CC2}"
 EndProject
@@ -28,6 +24,39 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI", "ReactiveDomain.UI\ReactiveDomain.UI.csproj", "{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI.Testing", "ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj", "{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B11B7952-E722-4EDE-ADF9-9DBEA64E0FD5}"
+	ProjectSection(SolutionItems) = preProject
+		build.props = build.props
+		..\tools\CreateDebugNuget.ps1 = ..\tools\CreateDebugNuget.ps1
+		..\tools\CreateNuget.ps1 = ..\tools\CreateNuget.ps1
+		..\package.bat = ..\package.bat
+		..\publish.bat = ..\publish.bat
+		ReactiveDomain.Debug.nuspec = ReactiveDomain.Debug.nuspec
+		ReactiveDomain.nuspec = ReactiveDomain.nuspec
+		ReactiveDomain.Policy.Debug.nuspec = ReactiveDomain.Policy.Debug.nuspec
+		ReactiveDomain.Policy.nuspec = ReactiveDomain.Policy.nuspec
+		ReactiveDomain.Testing.Debug.nuspec = ReactiveDomain.Testing.Debug.nuspec
+		ReactiveDomain.Testing.nuspec = ReactiveDomain.Testing.nuspec
+		ReactiveDomain.UI.Debug.nuspec = ReactiveDomain.UI.Debug.nuspec
+		ReactiveDomain.UI.nuspec = ReactiveDomain.UI.nuspec
+		ReactiveDomain.UI.Testing.Debug.nuspec = ReactiveDomain.UI.Testing.Debug.nuspec
+		ReactiveDomain.UI.Testing.nuspec = ReactiveDomain.UI.Testing.nuspec
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy", "ReactiveDomain.Policy\ReactiveDomain.Policy.csproj", "{553DAE59-F925-4AD9-9E08-20DDB5069CCA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy.Tests", "ReactiveDomain.Policy.Tests\ReactiveDomain.Policy.Tests.csproj", "{B8982E2B-B65B-4F69-8244-90A5DD588852}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyStorage", "ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj", "{C3C15430-586B-4A0F-955C-F7B27D36CBF6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyStorage.Tests", "ReactiveDomain.PolicyStorage.Tests\ReactiveDomain.PolicyStorage.Tests.csproj", "{4E728859-9A50-48F8-A2AD-C63C7682C0DF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.IdentityStorage", "ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj", "{0D863C9C-97AD-4182-A8D2-4E9DC9964332}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.IdentityStorage.Tests", "ReactiveDomain.IdentityStorage.Tests\ReactiveDomain.IdentityStorage.Tests.csproj", "{46F5E314-9AAF-419D-A261-940D55CD0FC9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.PolicyTool", "ReactiveDomain.PolicyTool\ReactiveDomain.PolicyTool.csproj", "{44879F67-D0AD-4D81-B680-CB01FBC5B75F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,14 +84,6 @@ Global
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64019A5E-C83F-45C4-BD31-76E344DBB65D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9FFD1DE3-5A34-423E-80E7-56EF79F84D17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C39A595E-7D1A-44B4-B341-3BC7300544E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BC72991-F211-4487-8BF4-364A12CF4CC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -87,6 +108,34 @@ Global
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8982E2B-B65B-4F69-8244-90A5DD588852}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3C15430-586B-4A0F-955C-F7B27D36CBF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E728859-9A50-48F8-A2AD-C63C7682C0DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D863C9C-97AD-4182-A8D2-4E9DC9964332}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D863C9C-97AD-4182-A8D2-4E9DC9964332}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D863C9C-97AD-4182-A8D2-4E9DC9964332}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D863C9C-97AD-4182-A8D2-4E9DC9964332}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

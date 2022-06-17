@@ -1,11 +1,11 @@
 
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <BuildWithNet40>true</BuildWithNet40>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">  
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+  </ItemGroup>
 </Project>

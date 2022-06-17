@@ -9,7 +9,7 @@ namespace ReactiveDomain {
     /// </summary>
     public abstract class EventDrivenStateMachine : IEventSource {
         private readonly EventRecorder _recorder;
-        private readonly EventRouter _router;
+        protected readonly EventRouter Router;
         private long _version;
         public bool HasRecordedEvents => _recorder.HasRecordedEvents;
 
@@ -26,7 +26,7 @@ namespace ReactiveDomain {
         /// </summary>
         protected EventDrivenStateMachine() {
             _recorder = new EventRecorder();
-            _router = new EventRouter();
+            Router = new EventRouter();
             _version = -1;
         }
 
@@ -41,7 +41,7 @@ namespace ReactiveDomain {
                     _version = 0; // got first event (zero based)
                 else
                     _version++;
-                _router.Route(@event);
+                Router.Route(@event);
             }
         }
         public void UpdateWithEvents(IEnumerable<object> events, long expectedVersion) {
@@ -55,7 +55,7 @@ namespace ReactiveDomain {
 
             foreach (var @event in events) {
                 _version++;
-                _router.Route(@event);
+                Router.Route(@event);
             }
         }
 
@@ -88,7 +88,7 @@ namespace ReactiveDomain {
         /// <typeparam name="TEvent">The type of event.</typeparam>
         /// <param name="route">The logic to route the event to.</param>
         protected void Register<TEvent>(Action<TEvent> route) {
-            _router.RegisterRoute(route);
+            Router.RegisterRoute(route);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace ReactiveDomain {
         /// <param name="typeOfEvent">The type of event.</param>
         /// <param name="route">The logic to route the event to.</param>
         protected void Register(Type typeOfEvent, Action<object> route) {
-            _router.RegisterRoute(typeOfEvent, route);
+            Router.RegisterRoute(typeOfEvent, route);
         }
         protected virtual void OnEventRaised(object @event) { }
         /// <summary>
@@ -106,7 +106,7 @@ namespace ReactiveDomain {
         /// <param name="event">The event to apply and record.</param>
         protected void Raise(object @event) {
             OnEventRaised(@event);
-            _router.Route(@event);
+            Router.Route(@event);
             _recorder.Record(@event);
         }
     }

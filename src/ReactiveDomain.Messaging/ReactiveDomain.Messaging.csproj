@@ -1,16 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <BuildWithNet40>true</BuildWithNet40>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk"> 
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" Condition="'$(TargetFramework)'!='net40'" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.5.0" Condition="'$(TargetFramework)'=='netstandard2.0'" />
-    <Reference Include="Microsoft.CSharp" Condition="'$(TargetFramework)'=='net40'" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.0.1"/>
     <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
   </ItemGroup>
 </Project>

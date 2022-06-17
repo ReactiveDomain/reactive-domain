@@ -108,23 +108,7 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitFor<T>(TimeSpan timeout) where T : IMessage
         {
-            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-            if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
-            var deadline = DateTime.Now + timeout;
-            var msgType = typeof(T);
-            do
-            {
-                if (SpinWait.SpinUntil(() => _handledTypes.Any(t => msgType.IsAssignableFrom(t)), 50))
-                {
-                    return;
-                }
-                if (DateTime.Now > deadline)
-                {
-                    throw new TimeoutException();
-                }
-                if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-
-            } while (true);
+               WaitForMultiple<T>(1, timeout);       
         }
 
         /// <summary>
@@ -140,7 +124,7 @@ namespace ReactiveDomain.Testing
             var deadline = DateTime.Now + timeout;
             do
             {
-                if (SpinWait.SpinUntil(() => Messages.OfType<T>().Count() == num, 50))
+                if (SpinWait.SpinUntil(() => Messages.Count(x => x is T) >= num, 50))
                 {
                     return;
                 }

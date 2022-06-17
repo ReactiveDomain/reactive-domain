@@ -11,7 +11,7 @@ namespace ReactiveDomain {
         /// <summary>
         /// The endpoint of the Event Store server to or from which the connection was connected or disconnected.
         /// </summary>
-        public IPEndPoint RemoteEndPoint { get; }
+        public EndPoint RemoteEndPoint { get; }
 
         /// <summary>
         /// The <see cref="T:ReactiveDomain.IEventStoreConnection" /> responsible for raising the event.
@@ -23,7 +23,7 @@ namespace ReactiveDomain {
         /// </summary>
         /// <param name="connection">The <see cref="T:ReactiveDomain.IEventStoreConnection" /> responsible for raising the event.</param>
         /// <param name="remoteEndPoint">The endpoint of the Event Store server to or from which the connection was connected or disconnected.</param>
-        public ClientConnectionEventArgs(IStreamStoreConnection connection, IPEndPoint remoteEndPoint) {
+        public ClientConnectionEventArgs(IStreamStoreConnection connection, EndPoint remoteEndPoint) {
             Connection = connection;
             RemoteEndPoint = remoteEndPoint;
         }

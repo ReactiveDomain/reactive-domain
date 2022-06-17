@@ -17,28 +17,16 @@ namespace ReactiveDomain.EventStore
         {
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
             EsConnection = eventStoreConnection;
-            EsConnection.Connected += ConnOnConnected;
-            EsConnection.Disconnected += ConnOnDisconnected;
-        }
-
-        public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
-        public event EventHandler<ClientConnectionEventArgs> Disconnected = (p1, p2) => { };
-        private void ConnOnDisconnected(object sender, ES.ClientConnectionEventArgs clientConnectionEventArgs)
-        {
-            Disconnected(sender, clientConnectionEventArgs.ToRdEventArgs(this));
-        }
-        
-        private void ConnOnConnected(object sender, ES.ClientConnectionEventArgs clientConnectionEventArgs)
-        {
-            Connected(sender, clientConnectionEventArgs.ToRdEventArgs(this));
         }
 
         public string ConnectionName => EsConnection.ConnectionName;
-
+        private bool _connected;
         public void Connect()
         {
+            if(_connected){ return;}
             try {
                 EsConnection.ConnectAsync().Wait();
+                _connected = true;
             }
             catch (AggregateException aggregate) {
                 if (aggregate.InnerException is CannotEstablishConnectionException) {
@@ -237,9 +225,7 @@ namespace ReactiveDomain.EventStore
             {
                 if (EsConnection != null)
                 {
-                    EsConnection.Close();
-                    EsConnection.Connected -= ConnOnConnected;
-                    EsConnection.Disconnected -= ConnOnDisconnected;
+                    EsConnection.Close();                   
                     EsConnection.Dispose();
                 }
             }
@@ -342,14 +328,7 @@ namespace ReactiveDomain.EventStore
         {
             if (null == settings)
                 return null;
-#if NET452
-            return new ES.CatchUpSubscriptionSettings(
-                settings.MaxLiveQueueSize,
-                settings.ReadBatchSize,
-                settings.VerboseLogging,
-                true
-            );
-#else
+
             return new ES.CatchUpSubscriptionSettings(
                 settings.MaxLiveQueueSize,
                 settings.ReadBatchSize,
@@ -357,7 +336,6 @@ namespace ReactiveDomain.EventStore
                 true,
                 settings.SubscriptionName
             );
-#endif
         }
     }
 }

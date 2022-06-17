@@ -10,6 +10,6 @@ namespace ReactiveDomain
         /// <summary>
         /// Sets the source event to apply the corrolation and causation ids.
         /// </summary>       
-        ICorrelatedMessage Source { set; }        
+        ICorrelatedMessage Source { get; set; }        
     }
 }

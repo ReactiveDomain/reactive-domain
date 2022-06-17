@@ -1,3 +1,8 @@
-REM Update the versions in ./src/build.props and here then run this
-msbuild src\ReactiveDomain.sln /p:"PackageVersion=0.8.21" /t:"Restore;Build"
+del .\nupkgs\*.* /q
+del .\bld\Debug\*.* /q
+del .\bld\pub\*.* /q
+dotnet restore .\src\ReactiveDomain.sln
+dotnet build .\src\ReactiveDomain.sln -c Debug
+dotnet publish .\src\ReactiveDomain.PolicyTool\ReactiveDomain.PolicyTool.csproj -p:PublishProfile=FolderProfile
+powershell -Command "& {.\tools\CreateDebugNuget.ps1 -rc003}"
 

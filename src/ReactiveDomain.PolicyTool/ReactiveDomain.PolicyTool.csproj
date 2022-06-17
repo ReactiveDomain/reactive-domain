@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ci.build.imports" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <IsPackable>true</IsPackable>  
+    <StartupObject>PolicyTool.Program</StartupObject>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>    
+  </PropertyGroup>  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="EventStore.Client" Version="21.2.2" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22114.1" />
+  </ItemGroup>  
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+ </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
