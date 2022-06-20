@@ -16,7 +16,7 @@ We welcome well-considered feature requests. For **major features**, please enga
 ## <a href="code"></a>Coding
 ### Development Environment
 - Visual Studio 2022 (with latest patches/updates)
-- All versions of .NET currently supported in the solution: Framework 4.5.2, Framework 4.7.2, Core 2.0. Check back here as the supported versions will be updated soon.
+- All versions of .NET currently supported in the solution: .NET Framework 4.8 & .NET 5.0.
 
 ### Coding Guidelines
 When submitting a Pull Request, keep these rules in mind:
