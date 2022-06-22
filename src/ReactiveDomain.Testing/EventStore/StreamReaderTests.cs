@@ -99,11 +99,11 @@ namespace ReactiveDomain.Testing.EventStore
             {
                 _count = 0;
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
-                var position = NUM_OF_EVENTS / 2;
+                var position = NUM_OF_EVENTS / 2; // zero-based position is the number of the last received event
 
                 reader.Read(_streamName, () => true, position);
 
-                Assert.Equal(NUM_OF_EVENTS - position, _count);
+                Assert.Equal(NUM_OF_EVENTS - (position + 1), _count); // events skipped: 0...P; events read: P+1...N
             }
         }
 
@@ -198,7 +198,7 @@ namespace ReactiveDomain.Testing.EventStore
 
                 reader.Read(_streamName, () => true, position, readBackwards: true);
 
-                Assert.Equal(position + 1, _count); // events from positions: N, N-1...0 => N+1 events
+                Assert.Equal(position, _count); // events from position: N-1, N-2...0 => N events
                 Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(_streamName, () => true, checkpoint: -10, readBackwards: true));
 
             }
@@ -350,27 +350,31 @@ namespace ReactiveDomain.Testing.EventStore
 
                 // forward 2 from 12
                 _count = 0;
-                reader.Read(categoryStream, () => true, checkpoint: 12, count: 2);
+                var lastReceived = 12; // zero-based number of the last received event
+                reader.Read(categoryStream, () => true, checkpoint: lastReceived, count: 2);
                 Assert.Equal(2, _count);
-                Assert.Equal(13, reader.Position);
+                Assert.Equal(lastReceived + 2, reader.Position);
 
                 // forward 10 from 5
                 _count = 0;
-                reader.Read(categoryStream, () => true, checkpoint: 5, count: 10);
+                lastReceived = 5;
+                reader.Read(categoryStream, () => true, checkpoint: lastReceived, count: 10);
                 Assert.Equal(10, _count);
-                Assert.Equal(14, reader.Position);
+                Assert.Equal(lastReceived + 10, reader.Position);
 
                 // backward 5 from 10
                 _count = 0;
+                lastReceived = 10;
                 reader.Read(categoryStream, () => true, checkpoint: 10, count: 5, readBackwards: true);
                 Assert.Equal(5, _count);
-                Assert.Equal(6, reader.Position);
+                Assert.Equal(lastReceived - 5, reader.Position);
 
 
                 // backward 10 from 5
                 _count = 0;
-                reader.Read(categoryStream, () => true, checkpoint: 5, count: 10, readBackwards: true);
-                Assert.Equal(6, _count);
+                lastReceived = 5;
+                reader.Read(categoryStream, () => true, checkpoint: lastReceived, count: 10, readBackwards: true);
+                Assert.Equal(5, _count);
                 Assert.Equal(0, reader.Position);
             }
         }
