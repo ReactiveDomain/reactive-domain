@@ -8,11 +8,13 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain UI assemblies for unit testing</description>
-    <copyright>Copyright © 2014-2022 PerkinElmer, Linedata Inc.</copyright>
-
+    <copyright>Copyright © 2014-2022 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework="net48">
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.Testing" version="0.9.0.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.UI" version="0.9.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="netstandard2.0">
         <dependency id="ReactiveDomain.Testing" version="0.9.0.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveDomain.UI" version="0.9.0.0" exclude="Build,Analyzers" />
       </group>
@@ -21,11 +23,17 @@
       <group targetFramework="net48">
         <reference file="ReactiveDomain.UI.Testing.dll" />
       </group>
+      <group targetFramework="netstandard2.0">
+        <reference file="ReactiveDomain.UI.Testing.dll" />
+      </group>
     </references>   
   </metadata>
   <files>
     <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.dll" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.dll" target="ref\net48" />
     <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.pdb" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.UI.Testing.dll" target="ref\net48" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.UI.Testing.dll" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.UI.Testing.pdb" target="lib\netstandard2.0" />
+    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.UI.Testing.dll" target="ref\netstandard2.0" />
   </files>
 </package>
