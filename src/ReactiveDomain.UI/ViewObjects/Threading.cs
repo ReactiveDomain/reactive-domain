@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET48
+using System;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 
@@ -76,3 +77,4 @@ namespace ReactiveDomain.UI
         }
     }
 }
+#endif
