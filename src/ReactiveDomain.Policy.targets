@@ -1,0 +1,12 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)PolicyTool.exe">
+        <Link>PolicyTool.exe</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Include="$(MSBuildThisFileDirectory)es_settings.json">
+        <Link>es_settings.json</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+  </Project>

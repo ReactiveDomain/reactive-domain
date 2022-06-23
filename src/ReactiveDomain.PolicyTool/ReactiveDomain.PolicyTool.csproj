@@ -22,7 +22,7 @@
  </ItemGroup>
   
   <ItemGroup>
-    <None Update="appsettings.json">
+    <None Update="es_settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

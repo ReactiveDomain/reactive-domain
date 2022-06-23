@@ -37,6 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ReactiveDomain.Policy.Debug.nuspec = ReactiveDomain.Policy.Debug.nuspec
 		ReactiveDomain.Policy.nuspec = ReactiveDomain.Policy.nuspec
 		ReactiveDomain.Testing.Debug.nuspec = ReactiveDomain.Testing.Debug.nuspec
+		ReactiveDomain.Policy.targets = ReactiveDomain.Policy.targets
 		ReactiveDomain.Testing.nuspec = ReactiveDomain.Testing.nuspec
 		ReactiveDomain.UI.Debug.nuspec = ReactiveDomain.UI.Debug.nuspec
 		ReactiveDomain.UI.nuspec = ReactiveDomain.UI.nuspec

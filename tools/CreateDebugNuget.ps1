@@ -42,6 +42,7 @@ Copy-Item -Path $buildDir -Destination $tempBuildDir -Recurse
 #source nuspec file paths
 $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
 $sourceRDPolicyNuspec = Join-Path $sourceDir "ReactiveDomain.Policy.Debug.nuspec"
+$sourceRDPolicyTargets = Join-Path $sourceDir "ReactiveDomain.Policy.targets"
 $sourceRDTestNuspec = Join-Path $sourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $sourceRDUINuspec = Join-Path $sourceDir "ReactiveDomain.UI.Debug.nuspec"
 $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
@@ -50,6 +51,7 @@ $sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nu
 #target nuspec file paths in temp dir
 $ReactiveDomainNuspec = Join-Path $tempSourceDir "ReactiveDomain.Debug.nuspec"
 $ReactiveDomainPolicyNuspec = Join-Path $tempSourceDir "ReactiveDomain.Policy.Debug.nuspec"
+$ReactiveDomainPolicyTargets = Join-Path $tempSourceDir "ReactiveDomain.Policy.targets"
 $ReactiveDomainTestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.Testing.Debug.nuspec"
 $ReactiveDomainUINuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Debug.nuspec"
 $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
@@ -58,6 +60,7 @@ $ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Tes
 #copy nuspec files to temp
 Copy-Item $sourceRDNuspec -Destination $ReactiveDomainNuspec
 Copy-Item $sourceRDPolicyNuspec -Destination $ReactiveDomainPolicyNuspec
+Copy-Item $sourceRDPolicyTargets -Destination $ReactiveDomainPolicyTargets
 Copy-Item $sourceRDTestNuspec -Destination $ReactiveDomainTestingNuspec
 Copy-Item $sourceRDUINuspec -Destination $ReactiveDomainUINuspec
 Copy-Item $sourceRDUITestNuspec -Destination $ReactiveDomainUITestingNuspec

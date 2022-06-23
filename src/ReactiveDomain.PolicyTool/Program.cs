@@ -285,7 +285,7 @@ namespace PolicyTool
         {
             AppConfig = new ConfigurationBuilder()
              .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-             .AddJsonFile("appsettings.json")
+             .AddJsonFile("es_settings.json")
              .Build();
             Console.WriteLine($"{AppConfig["EventStoreUserName"]}");
             EsConnection = BuildConnection();
