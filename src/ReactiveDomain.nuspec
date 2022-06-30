@@ -11,9 +11,10 @@
     <dependencies>
       <group targetFramework="netstandard2.0">
         <dependency id="EventStore.Client" version="21.2.2" exclude="Build,Analyzers" />
-        <dependency id="EventStore.Client.Embedded" version="5.0.1" exclude="Build,Analyzers" />
         <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="13.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.Configuration.ConfigurationManager" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.PerformanceCounter" version="5.0.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
