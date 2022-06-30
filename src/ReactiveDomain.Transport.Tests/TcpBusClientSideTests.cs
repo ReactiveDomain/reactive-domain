@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing;
 using ReactiveDomain.Transport.Serialization;
 using Xunit;
 
@@ -68,8 +69,8 @@ namespace ReactiveDomain.Transport.Tests
 
             clientInbound.Start();
 
-            // wait for tcp connection to be established (maybe an api to detect this would be nice)
-            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+            // wait for tcp connection to be established
+            AssertEx.IsOrBecomesTrue(() => _tcpBusClientSide.IsConnected, 200);
         }
 
         [Fact]

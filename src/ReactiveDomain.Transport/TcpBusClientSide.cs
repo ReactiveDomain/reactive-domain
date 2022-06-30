@@ -14,6 +14,8 @@ namespace ReactiveDomain.Transport
 {
     public sealed class TcpBusClientSide : TcpBus
     {
+        public bool IsConnected { get; private set; }
+
         public TcpBusClientSide(
             EndPoint endpoint,
             IEnumerable<Type> inboundDiscardingMessageTypes,
@@ -66,11 +68,12 @@ namespace ReactiveDomain.Transport
                     conn =>
                     {
                         Log.Debug($"TcpBusClientSide.CreateTcpConnection({endPoint}) successfully constructed TcpConnection.");
-
+                        IsConnected = true;
                         ConfigureTcpListener(conn);
                     },
                     (conn, err) =>
                     {
+                        IsConnected = false;
                         HandleError(conn, err);
                     },
                     verbose: true);

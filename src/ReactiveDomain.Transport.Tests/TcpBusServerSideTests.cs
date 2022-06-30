@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Transport.Tests
@@ -43,8 +44,8 @@ namespace ReactiveDomain.Transport.Tests
             // client side
             var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
-            // wait for tcp connection to be established (maybe an api to detect this would be nice)
-            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+            // wait for tcp connection to be established
+            AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
 
             // put message into client
             tcpBusClientSide.Handle(new WoftamEvent(prop1, prop2));
@@ -81,8 +82,8 @@ namespace ReactiveDomain.Transport.Tests
             // client side
             var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
-            // wait for tcp connection to be established (maybe an api to detect this would be nice)
-            Thread.Sleep(TimeSpan.FromMilliseconds(200));
+            // wait for tcp connection to be established
+            AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
 
             // put disallowed message into client
             tcpBusClientSide.Handle(new WoftamCommand("abc"));
