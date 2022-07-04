@@ -1,25 +1,24 @@
 ﻿//#define Attach
 using System;
-using Microsoft.Extensions.Configuration;
-using System.Net;
-using ReactiveDomain.Foundation;
-using ES = EventStore.ClientAPI;
-using ReactiveDomain.EventStore;
 using System.CommandLine;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Policy.Messages;
-using ReactiveDomain.Messaging.Messages;
-using System.Diagnostics;
-using System.Threading;
-using System.Linq;
-using ReactiveDomain.Policy;
 using System.DirectoryServices.AccountManagement;
-using ReactiveDomain.Policy.Domain;
+using System.Linq;
+using System.Net;
 using System.Text;
-using RDMsg = ReactiveDomain.Messaging;
-using ReactiveDomain.IdentityStorage.Services;
-using ReactiveDomain.IdentityStorage.ReadModels;
+using System.Threading;
+using Microsoft.Extensions.Configuration;
+using ReactiveDomain.EventStore;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Messages;
+using ReactiveDomain.IdentityStorage.ReadModels;
+using ReactiveDomain.IdentityStorage.Services;
+using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Messaging.Messages;
+using ReactiveDomain.Policy;
+using ReactiveDomain.Policy.Domain;
+using ReactiveDomain.Policy.Messages;
+using ES = EventStore.ClientAPI;
+using RDMsg = ReactiveDomain.Messaging;
 
 namespace PolicyTool
 {
@@ -64,8 +63,14 @@ namespace PolicyTool
                       description: "Client secret.",
                       getDefaultValue: () => "ChangeIt");
             clientSecret.IsRequired = true;
+            var appId = new Option<Guid>(
+                      name: "--app-id",
+                      description: "Target application's unique ID",
+                      getDefaultValue: () => Guid.NewGuid());
+            appId.IsRequired = true;
             var addApp = new Command("add-app", "Add a new application.");
             addApp.AddOption(clientSecret);
+            addApp.AddOption(appId);
 
             // Show App CMD
             var showApp = new Command("show-app", "Display app details.");
@@ -112,10 +117,9 @@ namespace PolicyTool
             var userSvc = new UserSvc(EsConnection.GetRepository(), mainBus);
             var clientStore = new ClientStore(EsConnection);
             addApp.SetHandler(
-                (string name, string secret) =>
+                (string name, string secret, Guid appId) =>
                 {
-                    var appId = Guid.NewGuid();
-                    var version = "1.0";                   
+                    var version = "1.0";
                     var cmd = RDMsg.MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(
                               appId,
                               Guid.NewGuid(),
@@ -125,7 +129,7 @@ namespace PolicyTool
                     if (mainBus.TrySend(cmd, out var _))
                     {
                         //todo: wrap this in a service
-                        //todo: look at making this a corlated mesage
+                        //todo: look at making this a correlated mesage
                         var client = new ReactiveDomain.IdentityStorage.Domain.Client(
                             Guid.NewGuid(),
                             appId,
@@ -133,13 +137,13 @@ namespace PolicyTool
                             secret,
                             new[] { "http://localhost/elbe" },
                             new[] { "http://localhost/elbe" },
-                             "http://localhost/elbe",
-                             new CorrelatedRoot());
+                            "http://localhost/elbe",
+                            new CorrelatedRoot());
                         var repo = EsConnection.GetRepository();
                         repo.Save(client);
                     }
 
-                }, appName, clientSecret);
+                }, appName, clientSecret, appId);
             showApp.SetHandler(
                 (string name) =>
                 {
@@ -193,8 +197,8 @@ namespace PolicyTool
                             Console.WriteLine($"User found {user.Context.Name}/{userName}");
                         }
 
-                        Console.WriteLine($"\t UserId    { userId}");
-                        Console.WriteLine($"\t SubjectId { subjectId}");
+                        Console.WriteLine($"\t UserId    {userId}");
+                        Console.WriteLine($"\t SubjectId {subjectId}");
                     }
                     else
                     {
@@ -260,14 +264,14 @@ namespace PolicyTool
             getConfig.SetHandler(
                 (string appName) =>
                 {
-                    var app = appRm.GetApplication(appName);   
+                    var app = appRm.GetApplication(appName);
                     var config = new StringBuilder();
                     config.AppendLine("\"RdPolicyConfig\": {");
                     config.AppendLine("\"TokenServer\": \"[Token Server URL]\",");
                     config.AppendLine("\"ESConnection\": \"[ES Connection String]\",");
-                    config.AppendLine( $"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
+                    config.AppendLine($"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
                     config.Append(clientStore.GetAppConfig(app.ApplicationId));
-                    
+
                     Console.WriteLine(config);
                 }, appName);
             rootCommand.AddCommand(addApp);
@@ -277,8 +281,7 @@ namespace PolicyTool
             rootCommand.AddCommand(addUser);
             rootCommand.AddCommand(getConfig);
 
-            rootCommand.Invoke(args);
-            return 0;
+            return rootCommand.Invoke(args);
         }
 
         private static void ConnectToEs()
@@ -322,7 +325,6 @@ namespace PolicyTool
                 new EventStoreConnectionWrapper(conn),
                 new PrefixedCamelCaseStreamNameBuilder(schema),
                 new JsonMessageSerializer());
-
         }
     }
 }
