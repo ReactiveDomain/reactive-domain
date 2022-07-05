@@ -96,7 +96,7 @@ namespace ReactiveDomain.IdentityStorage.Domain
             string userName)
         {
             if (_mappedAuthDomains.ContainsKey(subjectId)) { throw new ArgumentException("AuthDomain mapping already exists"); }
-            Raise(new UserMsgs.AuthDomainMapped(Id, subjectId, authProvider, authDomain, userName));
+            Raise(new UserMsgs.AuthDomainMapped(Id, subjectId, authProvider, authDomain.ToLowerInvariant(), userName));
         }
 
         /// <summary>

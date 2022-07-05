@@ -2,10 +2,9 @@ using System;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Users.Tests.Helpers;
 using Xunit;
 
-namespace ReactiveDomain.Users.Tests
+namespace ReactiveDomain.IdentityStorage.Tests
 {
     [Collection("UserDomainTests")]
     public sealed class UserAggregateTests
@@ -247,7 +246,7 @@ namespace ReactiveDomain.Users.Tests
                             _command));
         }
         [Fact]
-        public void can_mapp_authdomain()
+        public void can_map_authdomain()
         {
             var user = new User(
                             _id,
@@ -302,7 +301,7 @@ namespace ReactiveDomain.Users.Tests
                                     Assert.Equal(_id, mapped.UserId);
                                     Assert.Equal(_userSidFromAuthProvider, mapped.SubjectId);
                                     Assert.Equal(AuthProvider, mapped.AuthProvider);
-                                    Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                    Assert.Equal(AuthDomain.ToLowerInvariant(), mapped.AuthDomain);
                                     Assert.Equal(UserName, mapped.UserName);
                                 }
                                 else
@@ -374,7 +373,7 @@ namespace ReactiveDomain.Users.Tests
                                     Assert.Equal(_id, mapped.UserId);
                                     Assert.Equal(_userSidFromAuthProvider, mapped.SubjectId);
                                     Assert.Equal(AuthProvider, mapped.AuthProvider);
-                                    Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                    Assert.Equal(AuthDomain.ToLowerInvariant(), mapped.AuthDomain);
                                     Assert.Equal(UserName, mapped.UserName);
                                 }
                                 else
@@ -389,7 +388,7 @@ namespace ReactiveDomain.Users.Tests
                                      Assert.Equal(_id, mapped.UserId);
                                      Assert.Equal(otherSid, mapped.SubjectId);
                                      Assert.Equal(AuthProvider, mapped.AuthProvider);
-                                     Assert.Equal(AuthDomain, mapped.AuthDomain);
+                                     Assert.Equal(AuthDomain.ToLowerInvariant(), mapped.AuthDomain);
                                      Assert.Equal(UserName, mapped.UserName);
                                  }
                                  else

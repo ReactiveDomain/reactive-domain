@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace ReactiveDomain.Users.Tests
+namespace ReactiveDomain.IdentityStorage.Tests
 {
     public class UserStoreTests
     {

@@ -2,7 +2,7 @@
 using ReactiveDomain.IdentityStorage.Services;
 using Xunit;
 
-namespace ReactiveDomain.Users.Services
+namespace ReactiveDomain.IdentityStorage.Tests
 {
     public class ResourceStoreTests
     {

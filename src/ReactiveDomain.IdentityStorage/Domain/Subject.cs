@@ -48,7 +48,7 @@ namespace ReactiveDomain.IdentityStorage.Domain
                          userId,
                          subClaim,
                          authProvider,
-                         authDomain));
+                         authDomain.ToLowerInvariant()));
         }
 
         /// <summary>

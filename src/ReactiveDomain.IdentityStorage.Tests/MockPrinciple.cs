@@ -1,6 +1,6 @@
 ﻿using ReactiveDomain.IdentityStorage.ReadModels;
 
-namespace ReactiveDomain.Users.Tests
+namespace ReactiveDomain.IdentityStorage.Tests
 {
     internal class MockPrinciple : IPrinciple
     {
