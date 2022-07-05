@@ -30,7 +30,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         }
         public string GetDomainCategory(string provider, string domain)
         {
-            return $"{provider}-{domain}";
+            return $"{provider}-{domain.ToLowerInvariant()}";
         }
         public bool TryGetSubjectIdForUser(Guid userId, string provider, string domain, out Guid subjectId)
         {
@@ -78,7 +78,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
                 SubjectsByUserId.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subList);
             }
 
-            if (subList.TryGetValue(@event.UserId, out var _))
+            if (subList.TryGetValue(@event.UserId, out _))
             {
                 subList[@event.UserId] = @event.SubjectId;
             }
@@ -92,7 +92,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
                 SubjectsBySubClaim.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subjectsByClaim);
             }
 
-            if (subjectsByClaim.TryGetValue(@event.SubClaim, out var _))
+            if (subjectsByClaim.TryGetValue(@event.SubClaim, out _))
             {
                 subjectsByClaim[@event.SubClaim] = @event.SubjectId;
             }

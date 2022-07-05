@@ -6,7 +6,7 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Users.Tests
+namespace ReactiveDomain.IdentityStorage.Tests
 {
     [Collection("UserDomainTests")]
     public sealed class UsersRMTests : IDisposable

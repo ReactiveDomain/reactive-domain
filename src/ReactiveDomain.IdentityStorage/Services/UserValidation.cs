@@ -24,7 +24,7 @@ namespace ReactiveDomain.IdentityStorage.Services
         {
             _userStore = userStore;
         }
-        public bool TryFindUserPriciple(string domainName, string userName, out UserPrincipal userPriciple)
+        public bool TryFindUserPrincipal(string domainName, string userName, out UserPrincipal userPrincipal)
         {
 
             if (string.IsNullOrEmpty(domainName))
@@ -44,7 +44,7 @@ namespace ReactiveDomain.IdentityStorage.Services
                 if (ActiveDirectoryUserSearch.FindUserPrincipal(userName, principalContext)
                     .FirstOrDefault() is UserPrincipal user)
                 {
-                    userPriciple = user;
+                    userPrincipal = user;
                     return true;
                 }
             }
@@ -52,7 +52,7 @@ namespace ReactiveDomain.IdentityStorage.Services
             {
                 //ignore
             }
-            userPriciple = null;
+            userPrincipal = null;
             return false;
         }
         public ValidationResult Validate(string domainName, string userName, string password, string clientId, string remoteHttpAddress)

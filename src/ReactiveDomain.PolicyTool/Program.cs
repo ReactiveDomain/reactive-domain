@@ -179,7 +179,7 @@ namespace PolicyTool
                     Guid userId;
                     Guid subjectId;
 
-                    if (validation.TryFindUserPriciple(domain, userName, out UserPrincipal user))
+                    if (validation.TryFindUserPrincipal(domain, userName, out UserPrincipal user))
                     {
                         if (!userRm.HasUser(user.Sid.Value, user.Context.Name, out userId))
                         {

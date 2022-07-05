@@ -41,7 +41,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         }
         public bool HasUser(string subjectId, string authDomain, out Guid userId)
         {
-            var subject = $"{subjectId}@{authDomain}";
+            var subject = $"{subjectId}@{authDomain.ToLowerInvariant()}";
             return UserIdsBySubjectAtDomain.TryGetValue(subject, out userId);
         }
 
@@ -64,7 +64,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
                     _allUsers.AddOrUpdate(userDto);
                     break;
                 case UserMsgs.AuthDomainMapped mapped:
-                    var subject = $"{mapped.SubjectId}@{mapped.AuthDomain}";
+                    var subject = $"{mapped.SubjectId}@{mapped.AuthDomain.ToLowerInvariant()}";
                     if (UserIdsBySubjectAtDomain.ContainsKey(subject))
                     {
                         UserIdsBySubjectAtDomain[subject] = @event.UserId;
