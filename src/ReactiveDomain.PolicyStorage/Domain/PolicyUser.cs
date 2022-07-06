@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
-
 
 namespace ReactiveDomain.Policy.Domain
 {
     /// <summary>
     /// Aggregate for a User in an application policy.
     /// </summary>
-    public class PolicyUser : AggregateRoot {
-
+    public class PolicyUser : AggregateRoot
+    {
         private Guid _userId;
         private Guid _policyId;
         private readonly HashSet<(string name, Guid id)> _roles = new HashSet<(string name, Guid id)>();
@@ -39,27 +37,32 @@ namespace ReactiveDomain.Policy.Domain
             Register<PolicyUserMsgs.UserReactivated>(Apply);
         }
         //Apply State Changes
-        private void Apply(PolicyUserMsgs.PolicyUserAdded @event) {
+        private void Apply(PolicyUserMsgs.PolicyUserAdded @event)
+        {
             Id = @event.PolicyUserId;
             _policyId = @event.PolicyId;
             _userId = @event.UserId;
             _active = true;
         }
 
-        private void Apply(PolicyUserMsgs.RoleAdded @event) {
-            _roles.Add((@event.RoleName, @event.RoleId));
+        private void Apply(PolicyUserMsgs.RoleAdded @event)
+        {
+            _roles.Add((@event.RoleName.Trim().ToLowerInvariant(), @event.RoleId));
         }
 
-        private void Apply(PolicyUserMsgs.RoleRemoved @event) {
-            _roles.Remove((@event.RoleName, @event.RoleId));
+        private void Apply(PolicyUserMsgs.RoleRemoved @event)
+        {
+            _roles.Remove((@event.RoleName.Trim().ToLowerInvariant(), @event.RoleId));
         }
 
-        private void Apply(PolicyUserMsgs.UserDeactivated @event) {
+        private void Apply(PolicyUserMsgs.UserDeactivated @event)
+        {
             _active = false;
             _rolesAtDeactivation = new HashSet<(string name, Guid id)>(_roles);
         }
 
-        private void Apply(PolicyUserMsgs.UserReactivated @event) {
+        private void Apply(PolicyUserMsgs.UserReactivated @event)
+        {
             _active = true;
         }
 
@@ -88,28 +91,41 @@ namespace ReactiveDomain.Policy.Domain
                          singleRole));
         }
 
-        public void AddRole(string roleName, Guid roleId) {
-            if(_roles.Contains((roleName,roleId))){ return; }
-            Raise(new PolicyUserMsgs.RoleAdded(Id, roleId, roleName));
-        }
-        public void RemoveRole(string roleName, Guid roleId) {
-             if(!_roles.Contains((roleName,roleId))){ return; }
-            Raise(new PolicyUserMsgs.RoleRemoved(Id, roleId, roleName));
+        public void AddRole(string roleName, Guid roleId)
+        {
+            Ensure.NotNullOrEmpty(roleName.Trim(), nameof(roleName));
+            var testRoleName = roleName.Trim().ToLowerInvariant();
+            if (_roles.Contains((testRoleName, roleId))) { return; }
+            if (_roles.Any(x => x.name == testRoleName)) { throw new ArgumentException($"A role with name {roleName} already exists with a different ID.", nameof(roleId)); }
+            Raise(new PolicyUserMsgs.RoleAdded(Id, roleId, roleName.Trim()));
         }
 
-        public void Deactivate() {
+        public void RemoveRole(string roleName, Guid roleId)
+        {
+            Ensure.NotNullOrEmpty(roleName.Trim(), nameof(roleName));
+            var testRoleName = roleName.Trim().ToLowerInvariant();
+            if (!_roles.Contains((testRoleName, roleId))) { return; }
+            Raise(new PolicyUserMsgs.RoleRemoved(Id, roleId, roleName.Trim()));
+        }
+
+        public void Deactivate()
+        {
             if (!_active) { return; }
             Raise(new PolicyUserMsgs.UserDeactivated(Id));
-            foreach (var role in _roles.ToArray()) {
+            foreach (var role in _roles.ToArray())
+            {
                 Raise(new PolicyUserMsgs.RoleRemoved(Id, role.id, role.name));
             }
         }
 
-        public void Reactivate() {
+        public void Reactivate()
+        {
             if (_active) { return; }
             Raise(new PolicyUserMsgs.UserReactivated(Id));
-            if (_rolesAtDeactivation?.Any() ?? false) {
-                foreach (var role in _rolesAtDeactivation) {
+            if (_rolesAtDeactivation?.Any() ?? false)
+            {
+                foreach (var role in _rolesAtDeactivation)
+                {
                     Raise(new PolicyUserMsgs.RoleAdded(Id, role.id, role.name));
                 }
             }

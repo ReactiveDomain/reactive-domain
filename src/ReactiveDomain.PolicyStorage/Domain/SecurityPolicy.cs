@@ -14,9 +14,9 @@ namespace ReactiveDomain.Policy.Domain
         private readonly Dictionary<Guid, string> _rolesById = new Dictionary<Guid, string>();
         private readonly Dictionary<string, Guid> _rolesByName = new Dictionary<string, Guid>();
         public IReadOnlyList<Guid> Roles => _rolesById.Keys.ToList();
-       
+
         public string ClientId { get; }
-        public Guid AppId => base.Id;
+        public Guid AppId => Id;
         public readonly bool OneRolePerUser;
         public SecurityPolicy(
             Guid policyId,
@@ -37,8 +37,8 @@ namespace ReactiveDomain.Policy.Domain
         {
             if (@event.PolicyId == Id)
             {
-                _rolesById.Add(@event.RoleId, @event.Name);
-                _rolesByName.Add(@event.Name, @event.RoleId);
+                _rolesById.Add(@event.RoleId, @event.Name.Trim().ToLowerInvariant());
+                _rolesByName.Add(@event.Name.Trim().ToLowerInvariant(), @event.RoleId);
             }
         }
 
@@ -48,15 +48,18 @@ namespace ReactiveDomain.Policy.Domain
         /// </summary>
         public void AddRole(
             Guid roleId,
-            string roleName) {
-            if (roleId == Guid.Empty) {
+            string roleName)
+        {
+            if (roleId == Guid.Empty)
+            {
                 roleId = Guid.NewGuid();
             }
-            if(string.IsNullOrWhiteSpace(roleName)) { throw new ArgumentNullException($"{nameof(roleName)} cannot be null, empty, or whitespace.");}
-            
-            if (_rolesById.ContainsValue(roleName) || _rolesById.ContainsKey(roleId))
+            roleName = roleName?.Trim();
+            Ensure.NotNullOrEmpty(roleName, nameof(roleName));
+
+            if (_rolesById.ContainsValue(roleName.ToLowerInvariant()) || _rolesById.ContainsKey(roleId))
             {
-                throw new InvalidOperationException($"Cannot add duplicate role. RoleName: {roleName} RoleId:{roleId}");
+                throw new InvalidOperationException($"Cannot add duplicate role. RoleName: {roleName} RoleId: {roleId}");
             }
 
             Raise(new ApplicationMsgs.RoleCreated(
@@ -68,9 +71,11 @@ namespace ReactiveDomain.Policy.Domain
         public void GrantRole(PolicyUser user, string roleName)
         {
             Ensure.NotNull(user, nameof(user));
+            roleName = roleName?.Trim();
             Ensure.NotNullOrEmpty(roleName, nameof(roleName));
             Ensure.Equal(Id, user.PolicyId, nameof(user));
-            if (!_rolesByName.TryGetValue(roleName, out var roleId)) {
+            if (!_rolesByName.TryGetValue(roleName.ToLowerInvariant(), out var roleId))
+            {
                 throw new ArgumentOutOfRangeException($"Policy {ClientId} does not contain Role {roleName}");
             }
             user.AddRole(roleName, roleId);
@@ -78,13 +83,14 @@ namespace ReactiveDomain.Policy.Domain
         public void RevokeRole(PolicyUser user, string roleName)
         {
             Ensure.NotNull(user, nameof(user));
+            roleName = roleName?.Trim();
             Ensure.NotNullOrEmpty(roleName, nameof(roleName));
             Ensure.Equal(Id, user.PolicyId, nameof(user));
-            if (!_rolesByName.TryGetValue(roleName, out var roleId)) {
+            if (!_rolesByName.TryGetValue(roleName.ToLowerInvariant(), out var roleId))
+            {
                 throw new ArgumentOutOfRangeException($"Policy {ClientId} does not contain Role {roleName}");
             }
             user.RemoveRole(roleName, roleId);
         }
     }
-
 }

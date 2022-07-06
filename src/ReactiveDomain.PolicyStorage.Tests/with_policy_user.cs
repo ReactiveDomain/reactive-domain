@@ -9,15 +9,11 @@ namespace ReactiveDomain.PolicyStorage.Tests
 {
     public class with_policy_user
     {
-        Guid _policyId = Guid.NewGuid();
-        Guid _userId = Guid.NewGuid();
-        Guid _id = Guid.NewGuid();
+        private readonly Guid _policyId = Guid.NewGuid();
+        private readonly Guid _userId = Guid.NewGuid();
+        private readonly Guid _id = Guid.NewGuid();
         private readonly ICorrelatedMessage _command = MessageBuilder.New(() => new TestMessages.RootCommand());
 
-        public with_policy_user()
-        {
-
-        }
         [Fact]
         public void can_create_policy_user()
         {
@@ -27,8 +23,7 @@ namespace ReactiveDomain.PolicyStorage.Tests
                                _policyId,
                                _userId,
                                false,
-                               _command)
-            { };
+                               _command);
 
             var events = user.TakeEvents();
             Assert.Collection(
@@ -57,8 +52,7 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               _policyId,
                               _userId,
                               false,
-                              _command)
-            { };
+                              _command);
 
             user.TakeEvents();
             //add role
@@ -102,8 +96,7 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               _policyId,
                               _userId,
                               false,
-                              _command)
-            { };
+                              _command);
 
 
             //add role           
@@ -145,10 +138,10 @@ namespace ReactiveDomain.PolicyStorage.Tests
         [Fact]
         public void can_deactivate()
         {
-            Guid role1_Id = Guid.NewGuid();
-            string role1_name = "role1";
-            Guid role2_Id = Guid.NewGuid();
-            string role2_name = "role2";
+            Guid role1Id = Guid.NewGuid();
+            string role1Name = "role1";
+            Guid role2Id = Guid.NewGuid();
+            string role2Name = "role2";
 
             var user = new PolicyUser(
                            _id,
@@ -158,8 +151,8 @@ namespace ReactiveDomain.PolicyStorage.Tests
                            _command)
             { };
             //add role           
-            user.AddRole(role1_name, role1_Id);
-            user.AddRole(role2_name, role2_Id);
+            user.AddRole(role1Name, role1Id);
+            user.AddRole(role2Name, role2Id);
             user.TakeEvents();
 
             //deactivate
@@ -184,8 +177,8 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               if (e is PolicyUserMsgs.RoleRemoved removed)
                               {
                                   Assert.Equal(_id, removed.PolicyUserId);
-                                  Assert.Equal(role1_Id, removed.RoleId);
-                                  Assert.Equal(role1_name, removed.RoleName);
+                                  Assert.Equal(role1Id, removed.RoleId);
+                                  Assert.Equal(role1Name, removed.RoleName);
                               }
                               else
                               {
@@ -197,8 +190,8 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               if (e is PolicyUserMsgs.RoleRemoved removed)
                               {
                                   Assert.Equal(_id, removed.PolicyUserId);
-                                  Assert.Equal(role2_Id, removed.RoleId);
-                                  Assert.Equal(role2_name, removed.RoleName);
+                                  Assert.Equal(role2Id, removed.RoleId);
+                                  Assert.Equal(role2Name, removed.RoleName);
                               }
                               else
                               {
@@ -215,21 +208,20 @@ namespace ReactiveDomain.PolicyStorage.Tests
         [Fact]
         public void can_reactivate()
         {
-            Guid role1_Id = Guid.NewGuid();
-            string role1_name = "role1";
-            Guid role2_Id = Guid.NewGuid();
-            string role2_name = "role2";
+            Guid role1Id = Guid.NewGuid();
+            string role1Name = "role1";
+            Guid role2Id = Guid.NewGuid();
+            string role2Name = "role2";
 
             var user = new PolicyUser(
                            _id,
                            _policyId,
                            _userId,
                            false,
-                           _command)
-            { };
+                           _command);
             //add roles           
-            user.AddRole(role1_name, role1_Id);
-            user.AddRole(role2_name, role2_Id);
+            user.AddRole(role1Name, role1Id);
+            user.AddRole(role2Name, role2Id);
             //deactivate
             user.Deactivate();
             user.TakeEvents();
@@ -256,8 +248,8 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               if (e is PolicyUserMsgs.RoleAdded added)
                               {
                                   Assert.Equal(_id, added.PolicyUserId);
-                                  Assert.Equal(role1_Id, added.RoleId);
-                                  Assert.Equal(role1_name, added.RoleName);
+                                  Assert.Equal(role1Id, added.RoleId);
+                                  Assert.Equal(role1Name, added.RoleName);
                               }
                               else
                               {
@@ -269,8 +261,8 @@ namespace ReactiveDomain.PolicyStorage.Tests
                               if (e is PolicyUserMsgs.RoleAdded added)
                               {
                                   Assert.Equal(_id, added.PolicyUserId);
-                                  Assert.Equal(role2_Id, added.RoleId);
-                                  Assert.Equal(role2_name, added.RoleName);
+                                  Assert.Equal(role2Id, added.RoleId);
+                                  Assert.Equal(role2Name, added.RoleName);
                               }
                               else
                               {
@@ -282,6 +274,51 @@ namespace ReactiveDomain.PolicyStorage.Tests
             user.Reactivate();
             events = user.TakeEvents();
             Assert.Empty(events);
+        }
+
+        [Fact]
+        public void role_names_are_case_insensitive()
+        {
+            var roleId = Guid.NewGuid();
+            const string roleName = "admin";
+            const string roleName2 = "Admin";
+
+            var user = new PolicyUser(
+                            _id,
+                            _policyId,
+                            _userId,
+                            false,
+                            _command);
+            user.AddRole(roleName, roleId);
+            user.AddRole(roleName2, roleId); // case-insensitive, idempotent
+            user.RemoveRole(roleName2, roleId); // remove using same ID, different case
+            var events = user.TakeEvents();
+            Assert.Collection(
+                events,
+                e => Assert.IsType<PolicyUserMsgs.PolicyUserAdded>(e),
+                e => Assert.IsType<PolicyUserMsgs.RoleAdded>(e),
+                e => Assert.IsType<PolicyUserMsgs.RoleRemoved>(e));
+        }
+
+        [Fact]
+        public void cannot_add_same_named_role_with_different_id()
+        {
+            var roleId = Guid.NewGuid();
+            const string roleName = "admin";
+
+            var user = new PolicyUser(
+                _id,
+                _policyId,
+                _userId,
+                false,
+                _command);
+            user.AddRole(roleName, roleId);
+            Assert.Throws<ArgumentException>(() => user.AddRole(roleName, Guid.NewGuid()));
+            var events = user.TakeEvents();
+            Assert.Collection(
+                events,
+                e => Assert.IsType<PolicyUserMsgs.PolicyUserAdded>(e),
+                e => Assert.IsType<PolicyUserMsgs.RoleAdded>(e));
         }
     }
 }

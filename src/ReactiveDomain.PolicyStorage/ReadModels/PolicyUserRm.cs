@@ -111,7 +111,7 @@ namespace ReactiveDomain.Policy.ReadModels
                 _policyByPolicyUser[@event.PolicyUserId] = @event.PolicyId;
             }
 
-            if (!RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles))
+            if (!RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out _))
             {
                 RolesByPolicyUser.Add(@event.PolicyUserId, new HashSet<string>());
             }
@@ -121,7 +121,7 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles))
             {
-                roles.Add(@event.RoleName);
+                roles.Add(@event.RoleName.Trim().ToLowerInvariant());
             }
         }
 
@@ -129,7 +129,7 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles))
             {
-                roles.Remove(@event.RoleName);
+                roles.Remove(@event.RoleName.Trim().ToLowerInvariant());
             }
         }
 
