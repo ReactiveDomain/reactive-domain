@@ -41,7 +41,7 @@ namespace ReactiveDomain.Policy
         public void AddRole(Role role)
         {
             _roles.Add(role);
-            _roleNames.Add(role.RoleName);
+            _roleNames.Add(role.RoleName.Trim().ToLowerInvariant());
             foreach (var permission in role.Permissions)
             {
                 _permissions.Add(permission);
@@ -56,7 +56,7 @@ namespace ReactiveDomain.Policy
         public bool HasRole(string roleName)
         {
             if (string.IsNullOrWhiteSpace(roleName)) { return false; }
-            return _roleNames.Contains(roleName);
+            return _roleNames.Contains(roleName.Trim().ToLowerInvariant());
         }
         public bool HasRole(Role role)
         {

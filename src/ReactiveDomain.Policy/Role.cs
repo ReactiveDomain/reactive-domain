@@ -22,14 +22,14 @@ namespace ReactiveDomain.Policy
         }
         public Role(string roleName)
         {
-            Ensure.NotNullOrEmpty(roleName, nameof(roleName));
-            RoleName = roleName;
+            Ensure.NotNullOrEmpty(roleName.Trim(), nameof(roleName));
+            RoleName = roleName.Trim();
         }
         #region IEquatable<T> Implementation
         public bool Equals(Role other)
         {
             if (other is null) return false;
-            return string.Equals(RoleName, other.RoleName);
+            return string.Equals(RoleName.ToLowerInvariant(), other.RoleName.ToLowerInvariant());
         }
 
         public override bool Equals(object obj) => Equals(obj as Role);

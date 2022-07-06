@@ -38,7 +38,7 @@ namespace ReactiveDomain.Policy
         public bool Equals(Policy other)
         {
             if (other is null) return false;           
-            return string.Equals(PolicyName, other.PolicyName);
+            return string.Equals(PolicyName, other.PolicyName, StringComparison.OrdinalIgnoreCase);
         }
        
         public override bool Equals(object obj) => Equals(obj as Policy);

@@ -12,14 +12,14 @@ namespace ReactiveDomain.Policy.ReadModels
         {
             Id = id;
             PolicyId = policyId;
-            Name = name;
+            Name = name.Trim().ToLowerInvariant();
         }
 
         public RoleDTO(ApplicationMsgs.RoleCreated @event)
         {
             Id = @event.RoleId;
             PolicyId = @event.PolicyId;
-            Name = @event.Name;
+            Name = @event.Name.Trim().ToLowerInvariant();
         }
     }
 }
