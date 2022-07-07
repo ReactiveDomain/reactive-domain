@@ -51,7 +51,7 @@ namespace PolicyTool
             //Root CMD w/ global required AppName
             var appName = new Option<string>(
                         name: "--app-name",
-                        description: "Taget Application name.")
+                        description: "Target Application name.")
             {
                 IsRequired = true
             };
@@ -135,6 +135,7 @@ namespace PolicyTool
             var userRm = new UsersRm(EsConnection);
             var subjectsRm = new SubjectsRm(EsConnection);
             var userSvc = new UserSvc(EsConnection.GetRepository(), mainBus);
+            var clientSvc = new ClientSvc(EsConnection.GetRepository(), mainBus);
             var clientStore = new ClientStore(EsConnection);
             addApp.SetHandler(
                 (string name, string secret, Guid id, string uri) =>
@@ -148,19 +149,18 @@ namespace PolicyTool
                               false));
                     if (mainBus.TrySend(cmd, out _))
                     {
-                        //todo: wrap this in a service
-                        //todo: look at making this a correlated message
-                        var client = new ReactiveDomain.IdentityStorage.Domain.Client(
-                            Guid.NewGuid(),
-                            id,
-                            name,
-                            secret,
-                            new[] { uri },
-                            new[] { uri },
-                            uri,
-                            new CorrelatedRoot());
-                        var repo = EsConnection.GetRepository();
-                        repo.Save(client);
+                        mainBus.TrySend(
+                            RDMsg.MessageBuilder
+                                .From(cmd)
+                                .Build(() => new ClientMsgs.CreateClient(
+                                                    Guid.NewGuid(),
+                                                    id,
+                                                    name,
+                                                    new[] { uri },
+                                                    new[] { uri },
+                                                    uri,
+                                                    secret)),
+                            out _);
                     }
 
                 }, appName, clientSecret, appId, appUri);

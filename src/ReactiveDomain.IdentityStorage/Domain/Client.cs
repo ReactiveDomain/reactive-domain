@@ -5,13 +5,12 @@ using static ReactiveDomain.IdentityStorage.Messages.ClientMsgs;
 
 namespace ReactiveDomain.IdentityStorage.Domain
 {
-
     public class Client : AggregateRoot
     {
         public string ClientName { get; private set; }
         public string[] RedirectUris { get; private set; }
         public string[] LogoutRedirectUris { get; private set; }
-        public string FrontChannlLogoutUri { get; private set; }
+        public string FrontChannelLogoutUri { get; private set; }
 
         private Client()
         {
@@ -26,7 +25,7 @@ namespace ReactiveDomain.IdentityStorage.Domain
                 ClientName = @event.ClientName;
                 RedirectUris = @event.RedirectUris;
                 LogoutRedirectUris = @event.PostLogoutRedirectUris;
-                FrontChannlLogoutUri = @event.FrontChannelLogoutUri;
+                FrontChannelLogoutUri = @event.FrontChannelLogoutUri;
             });
             Register<ClientSecretAdded>(@event => { });
             Register<ClientSecretRemoved>(@event => { });
@@ -56,12 +55,12 @@ namespace ReactiveDomain.IdentityStorage.Domain
             Raise(new ClientCreated(
                 id,
                 applicationId,
-                 clientName,
-                 new[] { "client_credentials", "password", "authorization_code" },
-                 new[] { "openid", "profile", "rd-policy", "enabled-policies" },
-                 redirectUris,
-                 postLogoutRedirectUris,
-                 frontChannelLogoutUri));
+                clientName,
+                new[] { "client_credentials", "password", "authorization_code" },
+                new[] { "openid", "profile", "rd-policy", "enabled-policies" },
+                redirectUris,
+                postLogoutRedirectUris,
+                frontChannelLogoutUri));
 
             Raise(new ClientSecretAdded(id, encryptedClientSecret));
         }

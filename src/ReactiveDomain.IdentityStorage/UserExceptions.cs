@@ -14,9 +14,7 @@ namespace ReactiveDomain.IdentityStorage
             : base($"User {id}: {fullName}\\{email} already exists.")
         { }
     }
-
     
-   
     /// <summary>
     /// Throw this exception when a user lookup returns no results.
     /// </summary>
@@ -43,5 +41,12 @@ namespace ReactiveDomain.IdentityStorage
             : base(message)
         {
         }
+    }
+
+    public class DuplicateClientException : Exception
+    {
+        public DuplicateClientException(Guid id, string name)
+            : base($"Client {name} with ID {id} already exists.")
+        { }
     }
 }
