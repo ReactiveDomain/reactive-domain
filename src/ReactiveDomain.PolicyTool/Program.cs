@@ -50,28 +50,42 @@ namespace PolicyTool
 
             //Root CMD w/ global required AppName
             var appName = new Option<string>(
-                       name: "--app-name",
-                       description: "Taget Application name.");
-            appName.IsRequired = true;
+                        name: "--app-name",
+                        description: "Taget Application name.")
+            {
+                IsRequired = true
+            };
 
             var rootCommand = new RootCommand("Policy tool");
             rootCommand.AddGlobalOption(appName);
 
             //Add App CMD
             var clientSecret = new Option<string>(
-                      name: "--secret",
-                      description: "Client secret.",
-                      getDefaultValue: () => "ChangeIt");
-            clientSecret.IsRequired = true;
+                        name: "--secret",
+                        description: "Client secret.",
+                        getDefaultValue: () => "ChangeIt")
+            {
+                IsRequired = true
+            };
             var appId = new Option<Guid>(
-                      name: "--app-id",
-                      description: "Target application's unique ID",
-                      getDefaultValue: () => Guid.NewGuid());
-            appId.IsRequired = true;
+                        name: "--app-id",
+                        description: "Target application's unique ID",
+                        getDefaultValue: () => Guid.NewGuid())
+            {
+                IsRequired = true
+            };
+            var appUri = new Option<string>(
+                        name: "--app-uri",
+                        description: "Single URI to use for all redirects.",
+                        getDefaultValue: () => "http://localhost")
+            {
+                IsRequired = true
+            };
+
             var addApp = new Command("add-app", "Add a new application.");
             addApp.AddOption(clientSecret);
             addApp.AddOption(appId);
-
+            addApp.AddOption(appUri);
             // Show App CMD
             var showApp = new Command("show-app", "Display app details.");
 
@@ -81,10 +95,12 @@ namespace PolicyTool
 
             // Add User CMD
             var roles = new Option<string[]>(
-                      name: "--roles",
-                      description: "List of Roles.");
-            roles.IsRequired = true;
-            roles.AllowMultipleArgumentsPerToken = true;
+                        name: "--roles",
+                        description: "List of Roles.")
+            {
+                IsRequired = true,
+                AllowMultipleArgumentsPerToken = true
+            };
             var addRoles = new Command("add-roles", "Idempotently add roles to an application");
             addRoles.AddOption(roles);
 
@@ -93,13 +109,17 @@ namespace PolicyTool
 
 
             var userName = new Option<string>(
-                      name: "--user-name",
-                      description: "User name.");
-            userName.IsRequired = true;
+                        name: "--user-name",
+                        description: "User name.")
+            {
+                IsRequired = true
+            };
             var domain = new Option<string>(
-                      name: "--domain",
-                      description: "Domain.");
-            userName.IsRequired = false;
+                        name: "--domain",
+                        description: "The domain where the user account is defined.")
+            {
+                IsRequired = false
+            };
             var addUser = new Command("add-user", "Add a new user to the application with the specified roles.");
             addUser.AddOption(userName);
             addUser.AddOption(roles);
@@ -117,33 +137,33 @@ namespace PolicyTool
             var userSvc = new UserSvc(EsConnection.GetRepository(), mainBus);
             var clientStore = new ClientStore(EsConnection);
             addApp.SetHandler(
-                (string name, string secret, Guid appId) =>
+                (string name, string secret, Guid id, string uri) =>
                 {
                     var version = "1.0";
                     var cmd = RDMsg.MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(
-                              appId,
+                              id,
                               Guid.NewGuid(),
                               name,
                               version,
                               false));
-                    if (mainBus.TrySend(cmd, out var _))
+                    if (mainBus.TrySend(cmd, out _))
                     {
                         //todo: wrap this in a service
-                        //todo: look at making this a correlated mesage
+                        //todo: look at making this a correlated message
                         var client = new ReactiveDomain.IdentityStorage.Domain.Client(
                             Guid.NewGuid(),
-                            appId,
+                            id,
                             name,
                             secret,
-                            new[] { "http://localhost/elbe" },
-                            new[] { "http://localhost/elbe" },
-                            "http://localhost/elbe",
+                            new[] { uri },
+                            new[] { uri },
+                            uri,
                             new CorrelatedRoot());
                         var repo = EsConnection.GetRepository();
                         repo.Save(client);
                     }
 
-                }, appName, clientSecret, appId);
+                }, appName, clientSecret, appId, appUri);
             showApp.SetHandler(
                 (string name) =>
                 {
@@ -167,10 +187,10 @@ namespace PolicyTool
                 }, appName, clientSecret);
 
             addRoles.SetHandler(
-                (string appName, string[] roles) =>
+                (string name, string[] listOfRoles) =>
                 {
-                    var policy = appRm.GetPolicies(appName).First(); //There should only be one as multiple policies is not currently supported
-                    foreach (var role in roles)
+                    var policy = appRm.GetPolicies(name).First(); //There should only be one as multiple policies is not currently supported
+                    foreach (var role in listOfRoles)
                     {
                         mainBus.TrySend(new ApplicationMsgs.CreateRole(Guid.NewGuid(), role, policy.PolicyId, policy.ApplicationId), out var _);
                     }
@@ -178,23 +198,23 @@ namespace PolicyTool
                 }
                 , appName, roles);
             addUser.SetHandler(
-                (string appName, string userName, string domain, string[] roles) =>
+                (string app, string user, string accountDomain, string[] appRoles) =>
                 {
                     Guid userId;
                     Guid subjectId;
 
                     if (validation.TryFindUserPrincipal(domain, userName, out UserPrincipal user))
                     {
-                        if (!userRm.HasUser(user.Sid.Value, user.Context.Name, out userId))
+                        if (!userRm.HasUser(principal.Sid.Value, principal.Context.Name, out userId))
                         {
                             userId = Guid.NewGuid();
-                            userStore.AddUser(user, user.Context.Name, user.ContextType.ToString(), userId, out subjectId);
-                            Console.WriteLine($"User added {user.Context.Name}/{userName}");
+                            userStore.AddUser(principal, principal.Context.Name, principal.ContextType.ToString(), userId, out subjectId);
+                            Console.WriteLine($"User added {principal.Context.Name}/{user}");
                         }
                         else
                         {
-                            subjectsRm.TryGetSubjectIdForPrinciple(new PrincipleWrapper(user), out subjectId);
-                            Console.WriteLine($"User found {user.Context.Name}/{userName}");
+                            subjectsRm.TryGetSubjectIdForPrinciple(new PrincipleWrapper(principal), out subjectId);
+                            Console.WriteLine($"User found {principal.Context.Name}/{user}");
                         }
 
                         Console.WriteLine($"\t UserId    {userId}");
@@ -202,7 +222,7 @@ namespace PolicyTool
                     }
                     else
                     {
-                        Console.WriteLine($"user {domain}/{userName} not found.");
+                        Console.WriteLine($"user {accountDomain}/{user} not found.");
 
                         return;
                     }
@@ -212,7 +232,7 @@ namespace PolicyTool
                     {
                         Thread.Sleep(30);
                         n++;
-                        //todo: fix the readmodel race condition
+                        //todo: fix the read model race condition
                         if (n % 10 == 0)
                         {
                             userRm.Dispose();
@@ -222,16 +242,16 @@ namespace PolicyTool
                     }
                     var userDto = userRm.UsersById[userId];
 
-                    if (userDto.Scopes.Contains(appName.ToUpper()))
+                    if (userDto.Scopes.Contains(app.ToUpper()))
                     {
-                        Console.WriteLine($"User {user.Context.Name}/{userName} has access to App {appName} , exiting.");
+                        Console.WriteLine($"User {principal.Context.Name}/{user} has access to App {app} , exiting.");
                         return;
                     }
-                    if (mainBus.TrySend(new UserMsgs.AddClientScope(userId, appName), out var _))
+                    if (mainBus.TrySend(new UserMsgs.AddClientScope(userId, app), out _))
                     {
                         var root = new CorrelatedRoot();
-                        Console.WriteLine($"Access to {appName} added;");
-                        var policy = appRm.GetPolicies(appName).First(); //There should only be one as multiple policies is not currently supported
+                        Console.WriteLine($"Access to {app} added;");
+                        var policy = appRm.GetPolicies(app).First(); //There should only be one as multiple policies is not currently supported
                         if (policy.Users.Lookup(userId).HasValue)
                         {
                             Console.WriteLine($"Policy user exists, exiting.");
@@ -239,9 +259,9 @@ namespace PolicyTool
                         }
                         var policyUser = new PolicyUser(Guid.NewGuid(), policy.PolicyId, userId, policy.OneRolePerUser, root);
 
-                        foreach (var role in roles)
+                        foreach (var role in appRoles)
                         {
-                            var roleDto = policy.Roles.KeyValues.FirstOrDefault(v => v.Value.Name == role);
+                            var roleDto = policy.Roles.KeyValues.FirstOrDefault(v => string.Equals(v.Value.Name, role, StringComparison.OrdinalIgnoreCase));
                             if (roleDto.Key == Guid.Empty)
                             {
                                 Console.WriteLine($"Role {role} not found in Policy {policy.Name}");
@@ -249,7 +269,7 @@ namespace PolicyTool
                             }
 
                             policyUser.AddRole(role, roleDto.Key);
-                            Console.WriteLine($"Role {role} add to User {user.Context.Name}/{userName} for App {appName}");
+                            Console.WriteLine($"Role {role} add to User {principal.Context.Name}/{user} for App {app}");
                             if (policy.OneRolePerUser)
                             {
                                 Console.WriteLine($"Added single role {role}, per Application restrictions.");
@@ -259,12 +279,11 @@ namespace PolicyTool
                         var repo = EsConnection.GetRepository();
                         repo.Save(policyUser);
                     }
-                }
-                , appName, userName, domain, roles);
+                }, appName, userName, domain, roles);
             getConfig.SetHandler(
-                (string appName) =>
+                (string name) =>
                 {
-                    var app = appRm.GetApplication(appName);
+                    var app = appRm.GetApplication(name);
                     var config = new StringBuilder();
                     config.AppendLine("\"RdPolicyConfig\": {");
                     config.AppendLine("\"TokenServer\": \"[Token Server URL]\",");
