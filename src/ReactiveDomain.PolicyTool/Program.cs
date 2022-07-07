@@ -203,7 +203,7 @@ namespace PolicyTool
                     Guid userId;
                     Guid subjectId;
 
-                    if (validation.TryFindUserPrincipal(domain, userName, out UserPrincipal user))
+                    if (validation.TryFindUserPrincipal(accountDomain, user, out UserPrincipal principal))
                     {
                         if (!userRm.HasUser(principal.Sid.Value, principal.Context.Name, out userId))
                         {
@@ -213,7 +213,7 @@ namespace PolicyTool
                         }
                         else
                         {
-                            subjectsRm.TryGetSubjectIdForPrinciple(new PrincipleWrapper(principal), out subjectId);
+                            subjectsRm.TryGetSubjectIdForPrincipal(new PrincipalWrapper(principal), out subjectId);
                             Console.WriteLine($"User found {principal.Context.Name}/{user}");
                         }
 

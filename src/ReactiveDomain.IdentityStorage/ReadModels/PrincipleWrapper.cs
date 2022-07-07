@@ -4,26 +4,26 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.IdentityStorage.ReadModels
 {
 
-    public interface IPrinciple
+    public interface IPrincipal
     {
         string Provider { get; }
         string Domain { get; }
         string SId { get; }
     }
-    public class PrincipleWrapper : IPrinciple
+    public class PrincipalWrapper : IPrincipal
     {
-        private readonly UserPrincipal _principle;
+        private readonly UserPrincipal _principal;
 
-        public PrincipleWrapper(UserPrincipal principle)
+        public PrincipalWrapper(UserPrincipal principal)
         {
-            Ensure.NotNull(principle, nameof(principle));
-            _principle = principle;
+            Ensure.NotNull(principal, nameof(principal));
+            _principal = principal;
         }
 
-        public string Provider => _principle.ContextType.ToString();
+        public string Provider => _principal.ContextType.ToString();
 
-        public string Domain => _principle.Context.Name;
+        public string Domain => _principal.Context.Name;
 
-        public string SId => _principle.Sid.ToString();
+        public string SId => _principal.Sid.ToString();
     }
 }

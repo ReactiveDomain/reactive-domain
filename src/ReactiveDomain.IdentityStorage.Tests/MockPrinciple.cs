@@ -2,7 +2,7 @@
 
 namespace ReactiveDomain.IdentityStorage.Tests
 {
-    internal class MockPrinciple : IPrinciple
+    internal class MockPrincipal : IPrincipal
     {
         public string Provider { get; set; }
 

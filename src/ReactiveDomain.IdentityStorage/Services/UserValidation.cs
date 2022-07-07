@@ -89,7 +89,7 @@ namespace ReactiveDomain.IdentityStorage.Services
 
                         if (authSucceeded)
                         {
-                            //build the Claims Principle to return in the token
+                            //build the Claims Principal to return in the token
                             result.IsValidated = true;
                             _userStore.UserAuthenticated(user, domainName, contextType.ToString(), remoteHttpAddress, clientId);
                             var additionalClaims = _userStore.GetAdditionalClaims(userId);
