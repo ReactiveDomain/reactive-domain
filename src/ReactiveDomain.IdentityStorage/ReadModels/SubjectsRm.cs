@@ -48,14 +48,14 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
             }
             return false;
         }
-        public bool TryGetSubjectIdForPrinciple(IPrinciple principle, out Guid subjectId)
+        public bool TryGetSubjectIdForPrincipal(IPrincipal principal, out Guid subjectId)
         {
             try
             {
 
-                if (SubjectsBySubClaim.TryGetValue(GetDomainCategory(principle.Provider, principle.Domain), out var subList))
+                if (SubjectsBySubClaim.TryGetValue(GetDomainCategory(principal.Provider, principal.Domain), out var subList))
                 {
-                    return subList.TryGetValue(principle.SId, out subjectId);
+                    return subList.TryGetValue(principal.SId, out subjectId);
                 }
             }
             catch

@@ -64,12 +64,12 @@ namespace ReactiveDomain.IdentityStorage.Tests
             Assert.Equal(sub3, testSub);
         }
         [Fact]
-        public void can_get_subject_id_for_principle()
+        public void can_get_subject_id_for_principal()
         {
             var userId = Guid.NewGuid();            
             var subjectId = AddNewSubject(userId, provider: AuthProvider, domain: AuthDomain);
-            var user = new MockPrinciple { Provider = AuthProvider, Domain = AuthDomain, SId = userId.ToString() };
-            Assert.True(_rm.TryGetSubjectIdForPrinciple(user, out var id));
+            var user = new MockPrincipal { Provider = AuthProvider, Domain = AuthDomain, SId = userId.ToString() };
+            Assert.True(_rm.TryGetSubjectIdForPrincipal(user, out var id));
             Assert.Equal(subjectId, id);
         }
         [Fact]
