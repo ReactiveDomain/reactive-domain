@@ -115,7 +115,7 @@ namespace PolicyTool
                 (string name, string secret) =>
                 {
                     var appId = Guid.NewGuid();
-                    var version = "1.0";                   
+                    var version = "1.0";
                     var cmd = RDMsg.MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(
                               appId,
                               Guid.NewGuid(),
@@ -193,8 +193,8 @@ namespace PolicyTool
                             Console.WriteLine($"User found {user.Context.Name}/{userName}");
                         }
 
-                        Console.WriteLine($"\t UserId    { userId}");
-                        Console.WriteLine($"\t SubjectId { subjectId}");
+                        Console.WriteLine($"\t UserId    {userId}");
+                        Console.WriteLine($"\t SubjectId {subjectId}");
                     }
                     else
                     {
@@ -235,9 +235,9 @@ namespace PolicyTool
                         }
                         var policyUser = new PolicyUser(Guid.NewGuid(), policy.PolicyId, userId, policy.OneRolePerUser, root);
 
-                        foreach (var role in roles)
+                        foreach (var role in roles) 
                         {
-                            var roleDto = policy.Roles.KeyValues.FirstOrDefault(v => v.Value.Name == role);
+                            var roleDto = policy.Roles.KeyValues.FirstOrDefault(v => string.Equals(v.Value.Name, role, StringComparison.OrdinalIgnoreCase));
                             if (roleDto.Key == Guid.Empty)
                             {
                                 Console.WriteLine($"Role {role} not found in Policy {policy.Name}");
@@ -260,14 +260,14 @@ namespace PolicyTool
             getConfig.SetHandler(
                 (string appName) =>
                 {
-                    var app = appRm.GetApplication(appName);   
+                    var app = appRm.GetApplication(appName);
                     var config = new StringBuilder();
                     config.AppendLine("\"RdPolicyConfig\": {");
                     config.AppendLine("\"TokenServer\": \"[Token Server URL]\",");
                     config.AppendLine("\"ESConnection\": \"[ES Connection String]\",");
-                    config.AppendLine( $"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
+                    config.AppendLine($"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
                     config.Append(clientStore.GetAppConfig(app.ApplicationId));
-                    
+
                     Console.WriteLine(config);
                 }, appName);
             rootCommand.AddCommand(addApp);
