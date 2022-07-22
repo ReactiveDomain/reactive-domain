@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="HostWindow.xaml.cs" />
+    <Compile Remove="HostWindowVM.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="HostWindow.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.mshtml">
+      <HintPath>Microsoft.mshtml.dll</HintPath>
+    </Reference>
+    <PackageReference Include="IdentityModel" Version="4.6.0" />
+    <PackageReference Include="IdentityModel.OidcClient" Version="3.1.2" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1150.38" />
+    <PackageReference Include="NLog">
+      <Version>4.6.8</Version>
+    </PackageReference>   
+    <PackageReference Include="ReactiveUI">
+      <Version>11.1.12</Version>
+    </PackageReference>
+    <PackageReference Include="ReactiveUI.WPF">
+      <Version>11.1.12</Version>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
+  </ItemGroup>
+</Project>
