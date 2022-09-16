@@ -37,8 +37,8 @@ namespace ReactiveDomain.Foundation.StreamStore {
         public void HardDelete(IEventSource aggregate) {
             _cache.HardDelete(aggregate);
         }
-        public bool ClearCache(Guid id) {
-            return _cache.Remove(id);
+        public bool ClearCache<TAggregate>(Guid id) {
+            return _cache.Remove<TAggregate>(id);
         }
         public void ClearCache() {
             _cache.Clear();
