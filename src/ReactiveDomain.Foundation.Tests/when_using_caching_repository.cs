@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using Newtonsoft.Json;
 using ReactiveDomain.Foundation.StreamStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
@@ -28,7 +26,6 @@ namespace ReactiveDomain.Foundation.Tests
         [Fact]
         public void can_handle_repeated_and_cross_updates()
         {
-
             var id = Guid.NewGuid();
             ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));
             var cachedAccount = new Account(id, source);
@@ -82,6 +79,23 @@ namespace ReactiveDomain.Foundation.Tests
             Assert.Equal(8, cachedAccount3.Balance); //cachedAccount is a pointer to same object as acct2/3/4 due to cache
             Assert.Equal(8, cachedAccount4.Balance); //cachedAccount is a pointer to same object as acct2/3/4 due to cache
         }
+
+        [Fact]
+        public void can_cache_aggregates_with_different_types_and_same_id()
+        {
+            var accountId = Guid.NewGuid();
+            ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(accountId));
+            var account = new Account(accountId, source);
+            _cachingRepo.Save(account);
+
+            ICorrelatedMessage source2 = MessageBuilder.New(() => new CreateAccount(accountId));
+            var other = new OtherAggregateType(accountId, source2);
+            _cachingRepo.Save(other);
+
+            var cachedAccount = _cachingRepo.GetById<Account>(accountId);
+            var cachedOther = _cachingRepo.GetById<OtherAggregateType>(accountId);
+        }
+
         [Fact]
         public void can_remove_by_id_from_the_cache()
         {
@@ -98,7 +112,7 @@ namespace ReactiveDomain.Foundation.Tests
             var cacheCopy = _cachingRepo.GetById<Account>(id);
             Assert.Equal(12, cacheCopy.Balance);
 
-            _cachingRepo.ClearCache(id);
+            _cachingRepo.ClearCache<Account>(id);
 
             var persistedCopy = _cachingRepo.GetById<Account>(id);
             Assert.Equal(5, persistedCopy.Balance);
@@ -130,7 +144,7 @@ namespace ReactiveDomain.Foundation.Tests
             }
             public Account(Guid id, ICorrelatedMessage source) : this()
             {
-                Ensure.NotEmptyGuid(id, "id");
+                Ensure.NotEmptyGuid(id, nameof(id));
                 Raise(new AccountCreated(id));
             }
             public void Credit(uint amount)
@@ -138,6 +152,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Raise(new AccountCredited(Id, amount));
             }
         }
+
         public class CreateAccount : Command
         {
             public readonly Guid AccountId;
@@ -146,6 +161,7 @@ namespace ReactiveDomain.Foundation.Tests
                 AccountId = accountId;
             }
         }
+
         public class AccountCreated : IMessage
         {
             public Guid MsgId { get; private set; }
@@ -156,6 +172,7 @@ namespace ReactiveDomain.Foundation.Tests
                 AccountId = accountId;
             }
         }
+
         public class CreditAccount : Command
         {
             public readonly Guid AccountId;
@@ -166,6 +183,7 @@ namespace ReactiveDomain.Foundation.Tests
                 Amount = amount;
             }
         }
+
         public class AccountCredited : IMessage
         {
             public Guid MsgId { get; private set; }
@@ -177,6 +195,41 @@ namespace ReactiveDomain.Foundation.Tests
                 MsgId = Guid.NewGuid();
                 AccountId = accountId;
                 Amount = amount;
+            }
+        }
+
+        public class OtherAggregateType : EventDrivenStateMachine
+        {
+            private OtherAggregateType()
+            {
+                Register<OtherAggregateCreated>(e => Id = e.AggregateId);
+            }
+            public OtherAggregateType(Guid id, ICorrelatedMessage source) : this()
+            {
+                Ensure.NotEmptyGuid(id, nameof(id));
+                Raise(new OtherAggregateCreated(id));
+            }
+        }
+
+        public class CreateOtherAggregate : Command
+        {
+            public readonly Guid AggregateId;
+
+            public CreateOtherAggregate(Guid aggregateId)
+            {
+                AggregateId = aggregateId;
+            }
+        }
+
+        public class OtherAggregateCreated : IMessage
+        {
+            public Guid MsgId { get; }
+            public readonly Guid AggregateId;
+
+            public OtherAggregateCreated(Guid aggregateId)
+            {
+                MsgId = Guid.NewGuid();
+                AggregateId = aggregateId;
             }
         }
     }
