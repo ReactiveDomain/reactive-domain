@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions
+    url: https://github.com/ReactiveDomain/reactive-domain/discussions
+    about: 'For general questions about ReactiveDomain, ask in the GitHub discussions'
+  - name: Chat
+    url: https://reactivedomain.slack.com
+    about: 'Join the discussion on Slack'
