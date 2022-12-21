@@ -113,7 +113,7 @@ namespace ReactiveDomain.Foundation.Tests {
             AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
 
             Start(_stream2, null, true);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 10, msg: $"Expected 20 got {Count}");
+            AssertEx.IsOrBecomesTrue(() => Count == 20, 100, msg: $"Expected 20 got {Count}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50, 100);
         }
         [Fact]

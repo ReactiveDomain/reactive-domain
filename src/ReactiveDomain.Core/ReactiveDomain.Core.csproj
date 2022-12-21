@@ -1,11 +1,13 @@
-
+﻿
 <Project Sdk="Microsoft.NET.Sdk">  
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <RootNamespace>ReactiveDomain</RootNamespace>
+    <RootNamespace>ReactiveDomain</RootNamespace>   
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+    <InternalsVisibleTo Include="ReactiveDomain.Persistence" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
   </ItemGroup>
 </Project>

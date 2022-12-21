@@ -13,6 +13,14 @@ namespace ReactiveDomain.Messaging.Tests
             var msg1 = new TestMessage();
             Assert.NotEqual(Guid.Empty, msg1.MsgId);
         }
+        //[Fact]
+        //public void new_message_with_default_constructor_should_have_empty_metadata()
+        //{
+        //    var msg1 = new TestMessage();
+        //    msg1.Metadata
+        //    Assert.NotEqual(Guid.Empty, msg1.MsgId);
+        //}
+
         [Fact]
         public void new_message_with_default_constructor_should_have_new_id()
         {

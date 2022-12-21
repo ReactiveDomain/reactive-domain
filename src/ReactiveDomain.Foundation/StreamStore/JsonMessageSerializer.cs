@@ -13,7 +13,7 @@ namespace ReactiveDomain.Foundation
     public class JsonMessageSerializer : IEventSerializer
     {
 
-        public static readonly JsonSerializerSettings StandardSerializerSettings;
+        public static JsonSerializerSettings StandardSerializerSettings => Json.JsonSettings;
         public JsonSerializerSettings SerializerSettings
         {
             get => _serializerSettings ?? StandardSerializerSettings;
@@ -25,24 +25,6 @@ namespace ReactiveDomain.Foundation
         public bool FullyQualify { get; set; }
         public Assembly AssemblyOverride { get; set; }
         public bool ThrowOnTypeNotFound { get; set; }
-
-        static JsonMessageSerializer()
-        {
-            var contractResolver = new DefaultContractResolver();
-#pragma warning disable 618
-            contractResolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
-#pragma warning restore 618
-            StandardSerializerSettings = new JsonSerializerSettings()
-            {
-                ContractResolver = contractResolver,
-                TypeNameHandling = TypeNameHandling.Auto,
-                DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-                Converters = new JsonConverter[] { new StringEnumConverter() }
-            };           
-        }
 
         /// <summary>
         /// Creates an default instance of the JsonSerializer for serializing and Deserializing Events from
