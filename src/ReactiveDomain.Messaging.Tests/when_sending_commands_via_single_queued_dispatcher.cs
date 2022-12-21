@@ -12,7 +12,6 @@ namespace ReactiveDomain.Messaging.Tests {
         IHandle<AckCommand>,
         IHandle<CommandResponse> {
         private long _gotAck;
-        private long _gotMessage;
         private long _releaseAckHandler;
         private long _commandHandleStarted;
         private long _releaseHandler;

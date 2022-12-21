@@ -69,7 +69,6 @@ namespace ReactiveDomain.Testing.EventStore
             conn.AppendToStream(streamName, ExpectedVersion.Any, null,
                 events.Select(x => _serializer.Serialize(x)).ToArray());
         }
-
         [Fact]
         public void can_read_stream_forward()
         {
@@ -378,7 +377,6 @@ namespace ReactiveDomain.Testing.EventStore
                 Assert.Equal(0, reader.Position);
             }
         }
-
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Interface fequired for fixture.")]
         public void Handle(Event message)
         {

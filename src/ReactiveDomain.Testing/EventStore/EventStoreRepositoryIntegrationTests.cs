@@ -31,7 +31,6 @@ namespace ReactiveDomain.Testing
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
             _repo = new StreamStoreRepository(_streamNameBuilder, _connection, new JsonMessageSerializer());
         }
-
         [Fact]
         public void CanGetLatestVersionById()
         {

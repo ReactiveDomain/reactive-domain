@@ -23,7 +23,6 @@ namespace ReactiveDomain.Testing.Specifications
         {
             return command.Succeed();
         }
-               
         [Fact]
         public void can_wait_on_base_types()
         {
@@ -231,7 +230,6 @@ namespace ReactiveDomain.Testing.Specifications
                     .AssertEmpty();
             }
         }
-
         public void Dispose()
         {
             _dispatcher?.Dispose();

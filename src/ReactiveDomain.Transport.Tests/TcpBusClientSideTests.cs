@@ -64,7 +64,7 @@ namespace ReactiveDomain.Transport.Tests
                 port,
                 inboundNondiscardingMessageTypes: new[] { typeof(CommandResponse) },
                 inboundNondiscardingMessageQueuedHandler: clientInbound,
-                messageSerializers: new Dictionary<Type, IMessageSerializer>
+                messageSerializers: new Dictionary<Type, Serialization.IMessageSerializer>
                     { { typeof(WoftamCommandResponse), new WoftamCommandResponse.Serializer() } });
 
             clientInbound.Start();
@@ -138,7 +138,7 @@ namespace ReactiveDomain.Transport.Tests
             PropertyA = propertyA;
         }
 
-        public class Serializer : IMessageSerializer
+        public class Serializer : Serialization.IMessageSerializer
         {
             public IMessage DeserializeMessage(string json, Type messageType)
             {
@@ -185,6 +185,7 @@ namespace ReactiveDomain.Transport.Tests
                 return response;
             }
 
+          
             public string SerializeMessage(IMessage message)
             {
                 return JsonConvert.SerializeObject(message, Json.JsonSettings);

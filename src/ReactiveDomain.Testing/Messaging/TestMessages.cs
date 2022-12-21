@@ -5,53 +5,25 @@ using System;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing {
 
-    public class TestMessage : IMessage {
-        public Guid MsgId { get; private set; }
-        public TestMessage()
-        {
-            MsgId = Guid.NewGuid();
-        }
-    }
-    public class TestMessage2 : IMessage {
-        public Guid MsgId { get; private set; }
-        public TestMessage2()
-        {
-            MsgId = Guid.NewGuid();
-        }
-    }
-    public class TestMessage3 : IMessage {
-        public Guid MsgId { get; private set; }
-        public TestMessage3()
-        {
-            MsgId = Guid.NewGuid();
-        }
-    }
-    public class ParentTestMessage : IMessage {
-        public Guid MsgId { get; private set; }
-        public ParentTestMessage()
-        {
-            MsgId = Guid.NewGuid();
-        }
-    }
+    public class TestMessage : Message {}
+    public class TestMessage2 : Message {}
+    public class TestMessage3 : Message {}
+    public class ParentTestMessage : Message {}
     public class ChildTestMessage : ParentTestMessage {}
     public class GrandChildTestMessage : ChildTestMessage {}
-    public class CountedTestMessage : IMessage
+    public class CountedTestMessage : Message
     {
-        public Guid MsgId { get; private set; }
         public int MessageNumber;
         public CountedTestMessage(int msgNumber) {
-            MsgId = Guid.NewGuid();
             MessageNumber = msgNumber;
         }
     }
 
-    public class CountedEvent : ICorrelatedMessage {
-        public Guid MsgId { get; private set; }
+    public class CountedEvent : Message, ICorrelatedMessage {
         public Guid CorrelationId { get; set; }
         public Guid CausationId { get; set; }
         public int MessageNumber;
         public CountedEvent(int msgNumber) {
-            MsgId = Guid.NewGuid();
             MessageNumber = msgNumber;
         }
     }

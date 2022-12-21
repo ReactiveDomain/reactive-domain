@@ -2,9 +2,13 @@ using System;
 using System.Diagnostics;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
+using System.Runtime.Versioning;
 
 namespace ReactiveDomain.Messaging.Monitoring.Utils
 {
+#if NETCOREAPP
+    [SupportedOSPlatform("windows")]
+#endif
     internal class PerfCounterHelper : IDisposable
     {
         private const int InvalidCounterResult = -1;

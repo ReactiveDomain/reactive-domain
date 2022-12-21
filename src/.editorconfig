@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# xUnit1031: Do not use blocking task operations in test method
+dotnet_diagnostic.xUnit1031.severity = suggestion
+
+# VSSpell001: Spell Check
+dotnet_diagnostic.VSSpell001.severity = suggestion
