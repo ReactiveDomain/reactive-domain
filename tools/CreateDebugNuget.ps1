@@ -33,11 +33,14 @@ Write-Host ("Copy ReactiveDomain build folder and nuspec files to a temp directo
 
 $TempDir = Join-Path $env:temp $TempNum.ToString()
 $buildDir = Join-Path $ReactiveDomainRepo "bld"
+$propsDir = Join-Path $ReactiveDomainRepo "build"
 $sourceDir = Join-Path $ReactiveDomainRepo "src"
 $tempBuildDir = Join-Path $TempDir "bld"
+$tempPropsDir = Join-Path $TempDir "build"
 $tempSourceDir = Join-Path $TempDir "src"
 New-Item -ItemType "directory" -Path $tempSourceDir
 Copy-Item -Path $buildDir -Destination $tempBuildDir -Recurse
+Copy-Item -Path $propsDir -Destination $tempPropsDir -Recurse
 
 #source nuspec file paths
 $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"

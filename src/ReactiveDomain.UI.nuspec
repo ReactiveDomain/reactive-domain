@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain.UI</id>
-    <version>0.9.2.0</version>
+    <version>0.9.3.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -11,11 +11,11 @@
     <copyright>Copyright © 2014-2022 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework="net48">
-        <dependency id="ReactiveDomain" version="0.9.2.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.9.3.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="9.22.1" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="ReactiveDomain" version="0.9.2.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.9.3.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="9.22.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
@@ -29,6 +29,7 @@
     </references>
   </metadata>
   <files>
+    <file src="..\build\ReactiveDomain.UI.props" target="build" />
     <file src="..\bld\Release\net48\ReactiveDomain.UI.dll" target="lib\net48" />
     <file src="..\bld\Debug\net48\ReactiveDomain.UI.pdb" target="lib\net48" />
     <file src="..\bld\Release\net48\ReactiveDomain.UI.dll" target="ref\net48" />
