@@ -27,13 +27,11 @@
       </group>
     </references>    
   </metadata>
-    <contentFiles>
-    <file src="..\bld\tools\ReactiveDomain.PolicyTool.exe" target="Build\PolicyTool.exe" />
-    <file src="..\bld\tools\es_settings.json" target="Build\es_settings.json" />
-  </contentFiles>
-	<files>
+  <files>
     <file src="..\build\ReactiveDomain.Policy.props" target="build" />
     <file src="ReactiveDomain.Policy.targets" target="build" />
+    <file src="..\bld\tools\ReactiveDomain.PolicyTool.exe" target="build\PolicyTool.exe" />
+    <file src="..\bld\tools\es_settings.json" target="build\es_settings.json" />
     
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.pdb" target="lib\netstandard2.0" />
     <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Policy.dll" target="lib\netstandard2.0" />
