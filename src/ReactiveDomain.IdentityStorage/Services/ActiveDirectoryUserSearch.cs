@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace ReactiveDomain.IdentityStorage.Services
 {
+#if NETCOREAPP
+    [SupportedOSPlatform("windows")]
+#endif
     public static class ActiveDirectoryUserSearch
     {
         public static List<Principal> FindUserPrincipal(string userName, PrincipalContext principalContext)

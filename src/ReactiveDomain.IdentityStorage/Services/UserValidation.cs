@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Claims;
 using IdentityModel;
 
@@ -15,7 +16,9 @@ namespace ReactiveDomain.IdentityStorage.Services
         public ClaimsPrincipal Identity;
         public string ErrorMessage;
     }
-
+#if NETCOREAPP
+    [SupportedOSPlatform("windows")]
+#endif
     public class UserValidation
     {
         private readonly UserStore _userStore;

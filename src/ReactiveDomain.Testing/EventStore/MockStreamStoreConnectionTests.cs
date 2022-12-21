@@ -44,8 +44,6 @@ namespace ReactiveDomain.Testing
             _fixturePair = new Tuple<IStreamStoreConnection, StreamStoreRepository>(fixture.Connection, fixtureRepo);
 
         }
-
-
         [Fact]
         public void can_save_new_aggregate()
         {
@@ -253,7 +251,6 @@ namespace ReactiveDomain.Testing
                         ((ProjectedEvent)re).ProjectedStream));
             }
         }
-
 
         public class TestEvent : IMessage
         {

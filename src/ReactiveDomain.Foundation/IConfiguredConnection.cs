@@ -12,8 +12,8 @@ namespace ReactiveDomain.Foundation
         IListener GetListener(string name);
         IListener GetQueuedListener(string name);
         IStreamReader GetReader(string name, Action<IMessage> handle);
-        IRepository GetRepository(bool caching = false);
-        ICorrelatedRepository GetCorrelatedRepository(IRepository baseRepository = null, bool caching = false);
+        IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null);
+        ICorrelatedRepository GetCorrelatedRepository(IRepository baseRepository = null, bool caching = false, Func<Guid> currentPolicyUserId = null);
 
     }
 }

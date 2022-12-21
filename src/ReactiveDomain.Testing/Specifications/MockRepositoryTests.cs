@@ -21,7 +21,6 @@ namespace ReactiveDomain.Testing
         {
             _fixture.Dispatcher.Unsubscribe<TestCommands.Command1>(this);
         }
-
         [Fact]
         public void can_get_repository_events()
         {
@@ -71,7 +70,6 @@ namespace ReactiveDomain.Testing
                 .RepositoryEvents
                 .AssertEmpty();
         }
-
         public CommandResponse Handle(TestCommands.Command1 command)
         {
             return command.Succeed();

@@ -1,5 +1,6 @@
 ﻿using System.DirectoryServices.AccountManagement;
 using ReactiveDomain.Util;
+using System.Runtime.Versioning;
 
 namespace ReactiveDomain.IdentityStorage.ReadModels
 {
@@ -10,6 +11,9 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         string Domain { get; }
         string SId { get; }
     }
+#if NETCOREAPP
+    [SupportedOSPlatform("windows")]
+#endif
     public class PrincipalWrapper : IPrincipal
     {
         private readonly UserPrincipal _principal;

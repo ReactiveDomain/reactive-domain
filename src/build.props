@@ -53,14 +53,14 @@
     <Choose>
       <When Condition="$(OS) == 'WINDOWS_NT'">
         <PropertyGroup>
-          <LibTargetFrameworks>net48;net6.0</LibTargetFrameworks>
+          <LibTargetFrameworks>net48;net6.0</LibTargetFrameworks> 
           <TestTargetFrameworks>net48;net6.0</TestTargetFrameworks>
         </PropertyGroup>
       </When>
       <When Condition=" $(OS) != 'WINDOWS_NT'">
         <PropertyGroup>
-          <LibTargetFrameworks>netstandard2.0</LibTargetFrameworks> <!--netstandard 2.0 is the highest version that still supports net48 -->
-          <TestTargetFrameworks>net6.0</TestTargetFrameworks><!-- for testing on linux we just want latest on core -->
+          <LibTargetFrameworks>net6.0</LibTargetFrameworks> 
+          <TestTargetFrameworks>net6.0</TestTargetFrameworks>
         </PropertyGroup>
       </When>
     </Choose>

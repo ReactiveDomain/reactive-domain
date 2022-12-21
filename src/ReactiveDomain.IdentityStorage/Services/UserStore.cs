@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
+using System.Runtime.Versioning;
 using System.Security.Claims;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Domain;
@@ -12,6 +13,9 @@ using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.IdentityStorage.Services
 {
+#if NETCOREAPP
+    [SupportedOSPlatform("windows")]
+#endif
     public class UserStore
     {
         private readonly UserSvc _userSvc;

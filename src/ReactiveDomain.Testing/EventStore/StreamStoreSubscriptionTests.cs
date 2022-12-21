@@ -26,11 +26,9 @@ namespace ReactiveDomain.Testing.EventStore
         {
             _admin = fixture.AdminCredentials;
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-#if !NETCOREAPP2_0 && !NETSTANDARD2_0 && !NET452
             var mockStreamStore = new MockStreamStoreConnection(nameof(MockStreamStoreConnection));
             mockStreamStore.Connect();
             _stores.Add(mockStreamStore);
-#endif
             fixture.Connection.Connect();
             _stores.Add(fixture.Connection);
 
@@ -59,7 +57,6 @@ namespace ReactiveDomain.Testing.EventStore
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
             }
         }
-
 
         [Fact]
         public void can_subscribe_to_stream()
@@ -269,7 +266,6 @@ namespace ReactiveDomain.Testing.EventStore
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
-
 
 
         public class StreamCreatedTestEvent : IMessage

@@ -6,6 +6,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using ReactiveDomain.Audit;
+using ReactiveDomain.Foundation.StreamStore;
+using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation
@@ -13,7 +16,7 @@ namespace ReactiveDomain.Foundation
     public class JsonMessageSerializer : IEventSerializer
     {
 
-        public static readonly JsonSerializerSettings StandardSerializerSettings;
+        public static JsonSerializerSettings StandardSerializerSettings => Json.JsonSettings;
         public JsonSerializerSettings SerializerSettings
         {
             get => _serializerSettings ?? StandardSerializerSettings;
@@ -22,39 +25,24 @@ namespace ReactiveDomain.Foundation
         private JsonSerializerSettings _serializerSettings;
         public string EventClrQualifiedTypeHeader = "EventClrQualifiedTypeName";
         public string EventClrTypeHeader = "EventClrTypeName";
+        private readonly bool _preferIMetadataSource;
+
         public bool FullyQualify { get; set; }
         public Assembly AssemblyOverride { get; set; }
         public bool ThrowOnTypeNotFound { get; set; }
-
-        static JsonMessageSerializer()
-        {
-            var contractResolver = new DefaultContractResolver();
-#pragma warning disable 618
-            contractResolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
-#pragma warning restore 618
-            StandardSerializerSettings = new JsonSerializerSettings()
-            {
-                ContractResolver = contractResolver,
-                TypeNameHandling = TypeNameHandling.Auto,
-                DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-                Converters = new JsonConverter[] { new StringEnumConverter() }
-            };           
-        }
 
         /// <summary>
         /// Creates an default instance of the JsonSerializer for serializing and Deserializing Events from
         /// streams in EventStore. consumers are urged to create dedicated serializers that implement IEventSerializer
         /// for any custom needs, such as seamless event upgrades
         /// </summary>
-        public JsonMessageSerializer(JsonMessageSerializerSettings messageSerializerSettings = null)
+        public JsonMessageSerializer(JsonMessageSerializerSettings messageSerializerSettings = null, bool PreferIMetadataSource = true)
         {
             if (messageSerializerSettings == null) { messageSerializerSettings = new JsonMessageSerializerSettings(); }
             FullyQualify = messageSerializerSettings.FullyQualify;
             AssemblyOverride = messageSerializerSettings.AssemblyOverride;
             ThrowOnTypeNotFound = messageSerializerSettings.ThrowOnTypeNotFound;
+            _preferIMetadataSource = PreferIMetadataSource;
         }
         public EventData Serialize(object @event, IDictionary<string, object> headers = null)
         {
@@ -73,8 +61,54 @@ namespace ReactiveDomain.Foundation
                 else { qualifiedName = $"{@event.GetType().FullName},{@event.GetType().Assembly.GetName()}"; }
                 headers.Add(EventClrQualifiedTypeHeader, qualifiedName);
             }
-
             var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(headers, SerializerSettings));
+            if (@event is IMetadataSource source && _preferIMetadataSource)
+            {
+                var md = source.ReadMetadata() ?? new Metadata();
+                var commonMetadata = new CommonMetadata();
+                //commit id
+                headers.TryGetValue("CommitId", out var CommitId);
+                if (CommitId is Guid commitGuid && commitGuid != Guid.Empty)
+                {
+                    commonMetadata.CommitId = commitGuid;
+                }
+                else
+                {
+                    commonMetadata.CommitId = Guid.NewGuid();
+                }
+                //aggregate name
+                headers.TryGetValue("AggregateClrTypeName", out var AggregateClrTypeName);
+                commonMetadata.AggregateName = (string)AggregateClrTypeName ?? "";
+                //event name
+                if (FullyQualify)
+                {
+                    commonMetadata.EventName = @event.GetType().AssemblyQualifiedName;
+                }
+                else
+                {
+                    commonMetadata.EventName = @event.GetType().FullName;
+                }
+                commonMetadata.EventAssembly = @event.GetType().Assembly.GetName().ToString();
+                md.Write(commonMetadata);
+                
+                //Audit Data Policy User
+                headers.TryGetValue("PolicyUserId", out var userId);
+                if (userId is Guid userIdGuid && userIdGuid != Guid.Empty)
+                {
+                    var auditRecord = new AuditRecord
+                    {
+                        PolicyUserId = userIdGuid,
+                        AggregateName = commonMetadata.AggregateName,
+                        EventName = commonMetadata.EventName,
+                        CommitId = commonMetadata.CommitId,
+                        EventDateUTC = DateTime.UtcNow,
+                    };
+                    md.Write(auditRecord);
+                }
+                
+                metadata = md.GetData().ToJsonBytes();
+            }
+
             var dString = JsonConvert.SerializeObject(@event, SerializerSettings);
             var data = Encoding.UTF8.GetBytes(dString);
             var typeName = @event.GetType().Name;
@@ -84,8 +118,28 @@ namespace ReactiveDomain.Foundation
 
         public object Deserialize(IEventData @event)
         {
-            var clrQualifiedName = (string)JObject.Parse(Encoding.UTF8.GetString(@event.Metadata))
-                                                    .Property(EventClrQualifiedTypeHeader).Value;
+            var metaDataObject = JObject.Parse(Encoding.UTF8.GetString(@event.Metadata));
+            var clrQualifiedName = (string)metaDataObject.Property(EventClrQualifiedTypeHeader)?.Value;
+            if (string.IsNullOrWhiteSpace(clrQualifiedName) || _preferIMetadataSource)
+            {
+                var md = new Metadata(metaDataObject, JsonSerializer.Create(Json.JsonSettings));
+                if (md.TryRead<CommonMetadata>(out var smd))
+                {
+                    if (!string.IsNullOrEmpty(smd?.EventFullyQualifiedName))
+                    {
+                        return Deserialize(@event, smd.EventFullyQualifiedName);
+                    }
+                    if (!string.IsNullOrEmpty(smd?.EventName))
+                    {
+                        var name = smd.EventName;
+                        if (!string.IsNullOrEmpty(smd?.EventAssembly))
+                        {
+                            name += $",{smd.EventAssembly}";
+                        }
+                        return Deserialize(@event, name);
+                    }
+                }
+            }
             return Deserialize(@event, clrQualifiedName);
         }
 
@@ -133,17 +187,41 @@ namespace ReactiveDomain.Foundation
 
         public object Deserialize(IEventData @event, Type type)
         {
-            return JsonConvert.DeserializeObject(
+            var obj = JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(@event.Data),
                 type,
                 SerializerSettings);
+            if (obj is IMetadataSource mdObject)
+            {
+                try
+                {
+                    mdObject.Initialize(new Metadata(JObject.Parse(Encoding.UTF8.GetString(@event.Metadata)), JsonSerializer.Create(Json.JsonSettings)));
+                }
+                catch (Exception)
+                {
+                    //ignore
+                }
+            }
+            return obj;
         }
         public TEvent Deserialize<TEvent>(IEventData @event)
         {
-            return (TEvent)JsonConvert.DeserializeObject(
+            var evt = (TEvent)JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(@event.Data),
                 typeof(TEvent),
                 SerializerSettings);
+            if (evt is IMetadataSource mdObject)
+            {
+                try
+                {
+                    mdObject.Initialize(new Metadata(JObject.Parse(Encoding.UTF8.GetString(@event.Metadata)), JsonSerializer.Create(Json.JsonSettings)));
+                }
+                catch (Exception)
+                {
+                    //ignore
+                }
+            }
+            return evt;
         }
 
     }

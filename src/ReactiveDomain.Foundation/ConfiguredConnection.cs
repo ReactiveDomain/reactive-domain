@@ -37,18 +37,18 @@ namespace ReactiveDomain.Foundation
             return new StreamReader(name, Connection, StreamNamer, Serializer, handle);
         }
 
-        public IRepository GetRepository(bool caching = false)
+        public IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null)
         {
-            IRepository repo = new StreamStoreRepository(StreamNamer, Connection, Serializer);
+            IRepository repo = new StreamStoreRepository(StreamNamer, Connection, Serializer, currentPolicyUserId);
             return caching
                 ? new ReadThroughAggregateCache(repo)
                 : repo;
         }
 
         public ICorrelatedRepository GetCorrelatedRepository(
-            IRepository baseRepository = null, bool caching = false)
+            IRepository baseRepository = null, bool caching = false, Func<Guid> currentPolicyUserId = null)
         {
-            return new CorrelatedStreamStoreRepository(baseRepository ?? GetRepository(caching));
+            return new CorrelatedStreamStoreRepository(baseRepository ?? GetRepository(caching, currentPolicyUserId));
         }
 
     }

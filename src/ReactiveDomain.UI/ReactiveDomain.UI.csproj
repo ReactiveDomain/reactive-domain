@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net48</TargetFrameworks>
+    <TargetFrameworks>net48</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
  
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="reactiveui" Version="9.22.1" />
   </ItemGroup>
   <ItemGroup>

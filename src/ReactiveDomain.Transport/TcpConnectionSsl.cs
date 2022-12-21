@@ -125,7 +125,9 @@ namespace ReactiveDomain.Transport
                 _sslStream = new SslStream(new NetworkStream(socket, true), false);
                 try
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     _sslStream.BeginAuthenticateAsServer(certificate, false, SslProtocols.Default, true, OnEndAuthenticateAsServer, _sslStream);
+#pragma warning restore CS0618 // Type or member is obsolete
                 }
                 catch (AuthenticationException exc)
                 {

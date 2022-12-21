@@ -11,11 +11,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="21.2.2" Condition="" />   
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="EventStore.Client" Version="22.0.0" Condition="" />   
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+    <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
   </ItemGroup>
 </Project>
