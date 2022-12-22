@@ -43,7 +43,7 @@ namespace ReactiveDomain.Util
         }
 
         /// <summary>
-        /// Ensure that the argument (ICollection) is neither null nor empty (throw an exception if it is)
+        /// Ensure that the argument (IEnumerable) is neither null nor empty (throw an exception if it is)
         /// </summary>
         /// <param name="argument"></param>
         /// <param name="argumentName"></param>
