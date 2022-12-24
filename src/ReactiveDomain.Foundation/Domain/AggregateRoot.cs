@@ -14,8 +14,7 @@ namespace ReactiveDomain
         protected AggregateRoot(ICorrelatedMessage source = null)
         {
             if (source == null) { return; }
-            _correlationId = source.CorrelationId;
-            _causationId = source.MsgId;
+            Source = source;
         }
 
         internal void RegisterChild(ChildEntity childAggregate, out Action<object> raise, out EventRouter router)
@@ -27,7 +26,7 @@ namespace ReactiveDomain
 
         private Guid _correlationId;
         private Guid _causationId;
-        ICorrelatedMessage ICorrelatedEventSource.Source
+        public ICorrelatedMessage Source
         {
             get
             {
