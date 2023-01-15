@@ -14,10 +14,11 @@ namespace ReactiveDomain.Testing
         public IStreamStoreConnection StreamStoreConnection { get; }
         public IEventSerializer EventSerializer { get; }
         public IConfiguredConnection ConfiguredConnection { get; }
-        public string Schema { get; set; } = "Test";
+        public string Schema { get; }
 
-        public MockRepositorySpecification()
+        public MockRepositorySpecification(string schema = "Test")
         {
+            Schema = schema;
             StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(Schema);
             StreamStoreConnection = new MockStreamStoreConnection(Schema);
             StreamStoreConnection.Connect();
