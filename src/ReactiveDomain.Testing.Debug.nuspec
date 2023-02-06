@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes ReactiveDomain assemblies needed for unit testing</description>
-    <copyright>Copyright © 2014-2022 PerkinElmer Inc., Linedata Inc.</copyright>
+    <copyright>Copyright © 2014-2023 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>      
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.11.0" exclude="Build,Analyzers" />

@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain UI assemblies for unit testing</description>
-    <copyright>Copyright © 2014-2022 PerkinElmer Inc., Linedata Inc.</copyright>
+    <copyright>Copyright © 2014-2023 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework="net48">
         <dependency id="ReactiveDomain.Testing" version="0.9.3.0" exclude="Build,Analyzers" />
