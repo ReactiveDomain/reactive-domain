@@ -261,3 +261,4 @@ paket-files/
 src/ReactiveDomain/.vs/ReactiveDomain/v14/.suo
 .vscode/
 /history
+/nupkgs

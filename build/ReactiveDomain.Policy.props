@@ -1,0 +1,10 @@
+<Project>
+  <ItemGroup>
+    <Compile Update="@(Compile)">
+      <Visible Condition="'%(NuGetItemType)' == 'Compile' and '%(NuGetPackageId)' == 'ReactiveDomain.Policy'">false</Visible>
+    </Compile>
+    <None Include="@(None)">
+      <Visible Condition="'%(NuGetItemType)' == 'None' and '%(NuGetPackageId)' == 'ReactiveDomain.Policy'">false</Visible>
+    </None>
+  </ItemGroup>
+</Project>

@@ -3,10 +3,12 @@
       <None Include="$(MSBuildThisFileDirectory)PolicyTool.exe">
         <Link>PolicyTool.exe</Link>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <Visible>false</Visible>
       </None>
       <None Include="$(MSBuildThisFileDirectory)es_settings.json">
         <Link>es_settings.json</Link>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <Visible>false</Visible>
       </None>
     </ItemGroup>
   </Project>
