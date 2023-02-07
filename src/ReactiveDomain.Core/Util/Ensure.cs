@@ -26,8 +26,9 @@ namespace ReactiveDomain.Util
         public static void NotNullOrEmpty(string argument, string argumentName)
         {
             if (string.IsNullOrEmpty(argument))
-                throw new ArgumentNullException(argument, argumentName);
+                throw new ArgumentNullException(argumentName, argument);
         }
+
         /// <summary>
         /// Ensure that the argument (ICollection) is neither null nor empty (throw an exception if it is)
         /// </summary>
@@ -38,6 +39,19 @@ namespace ReactiveDomain.Util
             if (argument == null)
                 throw new ArgumentNullException(argumentName);
             if (argument.Count < 1)
+                throw new ArgumentOutOfRangeException(argumentName, argumentName + " must have items.");
+        }
+
+        /// <summary>
+        /// Ensure that the argument (IEnumerable) is neither null nor empty (throw an exception if it is)
+        /// </summary>
+        /// <param name="argument"></param>
+        /// <param name="argumentName"></param>
+        public static void NotNullOrEmpty<T>(IEnumerable<T> argument, string argumentName)
+        {
+            if (argument == null)
+                throw new ArgumentNullException(argumentName);
+            if (!argument.Any())
                 throw new ArgumentOutOfRangeException(argumentName, argumentName + " must have items.");
         }
 
@@ -115,7 +129,7 @@ namespace ReactiveDomain.Util
         public static void NotEmptyGuid(Guid guid, string argumentName)
         {
             if (Guid.Empty == guid)
-                throw new ArgumentException(argumentName, argumentName + " shoud be non-empty GUID.");
+                throw new ArgumentException(argumentName + " should be non-empty GUID.", argumentName);
         }
 
         /// <summary>
@@ -173,7 +187,7 @@ namespace ReactiveDomain.Util
         /// <param name="argumentName"></param>
         public static void PowerOf2(int argument, string argumentName)
         {
-            if ((argument <= 0) || (((uint)argument) & ((uint)argument - 1)) != 0)
+            if (argument <= 0 || ((uint)argument & ((uint)argument - 1)) != 0)
                 throw new ArgumentException($"{argumentName}: {argument} is not a power of 2");
         }
 
