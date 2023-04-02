@@ -32,32 +32,30 @@ namespace ReactiveDomain.IdentityStorage.Tests
             _fixture = new MockRepositorySpecification();
             AddUsers();
             _rm = new UsersRm(_fixture.ConfiguredConnection);
-
         }
-
-
 
         [Fact]
         public void correct_users_exist()
         {
-            Assert.True(_rm.UsersById.ContainsKey(_id1));
-            Assert.True(_rm.HasUser(SubjectId, AuthDomain, out _));
-            Assert.True(_rm.UsersById.ContainsKey(_id2));
-            Assert.True(_rm.HasUser(SubjectId2, AuthDomain, out _));
+            AssertEx.IsOrBecomesTrue(() => _rm.UsersById.ContainsKey(_id1));
+            AssertEx.IsOrBecomesTrue(() => _rm.HasUser(SubjectId, AuthDomain, out _));
+            AssertEx.IsOrBecomesTrue(() => _rm.UsersById.ContainsKey(_id2));
+            AssertEx.IsOrBecomesTrue(() => _rm.HasUser(SubjectId2, AuthDomain, out _));
 
             Assert.False(_rm.UsersById.ContainsKey(Guid.NewGuid()));
             Assert.False(_rm.UsersById.ContainsKey(Guid.Empty));
             Assert.False(_rm.HasUser(AuthDomain, "bogus", out _));
             Assert.False(_rm.HasUser("bogus", SubjectId, out _));
-
         }
 
         [Fact]
         public void can_get_user_id_by_SID()
         {
-            Assert.True(_rm.HasUser(SubjectId, AuthDomain, out var id1));
+            var id1 = Guid.Empty;
+            var id2 = Guid.Empty;
+            AssertEx.IsOrBecomesTrue(() => _rm.HasUser(SubjectId, AuthDomain, out id1));
             Assert.Equal(_id1, id1);
-            Assert.True(_rm.HasUser(SubjectId2, AuthDomain, out var id2));
+            AssertEx.IsOrBecomesTrue(() => _rm.HasUser(SubjectId2, AuthDomain, out id2));
             Assert.Equal(_id2, id2);
         }
 
@@ -65,7 +63,6 @@ namespace ReactiveDomain.IdentityStorage.Tests
         [Fact]
         public void cannot_get_nonexistent_user()
         {
-
             Assert.False(_rm.HasUser(SubjectId, "bogus", out _));
             Assert.False(_rm.HasUser("bogus", AuthDomain, out _));
         }

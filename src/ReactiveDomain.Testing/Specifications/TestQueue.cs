@@ -167,7 +167,7 @@ namespace ReactiveDomain.Testing
 
                     while (!waithandle.Wait(10))
                     {
-                        if (DateTime.Now > deadline) { throw new TimeoutException(); }
+                        if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
                         if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
                     }
                 }

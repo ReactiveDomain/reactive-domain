@@ -151,8 +151,8 @@ namespace ReactiveDomain.Testing.Specifications
                     .ContinueWith( _ => _dispatcher.Publish(evt));
 
                 Parallel.Invoke(
-                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200)),
-                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200))
+                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)),
+                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000))
                     );
                 
                 tq.AssertNext<TestEvent>(evt.CorrelationId)

@@ -34,6 +34,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         }
         public bool TryGetSubjectIdForUser(Guid userId, string provider, string domain, out Guid subjectId)
         {
+            subjectId = Guid.Empty;
             try
             {
                 if (SubjectsByUserId.TryGetValue(GetDomainCategory(provider, domain), out var subList))
@@ -43,16 +44,15 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
             }
             catch
             {
-                subjectId = Guid.Empty;
                 return false;
             }
             return false;
         }
         public bool TryGetSubjectIdForPrincipal(IPrincipal principal, out Guid subjectId)
         {
+            subjectId = Guid.Empty;
             try
             {
-
                 if (SubjectsBySubClaim.TryGetValue(GetDomainCategory(principal.Provider, principal.Domain), out var subList))
                 {
                     return subList.TryGetValue(principal.SId, out subjectId);
@@ -60,7 +60,6 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
             }
             catch
             {
-                subjectId = Guid.Empty;
                 return false;
             }
             return false;

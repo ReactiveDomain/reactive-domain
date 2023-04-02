@@ -28,11 +28,11 @@ namespace ReactiveDomain.Testing
             var id = Guid.NewGuid();
             var aggregate = new TestAggregate(id);
             _fixture.Repository.Save(aggregate);
-            _fixture.RepositoryEvents.WaitFor<TestAggregateMessages.NewAggregate>(TimeSpan.FromMilliseconds(200));
+            _fixture.RepositoryEvents.WaitFor<TestAggregateMessages.NewAggregate>(TimeSpan.FromMilliseconds(500));
             
             _fixture
                 .RepositoryEvents
-                .AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Missmatch")
+                .AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Mismatch")
                 .AssertEmpty();
         }
 

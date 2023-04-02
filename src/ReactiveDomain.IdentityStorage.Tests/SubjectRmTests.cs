@@ -2,6 +2,7 @@
 using ReactiveDomain.Testing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.IdentityStorage.ReadModels;
@@ -28,12 +29,14 @@ namespace ReactiveDomain.IdentityStorage.Tests
         [Fact]
         public void readmodel_lists_existing_subjects()
         {
+            AssertEx.IsOrBecomesTrue(() => _rm.SubjectsByUserId.Any() && _subjects.First().Value.Count == _rm.SubjectsByUserId.First().Value.Count);
             Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
         [Fact]
         public void readmodel_lists_added_subjects()
         {
             AddNewSubject();
+            AssertEx.IsOrBecomesTrue(() => _rm.SubjectsByUserId.Any() && _subjects.First().Value.Count == _rm.SubjectsByUserId.First().Value.Count);
             Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
 
@@ -44,6 +47,8 @@ namespace ReactiveDomain.IdentityStorage.Tests
             AddNewSubject(userId, provider: AuthProvider, domain: AuthDomain);
             AddNewSubject(provider: AuthProvider2, domain: "other1");
             AddNewSubject(provider: AuthProvider2, domain: "other2");
+            AssertEx.IsOrBecomesTrue(() => _rm.SubjectsByUserId.Any() && _subjects.First().Value.Count == _rm.SubjectsByUserId.First().Value.Count);
+            AssertEx.IsOrBecomesTrue(() => _rm.SubjectsByUserId.Any() && _subjects.Last().Value.Count == _rm.SubjectsByUserId.Last().Value.Count);
             Assert.Equal(_subjects, _rm.SubjectsByUserId);
         }
         [Fact]
@@ -55,7 +60,10 @@ namespace ReactiveDomain.IdentityStorage.Tests
             var sub1 = AddNewSubject(user1, provider: AuthProvider2, domain: "other1");
             var sub2 = AddNewSubject(user2, provider: AuthProvider2, domain: "other2");
             var sub3 = AddNewSubject(user3);
-            Guid testSub = Guid.Empty;
+            AssertEx.IsOrBecomesTrue(() => _subjects.Count == _rm.SubjectsByUserId.Count);
+            AssertEx.IsOrBecomesTrue(() => _subjects.First().Value.Count == _rm.SubjectsByUserId.First().Value.Count);
+            AssertEx.IsOrBecomesTrue(() => _subjects.Last().Value.Count == _rm.SubjectsByUserId.Last().Value.Count);
+            var testSub = Guid.Empty;
             AssertEx.IsOrBecomesTrue(()=> _rm.TryGetSubjectIdForUser(user1, AuthProvider2, "other1", out testSub));
             Assert.Equal(sub1, testSub);
             Assert.True(_rm.TryGetSubjectIdForUser(user2, AuthProvider2, "other2", out testSub));
@@ -69,7 +77,8 @@ namespace ReactiveDomain.IdentityStorage.Tests
             var userId = Guid.NewGuid();            
             var subjectId = AddNewSubject(userId, provider: AuthProvider, domain: AuthDomain);
             var user = new MockPrincipal { Provider = AuthProvider, Domain = AuthDomain, SId = userId.ToString() };
-            Assert.True(_rm.TryGetSubjectIdForPrincipal(user, out var id));
+            var id = Guid.Empty;
+            AssertEx.IsOrBecomesTrue(() => _rm.TryGetSubjectIdForPrincipal(user, out id));
             Assert.Equal(subjectId, id);
         }
         [Fact]
@@ -83,16 +92,16 @@ namespace ReactiveDomain.IdentityStorage.Tests
         {
             var user1 = Guid.NewGuid();
             var sub1 = AddNewSubject(user1, AuthProvider, AuthDomain);
+            //yes
+            var testSub = Guid.Empty;
+            AssertEx.IsOrBecomesTrue(() => _rm.TryGetSubjectIdForUser(user1, AuthProvider, AuthDomain, out testSub));
+            Assert.Equal(sub1, testSub);
             //no
-            Assert.False(_rm.TryGetSubjectIdForUser(user1, AuthProvider, "other1", out Guid testSub));
+            Assert.False(_rm.TryGetSubjectIdForUser(user1, AuthProvider, "other1", out testSub));
             Assert.Equal(Guid.Empty, testSub);
             //no
             Assert.False(_rm.TryGetSubjectIdForUser(user1, AuthProvider2, AuthDomain, out testSub));
             Assert.Equal(Guid.Empty, testSub);
-            //yes
-            Assert.True(_rm.TryGetSubjectIdForUser(user1, AuthProvider, AuthDomain, out testSub));
-            Assert.Equal(sub1, testSub);
-
         }
         private void AddSubjects(int count)
         {
