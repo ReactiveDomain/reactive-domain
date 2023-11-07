@@ -7,7 +7,6 @@
   <ItemGroup>
     <Compile Remove="EventStoreCatchUpSubscription.cs" />
     <Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
-    <Compile Remove="ScopedSerialization\Message.cs" />
     <Compile Remove="StreamSubscription.cs" />
   </ItemGroup>
   
