@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Ignore Spelling: metadatum
+
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -69,21 +71,28 @@ namespace ReactiveDomain
 			return false;
 		}
 
-        /// <summary>
-        /// Adds or replaces a metadata object of a type.
+		/// <summary>
+		/// Adds or replaces a metadata object of a type.
 		/// </summary>
-        /// <typeparam name="T">The type of metadata to write.</typeparam>
-        /// <param name="metadatum">The metadata object to write.</param>
-        public void Write<T>(T metadatum)
+		/// <typeparam name="T">The type of metadata to write.</typeparam>
+		/// <param name="metadatum">The metadata object to write.</param>
+		public void Write<T>(T metadatum)
 		{
-			_cache[typeof(T).Name] = metadatum;
+			if (!_cache.ContainsKey(typeof(T).Name))
+			{
+				_cache.Add(typeof(T).Name, metadatum);
+			}
+			else
+			{
+				_cache[typeof(T).Name] = metadatum;
+			}
 		}
 
         /// <summary>
         /// Gets a read-only dictionary of the values, indexed by type name.
         /// </summary>
         /// <returns>A dictionary of metadata types and their values.</returns>
-        internal IReadOnlyDictionary<string, object> GetData()
+        public IReadOnlyDictionary<string, object> GetData()
 		{
 			return _cache;
 		}
