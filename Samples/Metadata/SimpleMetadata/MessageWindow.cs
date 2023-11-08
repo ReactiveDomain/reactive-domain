@@ -7,7 +7,7 @@
 //      You can make changes to this file and they will not be overwritten when saving.
 //  </auto-generated>
 // -----------------------------------------------------------------------------
-namespace Sample1
+namespace Metadata_Sample_App
 {
     using Metadata_Sample_App;
     using ReactiveDomain;

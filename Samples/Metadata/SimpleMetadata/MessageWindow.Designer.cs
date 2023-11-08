@@ -8,7 +8,8 @@
 //      the code is regenerated.
 //  </auto-generated>
 // -----------------------------------------------------------------------------
-namespace Sample1 {
+namespace Metadata_Sample_App
+{
     using System;
     using Terminal.Gui;
     
