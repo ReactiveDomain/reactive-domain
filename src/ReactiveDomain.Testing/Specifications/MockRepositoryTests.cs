@@ -21,7 +21,7 @@ namespace ReactiveDomain.Testing
         {
             _fixture.Dispatcher.Unsubscribe<TestCommands.Command1>(this);
         }
-
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void can_get_repository_events()
         {
@@ -71,7 +71,7 @@ namespace ReactiveDomain.Testing
                 .RepositoryEvents
                 .AssertEmpty();
         }
-
+#endif
         public CommandResponse Handle(TestCommands.Command1 command)
         {
             return command.Succeed();

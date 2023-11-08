@@ -59,7 +59,7 @@ namespace ReactiveDomain.Testing.EventStore
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
             }
         }
-
+#if !NETSTANDARD //net standard cannot be used to run tests
 
         [Fact]
         public void can_subscribe_to_stream()
@@ -269,7 +269,7 @@ namespace ReactiveDomain.Testing.EventStore
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
         }
-
+#endif
 
 
         public class StreamCreatedTestEvent : IMessage

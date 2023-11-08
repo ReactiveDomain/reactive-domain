@@ -23,7 +23,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             return command.Succeed();
         }
-               
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void can_wait_on_base_types()
         {
@@ -231,7 +231,7 @@ namespace ReactiveDomain.Testing.Specifications
                     .AssertEmpty();
             }
         }
-
+#endif
         public void Dispose()
         {
             _dispatcher?.Dispose();

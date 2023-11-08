@@ -31,7 +31,7 @@ namespace ReactiveDomain.Testing
             _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
             _repo = new StreamStoreRepository(_streamNameBuilder, _connection, new JsonMessageSerializer());
         }
-
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void CanGetLatestVersionById()
         {
@@ -157,5 +157,6 @@ namespace ReactiveDomain.Testing
             //Looks like an api change
             Assert.Throws<AggregateNotFoundException>(() => _repo.GetById<TestWoftamAggregate>(aggregateId));
         }
+#endif
     }
 }

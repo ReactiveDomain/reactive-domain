@@ -45,7 +45,7 @@ namespace ReactiveDomain.Testing
 
         }
 
-
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void can_save_new_aggregate()
         {
@@ -253,7 +253,7 @@ namespace ReactiveDomain.Testing
                         ((ProjectedEvent)re).ProjectedStream));
             }
         }
-
+#endif
 
         public class TestEvent : IMessage
         {

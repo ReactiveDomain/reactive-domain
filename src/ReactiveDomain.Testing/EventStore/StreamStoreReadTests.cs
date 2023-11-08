@@ -33,6 +33,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
             }
         }
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void connection_name_is_set() {
             var name = "FooConnection";
@@ -301,6 +302,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
             }
         }
+ #endif
         public class ReadTestTestEvent : IMessage {
             public Guid MsgId { get; private set; }
             public readonly int MessageNumber;

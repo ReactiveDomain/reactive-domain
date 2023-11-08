@@ -6,6 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing {
     public class MessageHierarchyTest {
+#if !NETSTANDARD //net standard cannot be used to run tests
         [Fact]
         public void TestNameLookup() {
             var messageType = MessageHierarchy.GetTypeByName("Message");
@@ -89,5 +90,6 @@ namespace ReactiveDomain.Testing {
         //    Assert.Contains(loadedType, descendants);
         //    Assert.Contains(loadedChildType, descendants);
         //}
+#endif
     }
 }
