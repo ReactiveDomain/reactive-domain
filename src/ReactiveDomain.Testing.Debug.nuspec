@@ -2,31 +2,44 @@
 <package>
   <metadata>
     <id>ReactiveDomain.Testing</id>
-    <version>0.9.3.0</version>
+    <version>0.10.0.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes ReactiveDomain assemblies needed for unit testing</description>
     <copyright>Copyright © 2014-2023 PerkinElmer Inc., Linedata Inc.</copyright>
-    <dependencies>      
-      <group targetFramework="netstandard2.0">
+    <dependencies>
+      <group targetFramework="net48">
         <dependency id="Microsoft.NET.Test.Sdk" version="16.11.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain" version="0.9.3.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.10.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net6.0">
+        <dependency id="Microsoft.NET.Test.Sdk" version="16.11.0" exclude="Build,Analyzers" />
+        <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
+        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.10.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
-      <group targetFramework="netstandard2.0">
+      <group targetFramework="net48">
+        <reference file="ReactiveDomain.Testing.dll" />
+      </group>
+      <group targetFramework="net6.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
     </references>
   </metadata>
   <files>
     <file src="..\build\ReactiveDomain.Testing.props" target="build" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.pdb" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.dll" target="lib\netstandard2.0" />
-    <file src="..\bld\Debug\netstandard2.0\ReactiveDomain.Testing.dll" target="ref\netstandard2.0" />   
+    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.pdb" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.dll" target="lib\net48" />
+    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.dll" target="ref\net48" />
+
+    <file src="..\bld\Debug\net6.0\ReactiveDomain.Testing.pdb" target="lib\net6.0" />
+    <file src="..\bld\Debug\net6.0\ReactiveDomain.Testing.dll" target="lib\net6.0" />
+    <file src="..\bld\Debug\net6.0\ReactiveDomain.Testing.dll" target="ref\net6.0" />
   </files>
 </package>

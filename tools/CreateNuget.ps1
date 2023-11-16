@@ -42,7 +42,7 @@ if ($buildType -eq "debug")
  
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
-$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\netstandard2.0\ReactiveDomain.Core.dll"
+$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net6.0\ReactiveDomain.Core.dll"
 $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
 $ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
 $ReactiveDomainPolicyNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Policy" + $nuspecExtension
@@ -87,7 +87,7 @@ class PackagRef
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
 #         ConditionOperator - (the equality operator for a framework, == or !=)
-#         Framework - The framework this Packageref applies to: (net452, net472, netstandard2.0)
+#         Framework - The framework this Packageref applies to: (net48, net6.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
 {
@@ -138,9 +138,9 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
         $currentFramework = "net48"
     }
       
-    if ($currentCondition -match "netstandard2.0")
+    if ($currentCondition -match "net6.0")
     {
-        $currentFramework = "netstandard2.0"
+        $currentFramework = "net6.0"
     }
 
     $myObj = New-Object -TypeName PackagRef 
@@ -168,8 +168,8 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
     $f48 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net48']"
     $framework48Nodes = $f48.Node.ChildNodes
        
-    $netstandard2 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='netstandard2.0']"
-    $netstandard2Nodes = $netstandard2.Node.ChildNodes
+    $net6 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net6.0']"
+    $net6Nodes = $net6.Node.ChildNodes
    
     
     foreach($refnode in $framework48Nodes)
@@ -190,7 +190,7 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
         }      
     }   
 
-    foreach($refnode in $netstandard2Nodes)
+    foreach($refnode in $net6Nodes)
     {
         if ( $refnode.id -match "ReactiveDomain")
         {
@@ -198,10 +198,10 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             continue
         }
         
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "netstandard2.0"
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net6.0"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "netstandard2.0") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "netstandard2.0")) -and
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net6.0") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net6.0")) -and
             ($pRef.version -ne ""))
         { 
             $refnode.version = $pRef.Version
