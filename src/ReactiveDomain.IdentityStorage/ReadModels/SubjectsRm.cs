@@ -12,7 +12,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         IHandle<SubjectMsgs.SubjectCreated>
     {
         public SubjectsRm(IConfiguredConnection conn)
-            : base(nameof(SubjectsRm), () => conn.GetListener(nameof(SubjectsRm)))
+            : base(nameof(SubjectsRm), conn)
         {
             //set handlers
             EventStream.Subscribe<SubjectMsgs.SubjectCreated>(this);

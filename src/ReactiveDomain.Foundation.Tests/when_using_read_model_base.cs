@@ -11,14 +11,6 @@ namespace ReactiveDomain.Foundation.Tests {
                     IHandle<when_using_read_model_base.ReadModelTestEvent>,
                     IClassFixture<StreamStoreConnectionFixture> {
 
-        private static IListener GetListener() {
-            return new QueuedStreamListener(
-                        nameof(when_using_read_model_base),
-                        _conn,
-                        Namer,
-                        Serializer);
-        }
-
         private static IStreamStoreConnection _conn;
         private static readonly IEventSerializer Serializer =
             new JsonMessageSerializer();
@@ -30,8 +22,7 @@ namespace ReactiveDomain.Foundation.Tests {
 
 
         public when_using_read_model_base(StreamStoreConnectionFixture fixture)
-                    : base(nameof(when_using_read_model_base), GetListener) {
-            //_conn = new MockStreamStoreConnection("mockStore");
+                    : base(nameof(when_using_read_model_base), new ConfiguredConnection(fixture.Connection, Namer, Serializer)) {
             _conn = fixture.Connection;
             _conn.Connect();
 

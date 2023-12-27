@@ -19,7 +19,7 @@ namespace ReactiveDomain.IdentityStorage.ReadModels
         private readonly SourceCache<UserDTO, Guid> _allUsers = new SourceCache<UserDTO, Guid>(x => x.UserId);
 
         private readonly List<Guid> _userIds = new List<Guid>();
-        public UsersRm(IConfiguredConnection conn) : base(nameof(UsersRm), () => conn.GetListener(nameof(UsersRm)))
+        public UsersRm(IConfiguredConnection conn) : base(nameof(UsersRm), conn)
         {
             long? position;
             EventStream.Subscribe<UserMsgs.UserEvent>(this);

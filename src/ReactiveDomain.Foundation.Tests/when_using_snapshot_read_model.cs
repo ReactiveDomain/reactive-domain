@@ -9,14 +9,8 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests {
     // ReSharper disable once InconsistentNaming
     public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectionFixture> {
-        private IListener GetListener() {
-            return new QueuedStreamListener(
-                nameof(when_using_read_model_base),
-                _conn,
-                _namer,
-                _serializer);
-        }
 
+        private readonly IConfiguredConnection _configuredConnection;
         private readonly IStreamStoreConnection _conn;
         private readonly IEventSerializer _serializer =
             new JsonMessageSerializer();
@@ -39,6 +33,7 @@ namespace ReactiveDomain.Foundation.Tests {
         public when_using_snapshot_read_model(StreamStoreConnectionFixture fixture) {
             _conn = fixture.Connection;
             _conn.Connect();
+            _configuredConnection = new ConfiguredConnection(_conn, _namer, _serializer);
 
             _aggId = Guid.NewGuid();
             _stream = _namer.GenerateForAggregate(typeof(SnapReadModelTestAggregate), _aggId);
@@ -48,7 +43,7 @@ namespace ReactiveDomain.Foundation.Tests {
         }
         [Fact]
         public void can_get_snapshot_from_read_model() {
-            var rm = new TestSnapShotReadModel(_aggId, GetListener, null);
+            var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
             AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
             var snapshot = rm.GetState();
 
@@ -68,7 +63,7 @@ namespace ReactiveDomain.Foundation.Tests {
                                 new List<Tuple<string, long>> { new Tuple<string, long>(_stream, 9) },
                                 new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
-            var rm = new TestSnapShotReadModel(_aggId, GetListener, snapshot);
+            var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
             AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
             AppendEvents(1, _conn, _stream, 5);
@@ -78,7 +73,7 @@ namespace ReactiveDomain.Foundation.Tests {
         [Fact]
         [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
         public void can_snapshot_and_recover_read_model() {
-            var rm = new TestSnapShotReadModel(_aggId, GetListener, null);
+            var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
             AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
             AppendEvents(1, _conn, _stream, 5);
@@ -86,7 +81,7 @@ namespace ReactiveDomain.Foundation.Tests {
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 25);
             var snap = rm.GetState();
             rm.Dispose();
-            var rm2 = new TestSnapShotReadModel(_aggId, GetListener, snap);
+            var rm2 = new TestSnapShotReadModel(_aggId, _configuredConnection, snap);
             AssertEx.IsOrBecomesTrue(() => rm2.Count == 11, 1000);
             AssertEx.IsOrBecomesTrue(() => rm2.Sum == 25);
             AppendEvents(1, _conn, _stream, 5);
@@ -95,15 +90,15 @@ namespace ReactiveDomain.Foundation.Tests {
         }
         [Fact]
         public void can_only_restore_once() {
-            var rm = new TestSnapShotReadModel(_aggId, GetListener, null);
+            var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
             // ReSharper disable once AccessToDisposedClosure
             AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
             var state = rm.GetState();
             rm.Dispose();
             //create while forcing double restore
             Assert.Throws<InvalidOperationException>(() => new TestSnapShotReadModel(
-                                                                    _aggId, 
-                                                                    GetListener, 
+                                                                    _aggId,
+                                                                    _configuredConnection, 
                                                                     state,
                                                                     forceDoubleRestoreError:true));
         }
@@ -114,7 +109,7 @@ namespace ReactiveDomain.Foundation.Tests {
                 null, //no streams provided
                 new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
-            var rm = new TestSnapShotReadModel(_aggId, GetListener, snapshot);
+            var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
             AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
             
@@ -135,7 +130,7 @@ namespace ReactiveDomain.Foundation.Tests {
             //can still get complete snapshot
             var snap2 = rm.GetState();
             //works as expected
-            var rm2 = new TestSnapShotReadModel(_aggId, GetListener, snap2);
+            var rm2 = new TestSnapShotReadModel(_aggId, _configuredConnection, snap2);
             AssertEx.IsOrBecomesTrue(() => rm2.Count == 12, 1000);
             AssertEx.IsOrBecomesTrue(() => rm2.Sum == 30);
             AppendEvents(1, _conn, _stream, 5);
@@ -148,10 +143,10 @@ namespace ReactiveDomain.Foundation.Tests {
             IHandle<SnapReadModelTestEvent> {
             public TestSnapShotReadModel(
                     Guid aggId,
-                    Func<IListener> getListener,
+                    IConfiguredConnection configuredConnection,
                     ReadModelState snapshot,
                     bool forceDoubleRestoreError = false) :
-                base(nameof(TestSnapShotReadModel), getListener) {
+                base(nameof(TestSnapShotReadModel), configuredConnection) {
                 // ReSharper disable once RedundantTypeArgumentsOfMethod
                 EventStream.Subscribe<SnapReadModelTestEvent>(this);
 

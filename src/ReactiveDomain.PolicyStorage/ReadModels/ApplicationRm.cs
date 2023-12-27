@@ -29,7 +29,7 @@ namespace ReactiveDomain.Policy.ReadModels
 
 
         public ApplicationRm(IConfiguredConnection conn)
-           : base(nameof(ApplicationRm), () => conn.GetListener(nameof(ApplicationRm)))
+           : base(nameof(ApplicationRm), conn)
         {
             //set handlers
             EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
