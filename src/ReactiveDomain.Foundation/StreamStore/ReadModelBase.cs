@@ -24,36 +24,48 @@ namespace ReactiveDomain.Foundation
         public bool Idle => _queue.Idle;
 
         /// <summary>
-        /// Creates a read model using the provided Function to get a listener.
-        /// This is deprecated and will be removed in a future version of ReactiveDomain.
+        /// ReaderLock locks the event handler and can be used when reading the model 
+        /// to ensure model state is unchanged during read.
+        /// The lock should *not* be used in Handle methods as they are inside the lock already by default.
         /// </summary>
-        /// <param name="name">The name of the read model. Also used as the name of the listener.</param>
-        /// <param name="getListener">A Func to get a new <see cref="IListener"/>.</param>
-        protected ReadModelBase(string name, Func<IListener> getListener)
-        {
-            Ensure.NotNull(getListener, nameof(getListener));
-            _getListener = getListener;
-            _listeners = new List<IListener>();
-            _bus = new InMemoryBus($"{nameof(ReadModelBase)}:{name} bus", false);
-            _queue = new QueuedHandler(_bus, $"{nameof(ReadModelBase)}:{name} queue");
-            _queue.Start();
-        }
+        protected readonly object ReaderLock = new object();
+
+        /// <summary>
+        /// The version is equal to the number of messages passed to the read model.
+        /// The version is incremented after all handlers have been processed.
+        /// The number of handlers (including none) will not impact the version.
+        /// This can be used to ensure read model state for tests. This is *not*
+        /// the same as the version of any particular stream being read.
+        /// </summary>
+        public int Version { get; private set; }
 
         /// <summary>
         /// Creates a read model using the provided stream store connection. Reads existing events using a
         /// reader, then transitions to a listener for live events.
         /// </summary>
-        /// <param name="name">The name of the read model. Also used as the name of the listener and reader.</param>
+        /// <param name="name">The name of the read model. Also used as the names of the listener and reader.</param>
         /// <param name="connection">A connection to a stream store.</param>
         protected ReadModelBase(string name, IConfiguredConnection connection)
         {
             Ensure.NotNull(connection, nameof(connection));
-            _getListener = () => connection.GetListener(name);
             _getReader = () => connection.GetReader(name, Handle);
+            _getListener = () => connection.GetListener(name);
             _listeners = new List<IListener>();
             _bus = new InMemoryBus($"{nameof(ReadModelBase)}:{name} bus", false);
-            _queue = new QueuedHandler(_bus, $"{nameof(ReadModelBase)}:{name} queue");
+            _queue = new QueuedHandler(new AdHocHandler<IMessage>(DequeueMessage), $"{nameof(ReadModelBase)}:{name} queue");
             _queue.Start();
+        }
+
+        /// <summary>
+        /// Every message handled by the read model will pass through here.
+        /// </summary>
+        private void DequeueMessage(IMessage message)
+        {
+            lock (ReaderLock)
+            {
+                _bus.Handle(message);
+                Version++;
+            }
         }
 
         private IListener AddNewListener()
@@ -98,7 +110,7 @@ namespace ReactiveDomain.Foundation
                 using (var reader = _getReader())
                 {
                     reader.Read(stream, () => Idle, checkpoint);
-                    checkpoint = reader.Position;
+                    checkpoint = reader.Position ?? checkpoint;
                 }
             }
             AddNewListener().Start(stream, checkpoint, blockUntilLive, cancelWaitToken);

@@ -22,7 +22,7 @@ namespace ReactiveDomain.Policy.ReadModels
         /// Create a read model for getting information about Policy Users.
         /// </summary>
         public PolicyUserRm(IConfiguredConnection conn)
-            : base(nameof(PolicyUserRm), () => conn.GetListener(nameof(PolicyUserRm)))
+            : base(nameof(PolicyUserRm), conn)
         {
             //set handlers
             EventStream.Subscribe<PolicyUserMsgs.PolicyUserAdded>(this);

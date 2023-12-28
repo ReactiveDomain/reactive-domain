@@ -20,7 +20,7 @@ namespace ReactiveDomain.IdentityStorage.Services
         IHandle<ClientMsgs.ClientSecretRemoved>
     {
 
-        public ClientStore(IConfiguredConnection conn) : base(nameof(ClientStore), () => conn.GetListener(nameof(ClientStore)))
+        public ClientStore(IConfiguredConnection conn) : base(nameof(ClientStore), conn)
         {
             long checkpoint;
 

@@ -9,8 +9,8 @@ namespace ReactiveDomain.Foundation {
 
         protected SnapshotReadModel(
                 string name,
-                Func<IListener> getListener)
-            : base(name, getListener) {
+                IConfiguredConnection connection)
+            : base(name, connection) {
         }
 
         protected virtual void Restore(

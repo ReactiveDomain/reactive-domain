@@ -1,6 +1,5 @@
 ﻿using DynamicData;
 using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
 using System;
@@ -28,7 +27,7 @@ namespace ReactiveDomain.Policy.ReadModels
         private readonly Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
 
         public FilteredPoliciesRM(IConfiguredConnection conn, List<string> policyFilter = null)
-           : base(nameof(FilteredPoliciesRM), () => conn.GetListener(nameof(FilteredPoliciesRM)))
+           : base(nameof(FilteredPoliciesRM), conn)
         {
             if (policyFilter != null)
             {
