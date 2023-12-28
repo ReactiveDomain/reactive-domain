@@ -324,7 +324,7 @@ namespace ReactiveDomain.Testing.EventStore
             string stream,
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null)
+            UserCredentials credentials = null)
         {
             long currentPos = 0;
             lock (_store) {
@@ -340,7 +340,7 @@ namespace ReactiveDomain.Testing.EventStore
                 eventAppeared,
                 null, //live processing started
                 subscriptionDropped,
-                userCredentials);
+                credentials);
         }
         public IDisposable SubscribeToStreamFrom(
             string stream,
@@ -349,7 +349,7 @@ namespace ReactiveDomain.Testing.EventStore
             Action<RecordedEvent> eventAppeared,
             Action<Unit> liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null)
+            UserCredentials credentials = null)
         {
 
             var start = (lastCheckpoint ?? -1) + 1;
@@ -386,7 +386,7 @@ namespace ReactiveDomain.Testing.EventStore
 
         public IDisposable SubscribeToAllFrom(Position @from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
                                               Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                              UserCredentials userCredentials = null, bool resolveLinkTos = true)
+                                              UserCredentials credentials = null, bool resolveLinkTos = true)
         {
             var current = (int)@from.CommitPosition;
             var currentEvents = new RecordedEvent[] { };
@@ -417,7 +417,7 @@ namespace ReactiveDomain.Testing.EventStore
         public IDisposable SubscribeToAll(
                                 Action<RecordedEvent> eventAppeared,
                                 Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                UserCredentials userCredentials = null,
+                                UserCredentials credentials = null,
                                 bool resolveLinkTos = true)
         {
             return SubscribeToAllFrom(
@@ -426,7 +426,7 @@ namespace ReactiveDomain.Testing.EventStore
                 null,
                 null,
                 subscriptionDropped,
-                userCredentials);
+                credentials);
         }
 
         public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)

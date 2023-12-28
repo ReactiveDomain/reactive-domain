@@ -68,13 +68,13 @@ namespace ReactiveDomain
         /// <param name="stream">The stream to subscribe to.</param>
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
-        /// <param name="userCredentials">User credentials to use for the operation.</param>
+        /// <param name="credentials">User credentials to use for the operation.</param>
         /// <returns>An IDisposable that can be used to dispose the subscription.</returns>
         IDisposable SubscribeToStream(
             string stream,
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null);
+            UserCredentials credentials = null);
 
         /// <summary>
         /// Subscribes to a single event stream. Existing events from
@@ -103,7 +103,7 @@ namespace ReactiveDomain
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="liveProcessingStarted">An action invoked when the subscription switches to newly-pushed events.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
-        /// <param name="userCredentials">User credentials to use for the operation.</param>
+        /// <param name="credentials">User credentials to use for the operation.</param>
         /// <param name="settings">The <see cref="T:ReactiveDomain.CatchUpSubscriptionSettings" /> for the subscription.</param>
         /// <returns>An IDisposable that can be used to close the subscription.</returns>
         IDisposable SubscribeToStreamFrom(
@@ -113,7 +113,7 @@ namespace ReactiveDomain
                  Action<RecordedEvent> eventAppeared,
                  Action<Unit> liveProcessingStarted = null,
                  Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                 UserCredentials userCredentials = null);
+                 UserCredentials credentials = null);
 
         /// <summary>
         /// Asynchronously subscribes to all events. New
@@ -122,13 +122,13 @@ namespace ReactiveDomain
         /// </summary>
         /// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
         /// <param name="subscriptionDropped">An action invoked if the subscription is dropped.</param>
-        /// <param name="userCredentials">User credentials to use for the operation.</param>
+        /// <param name="credentials">User credentials to use for the operation.</param>
         /// <param name="resolveLinkTos">If true, resolve link events.</param>
         /// <returns>An IDisposable that can be used to close the subscription.</returns>
         IDisposable SubscribeToAll(
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
+            UserCredentials credentials = null,
             bool resolveLinkTos = true);
 
         IDisposable SubscribeToAllFrom(
@@ -137,7 +137,7 @@ namespace ReactiveDomain
             CatchUpSubscriptionSettings settings = null,
             Action liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
+            UserCredentials credentials = null,
             bool resolveLinkTos = true);
 
         void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null);

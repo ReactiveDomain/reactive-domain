@@ -7,20 +7,37 @@ using ES = EventStore.ClientAPI;
 
 namespace ReactiveDomain.EventStore
 {
+    /// <summary>
+    /// A wrapper for EventStore Database (ESDB) connections.
+    /// </summary>
     public class EventStoreConnectionWrapper : IStreamStoreConnection
     {
+        /// <summary>
+        /// The connection to the ESDB instance.
+        /// </summary>
         public readonly ES.IEventStoreConnection EsConnection;
+        private readonly UserCredentials _credentials;
         private bool _disposed;
         private const int WriteBatchSize = 500;
 
-        public EventStoreConnectionWrapper(ES.IEventStoreConnection eventStoreConnection)
+        /// <summary>
+        /// Creates a wrapper around an ESDB connection.
+        /// </summary>
+        /// <param name="eventStoreConnection">A connection to an EventStoreDB instance.</param>
+        /// <param name="credentials">The optional credentials to use when connecting.</param>
+        public EventStoreConnectionWrapper(ES.IEventStoreConnection eventStoreConnection, UserCredentials credentials = null)
         {
             Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
             EsConnection = eventStoreConnection;
+            _credentials = credentials;
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public string ConnectionName => EsConnection.ConnectionName;
         private bool _connected;
+
+        /// <inheritdoc cref="IStreamStoreConnection"/>
+        /// <exception cref="CannotEstablishConnectionException">Thrown if a connection cannot be established to the ESDB.</exception>
         public void Connect()
         {
             if(_connected){ return;}
@@ -36,12 +53,13 @@ namespace ReactiveDomain.EventStore
             }
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public void Close()
         {
             EsConnection.Close();
         }
 
-
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public WriteResult AppendToStream(
                             string stream,
                             long expectedVersion,
@@ -52,7 +70,7 @@ namespace ReactiveDomain.EventStore
             {
                 if (events.Length < WriteBatchSize)
                 {
-                    return EsConnection.AppendToStreamAsync(stream, expectedVersion, events.ToESEventData(), credentials.ToESCredentials()).Result.ToWriteResult();
+                    return EsConnection.AppendToStreamAsync(stream, expectedVersion, events.ToESEventData(), (credentials ?? _credentials)?.ToESCredentials()).Result.ToWriteResult();
                 }
 
                 var transaction = EsConnection.StartTransactionAsync(stream, expectedVersion).Result;
@@ -77,13 +95,14 @@ namespace ReactiveDomain.EventStore
 
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public StreamEventsSlice ReadStreamForward(
                                     string stream,
                                     long start,
                                     long count,
                                     UserCredentials credentials = null)
         {
-            var slice = EsConnection.ReadStreamEventsForwardAsync(stream, start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsForwardAsync(stream, start, (int)count, true, (credentials ?? _credentials)?.ToESCredentials()).Result;
             switch (slice.Status)
             {
                 case ES.SliceReadStatus.Success:
@@ -97,13 +116,14 @@ namespace ReactiveDomain.EventStore
             }
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public StreamEventsSlice ReadStreamBackward(
                                     string stream,
                                     long start,
                                     long count,
                                     UserCredentials credentials = null)
         {
-            var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, start, (int)count, true, credentials.ToESCredentials()).Result;
+            var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, start, (int)count, true, (credentials ?? _credentials)?.ToESCredentials()).Result;
             switch (slice.Status)
             {
                 case ES.SliceReadStatus.Success:
@@ -117,18 +137,19 @@ namespace ReactiveDomain.EventStore
             }
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public IDisposable SubscribeToStream(
                                     string stream,
                                     Action<RecordedEvent> eventAppeared,
                                     Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                    UserCredentials userCredentials = null)
+                                    UserCredentials credentials = null)
         {
             var sub = EsConnection.SubscribeToStreamAsync(
                                 stream,
                                 true,
                                 async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
                                 (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
-                                userCredentials?.ToESCredentials()).Result;
+                                (credentials ?? _credentials)?.ToESCredentials()).Result;
             return new Disposer(() =>
             {
                 sub?.Unsubscribe();
@@ -137,6 +158,7 @@ namespace ReactiveDomain.EventStore
             });
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public IDisposable SubscribeToStreamFrom(
                                             string stream,
                                             long? lastCheckpoint,
@@ -144,7 +166,7 @@ namespace ReactiveDomain.EventStore
                                             Action<RecordedEvent> eventAppeared,
                                             Action<Unit> liveProcessingStarted = null,
                                             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                            UserCredentials userCredentials = null)
+                                            UserCredentials credentials = null)
         {
             var sub = EsConnection.SubscribeToStreamFrom(
                                             stream,
@@ -153,7 +175,7 @@ namespace ReactiveDomain.EventStore
                                             async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
                                             _ => liveProcessingStarted?.Invoke(Unit.Default),
                                             (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
-                                            userCredentials?.ToESCredentials());
+                                            (credentials ?? _credentials)?.ToESCredentials());
 
             return new Disposer(() =>
             {
@@ -162,10 +184,11 @@ namespace ReactiveDomain.EventStore
             });
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public IDisposable SubscribeToAll(
             Action<RecordedEvent> eventAppeared,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
+            UserCredentials credentials = null,
             bool resolveLinkTos = true)
         {
             var sub = EsConnection.SubscribeToAllAsync(
@@ -176,7 +199,7 @@ namespace ReactiveDomain.EventStore
                     await Task.FromResult(Unit.Default);
                 },
                 (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
-                userCredentials?.ToESCredentials()).Result;
+                (credentials ?? _credentials)?.ToESCredentials()).Result;
             return new Disposer(() =>
             {
                 sub?.Unsubscribe();
@@ -185,13 +208,14 @@ namespace ReactiveDomain.EventStore
             });
         }
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public IDisposable SubscribeToAllFrom(
             Position from,
             Action<RecordedEvent> eventAppeared,
             CatchUpSubscriptionSettings settings = null,
             Action liveProcessingStarted = null,
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials userCredentials = null,
+            UserCredentials credentials = null,
             bool resolveLinkTos = true)
         {
             var sub = EsConnection.SubscribeToAllFrom(
@@ -204,7 +228,7 @@ namespace ReactiveDomain.EventStore
                 },
                 __ => { liveProcessingStarted?.Invoke(); },
                 (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
-                userCredentials?.ToESCredentials());
+                (credentials ?? _credentials)?.ToESCredentials());
             return new Disposer(() =>
             {
                 sub.Stop(TimeSpan.FromMilliseconds(250));
@@ -213,11 +237,13 @@ namespace ReactiveDomain.EventStore
         }
 
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, credentials.ToESCredentials()).Wait();
+                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, (credentials ?? _credentials).ToESCredentials()).Wait();
 
+        /// <inheritdoc cref="IStreamStoreConnection"/>
         public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, true, credentials.ToESCredentials()).Wait();
+                        => EsConnection.DeleteStreamAsync(stream, expectedVersion, true, (credentials ?? _credentials).ToESCredentials()).Wait();
 
         public void Dispose()
         {
@@ -320,7 +346,7 @@ namespace ReactiveDomain.EventStore
                 case ES.ReadDirection.Backward:
                     return ReadDirection.Backward;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(readDirection), "Unknown ReadDirection returned from Eventstore");
+                    throw new ArgumentOutOfRangeException(nameof(readDirection), "Unknown ReadDirection returned from EventStore");
             }
         }
 

@@ -14,16 +14,23 @@ namespace ReactiveDomain.EventStore
         private readonly ILogger _log = LogManager.GetLogger(nameof(EventStoreConnectionManager));
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
 
+        /// <summary>
+        /// Gets the connection to ESDB as an <see cref="IStreamStoreConnection"/>.
+        /// </summary>
         public IStreamStoreConnection Connection => ESConnection;
-        public EventStoreConnectionWrapper ESConnection { get; private set; }
+        /// <summary>
+        /// Gets the connection to ESDB.
+        /// </summary>
+        public EventStoreConnectionWrapper ESConnection { get; }
 
         /// <summary>
         /// Setup EventStore based on the config settings provided by the caller
         /// </summary>
         /// <param name="config"><see cref="EsdbConfig"/> defined by the caller.</param>
-        public EventStoreConnectionManager(EsdbConfig config)
+        /// <param name="credentials">User credentials to use for the connection.</param>
+        public EventStoreConnectionManager(EsdbConfig config, UserCredentials credentials = null)
         {
-            ESConnection = new EventStoreConnectionWrapper(EventStoreConnection.Create(config.ConnectionString));
+            ESConnection = new EventStoreConnectionWrapper(EventStoreConnection.Create(config.ConnectionString), credentials);
 
             //TODO: The connection settings to keep retrying in the EventStore code circumvents this loop of 8 tries never returning from the Connect call.
             Connection.Connect();
