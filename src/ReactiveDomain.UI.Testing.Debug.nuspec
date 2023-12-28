@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain.UI.Testing</id>
-    <version>0.10.0.0</version>
+    <version>0.10.1.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -11,12 +11,12 @@
     <copyright>Copyright © 2014-2023 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework="net48">
-        <dependency id="ReactiveDomain.Testing" version="0.10.0.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.10.0.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.Testing" version="0.10.1.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.UI" version="0.10.1.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="ReactiveDomain.Testing" version="0.10.0.0" exclude="Build,Analyzers" />
-        <dependency id="ReactiveDomain.UI" version="0.10.0.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.Testing" version="0.10.1.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain.UI" version="0.10.1.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>

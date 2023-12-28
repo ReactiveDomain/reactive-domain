@@ -9,7 +9,7 @@
         <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
     </PropertyGroup>
     <PropertyGroup>
-        <PackageVersionPrefix>0.10.0</PackageVersionPrefix>
+        <PackageVersionPrefix>0.10.1</PackageVersionPrefix>
         <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
         <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
         <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
@@ -22,8 +22,8 @@
         <Company>PerkinElmer,Linedata</Company>
         <Copyright>Copyright © 2019-2023 PerkinElmer Inc., Linedata Inc.</Copyright>
         <Description />
-        <AssemblyVersion>0.10.0.0</AssemblyVersion>
-        <FileVersion>0.10.0.0</FileVersion>
+        <AssemblyVersion>0.10.1.0</AssemblyVersion>
+        <FileVersion>0.10.1.0</FileVersion>
         <NeutralLanguage />
         <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
         <DebugSymbols>true</DebugSymbols>
