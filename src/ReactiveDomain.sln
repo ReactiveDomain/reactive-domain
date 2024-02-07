@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		build.props = build.props
 		..\tools\CreateDebugNuget.ps1 = ..\tools\CreateDebugNuget.ps1
 		..\tools\CreateNuget.ps1 = ..\tools\CreateNuget.ps1
+		nuget.config = nuget.config
 		..\package.bat = ..\package.bat
 		..\.github\workflows\pr-checks.yml = ..\.github\workflows\pr-checks.yml
 		..\publish.bat = ..\publish.bat
