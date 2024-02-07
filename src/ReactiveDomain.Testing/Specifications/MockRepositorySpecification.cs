@@ -14,12 +14,20 @@ namespace ReactiveDomain.Testing
         public IStreamStoreConnection StreamStoreConnection { get; }
         public IEventSerializer EventSerializer { get; }
         public IConfiguredConnection ConfiguredConnection { get; }
-        public string Schema { get; set; } = "Test";
 
-        public MockRepositorySpecification()
+        private string _schema;
+        public string Schema => _schema;
+
+        /// <summary>
+        /// Creates a mock repository.
+        /// </summary>
+        /// <param name="schema">Schema prefix for stream name.</param>
+        /// <param name="dataStore">Stream store connection.</param>
+        public MockRepositorySpecification(string schema, IStreamStoreConnection dataStore)
         {
-            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(Schema);
-            StreamStoreConnection = new MockStreamStoreConnection(Schema);
+            _schema = schema;
+            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(schema);
+            StreamStoreConnection = dataStore;
             StreamStoreConnection.Connect();
             EventSerializer = new JsonMessageSerializer();
             MockRepository = new StreamStoreRepository(StreamNameBuilder, StreamStoreConnection, EventSerializer);
@@ -27,11 +35,28 @@ namespace ReactiveDomain.Testing
             ConfiguredConnection = new ConfiguredConnection(StreamStoreConnection, StreamNameBuilder, EventSerializer);
 
             var connectorBus = new InMemoryBus("connector");
-            StreamStoreConnection.SubscribeToAll(evt => {
-                if(evt is ProjectedEvent) { return;}
-                connectorBus.Publish((IMessage) EventSerializer.Deserialize(evt));
+            StreamStoreConnection.SubscribeToAll(evt =>
+            {
+                if (evt is ProjectedEvent) { return; }
+                connectorBus.Publish((IMessage)EventSerializer.Deserialize(evt));
             });
             RepositoryEvents = new TestQueue(connectorBus, new[] { typeof(Event) });
+        }
+
+        /// <summary>
+        /// Creates a mock repository with a prefix.
+        /// </summary>
+        /// <param name="schema">Schema prefix for stream name. Default value is "Test".</param>
+        public MockRepositorySpecification(string schema = "Test") : this(schema, new MockStreamStoreConnection(schema))
+        {
+        }
+
+        /// <summary>
+        /// Creates a mock repository connected to a StreamStore. 
+        /// </summary>
+        /// <param name="dataStore">Stream store connection.</param>
+        public MockRepositorySpecification(IStreamStoreConnection dataStore) : this("", dataStore)
+        {
         }
 
         public virtual void ClearQueues()
