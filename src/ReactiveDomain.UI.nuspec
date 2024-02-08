@@ -2,20 +2,20 @@
 <package>
   <metadata>
     <id>ReactiveDomain.UI</id>
-    <version>0.10.1.0</version>
+    <version>0.10.2.0</version>
     <authors>PerkinElmer,Linedata</authors>
     <owners>PerkinElmer,Linedata</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes ReactiveDomain UI assembly</description>
-    <copyright>Copyright © 2014-2023 PerkinElmer Inc., Linedata Inc.</copyright>
+    <copyright>Copyright © 2014-2024 PerkinElmer Inc., Linedata Inc.</copyright>
     <dependencies>
       <group targetFramework="net48">
-        <dependency id="ReactiveDomain" version="0.10.1.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.10.2.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="9.22.1" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="ReactiveDomain" version="0.10.1.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.10.2.0" exclude="Build,Analyzers" />
         <dependency id="ReactiveUI" version="9.22.1" exclude="Build,Analyzers" />
       </group>
     </dependencies>
