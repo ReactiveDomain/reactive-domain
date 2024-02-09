@@ -1,6 +1,7 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
 namespace ReactiveDomain.Testing
@@ -28,7 +29,7 @@ namespace ReactiveDomain.Testing
             var aggregate = new TestAggregate(id);
             _fixture.Repository.Save(aggregate);
             _fixture.RepositoryEvents.WaitFor<TestAggregateMessages.NewAggregate>(TimeSpan.FromMilliseconds(500));
-            
+
             _fixture
                 .RepositoryEvents
                 .AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Mismatch")
@@ -37,7 +38,7 @@ namespace ReactiveDomain.Testing
 
         [Fact]
         public void can_clear_queues()
-        {          
+        {
             var evt = new TestEvent();
             _fixture.Dispatcher.Publish(evt);
 
@@ -70,6 +71,28 @@ namespace ReactiveDomain.Testing
                 .RepositoryEvents
                 .AssertEmpty();
         }
+
+        [Fact]
+        public void create_mock_repository_without_a_prefix()
+        {
+            var id = Guid.NewGuid();
+            var expectedStreamName = $"testAggregate-{id:n}";
+            var mockRepositoryWithoutPrefix = new MockRepositorySpecification(dataStore: new MockStreamStoreConnection(""));
+            var categoryStreamName = mockRepositoryWithoutPrefix.StreamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id);
+            Assert.Equal(expectedStreamName, categoryStreamName);
+        }
+
+        [Fact]
+        public void create_mock_repository_with_a_prefix()
+        {
+            var prefix = "iamaprefix";
+            var id = Guid.NewGuid();
+            var expectedStreamName = $"{prefix}.testAggregate-{id:n}";
+            var mockRepositoryWithoutPrefix = new MockRepositorySpecification(dataStore: new MockStreamStoreConnection(prefix));
+            var categoryStreamName = mockRepositoryWithoutPrefix.StreamNameBuilder.GenerateForAggregate(typeof(TestAggregate), id);
+            Assert.Equal(expectedStreamName, categoryStreamName);
+        }
+
         public CommandResponse Handle(TestCommands.Command1 command)
         {
             return command.Succeed();

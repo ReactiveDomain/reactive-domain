@@ -23,10 +23,10 @@ namespace ReactiveDomain.Testing
         /// </summary>
         /// <param name="schema">Schema prefix for stream name.</param>
         /// <param name="dataStore">Stream store connection.</param>
-        public MockRepositorySpecification(string schema, IStreamStoreConnection dataStore)
+        private MockRepositorySpecification(string schema, IStreamStoreConnection dataStore)
         {
             _schema = schema;
-            StreamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(schema);
+            StreamNameBuilder = string.IsNullOrEmpty(schema) ? new PrefixedCamelCaseStreamNameBuilder() : new PrefixedCamelCaseStreamNameBuilder(schema);
             StreamStoreConnection = dataStore;
             StreamStoreConnection.Connect();
             EventSerializer = new JsonMessageSerializer();
@@ -55,7 +55,7 @@ namespace ReactiveDomain.Testing
         /// Creates a mock repository connected to a StreamStore. 
         /// </summary>
         /// <param name="dataStore">Stream store connection.</param>
-        public MockRepositorySpecification(IStreamStoreConnection dataStore) : this("", dataStore)
+        public MockRepositorySpecification(IStreamStoreConnection dataStore) : this(dataStore.ConnectionName, dataStore)
         {
         }
 
