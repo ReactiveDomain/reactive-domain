@@ -81,12 +81,12 @@ jobs:
 
     # Execute all unit tests in the solution
     - name: Execute unit tests with .NET Framework
-      if: ${{ (matrix.dotnet-version == '4.8') && (matrix.configuration == Debug) }}
+      if: ${{ (matrix.dotnet-version == '4.8') && (matrix.configuration == 'Debug') }}
       working-directory: src
       run: dotnet test $env:Solution_Name -f net48 -p:ParallelizeTestCollections=false
 
     # Execute all unit tests in the solution
     - name: Execute unit tests with .NET
-      if: ${{ (matrix.dotnet-version == '6.0.x') && (matrix.configuration == Debug) }}
+      if: ${{ (matrix.dotnet-version == '6.0.x') && (matrix.configuration == 'Debug') }}
       working-directory: src
       run: dotnet test $env:Solution_Name -f net6.0 -p:ParallelizeTestCollections=false
