@@ -35,7 +35,9 @@ namespace ReactiveDomain.Foundation
         /// The version is incremented after all handlers have been processed.
         /// The number of handlers (including none) will not impact the version.
         /// This can be used to ensure read model state for tests. This is *not*
-        /// the same as the version of any particular stream being read.
+        /// the same as the version of any particular stream being read. This can
+        /// include <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/>,
+        /// which may result in the Version being 1 greater than otherwise expected.
         /// </summary>
         public int Version { get; private set; }
 
