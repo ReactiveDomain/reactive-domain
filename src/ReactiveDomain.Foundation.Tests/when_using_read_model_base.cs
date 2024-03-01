@@ -4,12 +4,14 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
-namespace ReactiveDomain.Foundation.Tests {
+namespace ReactiveDomain.Foundation.Tests
+{
     // ReSharper disable once InconsistentNaming
     public class when_using_read_model_base :
                     ReadModelBase,
                     IHandle<when_using_read_model_base.ReadModelTestEvent>,
-                    IClassFixture<StreamStoreConnectionFixture> {
+                    IClassFixture<StreamStoreConnectionFixture>
+    {
 
         private static IStreamStoreConnection _conn;
         private static readonly IEventSerializer Serializer =
@@ -22,7 +24,8 @@ namespace ReactiveDomain.Foundation.Tests {
 
 
         public when_using_read_model_base(StreamStoreConnectionFixture fixture)
-                    : base(nameof(when_using_read_model_base), new ConfiguredConnection(fixture.Connection, Namer, Serializer)) {
+                    : base(nameof(when_using_read_model_base), new ConfiguredConnection(fixture.Connection, Namer, Serializer))
+        {
             _conn = fixture.Connection;
             _conn.Connect();
 
@@ -43,47 +46,53 @@ namespace ReactiveDomain.Foundation.Tests {
                         int numEventsToBeSent,
                         IStreamStoreConnection conn,
                         string streamName,
-                        int value) {
-            for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++) {
+                        int value)
+        {
+            for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++)
+            {
                 var evt = new ReadModelTestEvent(evtNumber, value);
                 conn.AppendToStream(streamName, ExpectedVersion.Any, null, Serializer.Serialize(evt));
             }
         }
         [Fact]
-        public void can_start_streams_by_aggregate() {
+        public void can_start_streams_by_aggregate()
+        {
             var aggId = Guid.NewGuid();
             var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
             AppendEvents(1, _conn, s1, 7);
             Start<TestAggregate>(aggId);
-            AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
+            AssertEx.IsModelVersion(this, 2, 1000, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
             AssertEx.IsOrBecomesTrue(() => Sum == 7);
         }
         [Fact]
-        public void can_start_streams_by_aggregate_category() {
-            
+        public void can_start_streams_by_aggregate_category()
+        {
+
             var s1 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
             AppendEvents(1, _conn, s1, 7);
             var s2 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
             AppendEvents(1, _conn, s2, 5);
-            Start<ReadModelTestCategoryAggregate>(null,true);
+            Start<ReadModelTestCategoryAggregate>(null, true);
 
-            AssertEx.IsOrBecomesTrue(() => Count == 2, 1000, msg: $"Expected 2 got {Count}");
+            AssertEx.IsModelVersion(this, 3, 1000, msg: $"Expected 3 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 12);
         }
         [Fact]
-        public void can_read_one_stream() {
+        public void can_read_one_stream()
+        {
             Start(_stream1);
-            AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
+            AssertEx.IsModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
             Assert.Equal(9, GetCheckpoint()[0].Item2);
         }
         [Fact]
-        public void can_read_two_streams() {
+        public void can_read_two_streams()
+        {
             Start(_stream1);
             Start(_stream2);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -92,29 +101,32 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(9, GetCheckpoint()[1].Item2);
         }
         [Fact]
-        public void can_wait_for_one_stream_to_go_live() {
+        public void can_wait_for_one_stream_to_go_live()
+        {
             Start(_stream1, null, true);
-            AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
+            AssertEx.IsModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
         }
         [Fact]
-        public void can_wait_for_two_streams_to_go_live() {
+        public void can_wait_for_two_streams_to_go_live()
+        {
             Start(_stream1, null, true);
-            AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
+            AssertEx.IsModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
 
             Start(_stream2, null, true);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 100, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 21, 100, msg: $"Expected 21 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50, 100);
         }
         [Fact]
-        public void can_listen_to_one_stream() {
+        public void can_listen_to_one_stream()
+        {
             Start(_stream1);
-            AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
+            AssertEx.IsModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 21, 1000, msg: $"Expected 21 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 70);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -122,15 +134,16 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(19, GetCheckpoint()[0].Item2);
         }
         [Fact]
-        public void can_listen_to_two_streams() {
+        public void can_listen_to_two_streams()
+        {
             Start(_stream1);
             Start(_stream2);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
             AppendEvents(10, _conn, _stream2, 7);
-            AssertEx.IsOrBecomesTrue(() => Count == 40, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 42, 1000, msg: $"Expected 42 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 170);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -139,40 +152,40 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(19, GetCheckpoint()[1].Item2);
         }
         [Fact]
-        public void can_use_checkpoint_on_one_stream() {
+        public void can_use_checkpoint_on_one_stream()
+        {
             //restore state
             var checkPoint = 8L;//Zero based, ignore the first 9 events
-            Count = 9;
             Sum = 18;
             //start at the checkpoint
             Start(_stream1, checkPoint);
             //add the one recorded event
-            AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
+            AssertEx.IsModelVersion(this, 2, 100, msg: $"Expected 2 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 100, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 12, 100, msg: $"Expected 12 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 70);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
             Assert.Equal(19, GetCheckpoint()[0].Item2);
         }
         [Fact]
-        public void can_use_checkpoint_on_two_streams() {
+        public void can_use_checkpoint_on_two_streams()
+        {
             //restore state
             var checkPoint1 = 8L;//Zero based, ignore the first 9 events
             var checkPoint2 = 5L;//Zero based, ignore the first 6 events
-            Count = (9) + (6);
             Sum = (9 * 2) + (6 * 3);
             Start(_stream1, checkPoint1);
             Start(_stream2, checkPoint2);
             //add the recorded events 2 on stream 1 & 5 on stream 2
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 7, 1000, msg: $"Expected 7 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50, msg: $"Expected 50 got {Sum}");
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
             AppendEvents(10, _conn, _stream2, 7);
-            AssertEx.IsOrBecomesTrue(() => Count == 40, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 27, 1000, msg: $"Expected 27 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 170);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -181,38 +194,40 @@ namespace ReactiveDomain.Foundation.Tests {
             Assert.Equal(19, GetCheckpoint()[1].Item2);
         }
         [Fact]
-        public void can_listen_to_the_same_stream_twice() {
-            Assert.Equal(0,Count);
+        public void can_listen_to_the_same_stream_twice()
+        {
+            Assert.Equal(0, Version);
             //weird but true
             //n.b. Don't do this on purpose
             Start(_stream1);
             Start(_stream1);
             //double events
-            AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 40);
             //even more doubled events
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsOrBecomesTrue(() => Count == 40, 2000, msg: $"Expected 40 got {Count}");
+            AssertEx.IsModelVersion(this, 42, 2000, msg: $"Expected 42 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 140);
         }
 
         public long Sum { get; private set; }
-        public long Count { get; private set; }
-        void IHandle<ReadModelTestEvent>.Handle(ReadModelTestEvent @event) {
+        void IHandle<ReadModelTestEvent>.Handle(ReadModelTestEvent @event)
+        {
             Sum += @event.Value;
-            Count++;
         }
-        public class ReadModelTestEvent : Event {
+        public class ReadModelTestEvent : Event
+        {
             public readonly int Number;
             public readonly int Value;
 
             public ReadModelTestEvent(
                 int number,
-                int value){
+                int value)
+            {
                 Number = number;
                 Value = value;
             }
         }
-        public class ReadModelTestCategoryAggregate:EventDrivenStateMachine{}
+        public class ReadModelTestCategoryAggregate : EventDrivenStateMachine { }
     }
 }
