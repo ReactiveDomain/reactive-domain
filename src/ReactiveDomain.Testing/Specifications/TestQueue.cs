@@ -49,7 +49,7 @@ namespace ReactiveDomain.Testing
         {
             _isFiltered = messageTypeFilter != null;
             _msgTypeFilter = messageTypeFilter ?? new Type[] { };
-            
+
             _trackTypes = trackTypes;
 
             Messages = new ConcurrentMessageQueue<IMessage>("Messages");
@@ -108,11 +108,11 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitFor<T>(TimeSpan timeout) where T : IMessage
         {
-               WaitForMultiple<T>(1, timeout);       
+            WaitForMultiple<T>(1, timeout);
         }
 
         /// <summary>
-        /// Wait for some number of messages of type T to appear in the queue.
+        /// Wait for some number of messages compatible with T (via the 'is' operator) to appear in the queue.
         /// </summary>
         /// <typeparam name="T">The type to wait for.</typeparam>
         /// <param name="num">The number of messages of the given type to wait for.</param>
@@ -121,22 +121,27 @@ namespace ReactiveDomain.Testing
         {
             if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
             if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
-            var deadline = DateTime.Now + timeout;
-            do
+
+            var startTime = Environment.TickCount; //returns MS since machine start
+            var endTime = startTime + (int)timeout.TotalMilliseconds;
+
+            var delay = 1;
+            while (true)
             {
-                if (SpinWait.SpinUntil(() => Messages.Count(x => x is T) >= num, 50))
-                {
-                    return;
-                }
-                if (DateTime.Now > deadline)
-                {
-                    throw new TimeoutException();
-                }
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+                //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
+                using (var task = AssertEx.EvaluateAfterDelay(() => Messages.Count(x => x is T) >= num, TimeSpan.FromMilliseconds(delay)))
+                {
+                    task.Wait();
+                    if (task.Result == true) { break; }
+                }
+                var now = Environment.TickCount;
+                if ((endTime - now) <= 0) { throw new TimeoutException(); }
 
-            } while (true);
+                if (delay < 250) { delay = delay << 1; }
+                delay = Math.Min(delay, endTime - now);
+            }
         }
-
         /// <summary>
         /// Wait for a message with a specific MsgId to appear in the queue.
         /// </summary>
