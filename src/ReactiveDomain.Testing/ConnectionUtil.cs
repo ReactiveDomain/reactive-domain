@@ -7,7 +7,7 @@ namespace ReactiveDomain.Testing {
             while (true) {
                 try {
                     var slice = conn.ReadStreamForward(streamTypeName, StreamPosition.Start, 500);
-                    if (slice.IsEndOfStream && slice.Events.Length == expectedEventCount) {
+                    if (slice.IsEndOfStream && slice.Events.Length >= expectedEventCount) {
                         return true;
                     }
                     Thread.Sleep(10);

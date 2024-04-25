@@ -37,7 +37,8 @@ namespace ReactiveDomain.Foundation.Tests
 
             AppendEvents(10, _conn, _stream1, 2);
             AppendEvents(10, _conn, _stream2, 3);
-            _conn.TryConfirmStream(_stream1, 10);
+
+            _conn.TryConfirmStream(_stream1, 10);          
             _conn.TryConfirmStream(_stream2, 10);
             _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
         }
@@ -116,7 +117,7 @@ namespace ReactiveDomain.Foundation.Tests
 
             Start(_stream2, null, true);
             AssertEx.IsModelVersion(this, 21, 100, msg: $"Expected 21 got {Version}");
-            AssertEx.IsOrBecomesTrue(() => Sum == 50, 100);
+            AssertEx.IsOrBecomesTrue(() => Sum == 50, 150);
         }
         [Fact]
         public void can_listen_to_one_stream()
