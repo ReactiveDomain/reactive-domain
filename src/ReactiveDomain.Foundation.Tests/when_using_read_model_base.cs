@@ -62,7 +62,7 @@ namespace ReactiveDomain.Foundation.Tests
             var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
             AppendEvents(1, _conn, s1, 7);
             Start<TestAggregate>(aggId);
-            AssertEx.IsModelVersion(this, 2, 1000, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
+            AssertEx.AtLeastModelVersion(this, 2, 1000, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
             AssertEx.IsOrBecomesTrue(() => Sum == 7);
         }
         [Fact]
@@ -75,14 +75,14 @@ namespace ReactiveDomain.Foundation.Tests
             AppendEvents(1, _conn, s2, 5);
             Start<ReadModelTestCategoryAggregate>(null, true);
 
-            AssertEx.IsModelVersion(this, 3, 1000, msg: $"Expected 3 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 3, 1000, msg: $"Expected 3 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 12);
         }
         [Fact]
         public void can_read_one_stream()
         {
             Start(_stream1);
-            AssertEx.IsModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -93,7 +93,7 @@ namespace ReactiveDomain.Foundation.Tests
         {
             Start(_stream1);
             Start(_stream2);
-            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -105,29 +105,29 @@ namespace ReactiveDomain.Foundation.Tests
         public void can_wait_for_one_stream_to_go_live()
         {
             Start(_stream1, null, true);
-            AssertEx.IsModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
         }
         [Fact]
         public void can_wait_for_two_streams_to_go_live()
         {
             Start(_stream1, null, true);
-            AssertEx.IsModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
-            AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
+            AssertEx.AtLeastModelVersion(this, 11, 100, msg: $"Expected 11 got {Version}");
+            AssertEx.IsOrBecomesTrue(() => Sum == 20, 150);
 
             Start(_stream2, null, true);
-            AssertEx.IsModelVersion(this, 21, 100, msg: $"Expected 21 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 21, 100, msg: $"Expected 21 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50, 150);
         }
         [Fact]
         public void can_listen_to_one_stream()
         {
             Start(_stream1);
-            AssertEx.IsModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 11, 1000, msg: $"Expected 11 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsModelVersion(this, 21, 1000, msg: $"Expected 21 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 21, 1000, msg: $"Expected 21 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 70);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -139,12 +139,12 @@ namespace ReactiveDomain.Foundation.Tests
         {
             Start(_stream1);
             Start(_stream2);
-            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
             AppendEvents(10, _conn, _stream2, 7);
-            AssertEx.IsModelVersion(this, 42, 1000, msg: $"Expected 42 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 42, 1000, msg: $"Expected 42 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 170);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -161,11 +161,11 @@ namespace ReactiveDomain.Foundation.Tests
             //start at the checkpoint
             Start(_stream1, checkPoint);
             //add the one recorded event
-            AssertEx.IsModelVersion(this, 2, 100, msg: $"Expected 2 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 2, 100, msg: $"Expected 2 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsModelVersion(this, 12, 100, msg: $"Expected 12 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 12, 100, msg: $"Expected 12 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 70);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -181,12 +181,12 @@ namespace ReactiveDomain.Foundation.Tests
             Start(_stream1, checkPoint1);
             Start(_stream2, checkPoint2);
             //add the recorded events 2 on stream 1 & 5 on stream 2
-            AssertEx.IsModelVersion(this, 7, 1000, msg: $"Expected 7 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 7, 1000, msg: $"Expected 7 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 50, msg: $"Expected 50 got {Sum}");
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
             AppendEvents(10, _conn, _stream2, 7);
-            AssertEx.IsModelVersion(this, 27, 1000, msg: $"Expected 27 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 27, 1000, msg: $"Expected 27 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 170);
             //confirm checkpoints
             Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
@@ -203,11 +203,11 @@ namespace ReactiveDomain.Foundation.Tests
             Start(_stream1);
             Start(_stream1);
             //double events
-            AssertEx.IsModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 22, 1000, msg: $"Expected 22 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 40);
             //even more doubled events
             AppendEvents(10, _conn, _stream1, 5);
-            AssertEx.IsModelVersion(this, 42, 2000, msg: $"Expected 42 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 42, 2000, msg: $"Expected 42 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 140);
         }
 

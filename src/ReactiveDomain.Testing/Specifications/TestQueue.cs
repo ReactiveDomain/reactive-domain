@@ -126,15 +126,11 @@ namespace ReactiveDomain.Testing
             var endTime = startTime + (int)timeout.TotalMilliseconds;
 
             var delay = 1;
-            while (true)
+            //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
+            while (!AssertEx.EvaluateAfterDelay(() => Messages.Count(x => x is T) >= num, TimeSpan.FromMilliseconds(delay)))
             {
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-                //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
-                using (var task = AssertEx.EvaluateAfterDelay(() => Messages.Count(x => x is T) >= num, TimeSpan.FromMilliseconds(delay)))
-                {
-                    task.Wait();
-                    if (task.Result == true) { break; }
-                }
+
                 var now = Environment.TickCount;
                 if ((endTime - now) <= 0) { throw new TimeoutException(); }
 
