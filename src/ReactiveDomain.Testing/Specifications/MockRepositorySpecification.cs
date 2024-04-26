@@ -15,8 +15,7 @@ namespace ReactiveDomain.Testing
         public IEventSerializer EventSerializer { get; }
         public IConfiguredConnection ConfiguredConnection { get; }
 
-        private string _schema;
-        public string Schema => _schema;
+        public string Schema { get; }
 
         /// <summary>
         /// Creates a mock repository.
@@ -25,7 +24,7 @@ namespace ReactiveDomain.Testing
         /// <param name="dataStore">Stream store connection.</param>
         private MockRepositorySpecification(string schema, IStreamStoreConnection dataStore)
         {
-            _schema = schema;
+            Schema = schema;
             StreamNameBuilder = string.IsNullOrEmpty(schema) ? new PrefixedCamelCaseStreamNameBuilder() : new PrefixedCamelCaseStreamNameBuilder(schema);
             StreamStoreConnection = dataStore;
             StreamStoreConnection.Connect();
@@ -47,17 +46,13 @@ namespace ReactiveDomain.Testing
         /// Creates a mock repository with a prefix.
         /// </summary>
         /// <param name="schema">Schema prefix for stream name. Default value is "Test".</param>
-        public MockRepositorySpecification(string schema = "Test") : this(schema, new MockStreamStoreConnection(schema))
-        {
-        }
+        public MockRepositorySpecification(string schema = "Test") : this(schema, new MockStreamStoreConnection(schema)) { }
 
         /// <summary>
         /// Creates a mock repository connected to a StreamStore. 
         /// </summary>
         /// <param name="dataStore">Stream store connection.</param>
-        public MockRepositorySpecification(IStreamStoreConnection dataStore) : this(dataStore.ConnectionName, dataStore)
-        {
-        }
+        public MockRepositorySpecification(IStreamStoreConnection dataStore) : this(dataStore.ConnectionName, dataStore) { }
 
         public virtual void ClearQueues()
         {
@@ -71,5 +66,19 @@ namespace ReactiveDomain.Testing
                                 StreamStoreConnection,
                                 StreamNameBuilder,
                                 EventSerializer);
+
+        private bool _disposed;
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+            if (disposing)
+            {
+                StreamStoreConnection.Dispose();
+                RepositoryEvents.Dispose();
+            }
+            _disposed = true;
+            base.Dispose(disposing);
+        }
     }
 }

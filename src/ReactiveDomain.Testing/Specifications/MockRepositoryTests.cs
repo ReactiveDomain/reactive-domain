@@ -21,6 +21,7 @@ namespace ReactiveDomain.Testing
         public void Dispose()
         {
             _fixture.Dispatcher.Unsubscribe<TestCommands.Command1>(this);
+            _fixture.Dispose();
         }
         [Fact]
         public void can_get_repository_events()
