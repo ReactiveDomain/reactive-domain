@@ -47,15 +47,15 @@ namespace ReactiveDomain.Testing
         /// Repeatedly evaluates the function until false is returned or the timeout expires.  
         /// Will return immediately when the condition is false.  
         /// Evaluates the condition on an exponential back off up to 250 ms until timeout.  
-        /// Will yield the thread after each evaluation, use the hint yieldThread if it is known the function should yield before evaluation.  
+        /// Will yield the thread after each evaluation.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
         /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">Execution hint to yield thread before evaluation</param>
+        /// <param name="yieldThread">Ignored, will be removed in a future release</param>
         public static void IsOrBecomesFalse(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false)
         {
-            IsOrBecomesTrue(() => !func(), timeout, msg, yieldThread);
+            IsOrBecomesTrue(() => !func(), timeout, msg);
         }
 
         /// <summary>
@@ -63,15 +63,15 @@ namespace ReactiveDomain.Testing
         /// Repeatedly evaluates the function until true is returned or the timeout expires.  
         /// Will return immediately when the condition is true.  
         /// Evaluates the condition on an exponential back off up to 250 ms until timeout.  
-        /// Will yield the thread after each evaluation, use the hint yieldThread if it is known the function should yield before evaluation.  
+        /// Will yield the thread after each evaluation.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
         /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">Execution hint to yield thread before evaluation</param>
+        /// <param name="yieldThread">Ignored, will be removed in a future release</param>
         public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false)
         {
-            if (!yieldThread && func() == true)
+            if (func() == true)
             {
                 Assert.True(true, msg ?? "");
                 return;
@@ -85,67 +85,45 @@ namespace ReactiveDomain.Testing
             var delay = 1;
             while (true)
             {
-                using (var task = EvaluateAfterDelay(func, TimeSpan.FromMilliseconds(delay)))
+                if (EvaluateAfterDelay(func, TimeSpan.FromMilliseconds(delay)))
                 {
-                    task.Wait();
-                    if (task.Result == true)
-                    {
-                        result = true;
-                        break;
-                    }
+                    result = true;
+                    break;
                 }
+
                 var now = Environment.TickCount;
                 if ((endTime - now) <= 0) { break; }
                 if (delay < 250)
                 {
                     delay = delay << 1;
-                }    
+                }
                 delay = Math.Min(delay, endTime - now);
             }
             Assert.True(result, msg ?? "");
         }
 
         /// <summary>
-        /// Asserts that the given read model will have exactly the expected version before the timeout expires.
-        /// This can make tests fragile and should generally not be used unless the exact number of messages
-        /// handled is critical to your tests. In most cases you should use <see cref="AtLeastModelVersion"/>
-        /// instead.
-        /// </summary>
-        /// <param name="readModel">The read model.</param>
-        /// <param name="expectedVersion">The read model's expected version.</param>
-        /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
-        /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">If true, the thread relinquishes the remainder of its time
-        /// slice to any thread of equal priority that is ready to run.</param>
-        public static void IsModelVersion(ReadModelBase readModel, int expectedVersion, int? timeout = null, string msg = null, bool yieldThread = false)
-        {
-            IsOrBecomesTrue(() => readModel.Version == expectedVersion, timeout, msg, yieldThread);
-        }
-
-        /// <summary>
         /// Asserts that the given read model will have at least the expected version before the
-        /// timeout expires. This is generally preferred to <see cref="IsModelVersion"/>.
+        /// timeout expires.  If a test needs to check an exact model version use 'IsOrBecomesTrue(()=> ReadModel.Version == [expectedVersion], [timeout])'. 
         /// </summary>
         /// <param name="readModel">The read model.</param>
         /// <param name="expectedVersion">The read model's expected minimum version.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
         /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">If true, the thread relinquishes the remainder of its time
-        /// slice to any thread of equal priority that is ready to run.</param>
-        public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, int? timeout = null, string msg = null, bool yieldThread = false)
+        public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, int? timeout = null, string msg = null)
         {
-            IsOrBecomesTrue(() => readModel.Version >= expectedVersion, timeout, msg, yieldThread);
+            IsOrBecomesTrue(() => readModel.Version >= expectedVersion, timeout, msg);
         }
+
         /// <summary>
         /// Evaluates the given function after the supplied delay.
         /// The current thread will yield at the start of the delay.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
         /// <param name="delay">A delay timeSpan.</param>
-        /// <param name="cancellationToken">A token to cancel evaluation, TaskCanceledException will be thrown.</param>
-        public static async Task<bool> EvaluateAfterDelay(Func<bool> func, TimeSpan delay, CancellationToken cancellationToken = default)
+        public static bool EvaluateAfterDelay(Func<bool> func, TimeSpan delay)
         {
-            await Task.Delay(delay, cancellationToken);
+            Thread.Sleep(delay);
             return func();
         }
     }
