@@ -119,12 +119,12 @@ namespace ReactiveDomain.Testing.EventStore
                                             (reason, ex) => dropped = true);
 
 
-                AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, 2000, msg: "Failed handle live processing start");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 2, 5000, msg: $"Expected 2 Events got { Interlocked.Read(ref evtCount)}");
+                AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, TimeSpan.FromSeconds(2), msg: "Failed handle live processing start");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 2, TimeSpan.FromSeconds(5), msg: $"Expected 2 Events got { Interlocked.Read(ref evtCount)}");
                 Task.Run(() => AppendEvents(5, conn, streamName));
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 7, 5000, msg: $"Expected 7 Events got { Interlocked.Read(ref evtCount)}");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 7, TimeSpan.FromSeconds(5), msg: $"Expected 7 Events got { Interlocked.Read(ref evtCount)}");
                 AppendEvents(5, conn, streamName);
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 12, 5000, msg: $"Expected 12 Events got { Interlocked.Read(ref evtCount)}");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 12, TimeSpan.FromSeconds(5), msg: $"Expected 12 Events got { Interlocked.Read(ref evtCount)}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
@@ -224,7 +224,7 @@ namespace ReactiveDomain.Testing.EventStore
                     conn.TryConfirmStream(stream, 5);
                 }
                 Assert.False(dropped);
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) >= 10, 2000, $"Expected 10 got {Interlocked.Read(ref evtCount)}");
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) >= 10, TimeSpan.FromSeconds(2), $"Expected 10 got {Interlocked.Read(ref evtCount)}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
             }
@@ -260,7 +260,7 @@ namespace ReactiveDomain.Testing.EventStore
                 AppendEvents(5, conn, streams[0]);
                 AppendEvents(5, conn, streams[1]);
                 Assert.True(conn.TryConfirmStream(streamTypeName, 12), "Stream not ready.");
-                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 10, 2000,
+                AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 10, TimeSpan.FromSeconds(2),
                     $"Expected 10 got {Interlocked.Read(ref evtCount)} on {conn.ConnectionName}");
                 sub.Dispose();
                 AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
