@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Data.SqlTypes;
 using System.Threading;
-using System.Threading.Tasks;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Util;
 using Xunit;
 
 
@@ -50,9 +47,26 @@ namespace ReactiveDomain.Testing
         /// Will yield the thread after each evaluation.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="msg">A message to display if the condition is not satisfied.</param>
+        public static void IsOrBecomesFalse(Func<bool> func, TimeSpan timeout, string msg = null)
+        {
+            if (timeout <= TimeSpan.Zero)
+                throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+            IsOrBecomesFalse(func, (int)timeout.TotalMilliseconds, msg);
+        }
+
+        /// <summary>
+        /// Asserts the given function will return false before the timeout expires.  
+        /// Repeatedly evaluates the function until false is returned or the timeout expires.  
+        /// Will return immediately when the condition is false.  
+        /// Evaluates the condition on an exponential back off up to 250 ms until timeout.  
+        /// Will yield the thread after each evaluation.  
+        /// </summary>
+        /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
         /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">Ignored, will be removed in a future release</param>
+        /// <param name="yieldThread">Ignored, will be removed in a future release.</param>
         public static void IsOrBecomesFalse(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false)
         {
             IsOrBecomesTrue(() => !func(), timeout, msg);
@@ -66,12 +80,29 @@ namespace ReactiveDomain.Testing
         /// Will yield the thread after each evaluation.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="msg">A message to display if the condition is not satisfied.</param>
+        public static void IsOrBecomesTrue(Func<bool> func, TimeSpan timeout, string msg = null)
+        {
+            if (timeout <= TimeSpan.Zero)
+                throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+            IsOrBecomesTrue(func, (int)timeout.TotalMilliseconds, msg);
+        }
+
+        /// <summary>
+        /// Asserts the given function will return true before the timeout expires.  
+        /// Repeatedly evaluates the function until true is returned or the timeout expires.  
+        /// Will return immediately when the condition is true.  
+        /// Evaluates the condition on an exponential back off up to 250 ms until timeout.  
+        /// Will yield the thread after each evaluation.  
+        /// </summary>
+        /// <param name="func">The function to evaluate.</param>
         /// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
         /// <param name="msg">A message to display if the condition is not satisfied.</param>
-        /// <param name="yieldThread">Ignored, will be removed in a future release</param>
+        /// <param name="yieldThread">Ignored, will be removed in a future release.</param>
         public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false)
         {
-            if (func() == true)
+            if (func())
             {
                 Assert.True(true, msg ?? "");
                 return;
@@ -104,7 +135,24 @@ namespace ReactiveDomain.Testing
 
         /// <summary>
         /// Asserts that the given read model will have at least the expected version before the
-        /// timeout expires.  If a test needs to check an exact model version use 'IsOrBecomesTrue(()=> ReadModel.Version == [expectedVersion], [timeout])'. 
+        /// timeout expires.  If a test needs to check an exact model version use
+        /// 'IsOrBecomesTrue(()=> ReadModel.Version == [expectedVersion], [timeout])'. 
+        /// </summary>
+        /// <param name="readModel">The read model.</param>
+        /// <param name="expectedVersion">The read model's expected minimum version.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="msg">A message to display if the condition is not satisfied.</param>
+        public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, TimeSpan timeout, string msg = null)
+        {
+            if (timeout <= TimeSpan.Zero)
+                throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+            AtLeastModelVersion(readModel, expectedVersion, (int)timeout.TotalMilliseconds, msg);
+        }
+
+        /// <summary>
+        /// Asserts that the given read model will have at least the expected version before the
+        /// timeout expires.  If a test needs to check an exact model version use
+        /// 'IsOrBecomesTrue(()=> ReadModel.Version == [expectedVersion], [timeout])'. 
         /// </summary>
         /// <param name="readModel">The read model.</param>
         /// <param name="expectedVersion">The read model's expected minimum version.</param>
@@ -120,7 +168,7 @@ namespace ReactiveDomain.Testing
         /// The current thread will yield at the start of the delay.  
         /// </summary>
         /// <param name="func">The function to evaluate.</param>
-        /// <param name="delay">A delay timeSpan.</param>
+        /// <param name="delay">A delay <see cref="TimeSpan"/>.</param>
         public static bool EvaluateAfterDelay(Func<bool> func, TimeSpan delay)
         {
             Thread.Sleep(delay);
