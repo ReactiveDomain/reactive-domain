@@ -243,7 +243,8 @@ UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject
 
 # Pack the nuspec files to create the .nupkg files using the set versionString  *************************
 Write-Host "Packing reactivedomain nuget packages"
-$versionString = $RDVersion
+$versionInfo = (Get-Item $ReactiveDomainDll).VersionInfo
+$versionString = $versionInfo.FileMajorPart.ToString() + "." + $versionInfo.FileMinorPart.ToString() + "." + $versionInfo.FileBuildPart.ToString()
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainPolicyNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
