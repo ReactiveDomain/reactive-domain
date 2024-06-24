@@ -64,18 +64,21 @@ namespace ReactiveDomain.Testing.EventStore
             params EventData[] events)
         {
 
-            if (!_connected) throw new Exception("Not Connected");
+            if (!_connected) throw new InvalidOperationException("Not Connected");
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
             if (string.IsNullOrWhiteSpace(stream))
                 throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
 
             List<RecordedEvent> eventStream;
-            if (expectedVersion == ExpectedVersion.Any) {
+            if (expectedVersion == ExpectedVersion.Any)
+            {
                 eventStream = GetOrCreateStream(stream);
             }
-            else {
+            else
+            {
                 bool streamExists;
-                lock (_store) {
+                lock (_store)
+                {
                     streamExists = _store.TryGetValue(stream, out eventStream);
                 }
 
@@ -84,9 +87,11 @@ namespace ReactiveDomain.Testing.EventStore
                 if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
                     throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
-                if (!streamExists) {
+                if (!streamExists)
+                {
                     eventStream = new List<RecordedEvent>();
-                    lock (_store) {
+                    lock (_store)
+                    {
                         _store.Add(stream, eventStream);
                     }
                 }
@@ -97,7 +102,8 @@ namespace ReactiveDomain.Testing.EventStore
                         $"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
             }
             var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            for (var i = 0; i < events.Length; i++) {
+            for (var i = 0; i < events.Length; i++)
+            {
                 var created = DateTime.UtcNow;
                 var epochTime = (long)(created - epochStart).TotalSeconds;
                 var recordedEvent = new RecordedEvent(
@@ -110,7 +116,8 @@ namespace ReactiveDomain.Testing.EventStore
                     events[i].IsJson,
                     created,
                     epochTime);
-                lock (_allStream) {
+                lock (_allStream)
+                {
                     _allStream.Add(recordedEvent);
                     _inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
 
@@ -159,8 +166,10 @@ namespace ReactiveDomain.Testing.EventStore
         private List<RecordedEvent> GetOrCreateStream(string streamName)
         {
             List<RecordedEvent> stream;
-            lock (_store) {
-                if (!_store.TryGetValue(streamName, out stream)) {
+            lock (_store)
+            {
+                if (!_store.TryGetValue(streamName, out stream))
+                {
                     stream = new List<RecordedEvent>();
                     _store.Add(streamName, stream);
                 }
@@ -173,9 +182,13 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
             List<RecordedEvent> stream;
-            lock (_store) {
+            lock (_store)
+            {
                 if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
                 stream = _store[streamName].ToList();
             }
@@ -187,9 +200,13 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
             List<RecordedEvent> stream;
-            lock (_store) {
+            lock (_store)
+            {
                 if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
                 stream = _store[streamName].ToList();
             }
@@ -202,10 +219,15 @@ namespace ReactiveDomain.Testing.EventStore
                                     List<RecordedEvent> stream,
                                     ReadDirection direction)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             var result = new List<RecordedEvent>();
             var next = start == -1 ? stream.Count - 1 : (int)start;
-            for (int i = 0; i < count; i++) {
-                if (next < stream.Count && next >= 0) {
+            for (int i = 0; i < count; i++)
+            {
+                if (next < stream.Count && next >= 0)
+                {
                     long current = next;
                     result.Add(stream[(int)current]);
                 }
@@ -214,22 +236,27 @@ namespace ReactiveDomain.Testing.EventStore
 
             bool isEnd;
 
-            if (direction == ReadDirection.Forward) {
+            if (direction == ReadDirection.Forward)
+            {
                 isEnd = next >= stream.Count;
-                if (next > stream.Count) {
+                if (next > stream.Count)
+                {
                     next = stream.Count;
                 }
             }
             else  //Direction.Backward
             {
                 isEnd = next < 0;
-                if (next < 0) {
+                if (next < 0)
+                {
                     next = StreamPosition.End;
                 }
-                if (next > stream.Count + 1) {
+                if (next > stream.Count + 1)
+                {
                     next = stream.Count - 1;
                 }
-                else if (next > stream.Count) {
+                else if (next > stream.Count)
+                {
                     next = stream.Count;
                 }
             }
@@ -265,7 +292,8 @@ namespace ReactiveDomain.Testing.EventStore
             }
             public void Handle(EventCommitted evt)
             {
-                if (evt.RecordedPosition > _position) {
+                if (evt.RecordedPosition > _position)
+                {
                     _position = evt.RecordedPosition;
                     _eventAppeared(evt.Event);
                 }
@@ -303,8 +331,10 @@ namespace ReactiveDomain.Testing.EventStore
             public void Handle(EventWritten evt)
             {
                 if (string.CompareOrdinal(_streamName, evt.StreamName) == 0 ||
-                    string.CompareOrdinal(_streamName, AllStreamName) == 0) {
-                    if (evt.RecordedPosition > _position) {
+                    string.CompareOrdinal(_streamName, AllStreamName) == 0)
+                {
+                    if (evt.RecordedPosition > _position)
+                    {
                         _position = evt.RecordedPosition;
                         _eventAppeared(evt.Event);
                     }
@@ -326,9 +356,13 @@ namespace ReactiveDomain.Testing.EventStore
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials credentials = null)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
             long currentPos = 0;
-            lock (_store) {
-                if (_store.ContainsKey(stream)) {
+            lock (_store)
+            {
+                if (_store.ContainsKey(stream))
+                {
                     currentPos = _store[stream].Count - 1;
                 }
             }
@@ -351,21 +385,28 @@ namespace ReactiveDomain.Testing.EventStore
             Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
             UserCredentials credentials = null)
         {
-
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+          
             var start = (lastCheckpoint ?? -1) + 1;
             RecordedEvent[] curEvents = { };
-            lock (_store) {
-                if (_store.ContainsKey(stream)) {
+            lock (_store)
+            {
+                if (_store.ContainsKey(stream))
+                {
                     curEvents = _store[stream].Skip((int)start).ToArray();
                 }
             }
-            while (curEvents.Length > 0) {
-                for (int i = 0; i < curEvents.Length; i++) {
+            while (curEvents.Length > 0)
+            {
+                for (int i = 0; i < curEvents.Length; i++)
+                {
                     eventAppeared(curEvents[i]);
                 }
 
                 start = start + curEvents.Length;
-                lock (_store) {
+                lock (_store)
+                {
                     curEvents = _store[stream].Skip((int)start).ToArray();
                 }
             }
@@ -388,21 +429,28 @@ namespace ReactiveDomain.Testing.EventStore
                                               Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                               UserCredentials credentials = null, bool resolveLinkTos = true)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             var current = (int)@from.CommitPosition;
             var currentEvents = new RecordedEvent[] { };
-            lock (_allStream) {
-                if (@from == Position.End) {
+            lock (_allStream)
+            {
+                if (@from == Position.End)
+                {
                     current = _allStream.Count - 1;
                 }
 
-                if (current < _allStream.Count - 1) {
+                if (current < _allStream.Count - 1)
+                {
                     var events = new RecordedEvent[_allStream.Count - current];
                     _allStream.CopyTo(events, current);
                     currentEvents = events;
                 }
             }
 
-            for (int i = 0; i < currentEvents.Length; i++) {
+            for (int i = 0; i < currentEvents.Length; i++)
+            {
                 eventAppeared(currentEvents[i]);
             }
 
@@ -421,7 +469,7 @@ namespace ReactiveDomain.Testing.EventStore
                                 bool resolveLinkTos = true)
         {
             return SubscribeToAllFrom(
-                Position.Start, 
+                Position.Start,
                 eventAppeared,
                 null,
                 null,
@@ -431,18 +479,26 @@ namespace ReactiveDomain.Testing.EventStore
 
         public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
+           stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
+            {
                 throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
             }
-            if (stream.StartsWith("$")) {
+            if (stream.StartsWith("$"))
+            {
                 throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
             }
-            lock (_store) {
-                if (_store.ContainsKey(stream)) {
+            lock (_store)
+            {
+                if (_store.ContainsKey(stream))
+                {
                     _store.Remove(stream);
                 }
-                if (expectedVersion == ExpectedVersion.StreamExists) {
+                if (expectedVersion == ExpectedVersion.StreamExists)
+                {
                     throw new ArgumentOutOfRangeException();
                 }
             }
@@ -450,18 +506,26 @@ namespace ReactiveDomain.Testing.EventStore
 
         public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
+               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
+            {
                 throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
             }
-            if (stream.StartsWith("$")) {
+            if (stream.StartsWith("$"))
+            {
                 throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
             }
-            lock (_store) {
-                if (_store.ContainsKey(stream)) {
+            lock (_store)
+            {
+                if (_store.ContainsKey(stream))
+                {
                     _store.Remove(stream);
                 }
-                if (expectedVersion == ExpectedVersion.StreamExists) {
+                if (expectedVersion == ExpectedVersion.StreamExists)
+                {
                     throw new ArgumentOutOfRangeException();
                 }
             }
@@ -480,8 +544,9 @@ namespace ReactiveDomain.Testing.EventStore
         /// <param name="event">Event to be written to the category stream</param>
         private void WriteToByCategoryProjection(EventWritten @event)
         {
-            if (!_connected || _disposed)
-                throw new Exception();
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (@event.ProjectedEvent) { return; }
             var stream = GetOrCreateCategoryStream(@event, out var streamName);
             var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -500,7 +565,8 @@ namespace ReactiveDomain.Testing.EventStore
                     @event.Event.IsJson,
                     created,
                     epochTime);
-            lock (_allStream) {
+            lock (_allStream)
+            {
                 _allStream.Add(projectedEvent);
                 _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
             }
@@ -523,8 +589,9 @@ namespace ReactiveDomain.Testing.EventStore
         /// <param name="event">Event to be written to the event stream</param>
         private void WriteToByEventProjection(EventWritten @event)
         {
-            if (!_connected || _disposed)
-                throw new Exception();
+            if (!_connected) throw new InvalidOperationException("Not Connected");
+            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
             if (@event.ProjectedEvent) { return; }
             var stream = GetOrCreateEventTypeStream(@event, out var streamName);
             var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -543,7 +610,8 @@ namespace ReactiveDomain.Testing.EventStore
                 @event.Event.IsJson,
                 created,
                 epochTime);
-            lock (_allStream) {
+            lock (_allStream)
+            {
                 _allStream.Add(projectedEvent);
                 _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
             }

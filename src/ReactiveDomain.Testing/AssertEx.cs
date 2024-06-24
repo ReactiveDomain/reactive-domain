@@ -116,7 +116,7 @@ namespace ReactiveDomain.Testing
             var delay = 1;
             while (true)
             {
-                if (EvaluateAfterDelay(func, TimeSpan.FromMilliseconds(delay)))
+                if (func())
                 {
                     result = true;
                     break;
@@ -129,6 +129,7 @@ namespace ReactiveDomain.Testing
                     delay = delay << 1;
                 }
                 delay = Math.Min(delay, endTime - now);
+                Thread.Sleep(delay);
             }
             Assert.True(result, msg ?? "");
         }

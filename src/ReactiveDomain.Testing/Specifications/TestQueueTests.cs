@@ -122,6 +122,28 @@ namespace ReactiveDomain.Testing.Specifications
                 tq.AssertEmpty();
             }
         }
+        [Fact]
+        public void waiting_for_message_throws_on_clear()
+        {
+            using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
+            {
+                Task.Delay(5).ContinueWith(t => tq.Clear());
+                // Don't publish anything
+                Assert.Throws<InvalidOperationException>(() => tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100)));
+                tq.AssertEmpty();
+            }
+        }
+        [Fact]
+        public void waiting_for_id_throws_on_clear()
+        {
+            using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
+            {
+                Task.Delay(5).ContinueWith(t => tq.Clear());
+                // Don't publish anything
+                Assert.Throws<InvalidOperationException>(() => tq.WaitForMsgId(Guid.NewGuid(),TimeSpan.FromMilliseconds(100)));
+                tq.AssertEmpty();
+            }
+        }
 
         [Fact]
         public void can_wait_for_a_specific_message()
