@@ -135,7 +135,7 @@ namespace ReactiveDomain.Testing
 
             var delay = 1;
             //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
-            while (!AssertEx.EvaluateAfterDelay(() => Messages.Count(x => x is T) >= num, TimeSpan.FromMilliseconds(delay)))
+            while (Messages.ToList().Count(x => x is T) < num)
             {
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
 
@@ -144,6 +144,7 @@ namespace ReactiveDomain.Testing
 
                 if (delay < 250) { delay = delay << 1; }
                 delay = Math.Min(delay, endTime - now);
+                Thread.Sleep(delay);
             }
         }
         /// <summary>
