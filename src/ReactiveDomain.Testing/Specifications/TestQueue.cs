@@ -27,13 +27,13 @@ namespace ReactiveDomain.Testing
         private readonly HashSet<Type> _handledTypes = new HashSet<Type>();
         private readonly bool _trackTypes;
         private readonly ConcurrentDictionary<Guid, ManualResetEventSlim> _idWatchList = new ConcurrentDictionary<Guid, ManualResetEventSlim>();
-
         /// <summary>
         /// The queue of messages.
         /// </summary>
         public ConcurrentMessageQueue<IMessage> Messages { get; }
 
         private long _cleaning = 0;
+        private long _queueVersion = 0; //queue version is incremented on each clean
         private readonly IDisposable _subscription;
 
         /// <summary>
@@ -64,14 +64,16 @@ namespace ReactiveDomain.Testing
             _subscription?.Dispose();
             Clear();
         }
-        private bool EnsureReady() {
+        private bool EnsureReady()
+        {
             if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
             if (Interlocked.Read(ref _cleaning) != 0)
             {
                 SpinWait.SpinUntil(() => Interlocked.Read(ref _cleaning) == 0, 250);
             }
-            if (Interlocked.Read(ref _cleaning) != 0) {
-                throw new TimeoutException("Test Queue not ready, still clearing queues");
+            if (Interlocked.Read(ref _cleaning) != 0)
+            {
+                throw new TimeoutException("Test Queue not ready, timeout clearing queues");
             }
             return true;
         }
@@ -80,7 +82,7 @@ namespace ReactiveDomain.Testing
             EnsureReady();
             var msgType = message.GetType();
             if (_isFiltered && !MessageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
-           
+
             Messages.Enqueue(message);
 
             if (_trackTypes) { _handledTypes.Add(msgType); }
@@ -98,6 +100,7 @@ namespace ReactiveDomain.Testing
         {
             try
             {
+                Interlocked.Increment(ref _queueVersion); //invalidate current version
                 Interlocked.Exchange(ref _cleaning, 1); //It's ok to clean an extra message on the race condition
                 while (!Messages.IsEmpty)
                     Messages.TryDequeue(out var _);
@@ -128,17 +131,19 @@ namespace ReactiveDomain.Testing
         public void WaitForMultiple<T>(uint num, TimeSpan timeout) where T : IMessage
         {
             EnsureReady();
+            var version = Interlocked.Read(ref _queueVersion);
             if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
-            
+
             var startTime = Environment.TickCount; //returns MS since machine start
             var endTime = startTime + (int)timeout.TotalMilliseconds;
 
             var delay = 1;
             //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
+            //calling ToList allows the concurrent queue to handle grabbing a snapshot of the collection
             while (Messages.ToList().Count(x => x is T) < num)
             {
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-
+                if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!");}
                 var now = Environment.TickCount;
                 if ((endTime - now) <= 0) { throw new TimeoutException(); }
 
@@ -155,6 +160,7 @@ namespace ReactiveDomain.Testing
         public void WaitForMsgId(Guid id, TimeSpan timeout)
         {
             EnsureReady();
+            var version = Interlocked.Read(ref _queueVersion);
             var deadline = DateTime.Now + timeout;
             try
             {
@@ -175,10 +181,12 @@ namespace ReactiveDomain.Testing
 
                     if (Messages.ToArray().Any(m => m.MsgId == id)) { waithandle.Set(); }
 
+                    //wait here to see if the message handler triggers the wait handle we added
                     while (!waithandle.Wait(10))
                     {
                         if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
                         if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+                        if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
                     }
                 }
             }
