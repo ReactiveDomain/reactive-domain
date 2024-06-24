@@ -64,15 +64,23 @@ namespace ReactiveDomain.Testing
             _subscription?.Dispose();
             Clear();
         }
-
+        private bool EnsureReady() {
+            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            if (Interlocked.Read(ref _cleaning) != 0)
+            {
+                SpinWait.SpinUntil(() => Interlocked.Read(ref _cleaning) == 0, 250);
+            }
+            if (Interlocked.Read(ref _cleaning) != 0) {
+                throw new TimeoutException("Test Queue not ready, still clearing queues");
+            }
+            return true;
+        }
         public void Handle(IMessage message)
         {
-            if (_disposed) { return; }
+            EnsureReady();
             var msgType = message.GetType();
             if (_isFiltered && !MessageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
-
-            SpinWait.SpinUntil(() => Interlocked.Read(ref _cleaning) == 0, 100);
-
+           
             Messages.Enqueue(message);
 
             if (_trackTypes) { _handledTypes.Add(msgType); }
@@ -119,9 +127,9 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitForMultiple<T>(uint num, TimeSpan timeout) where T : IMessage
         {
-            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            EnsureReady();
             if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
-
+            
             var startTime = Environment.TickCount; //returns MS since machine start
             var endTime = startTime + (int)timeout.TotalMilliseconds;
 
@@ -145,7 +153,7 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitForMsgId(Guid id, TimeSpan timeout)
         {
-            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            EnsureReady();
             var deadline = DateTime.Now + timeout;
             try
             {
@@ -193,6 +201,7 @@ namespace ReactiveDomain.Testing
         /// <returns>The message that was dequeued.</returns>
         public TMsg DequeueNext<TMsg>() where TMsg : IMessage
         {
+            EnsureReady();
             return Messages.DequeueNext<TMsg>();
         }
 
@@ -207,6 +216,7 @@ namespace ReactiveDomain.Testing
                     Guid correlationId,
                     out TMsg msg) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(correlationId, out msg);
         }
 
@@ -218,6 +228,7 @@ namespace ReactiveDomain.Testing
         /// <returns>The Messages queue after dequeueing the next message.</returns>
         public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(Guid correlationId) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(correlationId);
         }
 
@@ -232,6 +243,7 @@ namespace ReactiveDomain.Testing
                     Func<TMsg, bool> condition,
                     string userMessage = null) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(condition, userMessage);
         }
 
@@ -240,6 +252,7 @@ namespace ReactiveDomain.Testing
         /// </summary>
         public void AssertEmpty()
         {
+            EnsureReady();
             Messages.AssertEmpty();
         }
 
