@@ -27,13 +27,13 @@ namespace ReactiveDomain.Testing
         private readonly HashSet<Type> _handledTypes = new HashSet<Type>();
         private readonly bool _trackTypes;
         private readonly ConcurrentDictionary<Guid, ManualResetEventSlim> _idWatchList = new ConcurrentDictionary<Guid, ManualResetEventSlim>();
-
         /// <summary>
         /// The queue of messages.
         /// </summary>
         public ConcurrentMessageQueue<IMessage> Messages { get; }
 
         private long _cleaning = 0;
+        private long _queueVersion = 0; //queue version is incremented on each clean
         private readonly IDisposable _subscription;
 
         /// <summary>
@@ -64,14 +64,24 @@ namespace ReactiveDomain.Testing
             _subscription?.Dispose();
             Clear();
         }
-
+        private bool EnsureReady()
+        {
+            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            if (Interlocked.Read(ref _cleaning) != 0)
+            {
+                SpinWait.SpinUntil(() => Interlocked.Read(ref _cleaning) == 0, 250);
+            }
+            if (Interlocked.Read(ref _cleaning) != 0)
+            {
+                throw new TimeoutException("Test Queue not ready, timeout clearing queues");
+            }
+            return true;
+        }
         public void Handle(IMessage message)
         {
-            if (_disposed) { return; }
+            EnsureReady();
             var msgType = message.GetType();
             if (_isFiltered && !MessageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
-
-            SpinWait.SpinUntil(() => Interlocked.Read(ref _cleaning) == 0, 100);
 
             Messages.Enqueue(message);
 
@@ -90,6 +100,7 @@ namespace ReactiveDomain.Testing
         {
             try
             {
+                Interlocked.Increment(ref _queueVersion); //invalidate current version
                 Interlocked.Exchange(ref _cleaning, 1); //It's ok to clean an extra message on the race condition
                 while (!Messages.IsEmpty)
                     Messages.TryDequeue(out var _);
@@ -119,7 +130,8 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitForMultiple<T>(uint num, TimeSpan timeout) where T : IMessage
         {
-            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            EnsureReady();
+            var version = Interlocked.Read(ref _queueVersion);
             if (!_trackTypes) { throw new InvalidOperationException("Type tracking is disabled for this instance."); }
 
             var startTime = Environment.TickCount; //returns MS since machine start
@@ -127,15 +139,17 @@ namespace ReactiveDomain.Testing
 
             var delay = 1;
             //Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
-            while (!AssertEx.EvaluateAfterDelay(() => Messages.Count(x => x is T) >= num, TimeSpan.FromMilliseconds(delay)))
+            //calling ToList allows the concurrent queue to handle grabbing a snapshot of the collection
+            while (Messages.ToList().Count(x => x is T) < num)
             {
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-
+                if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!");}
                 var now = Environment.TickCount;
                 if ((endTime - now) <= 0) { throw new TimeoutException(); }
 
                 if (delay < 250) { delay = delay << 1; }
                 delay = Math.Min(delay, endTime - now);
+                Thread.Sleep(delay);
             }
         }
         /// <summary>
@@ -145,7 +159,8 @@ namespace ReactiveDomain.Testing
         /// <param name="timeout">How long to wait before timing out.</param>
         public void WaitForMsgId(Guid id, TimeSpan timeout)
         {
-            if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+            EnsureReady();
+            var version = Interlocked.Read(ref _queueVersion);
             var deadline = DateTime.Now + timeout;
             try
             {
@@ -166,10 +181,12 @@ namespace ReactiveDomain.Testing
 
                     if (Messages.ToArray().Any(m => m.MsgId == id)) { waithandle.Set(); }
 
+                    //wait here to see if the message handler triggers the wait handle we added
                     while (!waithandle.Wait(10))
                     {
                         if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
                         if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+                        if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
                     }
                 }
             }
@@ -193,6 +210,7 @@ namespace ReactiveDomain.Testing
         /// <returns>The message that was dequeued.</returns>
         public TMsg DequeueNext<TMsg>() where TMsg : IMessage
         {
+            EnsureReady();
             return Messages.DequeueNext<TMsg>();
         }
 
@@ -207,6 +225,7 @@ namespace ReactiveDomain.Testing
                     Guid correlationId,
                     out TMsg msg) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(correlationId, out msg);
         }
 
@@ -218,6 +237,7 @@ namespace ReactiveDomain.Testing
         /// <returns>The Messages queue after dequeueing the next message.</returns>
         public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(Guid correlationId) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(correlationId);
         }
 
@@ -232,6 +252,7 @@ namespace ReactiveDomain.Testing
                     Func<TMsg, bool> condition,
                     string userMessage = null) where TMsg : ICorrelatedMessage
         {
+            EnsureReady();
             return Messages.AssertNext<TMsg>(condition, userMessage);
         }
 
@@ -240,6 +261,7 @@ namespace ReactiveDomain.Testing
         /// </summary>
         public void AssertEmpty()
         {
+            EnsureReady();
             Messages.AssertEmpty();
         }
 

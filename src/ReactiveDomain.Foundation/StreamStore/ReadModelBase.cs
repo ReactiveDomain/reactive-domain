@@ -182,9 +182,20 @@ namespace ReactiveDomain.Foundation
             }
             _disposed = true;
         }
-
+        /// <summary>
+        /// Applies a message synchronously to the read model while ensuring that the <see cref="ReaderLock"/>
+        /// is respected and bypasses both the queue and listeners. This is primarily useful in tests.
+        /// </summary>
+        /// <param name="message">The message to apply.</param>
+        public void DirectApply(IMessage message) { DequeueMessage(message); }
         public void Handle(Message message) { ((IHandle<IMessage>)_queue).Handle(message); }
         public void Handle(IMessage message) { ((IHandle<IMessage>)_queue).Handle(message); }
+        /// <summary>
+        /// Publishes a message onto the read model's internal queue.
+        /// This bypasses the Listeners while ensuring that the <see cref="ReaderLock"/>
+        /// is respected. All messages will be processed in order from the queue thread.
+        /// </summary>
+        /// <param name="message">The message to publish.</param>
         public void Publish(IMessage message) { ((IPublisher)_queue).Publish(message); }
     }
 }
