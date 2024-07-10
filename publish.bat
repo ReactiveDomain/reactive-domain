@@ -1,4 +1,4 @@
-del .\nupkgs\*.* /q
+del .\*.nukpg /q
 del .\bld\Release\*.* /q
 del .\bld\pub\*.* /q
 dotnet restore .\src\ReactiveDomain.sln

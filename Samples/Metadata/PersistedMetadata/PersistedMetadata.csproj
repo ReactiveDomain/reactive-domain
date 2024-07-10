@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ReactiveDomain" Version="0.10.4" />
+    <PackageReference Include="ReactiveDomain" Version="0.10.5" />
     <PackageReference Include="Terminal.Gui" Version="1.10.1" />
   </ItemGroup>
 
