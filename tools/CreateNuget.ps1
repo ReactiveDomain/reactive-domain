@@ -47,8 +47,6 @@ $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
 $ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
 $ReactiveDomainPolicyNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Policy" + $nuspecExtension
 $ReactiveDomainTestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Testing" + $nuspecExtension
-$ReactiveDomainUINuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI" + $nuspecExtension
-$ReactiveDomainUITestingNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing" + $nuspecExtension
 
 $RDCoreProject = $PSScriptRoot + "\..\src\ReactiveDomain.Core\ReactiveDomain.Core.csproj"
 $RDFoundationProject = $PSScriptRoot + "\..\src\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj"
@@ -61,8 +59,6 @@ $RDPolicyStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.PolicyStorage\
 $RDIdentityStorageProject = $PSScriptRoot + "\..\src\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj"
 
 $ReactiveDomainTestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
-$RDUIProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
-$RDUITestingProject = $PSScriptRoot + "\..\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
 $nuget = $PSScriptRoot + "\..\src\.nuget\nuget.exe"
 
 Write-Host ("Reactive Domain version is " + $RDVersion)
@@ -70,8 +66,6 @@ Write-Host ("Build type is " + $buildType)
 Write-Host ("ReactiveDomain nuspec file is " + $ReactiveDomainNuspec)
 Write-Host ("ReactiveDomain.Policy nuspec file is " + $ReactiveDomainPolicyNuspec)
 Write-Host ("ReactiveDomain.Testing nuspec file is " + $ReactiveDomainTestingNuspec)
-Write-Host ("ReactiveDomain.UI nuspec file is " + $ReactiveDomainUINuspec)
-Write-Host ("ReactiveDomain.UI.Testing nuspec file is " + $ReactiveDomainUITestingNuspec)
 Write-Host ("Branch is file is " + $branch)
 
 class PackagRef
@@ -87,7 +81,7 @@ class PackagRef
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
 #         ConditionOperator - (the equality operator for a framework, == or !=)
-#         Framework - The framework this Packageref applies to: (net48, net6.0)
+#         Framework - The framework this Packageref applies to: (net8.0, net6.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
 {
@@ -133,14 +127,14 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     }
  
     
-    if ($currentCondition -match "net48")
-    {
-        $currentFramework = "net48"
-    }
-      
     if ($currentCondition -match "net6.0")
     {
         $currentFramework = "net6.0"
+    }
+      
+    if ($currentCondition -match "net8.0")
+    {
+        $currentFramework = "net8.0"
     }
 
     $myObj = New-Object -TypeName PackagRef 
@@ -165,14 +159,14 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
 
-    $f48 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net48']"
-    $framework48Nodes = $f48.Node.ChildNodes
+    $net8 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net8.0']"
+    $net8Nodes = $net8.Node.ChildNodes
        
     $net6 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net6.0']"
     $net6Nodes = $net6.Node.ChildNodes
    
     
-    foreach($refnode in $framework48Nodes)
+    foreach($refnode in $net8Nodes)
     {
         if ( $refnode.id -match "ReactiveDomain")
         {
@@ -180,10 +174,10 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             continue
         }
 
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net48"
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net8.0"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net48") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net48")) -and
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net8.0") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net8.0")) -and
             ($pRef.version -ne ""))
         {
             $refnode.version = $pRef.Version
@@ -230,14 +224,8 @@ UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyProject
 UpdateDependencyVersions $ReactiveDomainNuspec $RDPolicyStorageProject
 UpdateDependencyVersions $ReactiveDomainNuspec $RDIdentityStorageProject  
 
-# These go into updating the ReactiveDomainUI.nuspec
-UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 
-
 # These go into updating the ReactiveDomainTesting.nuspec
 UpdateDependencyVersions $ReactiveDomainTestingNuspec $ReactiveDomainTestingProject 
-
-# These go into updating the ReactiveDomain.UI.Testing.nuspec
-UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject 
 
 # *******************************************************************************************************
 
@@ -248,23 +236,17 @@ $versionString = $versionInfo.FileMajorPart.ToString() + "." + $versionInfo.File
 & $nuget pack $ReactiveDomainNuspec -Version $versionString
 & $nuget pack $ReactiveDomainPolicyNuspec -Version $versionString
 & $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
-& $nuget pack $ReactiveDomainUINuspec -Version $versionString
-& $nuget pack $ReactiveDomainUITestingNuspec -Version $versionString
 
 # *******************************************************************************************************************************
 
 # Push the nuget packages to nuget.org ******************************************************************************************
 Write-Host "Push nuget packages to nuget.org"
 $ReactiveDomainNupkg = $PSScriptRoot + "\..\ReactiveDomain." + $versionString + ".nupkg"
-$ReactiveDomainTestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.Policy." + $versionString + ".nupkg"
+$ReactiveDomainPolicyNupkg = $PSScriptRoot + "\..\ReactiveDomain.Policy." + $versionString + ".nupkg"
 $ReactiveDomainTestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.Testing." + $versionString + ".nupkg"
-$ReactiveDomainUINupkg = $PSScriptRoot + "\..\ReactiveDomain.UI." + $versionString + ".nupkg"
-$ReactiveDomainUITestingNupkg = $PSScriptRoot + "\..\ReactiveDomain.UI.Testing." + $versionString + ".nupkg"
 
 & $nuget push $ReactiveDomainNupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
 & $nuget push $ReactiveDomainPolicyNupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
 & $nuget push $ReactiveDomainTestingNupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
-& $nuget push $ReactiveDomainUINupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
-& $nuget push $ReactiveDomainUITestingNupkg -Source "https://api.nuget.org/v3/index.json" -ApiKey $apikey 
 
 # *******************************************************************************************************************************

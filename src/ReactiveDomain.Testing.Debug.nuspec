@@ -3,28 +3,28 @@
   <metadata>
     <id>ReactiveDomain.Testing</id>
     <version>0.10.5.0</version>
-    <authors>PerkinElmer,Linedata</authors>
-    <owners>PerkinElmer,Linedata</owners>
+    <authors>Reactive Domain Group</authors>
+    <owners>Reactive Domain Group</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes ReactiveDomain assemblies needed for unit testing</description>
-    <copyright>Copyright © 2014-2024 PerkinElmer Inc., Linedata Inc.</copyright>
+    <copyright>Copyright © 2024 Reactive Domain Group</copyright>
     <dependencies>
-      <group targetFramework="net48">
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.11.0" exclude="Build,Analyzers" />
-        <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
+      <group targetFramework="net8.0">
         <dependency id="ReactiveDomain" version="0.10.5.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
+        <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
+        <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="Microsoft.NET.Test.Sdk" version="16.11.0" exclude="Build,Analyzers" />
-        <dependency id="xunit" version="2.4.1" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.4.1" exclude="Build,Analyzers" />
         <dependency id="ReactiveDomain" version="0.10.5.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
+        <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
+        <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
-      <group targetFramework="net48">
+      <group targetFramework="net8.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
       <group targetFramework="net6.0">
@@ -34,9 +34,9 @@
   </metadata>
   <files>
     <file src="..\build\ReactiveDomain.Testing.props" target="build" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.pdb" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.dll" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.Testing.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.pdb" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.dll" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.dll" target="ref\net8.0" />
 
     <file src="..\bld\Debug\net6.0\ReactiveDomain.Testing.pdb" target="lib\net6.0" />
     <file src="..\bld\Debug\net6.0\ReactiveDomain.Testing.dll" target="lib\net6.0" />

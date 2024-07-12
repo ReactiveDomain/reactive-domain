@@ -3,34 +3,34 @@
   <metadata>
     <id>ReactiveDomain.Policy</id>
     <version>0.10.5.0</version>
-    <authors>PerkinElmer,Linedata</authors>
+    <authors>Reactive Domain Group</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Identity and Policy assemblies</description>       
     <dependencies>
-      <group targetFramework="net48">
+      <group targetFramework="net8.0">
         <dependency id="ReactiveDomain" version="0.10.5.0" exclude="Build,Analyzers" />
-        <dependency id="DynamicData" version="7.1.17" exclude="Build,Analyzers" />
+        <dependency id="DynamicData" version="8.4.1" exclude="Build,Analyzers" />
         <dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
         <dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
         <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="Newtonsoft.Json" version="13.0.2" exclude="Build,Analyzers" />
-        <dependency id="System.DirectoryServices" version="5.0.0" exclude="Build,Analyzers"/>
-        <dependency id="System.DirectoryServices.AccountManagement" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+        <dependency id="System.DirectoryServices" version="8.0.0" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices.AccountManagement" version="8.0.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net6.0">
         <dependency id="ReactiveDomain" version="0.10.5.0" exclude="Build,Analyzers" />
-        <dependency id="DynamicData" version="7.1.17" exclude="Build,Analyzers" />
+        <dependency id="DynamicData" version="8.4.1" exclude="Build,Analyzers" />
         <dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
         <dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
         <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="Newtonsoft.Json" version="13.0.2" exclude="Build,Analyzers" />
-        <dependency id="System.DirectoryServices" version="5.0.0" exclude="Build,Analyzers"/>
-        <dependency id="System.DirectoryServices.AccountManagement" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+        <dependency id="System.DirectoryServices" version="8.0.0" exclude="Build,Analyzers"/>
+        <dependency id="System.DirectoryServices.AccountManagement" version="8.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
-      <group targetFramework="net48">
+      <group targetFramework="net8.0">
         <reference file="ReactiveDomain.Policy.dll" />
         <reference file="ReactiveDomain.PolicyStorage.dll" />
         <reference file="ReactiveDomain.IdentityStorage.dll" />
@@ -48,17 +48,17 @@
     <file src="..\bld\tools\ReactiveDomain.PolicyTool.exe" target="build\PolicyTool.exe" />
     <file src="..\bld\tools\es_settings.json" target="build\es_settings.json" />
     
-    <file src="..\bld\Debug\net48\ReactiveDomain.Policy.pdb" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.Policy.dll" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.Policy.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.pdb" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.dll" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.dll" target="ref\net8.0" />
     
-    <file src="..\bld\Debug\net48\ReactiveDomain.PolicyStorage.pdb" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.PolicyStorage.dll" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.PolicyStorage.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.pdb" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.dll" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.dll" target="ref\net8.0" />
     
-    <file src="..\bld\Debug\net48\ReactiveDomain.IdentityStorage.pdb" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.IdentityStorage.dll" target="lib\net48" />
-    <file src="..\bld\Debug\net48\ReactiveDomain.IdentityStorage.dll" target="ref\net48" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.pdb" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.dll" target="lib\net8.0" />
+    <file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.dll" target="ref\net8.0" />
     
     <file src="..\bld\Debug\net6.0\ReactiveDomain.Policy.pdb" target="lib\net6.0" />
     <file src="..\bld\Debug\net6.0\ReactiveDomain.Policy.dll" target="lib\net6.0" />

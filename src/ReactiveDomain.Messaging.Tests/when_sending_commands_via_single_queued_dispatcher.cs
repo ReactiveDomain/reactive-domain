@@ -31,7 +31,8 @@ namespace ReactiveDomain.Messaging.Tests {
 
         [Fact]
         public void send_cmd_msg_sequence_is_correct() {
-            Task.Run(() => _dispatcher.Send(new TestCommands.Command1()));
+            var t1 = Task.Run(() => _dispatcher.Send(new TestCommands.Command1()));
+            AssertEx.EnsureRunning(t1);
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotAck) == 1);
             Assert.True(_commandHandleStarted == 0);
             Interlocked.Increment(ref _releaseAckHandler);

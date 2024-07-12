@@ -32,7 +32,10 @@ namespace ReactiveDomain.Transport.Tests
         public TcpBusClientSideTests()
         {
             var hostAddress = IPAddress.Loopback;
-            var port = 10000;
+            var port = 10008;
+#if NET6_0
+            port = 10006; //net 6 and 8 will fight over the port in tests
+#endif
             _tcs = new TaskCompletionSource<IMessage>();
 
             // server side

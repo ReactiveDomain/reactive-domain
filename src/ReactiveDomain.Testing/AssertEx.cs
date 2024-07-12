@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using Xunit;
@@ -174,6 +177,36 @@ namespace ReactiveDomain.Testing
         {
             Thread.Sleep(delay);
             return func();
+        }
+        /// <summary>
+        /// Allow the test to ensure the listed tasks have begun 
+        /// running in tests.
+        /// Use as needed in tests to ensure that functions started in async tasks, 
+        /// have begun running on the thread pool.
+        /// Task.Wait etc. will often behave poorly with the test runner as they 
+        /// insert a continuation onto the target tasks to wait on.
+        /// </summary>
+        /// <param name="tasks">the tasks to ensure are running.</param>
+        public static void EnsureRunning(params Task[] tasks)
+        {
+            while (tasks.Any(t => t.Status < TaskStatus.Running))
+            {
+                Thread.Sleep(0);
+            }
+        }
+        /// <summary>
+        /// Allow the test to ensure the listed tasks have completed 
+        /// or failed in tests.
+        /// Use as needed at the end of tests to ensure that asserts or 
+        /// functions that throw, started in async tasks, have run their course.
+        /// Task.Wait etc. will often behave poorly with the test runner as they 
+        /// insert a continuation onto the target tasks to wait on.
+        /// </summary>
+        /// <param name="tasks">the tasks to ensure completion of.</param>
+        public static void EnsureComplete(params Task[] tasks) {
+            while (tasks.Any(t => t.Status < TaskStatus.RanToCompletion)) { 
+                Thread.Sleep(0);
+            }
         }
     }
 }

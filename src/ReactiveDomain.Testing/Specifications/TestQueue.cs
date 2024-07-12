@@ -26,7 +26,7 @@ namespace ReactiveDomain.Testing
         public Type[] HandledTypes => _handledTypes.ToArray();
         private readonly HashSet<Type> _handledTypes = new HashSet<Type>();
         private readonly bool _trackTypes;
-        private readonly ConcurrentDictionary<Guid, ManualResetEventSlim> _idWatchList = new ConcurrentDictionary<Guid, ManualResetEventSlim>();
+        private readonly Dictionary<Guid, ManualResetEventSlim> _idWatchList = new Dictionary<Guid, ManualResetEventSlim>();
         /// <summary>
         /// The queue of messages.
         /// </summary>
@@ -86,10 +86,12 @@ namespace ReactiveDomain.Testing
             Messages.Enqueue(message);
 
             if (_trackTypes) { _handledTypes.Add(msgType); }
-            if (_idWatchList.Count > 0)
+            lock (_idWatchList)
             {
-                _idWatchList.TryGetValue(message.MsgId, out var mres);
-                mres?.Set();
+                if (_idWatchList.ContainsKey(message.MsgId))
+                {
+                    _idWatchList[message.MsgId].Set();
+                }
             }
         }
 
@@ -105,6 +107,10 @@ namespace ReactiveDomain.Testing
                 while (!Messages.IsEmpty)
                     Messages.TryDequeue(out var _);
                 _handledTypes.Clear();
+                lock (_idWatchList)
+                {
+                    _idWatchList.Clear();
+                }
             }
             finally
             {
@@ -143,7 +149,7 @@ namespace ReactiveDomain.Testing
             while (Messages.ToList().Count(x => x is T) < num)
             {
                 if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-                if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!");}
+                if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
                 var now = Environment.TickCount;
                 if ((endTime - now) <= 0) { throw new TimeoutException(); }
 
@@ -162,43 +168,39 @@ namespace ReactiveDomain.Testing
             EnsureReady();
             var version = Interlocked.Read(ref _queueVersion);
             var deadline = DateTime.Now + timeout;
-            try
+
+            //setup a watch
+            ManualResetEventSlim waithandle;
+            lock (_idWatchList)
             {
-
-                var mres = new ManualResetEventSlim();
-                using (mres)
+                if (_idWatchList.ContainsKey(id))
                 {
-                    var waithandle = mres;
-
-
-                    if (!_idWatchList.TryAdd(id, waithandle))
-                    {
-                        if (!_idWatchList.TryGetValue(id, out waithandle) || waithandle.IsSet)
-                        {
-                            return; //we hit the race condition or waithandle set both likely mean it was found #mocklife
-                        }
-                    }
-
-                    if (Messages.ToArray().Any(m => m.MsgId == id)) { waithandle.Set(); }
-
-                    //wait here to see if the message handler triggers the wait handle we added
-                    while (!waithandle.Wait(10))
-                    {
-                        if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
-                        if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
-                        if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
-                    }
+                    waithandle = _idWatchList[id];
+                    if (waithandle.IsSet) { return; }
+                }
+                else
+                {
+                    waithandle = new ManualResetEventSlim(false);
+                    _idWatchList.Add(id, waithandle);
                 }
             }
-            catch (ObjectDisposedException)
+            //check to see if the message was handled before we got the watch setup
+            if (Messages.ToArray().Any(m => m.MsgId == id))
             {
-                //waithandle or TestQueue disposed
+                lock (_idWatchList)
+                {
+                    _idWatchList[id].Set();                       
+                }
                 return;
             }
-            finally
+            //wait here to see if the message handler triggers the wait handle we added
+            while (!waithandle.Wait(10))
             {
-                _idWatchList.TryRemove(id, out _);
+                if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
+                if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+                if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
             }
+
         }
 
         #region Passthroughs to Message Queue

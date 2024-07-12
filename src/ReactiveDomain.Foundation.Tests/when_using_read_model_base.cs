@@ -165,6 +165,8 @@ namespace ReactiveDomain.Foundation.Tests
             AssertEx.IsOrBecomesTrue(() => Sum == 20);
             //add more messages
             AppendEvents(10, _conn, _stream1, 5);
+            AssertEx.AtLeastModelVersion(this, 3, TimeSpan.FromMilliseconds(200), msg: $"Expected 3 got {Version}");
+            AssertEx.AtLeastModelVersion(this, 8, TimeSpan.FromMilliseconds(100), msg: $"Expected 8 got {Version}");
             AssertEx.AtLeastModelVersion(this, 12, TimeSpan.FromMilliseconds(100), msg: $"Expected 12 got {Version}");
             AssertEx.IsOrBecomesTrue(() => Sum == 70);
             //confirm checkpoints

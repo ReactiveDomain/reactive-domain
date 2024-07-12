@@ -10,6 +10,9 @@ namespace ReactiveDomain {
         public StreamStoreConnectionException(
                 string message = null, Exception innerException = null)
             : base(message, innerException) { }
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected StreamStoreConnectionException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
     }
@@ -19,6 +22,9 @@ namespace ReactiveDomain {
                     string message = null,
                     Exception innerException = null)
             : base(message, innerException) { }
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected StreamStoreNotAvailableException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
     }
@@ -31,6 +37,9 @@ namespace ReactiveDomain {
             : base(message, innerException) { }
         public WrongExpectedVersionException(string stream, int position, int expected, Exception innerException = null)
             : base($"The stream {stream} was found at {position}, expected position was {expected}.", innerException) { }
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected WrongExpectedVersionException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
     }

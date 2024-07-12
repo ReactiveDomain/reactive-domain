@@ -19,6 +19,9 @@ namespace ReactiveDomain.Transport.Framing
         {
         }
 
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected PackageFramingException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
