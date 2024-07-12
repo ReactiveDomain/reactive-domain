@@ -47,8 +47,6 @@ $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
 $sourceRDPolicyNuspec = Join-Path $sourceDir "ReactiveDomain.Policy.Debug.nuspec"
 $sourceRDPolicyTargets = Join-Path $sourceDir "ReactiveDomain.Policy.targets"
 $sourceRDTestNuspec = Join-Path $sourceDir "ReactiveDomain.Testing.Debug.nuspec"
-$sourceRDUINuspec = Join-Path $sourceDir "ReactiveDomain.UI.Debug.nuspec"
-$sourceRDUITestNuspec = Join-Path $sourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
 
 
 #target nuspec file paths in temp dir
@@ -56,8 +54,6 @@ $ReactiveDomainNuspec = Join-Path $tempSourceDir "ReactiveDomain.Debug.nuspec"
 $ReactiveDomainPolicyNuspec = Join-Path $tempSourceDir "ReactiveDomain.Policy.Debug.nuspec"
 $ReactiveDomainPolicyTargets = Join-Path $tempSourceDir "ReactiveDomain.Policy.targets"
 $ReactiveDomainTestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.Testing.Debug.nuspec"
-$ReactiveDomainUINuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Debug.nuspec"
-$ReactiveDomainUITestingNuspec = Join-Path $tempSourceDir "ReactiveDomain.UI.Testing.Debug.nuspec"
 
 
 #copy nuspec files to temp
@@ -65,8 +61,6 @@ Copy-Item $sourceRDNuspec -Destination $ReactiveDomainNuspec
 Copy-Item $sourceRDPolicyNuspec -Destination $ReactiveDomainPolicyNuspec
 Copy-Item $sourceRDPolicyTargets -Destination $ReactiveDomainPolicyTargets
 Copy-Item $sourceRDTestNuspec -Destination $ReactiveDomainTestingNuspec
-Copy-Item $sourceRDUINuspec -Destination $ReactiveDomainUINuspec
-Copy-Item $sourceRDUITestNuspec -Destination $ReactiveDomainUITestingNuspec
 
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
@@ -93,8 +87,6 @@ $RDMessagingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Messaging\React
 $RDPersistenceProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj"
 $RDTransportProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Transport\ReactiveDomain.Transport.csproj"
 $ReactiveDomainTestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj"
-$RDUIProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI\ReactiveDomain.UI.csproj"
-$RDUITestingProject = $ReactiveDomainRepo + "\src\ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj"
 $RDPolicyProject = $ReactiveDomainRepo + "\src\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj"
 $RDPolicyStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj"
 $RDIdentityStorageProject = $ReactiveDomainRepo + "\src\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj"
@@ -106,8 +98,6 @@ Write-Host ("Build type is " + $buildType)
 Write-Host ("ReactiveDomain nuspec file is " + $ReactiveDomainNuspec)
 Write-Host ("ReactiveDomain.Policy nuspec file is " + $ReactiveDomainPolicyNuspec)
 Write-Host ("ReactiveDomain.Testing nuspec file is " + $ReactiveDomainTestingNuspec)
-Write-Host ("ReactiveDomain.UI nuspec file is " + $ReactiveDomainUINuspec)
-Write-Host ("ReactiveDomain.UI.Testing nuspec file is " + $ReactiveDomainUITestingNuspec)
 Write-Host ("Branch is file is " + $branch)
 
 class PackagRef
@@ -168,9 +158,14 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
         $compOperator = "!="
     }
 
-    if ($currentCondition -match "netstandard2.0")
+     if ($currentCondition -match "net6.0")
     {
-        $currentFramework = "netstandard2.0"
+        $currentFramework = "net6.0"
+    }
+      
+    if ($currentCondition -match "net8.0")
+    {
+        $currentFramework = "net8.0"
     }
 
 
@@ -196,14 +191,13 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
     [xml]$xml = Get-Content -Path $Nuspec -Encoding UTF8
     $dependencyNodes = $xml.package.metadata.dependencies.group.dependency
     
-    $f48 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net48']"
-    $framework48Nodes = $f48.Node.ChildNodes
-
-    #netstandard2.0 processing
-    $netstandard20 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='netstandard2.0']"
-    $netstandard20Nodes = $netstandard20.Node.ChildNodes
+    $net8 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net8.0']"
+    $net8Nodes = $net8.Node.ChildNodes
+       
+    $net6 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net6.0']"
+    $net6Nodes = $net6.Node.ChildNodes
     
-    foreach($refnode in $framework48Nodes)
+    foreach($refnode in $net8Nodes)
     {
         if ( $refnode.id -match "ReactiveDomain")
         {
@@ -211,17 +205,17 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             continue
         }
 
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net48"
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net8.0"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net48") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net48")) -and
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net8.0") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net8.0")) -and
             ($pRef.version -ne ""))
         {
             $refnode.version = $pRef.Version
         }      
     }   
 
-    foreach($refnode in $netstandard20Nodes)
+    foreach($refnode in $net6Nodes)
     {
         if ( $refnode.id -match "ReactiveDomain")
         {
@@ -229,10 +223,10 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             continue
         }
         
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "netstandard2.0"
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net6.0"
         if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "netstandard2.0") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "netstandard2.0")) -and
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net6.0") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net6.0")) -and
             ($pRef.version -ne ""))
         { 
             $refnode.version = $pRef.Version
@@ -258,14 +252,8 @@ UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDPolicyProject
 UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDPolicyStorageProject 
 UpdateDependencyVersions $ReactiveDomainPolicyNuspec $RDIdentityStorageProject 
 
-# These go into updating the ReactiveDomainUI.nuspec
-UpdateDependencyVersions $ReactiveDomainUINuspec $RDUIProject 
-
 # These go into updating the ReactiveDomainTesting.nuspec
 UpdateDependencyVersions $ReactiveDomainTestingNuspec $ReactiveDomainTestingProject 
-
-# These go into updating the ReactiveDomain.UI.Testing.nuspec
-UpdateDependencyVersions $ReactiveDomainUITestingNuspec $RDUITestingProject 
 
 # *******************************************************************************************************
 
@@ -275,11 +263,9 @@ Write-Host "Packing reactivedomain nuget packages"
 Write-Host "Version string to use: " + $RDVersion
 Write-Host "RD-Vuspec: " + $ReactiveDomainNuspec
 
-& $nuget pack $ReactiveDomainNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
-& $nuget pack $ReactiveDomainPolicyNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
-& $nuget pack $ReactiveDomainTestingNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
-& $nuget pack $ReactiveDomainUINuspec -Version $RDVersion -OutputDirectory $nupkgsDir
-& $nuget pack $ReactiveDomainUITestingNuspec -Version $RDVersion -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainNuspec -version $RDVersion -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainPolicyNuspec -version $RDVersion -OutputDirectory $nupkgsDir
+& $nuget pack $ReactiveDomainTestingNuspec -version $RDVersion -OutputDirectory $nupkgsDir
 
 # *******************************************************************************************************************************
 

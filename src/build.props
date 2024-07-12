@@ -1,67 +1,56 @@
 <Project>
-    <PropertyGroup>
-        <BuildPropsImported>true</BuildPropsImported>
-    </PropertyGroup>
-    <PropertyGroup>
-        <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
-        <IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
-        <DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
-        <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
-    </PropertyGroup>
-    <PropertyGroup>
-        <PackageVersionPrefix>0.10.5</PackageVersionPrefix>
-        <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
-        <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
-        <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
-        <NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
-    </PropertyGroup>
-    <PropertyGroup>
-        <Prefer32Bit>false</Prefer32Bit>
-        <Platforms>AnyCPU</Platforms>
-        <Authors>PerkinElmer,Linedata</Authors>
-        <Company>PerkinElmer,Linedata</Company>
-        <Copyright>Copyright © 2019-2024 PerkinElmer Inc., Linedata Inc.</Copyright>
-        <Description />
-        <AssemblyVersion>0.10.5.0</AssemblyVersion>
-        <FileVersion>0.10.5.0</FileVersion>
-        <NeutralLanguage />
-        <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-    </PropertyGroup>
-    <PropertyGroup>
-        <OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup>
-        <NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
-    </PropertyGroup>
-    <PropertyGroup>
-        <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
-    </PropertyGroup>
-    <Choose>
-        <When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
-            <PropertyGroup>
-                <HomeDirectory>$(HOME)</HomeDirectory>
-            </PropertyGroup>
-        </When>
-        <When Condition=" $(OS) == 'WINDOWS_NT'">
-            <PropertyGroup>
-                <HomeDirectory>$(USERPROFILE)</HomeDirectory>
-            </PropertyGroup>
-        </When>
-    </Choose>
-    <Choose>
-      <When Condition="$(OS) == 'WINDOWS_NT'">
-        <PropertyGroup>
-          <LibTargetFrameworks>net48;net6.0</LibTargetFrameworks> 
-          <TestTargetFrameworks>net48;net6.0</TestTargetFrameworks>
-        </PropertyGroup>
-      </When>
-      <When Condition=" $(OS) != 'WINDOWS_NT'">
-        <PropertyGroup>
-          <LibTargetFrameworks>net6.0</LibTargetFrameworks> 
-          <TestTargetFrameworks>net6.0</TestTargetFrameworks>
-        </PropertyGroup>
-      </When>
-    </Choose>
+  <PropertyGroup>
+    <BuildPropsImported>true</BuildPropsImported>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
+    <IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
+    <DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
+    <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageVersionPrefix>0.10.5</PackageVersionPrefix>
+    <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
+    <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
+    <NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Prefer32Bit>false</Prefer32Bit>
+    <Platforms>AnyCPU</Platforms>
+    <Authors>Reactive Domain Group</Authors>
+    <Copyright>Copyright © 2024 Reactive Domain Group</Copyright>
+    <Description />
+    <AssemblyVersion>0.10.5.0</AssemblyVersion>
+    <FileVersion>0.10.5.0</FileVersion>
+    <NeutralLanguage />
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
+      <PropertyGroup>
+        <HomeDirectory>$(HOME)</HomeDirectory>
+      </PropertyGroup>
+    </When>
+    <When Condition=" $(OS) == 'WINDOWS_NT'">
+      <PropertyGroup>
+        <HomeDirectory>$(USERPROFILE)</HomeDirectory>
+      </PropertyGroup>
+    </When>
+  </Choose>
+  <PropertyGroup>
+    <LibTargetFrameworks>net6.0;net8.0</LibTargetFrameworks>
+    <TestTargetFrameworks>net6.0;net8.0</TestTargetFrameworks>
+  </PropertyGroup>
 </Project>

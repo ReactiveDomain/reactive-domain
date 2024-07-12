@@ -22,7 +22,9 @@ namespace ReactiveDomain.Messaging.Bus {
         {
             Command = command;
         }
-
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected CommandException(
             SerializationInfo info,
             StreamingContext context) : base(info, context)
@@ -45,7 +47,9 @@ namespace ReactiveDomain.Messaging.Bus {
         public CommandCanceledException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
-
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected CommandCanceledException(
             SerializationInfo info,
             StreamingContext context) : base(info, context)
@@ -67,7 +71,9 @@ namespace ReactiveDomain.Messaging.Bus {
         public CommandTimedOutException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
-
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected CommandTimedOutException(
             SerializationInfo info,
             StreamingContext context) : base(info, context)
@@ -94,7 +100,9 @@ namespace ReactiveDomain.Messaging.Bus {
         public CommandOversubscribedException(string message, Exception inner, ICommand command) : base(message, inner, command)
         {
         }
-
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
         protected CommandOversubscribedException(
             SerializationInfo info,
             StreamingContext context) : base(info, context)
@@ -116,8 +124,10 @@ namespace ReactiveDomain.Messaging.Bus {
 		public CommandNotHandledException(string message, Exception inner, ICommand command) : base(message, inner, command)
 		{
 		}
-
-		protected CommandNotHandledException(
+#if NET8_0_OR_GREATER
+        [Obsolete(DiagnosticId = "SYSLIB0051")]
+#endif
+        protected CommandNotHandledException(
 			SerializationInfo info,
 			StreamingContext context) : base(info, context)
 		{

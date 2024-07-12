@@ -121,7 +121,7 @@ namespace ReactiveDomain.Testing.EventStore
 
                 AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, TimeSpan.FromSeconds(2), msg: "Failed handle live processing start");
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 2, TimeSpan.FromSeconds(5), msg: $"Expected 2 Events got { Interlocked.Read(ref evtCount)}");
-                Task.Run(() => AppendEvents(5, conn, streamName));
+                AppendEvents(5, conn, streamName);
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 7, TimeSpan.FromSeconds(5), msg: $"Expected 7 Events got { Interlocked.Read(ref evtCount)}");
                 AppendEvents(5, conn, streamName);
                 AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref evtCount) == 12, TimeSpan.FromSeconds(5), msg: $"Expected 12 Events got { Interlocked.Read(ref evtCount)}");

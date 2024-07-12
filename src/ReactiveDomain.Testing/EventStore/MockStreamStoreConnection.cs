@@ -12,6 +12,7 @@ namespace ReactiveDomain.Testing.EventStore
 {
     public sealed class MockStreamStoreConnection : IStreamStoreConnection
     {
+        private object ReaderWriterLock = new object();
         public const string CategoryStreamNamePrefix = @"$ce";
         public const string EventTypeStreamNamePrefix = @"$et";
         public const string AllStreamName = @"$All";
@@ -29,8 +30,6 @@ namespace ReactiveDomain.Testing.EventStore
 
             _store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
             _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
-            _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByCategoryProjection)));
-            _subscriptions.Add(_inboundEventBus.Subscribe(new AdHocHandler<EventWritten>(WriteToByEventProjection)));
 
             _inboundEventHandler = new QueuedHandler(
                 new AdHocHandler<IMessage>(_inboundEventBus.Publish),
@@ -68,66 +67,66 @@ namespace ReactiveDomain.Testing.EventStore
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
             if (string.IsNullOrWhiteSpace(stream))
                 throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
-
-            List<RecordedEvent> eventStream;
-            if (expectedVersion == ExpectedVersion.Any)
+            lock (ReaderWriterLock)
             {
-                eventStream = GetOrCreateStream(stream);
-            }
-            else
-            {
-                bool streamExists;
-                lock (_store)
+                List<RecordedEvent> eventStream;
+                if (expectedVersion == ExpectedVersion.Any)
                 {
-                    streamExists = _store.TryGetValue(stream, out eventStream);
+                    eventStream = GetOrCreateStream(stream);
                 }
-
-                if (streamExists && expectedVersion == ExpectedVersion.NoStream)
-                    throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
-                if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
-                    throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
-
-                if (!streamExists)
+                else
                 {
-                    eventStream = new List<RecordedEvent>();
+                    bool streamExists;
                     lock (_store)
                     {
-                        _store.Add(stream, eventStream);
+                        streamExists = _store.TryGetValue(stream, out eventStream);
                     }
+
+                    if (streamExists && expectedVersion == ExpectedVersion.NoStream)
+                        throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
+                    if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
+                        throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
+
+                    if (!streamExists)
+                    {
+                        eventStream = new List<RecordedEvent>();
+                        lock (_store)
+                        {
+                            _store.Add(stream, eventStream);
+                        }
+                    }
+                    var startingPosition = eventStream.Count - 1;
+                    if (expectedVersion != ExpectedVersion.NoStream &&
+                        expectedVersion != startingPosition)
+                        throw new WrongExpectedVersionException(
+                            $"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
                 }
-                var startingPosition = eventStream.Count - 1;
-                if (expectedVersion != ExpectedVersion.NoStream &&
-                    expectedVersion != startingPosition)
-                    throw new WrongExpectedVersionException(
-                        $"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
-            }
-            var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            for (var i = 0; i < events.Length; i++)
-            {
-                var created = DateTime.UtcNow;
-                var epochTime = (long)(created - epochStart).TotalSeconds;
-                var recordedEvent = new RecordedEvent(
-                    stream,
-                    events[i].EventId,
-                    eventStream.Count,
-                    events[i].EventType,
-                    events[i].Data,
-                    events[i].Metadata,
-                    events[i].IsJson,
-                    created,
-                    epochTime);
-                lock (_allStream)
+                var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                for (var i = 0; i < events.Length; i++)
                 {
+                    var created = DateTime.UtcNow;
+                    var epochTime = (long)(created - epochStart).TotalSeconds;
+                    var recordedEvent = new RecordedEvent(
+                        stream,
+                        events[i].EventId,
+                        eventStream.Count,
+                        events[i].EventType,
+                        events[i].Data,
+                        events[i].Metadata,
+                        events[i].IsJson,
+                        created,
+                        epochTime);
+
                     _allStream.Add(recordedEvent);
                     _inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
-
+                    eventStream.Add(recordedEvent);
+                    var written = new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber);
+                    _inboundEventHandler.Handle(written);
+                    WriteToByCategoryProjection(written);
+                    WriteToByEventProjection(written);
                 }
-
-                eventStream.Add(recordedEvent);
-                _inboundEventHandler.Handle(new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber));
+                return new WriteResult(eventStream.Count - 1);
             }
-            return new WriteResult(eventStream.Count - 1);
-
         }
 
         /// <summary>
@@ -182,17 +181,20 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-
-            if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
-            List<RecordedEvent> stream;
-            lock (_store)
+            lock (ReaderWriterLock)
             {
-                if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
-                stream = _store[streamName].ToList();
+                if (!_connected) throw new InvalidOperationException("Not Connected");
+                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
+                if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
+                List<RecordedEvent> stream;
+                lock (_store)
+                {
+                    if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
+                    stream = _store[streamName].ToList();
+                }
+                return ReadFromStream(streamName, start, count, stream, ReadDirection.Forward);
             }
-            return ReadFromStream(streamName, start, count, stream, ReadDirection.Forward);
         }
         public StreamEventsSlice ReadStreamBackward(
                                     string streamName,
@@ -200,17 +202,20 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-
-            if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
-            List<RecordedEvent> stream;
-            lock (_store)
+            lock (ReaderWriterLock)
             {
-                if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
-                stream = _store[streamName].ToList();
+                if (!_connected) throw new InvalidOperationException("Not Connected");
+                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+
+                if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
+                List<RecordedEvent> stream;
+                lock (_store)
+                {
+                    if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
+                    stream = _store[streamName].ToList();
+                }
+                return ReadFromStream(streamName, start, count, stream, ReadDirection.Backward);
             }
-            return ReadFromStream(streamName, start, count, stream, ReadDirection.Backward);
         }
         private StreamEventsSlice ReadFromStream(
                                     string streamName,
@@ -219,57 +224,60 @@ namespace ReactiveDomain.Testing.EventStore
                                     List<RecordedEvent> stream,
                                     ReadDirection direction)
         {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-
-            var result = new List<RecordedEvent>();
-            var next = start == -1 ? stream.Count - 1 : (int)start;
-            for (int i = 0; i < count; i++)
+            lock (ReaderWriterLock)
             {
-                if (next < stream.Count && next >= 0)
-                {
-                    long current = next;
-                    result.Add(stream[(int)current]);
-                }
-                next += (int)direction;
-            }
+                if (!_connected) throw new InvalidOperationException("Not Connected");
+                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            bool isEnd;
+                var result = new List<RecordedEvent>();
+                var next = start == -1 ? stream.Count - 1 : (int)start;
+                for (int i = 0; i < count; i++)
+                {
+                    if (next < stream.Count && next >= 0)
+                    {
+                        long current = next;
+                        result.Add(stream[(int)current]);
+                    }
+                    next += (int)direction;
+                }
 
-            if (direction == ReadDirection.Forward)
-            {
-                isEnd = next >= stream.Count;
-                if (next > stream.Count)
-                {
-                    next = stream.Count;
-                }
-            }
-            else  //Direction.Backward
-            {
-                isEnd = next < 0;
-                if (next < 0)
-                {
-                    next = StreamPosition.End;
-                }
-                if (next > stream.Count + 1)
-                {
-                    next = stream.Count - 1;
-                }
-                else if (next > stream.Count)
-                {
-                    next = stream.Count;
-                }
-            }
-            var slice = new StreamEventsSlice(
-                                streamName,
-                                start,
-                                direction,
-                                result.ToArray(),
-                                next,
-                                stream.Count - 1,
-                                isEnd);
+                bool isEnd;
 
-            return slice;
+                if (direction == ReadDirection.Forward)
+                {
+                    isEnd = next >= stream.Count;
+                    if (next > stream.Count)
+                    {
+                        next = stream.Count;
+                    }
+                }
+                else  //Direction.Backward
+                {
+                    isEnd = next < 0;
+                    if (next < 0)
+                    {
+                        next = StreamPosition.End;
+                    }
+                    if (next > stream.Count + 1)
+                    {
+                        next = stream.Count - 1;
+                    }
+                    else if (next > stream.Count)
+                    {
+                        next = stream.Count;
+                    }
+                }
+                var slice = new StreamEventsSlice(
+                                    streamName,
+                                    start,
+                                    direction,
+                                    result.ToArray(),
+                                    next,
+                                    stream.Count - 1,
+                                    isEnd);
+
+                return slice;
+            }
         }
 
         public sealed class AllStreamSubscription :
@@ -387,7 +395,7 @@ namespace ReactiveDomain.Testing.EventStore
         {
             if (!_connected) throw new InvalidOperationException("Not Connected");
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-          
+
             var start = (lastCheckpoint ?? -1) + 1;
             RecordedEvent[] curEvents = { };
             lock (_store)
@@ -479,54 +487,60 @@ namespace ReactiveDomain.Testing.EventStore
 
         public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+            lock (ReaderWriterLock)
+            {
+                if (!_connected) throw new InvalidOperationException("Not Connected");
+                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-           stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
-            }
-            if (stream.StartsWith("$"))
-            {
-                throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
-            }
-            lock (_store)
-            {
-                if (_store.ContainsKey(stream))
+                if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
+               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    _store.Remove(stream);
+                    throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
                 }
-                if (expectedVersion == ExpectedVersion.StreamExists)
+                if (stream.StartsWith("$"))
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
+                }
+                lock (_store)
+                {
+                    if (_store.ContainsKey(stream))
+                    {
+                        _store.Remove(stream);
+                    }
+                    if (expectedVersion == ExpectedVersion.StreamExists)
+                    {
+                        throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
         }
 
         public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+            lock (ReaderWriterLock)
+            {
+                if (!_connected) throw new InvalidOperationException("Not Connected");
+                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
-            }
-            if (stream.StartsWith("$"))
-            {
-                throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
-            }
-            lock (_store)
-            {
-                if (_store.ContainsKey(stream))
+                if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
+                   stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    _store.Remove(stream);
+                    throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
                 }
-                if (expectedVersion == ExpectedVersion.StreamExists)
+                if (stream.StartsWith("$"))
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
+                }
+                lock (_store)
+                {
+                    if (_store.ContainsKey(stream))
+                    {
+                        _store.Remove(stream);
+                    }
+                    if (expectedVersion == ExpectedVersion.StreamExists)
+                    {
+                        throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
         }

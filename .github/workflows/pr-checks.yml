@@ -48,45 +48,31 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [Debug, Release]
-        dotnet-version: [ '4.8', '6.0.x' ]
-
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-
-    env:
-      Solution_Name: ReactiveDomain.sln
-
-    steps:
+        dotnet-version: [ '6.0', '8.0']
+        os: [windows-latest, ubuntu-latest]              
+             
+    runs-on: ${{ matrix.os }}       
+     
+    # Checkout
+    steps:    
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
-
-    # Install the .NET Core workload
+        fetch-depth: 0  
+    
+    # Install .NET Core
     - name: Install .NET ${{ matrix.dotnet-version }}
-      if: ${{ matrix.dotnet-version == '6.0.x' }}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
-
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
-
-    # Build all framework versions
-    - name: Build all
+    # Build
+    - name: Build
       working-directory: src
-      run: dotnet build $env:Solution_Name
+      run: dotnet build ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -c Release
 
-    # Execute all unit tests in the solution
-    - name: Execute unit tests with .NET Framework
-      if: ${{ (matrix.dotnet-version == '4.8') && (matrix.configuration == 'Debug') }}
+    # Test
+    - name: Test     
       working-directory: src
-      run: dotnet test $env:Solution_Name -f net48 -p:ParallelizeTestCollections=false
+      run: dotnet test ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -p:ParallelizeTestCollections=false -c Release  --no-build 
 
-    # Execute all unit tests in the solution
-    - name: Execute unit tests with .NET
-      if: ${{ (matrix.dotnet-version == '6.0.x') && (matrix.configuration == 'Debug') }}
-      working-directory: src
-      run: dotnet test $env:Solution_Name -f net6.0 -p:ParallelizeTestCollections=false

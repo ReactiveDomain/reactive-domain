@@ -3,29 +3,31 @@
   <metadata>
     <id>ReactiveDomain</id>
     <version>0.10.5.0</version>
-    <authors>PerkinElmer,Linedata</authors>
+    <authors>Reactive Domain Group</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Core assemblies</description>
-    <copyright>Copyright © 2014-2024 PerkinElmer Inc., Linedata Inc.</copyright>
+    <copyright>Copyright © 2024 Reactive Domain Group</copyright>
     <dependencies>
-      <group targetFramework="net48">
+      <group targetFramework="net8.0">
         <dependency id="EventStore.Client" version="22.0.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
-        <dependency id="System.Configuration.ConfigurationManager" version="7.0.0" exclude="Build,Analyzers" />
-        <dependency id="System.Diagnostics.PerformanceCounter" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Reactive" version="6.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.Configuration.ConfigurationManager" version="8.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.PerformanceCounter" version="8.0.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net6.0">
         <dependency id="EventStore.Client" version="22.0.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.CSharp" version="4.7.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
-        <dependency id="System.Configuration.ConfigurationManager" version="7.0.0" exclude="Build,Analyzers" />
-        <dependency id="System.Diagnostics.PerformanceCounter" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Reactive" version="6.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.Configuration.ConfigurationManager" version="8.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.PerformanceCounter" version="8.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
     <references>
-      <group targetFramework="net48">
+      <group targetFramework="net8.0">
         <reference file="ReactiveDomain.Core.dll" />
         <reference file="ReactiveDomain.Foundation.dll" />
         <reference file="ReactiveDomain.Messaging.dll" />
@@ -46,21 +48,21 @@
   </metadata>
   <files>
     <file src="..\build\ReactiveDomain.props" target="build" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Core.pdb" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Foundation.pdb" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Messaging.pdb" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Persistence.pdb" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Transport.pdb" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Core.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Foundation.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Messaging.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Persistence.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Transport.dll" target="lib\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Core.dll" target="ref\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Foundation.dll" target="ref\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Messaging.dll" target="ref\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Persistence.dll" target="ref\net48" />
-    <file src="..\bld\Release\net48\ReactiveDomain.Transport.dll" target="ref\net48" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Core.pdb" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Foundation.pdb" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Messaging.pdb" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Persistence.pdb" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Transport.pdb" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Core.dll" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Foundation.dll" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Messaging.dll" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Persistence.dll" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Transport.dll" target="lib\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Core.dll" target="ref\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Foundation.dll" target="ref\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Messaging.dll" target="ref\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Persistence.dll" target="ref\net8.0" />
+    <file src="..\bld\Release\net8.0\ReactiveDomain.Transport.dll" target="ref\net8.0" />
     <file src="..\bld\Release\net6.0\ReactiveDomain.Core.pdb" target="lib\net6.0" />
     <file src="..\bld\Release\net6.0\ReactiveDomain.Foundation.pdb" target="lib\net6.0" />
     <file src="..\bld\Release\net6.0\ReactiveDomain.Messaging.pdb" target="lib\net6.0" />

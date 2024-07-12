@@ -21,10 +21,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Persistence"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Core", "ReactiveDomain.Core\ReactiveDomain.Core.csproj", "{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI", "ReactiveDomain.UI\ReactiveDomain.UI.csproj", "{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI.Testing", "ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj", "{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B11B7952-E722-4EDE-ADF9-9DBEA64E0FD5}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -42,10 +38,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ReactiveDomain.Policy.targets = ReactiveDomain.Policy.targets
 		ReactiveDomain.Testing.Debug.nuspec = ReactiveDomain.Testing.Debug.nuspec
 		ReactiveDomain.Testing.nuspec = ReactiveDomain.Testing.nuspec
-		ReactiveDomain.UI.Debug.nuspec = ReactiveDomain.UI.Debug.nuspec
-		ReactiveDomain.UI.nuspec = ReactiveDomain.UI.nuspec
-		ReactiveDomain.UI.Testing.Debug.nuspec = ReactiveDomain.UI.Testing.Debug.nuspec
-		ReactiveDomain.UI.Testing.nuspec = ReactiveDomain.UI.Testing.nuspec
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy", "ReactiveDomain.Policy\ReactiveDomain.Policy.csproj", "{553DAE59-F925-4AD9-9E08-20DDB5069CCA}"
@@ -104,14 +96,6 @@ Global
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D2A6B27-7B36-443B-9828-701CAFCDFCAB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B88E7A2F-27DA-477D-8353-D218EFAF9BA9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{553DAE59-F925-4AD9-9E08-20DDB5069CCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -137,9 +121,7 @@ Global
 		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46F5E314-9AAF-419D-A261-940D55CD0FC9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44879F67-D0AD-4D81-B680-CB01FBC5B75F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

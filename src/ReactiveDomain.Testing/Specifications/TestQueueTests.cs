@@ -3,12 +3,13 @@
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace ReactiveDomain.Testing.Specifications
 {
-    public sealed class TestQueueTests : 
+    public sealed class TestQueueTests :
         IHandleCommand<TestCommands.Command1>,
         IDisposable
     {
@@ -28,6 +29,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
+                Assert.True(_dispatcher.HasSubscriberFor<TestCommands.Command1>());
                 var evt = new TestEvent();
                 var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
@@ -51,6 +53,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher))
             {
+                Assert.True(_dispatcher.HasSubscriberFor<TestCommands.Command1>());
                 var evt = new TestEvent();
                 var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
@@ -72,6 +75,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Command) }))
             {
+                Assert.True(_dispatcher.HasSubscriberFor<TestCommands.Command1>());
                 var evt = new TestEvent();
                 var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
@@ -87,6 +91,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event) }))
             {
+                Assert.True(_dispatcher.HasSubscriberFor<TestCommands.Command1>());
                 var evt = new TestEvent();
                 var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
@@ -102,6 +107,7 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
+                Assert.True(_dispatcher.HasSubscriberFor<TestCommands.Command1>());
                 var evt = new TestEvent();
                 var cmd = new TestCommands.Command1();
                 _dispatcher.Publish(evt);
@@ -127,9 +133,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                Task.Delay(5).ContinueWith(t => tq.Clear());
-                // Don't publish anything
-                Assert.Throws<InvalidOperationException>(() => tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100)));
+                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100))))
+                    .ContinueWith(t => tq.Clear());
                 tq.AssertEmpty();
             }
         }
@@ -138,9 +143,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                Task.Delay(5).ContinueWith(t => tq.Clear());
-                // Don't publish anything
-                Assert.Throws<InvalidOperationException>(() => tq.WaitForMsgId(Guid.NewGuid(),TimeSpan.FromMilliseconds(100)));
+                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitForMsgId(Guid.NewGuid(), TimeSpan.FromMilliseconds(100))))
+                    .ContinueWith(t => tq.Clear());
                 tq.AssertEmpty();
             }
         }
@@ -152,14 +156,21 @@ namespace ReactiveDomain.Testing.Specifications
             {
                 var evt = new TestEvent();
                 var evt2 = new TestEvent();
+                //before
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(1000)));
+                AssertEx.EnsureRunning(t1,t2);
+
                 _dispatcher.Publish(evt);
                 _dispatcher.Publish(evt2);
 
+                // or after
                 tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(200));
 
                 tq.AssertNext<TestEvent>(evt.CorrelationId)
                   .AssertNext<TestEvent>(evt2.CorrelationId)
                   .AssertEmpty();
+                AssertEx.EnsureComplete(t1,t2);
             }
         }
         [Fact]
@@ -168,16 +179,13 @@ namespace ReactiveDomain.Testing.Specifications
             using (var tq = new TestQueue(_dispatcher))
             {
                 var evt = new TestEvent();
-                Task.Delay(50)
-                    .ContinueWith( _ => _dispatcher.Publish(evt));
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
 
-                Parallel.Invoke(
-                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)),
-                    () => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000))
-                    );
-                
+                tq.Handle(evt);
                 tq.AssertNext<TestEvent>(evt.CorrelationId)
                   .AssertEmpty();
+                AssertEx.EnsureComplete(t1, t2);
             }
         }
         [Fact]
@@ -205,19 +213,16 @@ namespace ReactiveDomain.Testing.Specifications
             {
                 var evt = new TestEvent();
                 var evt2 = new TestEvent();
-                Task.Delay(50)
-                     .ContinueWith(_ =>
-                     {
-                         _dispatcher.Publish(evt);
-                         _dispatcher.Publish(evt2);
-                     });
 
-                tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200));
-                tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(200));
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200)));
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(200)));
 
+                _dispatcher.Publish(evt);
+                _dispatcher.Publish(evt2);
                 tq.AssertNext<TestEvent>(evt.CorrelationId)
                   .AssertNext<TestEvent>(evt2.CorrelationId)
                   .AssertEmpty();
+                AssertEx.EnsureComplete(t1, t2);
             }
         }
         [Fact]

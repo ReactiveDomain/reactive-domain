@@ -14,7 +14,12 @@ namespace ReactiveDomain.Transport.Tests
     public class TcpBusServerSideTests
     {
         private readonly IPAddress _hostAddress = IPAddress.Loopback;
-        private int port = 10000;
+#if NET6_0
+        private int port = 10006; //net 6 and 8 will fight over the port in tests
+#endif
+#if NET8_0
+        private int port = 10008; //net 6 and 8 will fight over the port in tests
+#endif
         private readonly TaskCompletionSource<IMessage> _tcs = new TaskCompletionSource<IMessage>();
 
         [Fact]

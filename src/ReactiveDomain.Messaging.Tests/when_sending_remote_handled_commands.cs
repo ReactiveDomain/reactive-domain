@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -39,12 +40,21 @@ namespace ReactiveDomain.Messaging.Tests {
                         return false;}))
                     ) 
             {
-                var ts = new CancellationTokenSource(5);
-                Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts.Token), out var response));
-                Assert.IsType<Canceled>(response);
-                ts = new CancellationTokenSource(5);
-                Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts.Token), out response));
-                Assert.IsType<Canceled>(response);
+                var ts1 = new CancellationTokenSource();
+                CommandResponse response1 = null;
+                var t1 = Task.Run(()=> Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts1.Token), out response1)));
+                ts1.Cancel();
+
+                var ts2 = new CancellationTokenSource();
+                CommandResponse response2 = null;
+                var t2 = Task.Run(() => Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts2.Token), out response2)));
+                ts2.Cancel();
+
+                AssertEx.EnsureComplete(t1, t2);
+                Assert.NotNull(response1);
+                Assert.NotNull(response2);
+                Assert.IsType<Canceled>(response1);
+                Assert.IsType<Canceled>(response2);
             }
         }
 

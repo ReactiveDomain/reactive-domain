@@ -12,7 +12,6 @@ namespace ReactiveDomain.IdentityStorage.Tests
 {
     public class SubjectRmTests
     {
-        private readonly MockRepositorySpecification _fixture;
         private readonly SubjectsRm _rm;
         private readonly Dictionary<string, Dictionary<Guid, Guid>> _subjects = new Dictionary<string, Dictionary<Guid, Guid>>(); //{provider/domain}-{userId-subjectId}
 
@@ -21,10 +20,9 @@ namespace ReactiveDomain.IdentityStorage.Tests
         private const string AuthDomain = "MyDomain";
 
         public SubjectRmTests()
-        {
-            _fixture = new MockRepositorySpecification();
+        {           
+            _rm = new SubjectsRm(new NullConfiguredConnection());
             AddSubjects(5);
-            _rm = new SubjectsRm(_fixture.ConfiguredConnection);
         }
         [Fact]
         public void readmodel_lists_existing_subjects()
@@ -121,14 +119,7 @@ namespace ReactiveDomain.IdentityStorage.Tests
 
             var evt = MessageBuilder.New(
               () => new SubjectMsgs.SubjectCreated(subjectId, userId, userId.ToString(), provider ?? AuthProvider, (domain ?? AuthDomain).ToLowerInvariant()));
-            var stream = _fixture.StreamNameBuilder.GenerateForAggregate(typeof(Subject), subjectId);
-            _fixture.StreamStoreConnection.AppendToStream(
-                stream,
-                ExpectedVersion.Any,
-                null,
-                new[] { _fixture.EventSerializer.Serialize(evt) });
-            _fixture.RepositoryEvents.WaitFor<SubjectMsgs.SubjectCreated>(TimeSpan.FromMilliseconds(200));
-            _fixture.ClearQueues();
+            _rm.DirectApply(evt);                 
             return subjectId;
         }
     }
