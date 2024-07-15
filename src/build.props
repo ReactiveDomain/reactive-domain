@@ -9,7 +9,7 @@
     <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
   </PropertyGroup>
   <PropertyGroup>
-    <PackageVersionPrefix>0.10.5</PackageVersionPrefix>
+    <PackageVersionPrefix>0.11.0</PackageVersionPrefix>
     <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
     <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
@@ -21,8 +21,8 @@
     <Authors>Reactive Domain Group</Authors>
     <Copyright>Copyright © 2024 Reactive Domain Group</Copyright>
     <Description />
-    <AssemblyVersion>0.10.5.0</AssemblyVersion>
-    <FileVersion>0.10.5.0</FileVersion>
+    <AssemblyVersion>0.11.0.0</AssemblyVersion>
+    <FileVersion>0.11.0.0</FileVersion>
     <NeutralLanguage />
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <DebugSymbols>true</DebugSymbols>
