@@ -233,9 +233,9 @@ UpdateDependencyVersions $ReactiveDomainTestingNuspec $ReactiveDomainTestingProj
 Write-Host "Packing reactivedomain nuget packages"
 $versionInfo = (Get-Item $ReactiveDomainDll).VersionInfo
 $versionString = $versionInfo.FileMajorPart.ToString() + "." + $versionInfo.FileMinorPart.ToString() + "." + $versionInfo.FileBuildPart.ToString()
-& $nuget pack $ReactiveDomainNuspec -Version $versionString
-& $nuget pack $ReactiveDomainPolicyNuspec -Version $versionString
-& $nuget pack $ReactiveDomainTestingNuspec -Version $versionString
+& $nuget pack $ReactiveDomainNuspec -Version $versionString -Symbols -SymbolPackageFormat snupkg
+& $nuget pack $ReactiveDomainPolicyNuspec -Version $versionString -Symbols -SymbolPackageFormat snupkg
+& $nuget pack $ReactiveDomainTestingNuspec -Version $versionString -Symbols -SymbolPackageFormat snupkg
 
 # *******************************************************************************************************************************
 
