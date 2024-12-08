@@ -11,6 +11,7 @@ namespace ReactiveDomain.Testing
     /// </summary>
     public class NullListener : IListener, ISubscriber
     {
+#pragma warning disable CS1066 // The default value specified will have no effect because it applies to a member that is used in contexts that do not allow optional arguments
 
         private string _stream;
         private long _position;
@@ -34,7 +35,7 @@ namespace ReactiveDomain.Testing
         /// </summary>
         /// <param name="name">This parameter is ignored.</param>
         public NullListener(string name = "")
-        {          
+        {
         }
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace ReactiveDomain.Testing
         /// <param name="checkpoint">The position at which the listener should start.</param>
         /// <param name="blockUntilLive">This parameter is ignored.</param>
         /// <param name="cancelWaitToken">This parameter is ignored.</param>
-        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default)
+        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default)
         {
             _stream = stream;
             _position = checkpoint ?? 0;
@@ -87,7 +88,7 @@ namespace ReactiveDomain.Testing
         /// <param name="checkpoint">This parameter is ignored.</param>
         /// <param name="blockUntilLive">This parameter is ignored.</param>
         /// <param name="cancelWaitToken">This parameter is ignored.</param>
-        void IListener.Start<TAggregate>(Guid id, long? checkpoint, bool blockUntilLive, CancellationToken cancelWaitToken)
+        void IListener.Start<TAggregate>(Guid id, long? checkpoint, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default)
         {
             _stream = new PrefixedCamelCaseStreamNameBuilder().GenerateForAggregate(typeof(TAggregate), id);
         }
@@ -99,7 +100,7 @@ namespace ReactiveDomain.Testing
         /// <param name="checkpoint">This parameter is ignored.</param>
         /// <param name="blockUntilLive">This parameter is ignored.</param>
         /// <param name="cancelWaitToken">This parameter is ignored.</param>
-        void IListener.Start<TAggregate>(long? checkpoint, bool blockUntilLive, CancellationToken cancelWaitToken)
+        void IListener.Start<TAggregate>(long? checkpoint, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default)
         {
             _stream = nameof(TAggregate);
         }
@@ -124,5 +125,6 @@ namespace ReactiveDomain.Testing
         void ISubscriber.Unsubscribe<T>(IHandle<T> handler)
         {
         }
+#pragma warning restore CS1066 // The default value specified will have no effect because it applies to a member that is used in contexts that do not allow optional arguments
     }
 }

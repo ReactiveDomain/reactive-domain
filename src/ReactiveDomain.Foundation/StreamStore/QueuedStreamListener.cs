@@ -53,12 +53,12 @@ namespace ReactiveDomain.Foundation
             }
         }
 
-        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, CancellationToken cancelWaitToken = default(CancellationToken))
+        public override void Start(string streamName, long? checkpoint = null, bool waitUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default(CancellationToken))
         {
             _isLive.Reset();
 
             SyncQueue?.Start();
-            base.Start(streamName, checkpoint, waitUntilLive, cancelWaitToken);
+            base.Start(streamName, checkpoint, waitUntilLive, validateStream, cancelWaitToken);
 
             Interlocked.Exchange(ref _pendingCount, SyncQueue.MessageCount);
             if (Interlocked.Read(ref _pendingCount) <= 0 || SyncQueue.Idle)

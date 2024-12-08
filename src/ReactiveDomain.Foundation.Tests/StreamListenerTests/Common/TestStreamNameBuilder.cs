@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests.Common
+namespace ReactiveDomain.Foundation.Tests.StreamListenerTests.Common
 {
     /// <summary>
     /// Generate stream names for testing. 
     /// </summary>
     /// <remarks>
     /// todo:
-    /// The use of the extra Guid doesn't match the generation by the <see cref="ReactiveDomain.Foundation.IStreamNameBuilder"/>
+    /// The use of the extra Guid doesn't match the generation by the <see cref="IStreamNameBuilder"/>
     /// and the checks for existing category and event streams fail. <see cref="PrefixedCamelCaseStreamNameBuilderTests"/>
     /// tests the stream name generation. So switching to the PrefixedCamelCaseStreamNameBuilder. Leaving these here so Chris can
     /// agree and remove or correct me.

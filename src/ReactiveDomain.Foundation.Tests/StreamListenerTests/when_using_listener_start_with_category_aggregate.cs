@@ -3,10 +3,11 @@ using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
-using ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests.Common;
 using Xunit;
+using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 
-namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
+namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
+{
     // ReSharper disable once InconsistentNaming
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     public class when_using_listener_start_with_category_aggregate
@@ -24,38 +25,41 @@ namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests {
 
             // Drop an event into the stream testAggregate-guid
             var result = conn.AppendToStream(
-                aggStream, 
-                ExpectedVersion.NoStream, 
-                null, 
+                aggStream,
+                ExpectedVersion.NoStream,
+                null,
                 _eventSerializer.Serialize(new TestEvent()));
             Assert.True(result.NextExpectedVersion == 0);
 
             //wait for the projection to be written.
             CommonHelpers.WaitForStream(conn, categoryStream);
-            
+
             // Now set up the projection listener, and start it. 
             var listener = new QueuedStreamListener(
                 "category listener",
                 conn,
                streamNameBuilder,
                 new JsonMessageSerializer());
-            listener.EventStream.Subscribe<TestEvent>(new AdHocHandler<TestEvent>(Handle));
+            listener.EventStream.Subscribe(new AdHocHandler<TestEvent>(Handle));
             listener.Start<AggregateCategoryTestAggregate>();
         }
 
         private long _testEventCount;
         [Fact]
-        public void can_get_events_from_category_projection() {
+        public void can_get_events_from_category_projection()
+        {
             AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000);
         }
 
-        private void Handle(IMessage message) {
+        private void Handle(IMessage message)
+        {
             dynamic evt = message;
-            if (evt is TestEvent) {
+            if (evt is TestEvent)
+            {
                 Interlocked.Increment(ref _testEventCount);
             }
 
         }
-        public class AggregateCategoryTestAggregate:EventDrivenStateMachine{}
+        public class AggregateCategoryTestAggregate : EventDrivenStateMachine { }
     }
 }

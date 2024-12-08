@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading;
 using ReactiveDomain.Messaging;
@@ -105,7 +106,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default)
+        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default)
         {
             if (_getReader != null)
             {
@@ -115,7 +116,7 @@ namespace ReactiveDomain.Foundation
                     checkpoint = reader.Position ?? checkpoint;
                 }
             }
-            AddNewListener().Start(stream, checkpoint, blockUntilLive, cancelWaitToken);
+            AddNewListener().Start(stream, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
         }
 
         /// <summary>
@@ -126,7 +127,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
+        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
         {
             if (_getReader != null)
             {
@@ -136,7 +137,7 @@ namespace ReactiveDomain.Foundation
                     checkpoint = reader.Position;
                 }
             }
-            AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, cancelWaitToken);
+            AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
         }
 
         /// <summary>
@@ -146,7 +147,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="checkpoint">The event to start with.</param>
         /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
+        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
         {
             if (_getReader != null)
             {
@@ -156,7 +157,7 @@ namespace ReactiveDomain.Foundation
                     checkpoint = reader.Position;
                 }
             }
-            AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, cancelWaitToken);
+            AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, validateStream, cancelWaitToken);
         }
 
         /// <summary>

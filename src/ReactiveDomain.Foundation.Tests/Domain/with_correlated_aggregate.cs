@@ -3,7 +3,7 @@ using ReactiveDomain.Messaging;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation.Tests
+namespace ReactiveDomain.Foundation.Tests.Domain
 {
     // ReSharper disable once InconsistentNaming
     public class with_correlated_aggregate
@@ -28,7 +28,7 @@ namespace ReactiveDomain.Foundation.Tests
                                                 },
                                                  e =>{
                                                    if( e is CorrelatedAggregate.CorrelatedEvent @event){
-                                                        Assert.Equal(_command.CorrelationId, @event.CorrelationId);                                                        
+                                                        Assert.Equal(_command.CorrelationId, @event.CorrelationId);
                                                        }
                                                    else{
                                                         throw new Exception("wrong event");

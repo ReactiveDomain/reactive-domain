@@ -16,8 +16,9 @@ namespace ReactiveDomain.Foundation
         /// <param name="stream">the exact stream name</param>
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
+        /// <param name="validateStream">ensure the stream exists on start</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default);
+        void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default);
         /// <summary>
         /// Starts listening on an aggregate root stream
         /// </summary>
@@ -25,15 +26,17 @@ namespace ReactiveDomain.Foundation
         /// <param name="id">the aggregate id</param>
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
+        /// <param name="validateStream">ensure the stream exists on start</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
         /// <summary>
         /// Starts listening on a Aggregate Category Stream
         /// </summary>
         /// <typeparam name="TAggregate">The type of aggregate</typeparam>
         /// <param name="checkpoint">start point to listen from</param>
         /// <param name="blockUntilLive">wait for the is live event from the catchup subscription before returning</param>
+        /// <param name="validateStream">ensure the stream exists on start</param>
         /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true</param>
-        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
+        void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource;
     }
 }
