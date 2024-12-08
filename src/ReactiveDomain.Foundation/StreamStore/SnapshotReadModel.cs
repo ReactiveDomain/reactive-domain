@@ -17,6 +17,7 @@ namespace ReactiveDomain.Foundation {
                                 ReadModelState snapshot,
                                 bool startListeners = true, 
                                 bool block = false,
+                                bool validateStreams = false,
                                 CancellationToken cancelWaitToken = default(CancellationToken)) {
             if(StartingState != null) {
                 throw new InvalidOperationException("ReadModel has already been restored.");
@@ -27,7 +28,7 @@ namespace ReactiveDomain.Foundation {
             if (!startListeners || StartingState.Checkpoints == null) return;
 
             foreach (var stream in StartingState.Checkpoints) {
-                Start(stream.Item1,stream.Item2,block, cancelWaitToken);
+                Start(stream.Item1,stream.Item2, block, validateStreams, cancelWaitToken);
             }
         }
 

@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation.Tests
+namespace ReactiveDomain.Foundation.Tests.Domain
 {
     public class CorrelatedAggregate : AggregateRoot
     {

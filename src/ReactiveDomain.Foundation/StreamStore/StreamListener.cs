@@ -79,6 +79,7 @@ namespace ReactiveDomain.Foundation
             Type tMessage,
             long? checkpoint = null,
             bool blockUntilLive = false,
+            bool validateStream = false,
             CancellationToken cancelWaitToken = default(CancellationToken))
         {
             if (!tMessage.IsSubclassOf(typeof(Event)))
@@ -89,6 +90,7 @@ namespace ReactiveDomain.Foundation
                _streamNameBuilder.GenerateForEventType(tMessage.Name),
                 checkpoint,
                 blockUntilLive,
+                validateStream,
                 cancelWaitToken);
         }
         /// <summary>
@@ -102,6 +104,7 @@ namespace ReactiveDomain.Foundation
         public void Start<TAggregate>(
                         long? checkpoint = null,
                         bool blockUntilLive = false,
+                        bool validateStream = false,
                         CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource
         {
 
@@ -109,6 +112,7 @@ namespace ReactiveDomain.Foundation
                 _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
                 checkpoint,
                 blockUntilLive,
+                validateStream,
                 cancelWaitToken);
         }
 
@@ -125,12 +129,14 @@ namespace ReactiveDomain.Foundation
                         Guid id,
                         long? checkpoint = null,
                         bool blockUntilLive = false,
+                        bool validateStream = false,
                         CancellationToken cancelWaitToken = default(CancellationToken)) where TAggregate : class, IEventSource
         {
             Start(
                 _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
                 checkpoint,
                 blockUntilLive,
+                validateStream,
                 cancelWaitToken);
         }
 
@@ -146,6 +152,7 @@ namespace ReactiveDomain.Foundation
                             string streamName,
                             long? checkpoint = null,
                             bool blockUntilLive = false,
+                            bool validateStream = false,
                             CancellationToken cancelWaitToken = default(CancellationToken))
         {
             _liveLock.Reset();
@@ -153,7 +160,7 @@ namespace ReactiveDomain.Foundation
             {
                 if (_started)
                     throw new InvalidOperationException("Listener already started.");
-                if (!ValidateStreamName(streamName))
+                if (validateStream && !ValidateStreamName(streamName))
                     throw new ArgumentException("Stream not found.", streamName);
                 StreamName = streamName;
                 _subscription =
@@ -204,8 +211,17 @@ namespace ReactiveDomain.Foundation
 
         public bool ValidateStreamName(string streamName)
         {
-            var isValid = _streamStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
-            return isValid;
+            try
+            {
+                var result = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
+               
+                return result.GetType() == typeof(StreamEventsSlice);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
         }
         protected virtual void GotEvent(RecordedEvent recordedEvent)
         {

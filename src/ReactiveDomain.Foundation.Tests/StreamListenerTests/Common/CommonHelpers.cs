@@ -2,7 +2,7 @@
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 
-namespace ReactiveDomain.Foundation.Tests.SynchronizedStreamListenerTests.Common
+namespace ReactiveDomain.Foundation.Tests.StreamListenerTests.Common
 {
     internal static class CommonHelpers
     {

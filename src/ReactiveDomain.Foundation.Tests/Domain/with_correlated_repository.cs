@@ -4,7 +4,7 @@ using ReactiveDomain.Testing;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation.Tests
+namespace ReactiveDomain.Foundation.Tests.Domain
 {
     [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
     // ReSharper disable once InconsistentNaming
@@ -83,36 +83,40 @@ namespace ReactiveDomain.Foundation.Tests
 
             var raisedEvents = ((IEventSource)agg).TakeEvents();
             Assert.Collection(raisedEvents,
-                @event => {
+                @event =>
+                {
                     var created = @event as CorrelatedAggregate.Created;
                     Assert.NotNull(created);
-                    Assert.Equal(command1.MsgId,created.CausationId);
-                    Assert.Equal(command1.CorrelationId,created.CorrelationId);
+                    Assert.Equal(command1.MsgId, created.CausationId);
+                    Assert.Equal(command1.CorrelationId, created.CorrelationId);
                 },
-                @event => {
+                @event =>
+                {
                     var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
                     Assert.NotNull(corrEvent);
-                    Assert.Equal(command1.MsgId,corrEvent.CausationId);
-                    Assert.Equal(command1.CorrelationId,corrEvent.CorrelationId);
+                    Assert.Equal(command1.MsgId, corrEvent.CausationId);
+                    Assert.Equal(command1.CorrelationId, corrEvent.CorrelationId);
                 },
-                @event => {
+                @event =>
+                {
                     var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
                     Assert.NotNull(corrEvent);
-                    Assert.Equal(command1.MsgId,corrEvent.CausationId);
-                    Assert.Equal(command1.CorrelationId,corrEvent.CorrelationId);
+                    Assert.Equal(command1.MsgId, corrEvent.CausationId);
+                    Assert.Equal(command1.CorrelationId, corrEvent.CorrelationId);
                 });
             var command2 = MessageBuilder.New(() => new TestCommands.Command2());
-            ((ICorrelatedEventSource) agg).Source = command2;
-            
+            ((ICorrelatedEventSource)agg).Source = command2;
+
             agg.RaiseCorrelatedEvent();
             raisedEvents = ((IEventSource)agg).TakeEvents();
             Assert.Collection(raisedEvents,
-                    @event => {
-                    var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
-                    Assert.NotNull(corrEvent);
-                    Assert.Equal(command2.MsgId,corrEvent.CausationId);
-                    Assert.Equal(command2.CorrelationId,corrEvent.CorrelationId);
-                });
+                    @event =>
+                    {
+                        var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
+                        Assert.NotNull(corrEvent);
+                        Assert.Equal(command2.MsgId, corrEvent.CausationId);
+                        Assert.Equal(command2.CorrelationId, corrEvent.CorrelationId);
+                    });
         }
     }
 }

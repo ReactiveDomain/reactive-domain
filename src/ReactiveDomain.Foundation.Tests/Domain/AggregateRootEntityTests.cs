@@ -1,9 +1,12 @@
-﻿using System;
+﻿using ReactiveDomain.Foundation.Tests.Domain;
+using System;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Domain.Tests {
-    namespace AggregateRootEntityTests {
+namespace ReactiveDomain.Domain.Tests
+{
+    namespace AggregateRootEntityTests
+    {
         public class AnyInstance {
             // IEventSource behavior
 
