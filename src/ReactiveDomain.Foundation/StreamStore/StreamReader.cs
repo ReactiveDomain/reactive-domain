@@ -151,9 +151,9 @@ namespace ReactiveDomain.Foundation
                 Ensure.Nonnegative((long)checkpoint, nameof(checkpoint));
             if (count != null)
                 Ensure.Positive((long)count, nameof(count));
-            if (!ValidateStreamName(streamName))
-                throw new ArgumentException("Stream not found.", streamName);
-
+            if (!ValidateStreamName(streamName)) 
+                return false;
+            
             _cancelled = false;
             FirstEventRead = false;
             StreamName = streamName;
@@ -191,8 +191,17 @@ namespace ReactiveDomain.Foundation
         /// <param name="streamName">The stream name to validate.</param>
         public bool ValidateStreamName(string streamName)
         {
-            var currentSlice = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
-            return !(currentSlice is StreamDeletedSlice);
+            try
+            {
+                var result = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
+
+                return result.GetType() == typeof(StreamEventsSlice);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
         }
 
         protected virtual void EventRead(RecordedEvent recordedEvent)
