@@ -1,5 +1,4 @@
 ﻿using ReactiveDomain.Messaging;
-using ReactiveDomain.Testing;
 using System;
 using Xunit;
 

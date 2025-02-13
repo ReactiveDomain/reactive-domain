@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -68,7 +69,6 @@ public class TcpBusClientSideTests : IDisposable {
         // wait for tcp connection to be established
         AssertEx.IsOrBecomesTrue(() => _tcpBusClientSide.IsConnected, 200);
     }
-
     [Fact]
     public void can_send_command() {
         var handler = new WoftamCommandHandler(_longProp);

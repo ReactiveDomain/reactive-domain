@@ -3,24 +3,21 @@
     <PropertyGroup>
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
-    </PropertyGroup>
+	  <OutputType>Exe</OutputType>
+	  <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+	  <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+	</PropertyGroup>
     <ItemGroup>
       <Compile Remove="PolicyMapTest.cs" />
     </ItemGroup>
   
     <ItemGroup>
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-      <PackageReference Include="xunit" Version="2.9.2" />
-      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-      <PackageReference Include="xunit.runner.console" Version="2.9.2">
+      <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />     
