@@ -1,9 +1,6 @@
-﻿
-
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -133,8 +130,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100))))
-                    .ContinueWith(t => tq.Clear());
+                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(100))), TestContext.Current.CancellationToken)
+                    .ContinueWith(t => tq.Clear(), TestContext.Current.CancellationToken);
                 tq.AssertEmpty();
             }
         }
@@ -143,8 +140,8 @@ namespace ReactiveDomain.Testing.Specifications
         {
             using (var tq = new TestQueue(_dispatcher, new[] { typeof(Event), typeof(Command) }))
             {
-                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitForMsgId(Guid.NewGuid(), TimeSpan.FromMilliseconds(100))))
-                    .ContinueWith(t => tq.Clear());
+                Task.Run(() => Assert.Throws<InvalidOperationException>(() => tq.WaitForMsgId(Guid.NewGuid(), TimeSpan.FromMilliseconds(100))), TestContext.Current.CancellationToken)
+                    .ContinueWith(t => tq.Clear(), TestContext.Current.CancellationToken);
                 tq.AssertEmpty();
             }
         }
@@ -157,8 +154,8 @@ namespace ReactiveDomain.Testing.Specifications
                 var evt = new TestEvent();
                 var evt2 = new TestEvent();
                 //before
-                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
-                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(1000)));
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)), TestContext.Current.CancellationToken);
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(1000)), TestContext.Current.CancellationToken);
                 AssertEx.EnsureRunning(t1,t2);
 
                 _dispatcher.Publish(evt);
@@ -179,8 +176,8 @@ namespace ReactiveDomain.Testing.Specifications
             using (var tq = new TestQueue(_dispatcher))
             {
                 var evt = new TestEvent();
-                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
-                var t2 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)));
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)), TestContext.Current.CancellationToken);
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(1000)), TestContext.Current.CancellationToken);
 
                 tq.Handle(evt);
                 tq.AssertNext<TestEvent>(evt.CorrelationId)
@@ -214,8 +211,8 @@ namespace ReactiveDomain.Testing.Specifications
                 var evt = new TestEvent();
                 var evt2 = new TestEvent();
 
-                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200)));
-                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(200)));
+                var t1 = Task.Run(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200)), TestContext.Current.CancellationToken);
+                var t2 = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(200)), TestContext.Current.CancellationToken);
 
                 _dispatcher.Publish(evt);
                 _dispatcher.Publish(evt2);
