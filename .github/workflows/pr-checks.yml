@@ -62,7 +62,7 @@ jobs:
     
     # Install .NET Core
     - name: Install .NET ${{ matrix.dotnet-version }}
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
