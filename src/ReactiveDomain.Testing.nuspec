@@ -16,18 +16,9 @@
         <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
-      <group targetFramework="net6.0">
-        <dependency id="ReactiveDomain" version="0.11.0.0" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
-        <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
-        <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
-      </group>
     </dependencies>
     <references>
       <group targetFramework="net8.0">
-        <reference file="ReactiveDomain.Testing.dll" />
-      </group>
-      <group targetFramework="net6.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
     </references>
@@ -37,8 +28,5 @@
     <file src="..\bld\Release\net8.0\ReactiveDomain.Testing.pdb" target="lib\net8.0" />
     <file src="..\bld\Release\net8.0\ReactiveDomain.Testing.dll" target="lib\net8.0" />
     <file src="..\bld\Release\net8.0\ReactiveDomain.Testing.dll" target="ref\net8.0" />
-    <file src="..\bld\Release\net6.0\ReactiveDomain.Testing.pdb" target="lib\net6.0" />
-    <file src="..\bld\Release\net6.0\ReactiveDomain.Testing.dll" target="lib\net6.0" />
-    <file src="..\bld\Release\net6.0\ReactiveDomain.Testing.dll" target="ref\net6.0" />
   </files>
 </package>
