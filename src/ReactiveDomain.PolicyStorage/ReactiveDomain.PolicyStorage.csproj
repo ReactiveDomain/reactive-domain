@@ -7,12 +7,12 @@
     <RootNamespace>ReactiveDomain.Policy</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DynamicData" Version="8.4.1" />
+    <PackageReference Include="DynamicData" Version="9.1.2" />
     <PackageReference Include="IdentityModel" Version="4.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.0" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageReference Include="System.DirectoryServices" Version="9.0.2" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.2" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
