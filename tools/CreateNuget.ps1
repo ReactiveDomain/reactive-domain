@@ -42,7 +42,7 @@ if ($buildType -eq "debug")
  
 Write-Host ("Powershell script location is " + $PSScriptRoot)
 
-$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net6.0\ReactiveDomain.Core.dll"
+$ReactiveDomainDll = $PSScriptRoot + "\..\bld\$configuration\net8.0\ReactiveDomain.Core.dll"
 $RDVersion = (Get-Item $ReactiveDomainDll).VersionInfo.FileVersion
 $ReactiveDomainNuspec = $PSScriptRoot + "\..\src\ReactiveDomain" + $nuspecExtension
 $ReactiveDomainPolicyNuspec = $PSScriptRoot + "\..\src\ReactiveDomain.Policy" + $nuspecExtension
@@ -81,7 +81,7 @@ class PackagRef
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
 #         ConditionOperator - (the equality operator for a framework, == or !=)
-#         Framework - The framework this Packageref applies to: (net8.0, net6.0)
+#         Framework - The framework this Packageref applies to: (net8.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
 {
@@ -125,12 +125,6 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     {
         $compOperator = "!="
     }
- 
-    
-    if ($currentCondition -match "net6.0")
-    {
-        $currentFramework = "net6.0"
-    }
       
     if ($currentCondition -match "net8.0")
     {
@@ -161,10 +155,6 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
 
     $net8 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net8.0']"
     $net8Nodes = $net8.Node.ChildNodes
-       
-    $net6 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net6.0']"
-    $net6Nodes = $net6.Node.ChildNodes
-   
     
     foreach($refnode in $net8Nodes)
     {
@@ -183,24 +173,6 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             $refnode.version = $pRef.Version
         }      
     }   
-
-    foreach($refnode in $net6Nodes)
-    {
-        if ( $refnode.id -match "ReactiveDomain")
-        {
-            $refnode.version = $RDVersion
-            continue
-        }
-        
-        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net6.0"
-        if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
-            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net6.0") -or 
-            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net6.0")) -and
-            ($pRef.version -ne ""))
-        { 
-            $refnode.version = $pRef.Version
-        }      
-    }
 
     $xml.Save($Nuspec)
     Write-Host "Updated dependency versions of: $Nuspec"
