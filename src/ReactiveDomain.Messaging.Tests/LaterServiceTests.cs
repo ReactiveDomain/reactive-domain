@@ -120,7 +120,7 @@ namespace ReactiveDomain.Messaging.Tests {
                     delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage()));
                 }
                 timeSource.AdvanceTime(50);
-                cd.Wait(1000);
+                cd.Wait(1000, TestContext.Current.CancellationToken);
             }
             Assert.True(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start <= 15000, $"elapsed {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start}");
         }
@@ -135,7 +135,7 @@ namespace ReactiveDomain.Messaging.Tests {
                 for (int i = 0; i < iterations; i++) {
                     delay.Handle(new DelaySendEnvelope(TimeSource.System, TimeSpan.FromMilliseconds(50), new TestMessage()));
                 }
-                cd.Wait(1000);
+                cd.Wait(1000, TestContext.Current.CancellationToken);
             }
             Assert.True(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start <= 15000, $"elapsed {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start}");
         }
