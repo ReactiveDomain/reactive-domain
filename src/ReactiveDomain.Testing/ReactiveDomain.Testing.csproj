@@ -4,6 +4,7 @@
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>True</IsPackable>
     <IsTestProject>true</IsTestProject>
+	<OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Domain\**" />
