@@ -2,8 +2,10 @@
     <Import Project="../ci.build.imports" />
     <PropertyGroup>
      <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
-    <IsTestProject>true</IsTestProject>
-    </PropertyGroup>
+     <IsTestProject>true</IsTestProject>
+     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+	</PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
