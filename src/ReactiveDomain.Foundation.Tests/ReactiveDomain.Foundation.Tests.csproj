@@ -4,8 +4,8 @@
     <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
-	<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-	<TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+	  <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+	  <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Logging\**" />

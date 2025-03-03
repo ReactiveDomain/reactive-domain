@@ -3,9 +3,9 @@
     <PropertyGroup>
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
-	  <OutputType>Exe</OutputType>
-	  <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-	  <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+      <OutputType>Exe</OutputType>
+      <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+      <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 	</PropertyGroup>
     <ItemGroup>
       <Compile Remove="PolicyMapTest.cs" />

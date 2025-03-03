@@ -3,10 +3,10 @@
     <PropertyGroup>
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
-	  <OutputType>Exe</OutputType>
-	  <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-	  <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
-	  <RootNamespace>ReactiveDomain.Policy.Tests</RootNamespace>
+	    <OutputType>Exe</OutputType>
+	    <RootNamespace>ReactiveDomain.Policy.Tests</RootNamespace>
+	    <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+	    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     </PropertyGroup>
     <ItemGroup>
       <Compile Remove="ApplicationAggregateTests.cs" />
