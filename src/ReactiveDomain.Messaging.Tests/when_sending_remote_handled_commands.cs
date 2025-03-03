@@ -42,12 +42,12 @@ namespace ReactiveDomain.Messaging.Tests {
             {
                 var ts1 = new CancellationTokenSource();
                 CommandResponse response1 = null;
-                var t1 = Task.Run(()=> Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts1.Token), out response1)));
+                var t1 = Task.Run(()=> Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts1.Token), out response1)), TestContext.Current.CancellationToken);
                 ts1.Cancel();
 
                 var ts2 = new CancellationTokenSource();
                 CommandResponse response2 = null;
-                var t2 = Task.Run(() => Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts2.Token), out response2)));
+                var t2 = Task.Run(() => Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts2.Token), out response2)), TestContext.Current.CancellationToken);
                 ts2.Cancel();
 
                 AssertEx.EnsureComplete(t1, t2);

@@ -120,7 +120,7 @@ namespace ReactiveDomain.Foundation.Tests {
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
 
             //can manually start
-            rm.Start<SnapReadModelTestAggregate>(_aggId, 9, true);
+            rm.Start<SnapReadModelTestAggregate>(_aggId, 9, true, cancelWaitToken: TestContext.Current.CancellationToken);
             AssertEx.IsOrBecomesTrue(() => rm.Count == 11, 1000);
             AssertEx.IsOrBecomesTrue(() => rm.Sum == 25);
             AppendEvents(1, _conn, _stream, 5);

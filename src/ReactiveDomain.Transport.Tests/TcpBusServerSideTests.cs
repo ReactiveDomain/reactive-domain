@@ -1,11 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
+using System;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace ReactiveDomain.Transport.Tests
@@ -23,7 +22,7 @@ namespace ReactiveDomain.Transport.Tests
         private readonly TaskCompletionSource<IMessage> _tcs = new TaskCompletionSource<IMessage>();
 
         [Fact]
-        public void can_handle_split_frames()
+        public async Task can_handle_split_frames()
         {
             // 16kb large enough to cause the transport to split up the frame.
             // it would be better if we did the splitting manually so we were sure it really happened.
@@ -56,8 +55,7 @@ namespace ReactiveDomain.Transport.Tests
             tcpBusClientSide.Handle(new WoftamEvent(prop1, prop2));
 
             // expect to receive it in the server
-            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
-            Assert.True(gotMessage);
+            await _tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(1000), TestContext.Current.CancellationToken);
             var evt = Assert.IsType<WoftamEvent>(_tcs.Task.Result);
             Assert.Equal(prop1, evt.Property1);
             Assert.Equal(prop2, evt.Property2);
@@ -67,7 +65,7 @@ namespace ReactiveDomain.Transport.Tests
         }
 
         [Fact]
-        public void can_filter_out_message_types()
+        public async Task can_filter_out_message_types()
         {
             // server side
             var serverInbound = new QueuedHandler(
@@ -94,8 +92,7 @@ namespace ReactiveDomain.Transport.Tests
             tcpBusClientSide.Handle(new WoftamCommand("abc"));
 
             // expect to receive it in the server but drop it on the floor
-            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
-            Assert.False(gotMessage);
+            _ = await Assert.ThrowsAsync<TimeoutException>(async () => await _tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(1000), TestContext.Current.CancellationToken));
 
             tcpBusClientSide.Dispose();
             tcpBusServerSide.Dispose();

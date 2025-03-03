@@ -1,15 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
-using ReactiveDomain.Testing;
-using ReactiveDomain.Transport.Serialization;
 using Xunit;
 
 namespace ReactiveDomain.Transport.Tests
@@ -77,7 +75,7 @@ namespace ReactiveDomain.Transport.Tests
         }
 
         [Fact]
-        public void can_send_command()
+        public async Task can_send_command()
         {
             var handler = new WoftamCommandHandler(_longProp);
             _subscriptions.Add(_localBus.Subscribe(handler));
@@ -86,13 +84,12 @@ namespace ReactiveDomain.Transport.Tests
             _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
 
             // expect to receive it on the client side
-            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
-            Assert.True(gotMessage);
-            Assert.IsType<Success>(_tcs.Task.Result);
+            var result = await _tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(1000), TestContext.Current.CancellationToken);
+            Assert.IsType<Success>(result);
         }
 
         [Fact]
-        public void can_handle_split_frames() // Also tests custom deserializer
+        public async Task can_handle_split_frames() // Also tests custom deserializer
         {
             var handler = new WoftamCommandHandler(_longProp) { ReturnCustomResponse = true };
             _subscriptions.Add(_localBus.Subscribe(handler));
@@ -103,9 +100,8 @@ namespace ReactiveDomain.Transport.Tests
             _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
 
             // expect to receive it on the client side
-            var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
-            Assert.True(gotMessage);
-            var response = Assert.IsType<WoftamCommandResponse>(_tcs.Task.Result);
+            var result = await _tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(1000), TestContext.Current.CancellationToken);
+            var response = Assert.IsType<WoftamCommandResponse>(result);
             Assert.Equal(_longProp, response.PropertyA);
         }
 
