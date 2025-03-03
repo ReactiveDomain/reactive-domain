@@ -4,7 +4,8 @@
       <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
       <IsTestProject>true</IsTestProject>
       <RootNamespace>ReactiveDomain.Policy.Tests</RootNamespace>
-	  <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+      <OutputType>Exe</OutputType>
+      <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
 	  <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     </PropertyGroup>
     <ItemGroup>
