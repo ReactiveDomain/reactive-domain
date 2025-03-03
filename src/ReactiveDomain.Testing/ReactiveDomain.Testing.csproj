@@ -4,6 +4,9 @@
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>True</IsPackable>
     <IsTestProject>true</IsTestProject>
+	<OutputType>Exe</OutputType>
+	<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+	<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Domain\**" />
