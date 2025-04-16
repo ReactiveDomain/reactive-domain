@@ -786,4 +786,11 @@ These usage patterns provide a foundation for implementing event sourcing with R
 
 For more detailed information on specific components, see the [Component Documentation](components/README.md) section. For code examples, see the [Code Examples](code-examples/README.md) section.
 
+---
+
+**Navigation**:
+- [← Previous: Core Concepts](core-concepts.md)
+- [↑ Back to Top](#usage-patterns-for-reactive-domain)
+- [→ Next: Code Examples](code-examples/README.md)
+
 [↑ Back to Top](#usage-patterns-for-reactive-domain) | [← Back to Table of Contents](README.md)

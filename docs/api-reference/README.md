@@ -89,4 +89,11 @@ The Reactive Domain library consists of the following assemblies:
 - [ReactiveDomain.IdentityStorage](assemblies/reactivedomain-identitystorage.md) - Identity storage
 - [ReactiveDomain.Tools](assemblies/reactivedomain-tools.md) - Developer tools
 
+---
+
+**Navigation**:
+- [← Previous: Code Examples](../code-examples/README.md)
+- [↑ Back to Top](#reactive-domain-api-reference)
+- [→ Next: Architecture Guide](../architecture.md)
+
 [↑ Back to Top](#reactive-domain-api-reference) | [← Back to Table of Contents](../README.md)

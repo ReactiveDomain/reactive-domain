@@ -47,4 +47,9 @@ If you're new to Reactive Domain, we recommend starting with the [Creating a New
 
 For more advanced scenarios, check out the [Complete Sample Applications](sample-applications.md) section.
 
-[↑ Back to Top](#reactive-domain-code-examples) | [← Back to Table of Contents](../README.md)
+---
+
+**Navigation**:
+- [← Previous: Usage Patterns](../usage-patterns.md)
+- [↑ Back to Top](#reactive-domain-code-examples)
+- [→ Next: API Reference](../api-reference/README.md)

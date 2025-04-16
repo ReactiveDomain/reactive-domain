@@ -905,4 +905,9 @@ Recommendations:
 - Implement controls based on risk assessment
 - Test controls for effectiveness
 
-[↑ Back to Top](#architecture-guide) | [← Back to Table of Contents](README.md)
+---
+
+**Navigation**:
+- [← Previous: API Reference](api-reference/README.md)
+- [↑ Back to Top](#architecture-guide)
+- [→ Next: Migration Guide](migration.md)

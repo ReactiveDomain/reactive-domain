@@ -173,4 +173,9 @@ These core concepts form the foundation of the Reactive Domain library. Understa
 
 For more detailed information on specific components, see the [Component Documentation](components/README.md) section. For practical guidance on using these concepts, see the [Usage Patterns](usage-patterns.md) section.
 
-[↑ Back to Top](#core-concepts-of-reactive-domain) | [← Back to Table of Contents](README.md)
+---
+
+**Navigation**:
+- [← Previous: Documentation Home](README.md)
+- [↑ Back to Top](#core-concepts-of-reactive-domain)
+- [→ Next: Usage Patterns](usage-patterns.md)

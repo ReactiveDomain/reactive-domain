@@ -26,6 +26,17 @@ Reactive Domain is built on several key design principles:
 - **Correlation and Causation Tracking**: Built-in support for tracking correlation and causation IDs across message flows.
 - **Snapshotting**: Support for creating and restoring from snapshots to improve performance.
 
+## Learning Path
+
+For the best learning experience, we recommend following this progression:
+
+1. **Start Here**: [Core Concepts](core-concepts.md) - Understand the fundamentals of event sourcing and CQRS
+2. **Next**: [Usage Patterns](usage-patterns.md) - Learn how to apply these concepts in practice
+3. **Then**: [Code Examples](code-examples/README.md) - See concrete implementations
+4. **Explore**: [API Reference](api-reference/README.md) - Dive into the details of specific components
+5. **Advanced**: [Architecture Guide](architecture.md) - Understand the system architecture
+6. **Production**: [Deployment Guide](deployment.md) and [Performance Optimization](performance.md) - Prepare for production
+
 ## Table of Contents
 
 1. [Core Concepts](core-concepts.md)
@@ -167,6 +178,34 @@ Reactive Domain is built on several key design principles:
     - Message Contracts and Versioning
     - Integration Testing Strategies
 
+16. [Video Tutorial Script](video-tutorial-script.md)
+    - Introduction to Reactive Domain
+    - Setting Up Your First Project
+    - Creating Aggregates and Events
+    - Working with Repositories
+    - Building Read Models
+    - Testing Your Application
+
+17. [Workshop Materials](workshop-materials.md)
+    - Workshop Overview
+    - Prerequisites
+    - Exercises
+    - Sample Solutions
+    - Presentation Materials
+
+## Quick Reference
+
+| If you want to... | Go to... |
+|-------------------|----------|
+| Understand event sourcing | [Core Concepts](core-concepts.md) |
+| Start a new project | [Usage Patterns](usage-patterns.md#setting-up-a-new-reactive-domain-project) |
+| Create an aggregate | [Code Examples](code-examples/README.md#creating-a-new-aggregate-root) |
+| Fix a common issue | [Troubleshooting Guide](troubleshooting.md) |
+| Optimize performance | [Performance Optimization Guide](performance.md) |
+| Secure your application | [Security Guide](security.md) |
+| Deploy to production | [Deployment Guide](deployment.md) |
+| Learn key terminology | [Glossary](glossary.md) |
+
 ## Getting Started
 
 If you're new to Reactive Domain, we recommend starting with the [Core Concepts](core-concepts.md) section to understand the fundamental principles behind event sourcing and how they're implemented in Reactive Domain.
@@ -192,3 +231,7 @@ graph TD
 ## Contributing
 
 Contributions to this documentation are welcome! Please see the [CONTRIBUTING.md](../CONTRIBUTING.md) file for guidelines.
+
+---
+
+**Next**: [Core Concepts](core-concepts.md)
