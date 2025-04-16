@@ -10,6 +10,22 @@ Reactive Domain is an open source framework for implementing event sourcing in .
 
 The framework is highly opinionated. It focuses on using a small number of consistent patterns and design principles in its public interfaces to enable developers to get up to speed quickly. Ease of use and "design for code review" have been the driving forces behind the framework's evolution. Where trade-offs have been necessary, these principles have been emphasized over performance.
 
+## Documentation
+
+Comprehensive documentation for Reactive Domain is available in the [docs](./docs) directory. The documentation includes:
+
+- [Introduction and Overview](./docs/README.md) - Get started with Reactive Domain
+- [Core Concepts](./docs/core-concepts.md) - Learn about event sourcing fundamentals
+- [Usage Patterns](./docs/usage-patterns.md) - Discover common patterns and best practices
+- [API Reference](./docs/api-reference/README.md) - Explore the API documentation
+- [Troubleshooting Guide](./docs/troubleshooting.md) - Solve common issues
+- [Architecture Guide](./docs/architecture.md) - Understand the system architecture
+- [Migration Guide](./docs/migration.md) - Migrate between versions
+- [Security Guide](./docs/security.md) - Implement security best practices
+- [Performance Optimization](./docs/performance.md) - Optimize your application
+
+For developers new to Reactive Domain, we recommend starting with the [Introduction](./docs/README.md) followed by the [Core Concepts](./docs/core-concepts.md) guide.
+
 ## Contributing
 
 Pull requests are welcome! Take a look at the open issues, join our [discussion on Slack](https://reactivedomain.slack.com), or contribute in an area where you see a need. Contributors and participants on our Slack channels are expected to abide by the project's [code of conduct](CODE_OF_CONDUCT.md). Read the full guidelines on [contributing](CONTRIBUTING.md).
