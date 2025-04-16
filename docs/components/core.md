@@ -2,6 +2,8 @@
 
 [← Back to Components](README.md) | [← Back to Table of Contents](../README.md)
 
+**Component Navigation**: [← Components](README.md) | [Next: ReactiveDomain.Foundation →](foundation.md)
+
 The `ReactiveDomain.Core` component provides the fundamental interfaces and abstractions that form the foundation of the Reactive Domain library. These core interfaces define the contract for event sourcing and are used throughout the library.
 
 ## Table of Contents
@@ -193,4 +195,9 @@ Some common issues to avoid when working with the `ReactiveDomain.Core` componen
 3. **Complex event application**: Keep the logic for applying events simple and focused
 4. **Leaking implementation details**: The core interfaces should hide implementation details from clients
 
-[↑ Back to Top](#reactivedomaincore) | [← Back to Components](README.md) | [← Back to Table of Contents](../README.md)
+---
+
+**Component Navigation**:
+- [← Back to Components](README.md)
+- [↑ Back to Top](#reactivedomaincore)
+- [Next: ReactiveDomain.Foundation →](foundation.md)
