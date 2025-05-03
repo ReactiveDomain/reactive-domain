@@ -206,6 +206,19 @@ For the best learning experience, we recommend following this progression:
 | Deploy to production | [Deployment Guide](deployment.md) |
 | Learn key terminology | [Glossary](glossary.md) |
 
+### Key Types Reference
+
+| Type | Description | Documentation |
+|------|-------------|---------------|
+| ReadModelBase | Base class for read models in CQRS architecture | [API Reference](api-reference/types/read-model-base.md) |
+| MessageBuilder | Factory for creating correlated messages | [API Reference](api-reference/types/message-builder.md) |
+| Command | Base class for command messages | [API Reference](api-reference/types/command.md) |
+| Event | Base class for event messages | [API Reference](api-reference/types/event.md) |
+| ICorrelatedMessage | Interface for messages with correlation tracking | [API Reference](api-reference/types/icorrelated-message.md) |
+| AggregateRoot | Base class for domain aggregates | [API Reference](api-reference/types/aggregate-root.md) |
+| IRepository | Interface for repositories | [API Reference](api-reference/types/irepository.md) |
+| IEventSource | Core interface for event-sourced entities | [API Reference](api-reference/types/ievent-source.md) |
+
 ## Getting Started
 
 If you're new to Reactive Domain, we recommend starting with the [Core Concepts](core-concepts.md) section to understand the fundamental principles behind event sourcing and how they're implemented in Reactive Domain.

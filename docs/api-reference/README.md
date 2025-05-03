@@ -40,6 +40,7 @@ Each type is documented with:
 
 - [AggregateRoot](types/aggregate-root.md) - Base class for domain aggregates
 - [EventRecorder](types/event-recorder.md) - Utility for recording events
+- [ReadModelBase](types/read-model-base.md) - Base class for read models in CQRS architecture
 
 ### Message Types
 
@@ -47,6 +48,12 @@ Each type is documented with:
 - [ICommand](types/icommand.md) - Interface for commands
 - [IEvent](types/ievent.md) - Interface for events
 - [ICorrelatedMessage](types/icorrelated-message.md) - Interface for correlated messages
+- [Command](types/command.md) - Base class for command messages
+- [Event](types/event.md) - Base class for event messages
+
+### Utilities
+
+- [MessageBuilder](types/message-builder.md) - Factory for creating correlated messages
 
 ### Repositories
 
