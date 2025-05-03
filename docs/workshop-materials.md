@@ -56,7 +56,7 @@ Before the workshop, participants should:
 
 1. Clone the workshop repository:
    ```bash
-   git clone https://github.com/linedata/reactive-domain-workshop.git
+   git clone https://github.com/ReactiveDomain/reactive-domain-workshop.git
    ```
 
 2. Install the .NET 7.0 SDK from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
@@ -811,7 +811,7 @@ The workshop repository includes complete code samples for all exercises and add
 
 ### Reference Documentation
 
-- [Reactive Domain Documentation](https://github.com/linedata/reactive-domain/docs)
+- [Reactive Domain Documentation](https://github.com/ReactiveDomain/reactive-domain/docs)
 - [EventStoreDB Documentation](https://developers.eventstore.com/server/v21.10/docs/)
 - [CQRS Journey by Microsoft](https://docs.microsoft.com/en-us/previous-versions/msp-n-p/jj554200(v=pandp.10))
 

@@ -1,11 +1,11 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/oir89k5nyyouqtsm?svg=true)](https://ci.appveyor.com/project/jageall/reactive-domain)
-[![Build Status](https://travis-ci.org/linedata/reactive-domain.svg?branch=master)](https://travis-ci.org/linedata/reactive-domain)
+[![Build Status](https://travis-ci.org/ReactiveDomain/reactive-domain.svg?branch=master)](https://travis-ci.org/ReactiveDomain/reactive-domain)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://leopoldodonnell.github.io/reactive-domain/)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://reactivedomain.github.io/reactive-domain/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![NuGet](https://img.shields.io/nuget/v/ReactiveDomain.svg)](https://www.nuget.org/packages/ReactiveDomain/)
-[![GitHub stars](https://img.shields.io/github/stars/leopoldodonnell/reactive-domain.svg)](https://github.com/leopoldodonnell/reactive-domain/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/leopoldodonnell/reactive-domain.svg)](https://github.com/leopoldodonnell/reactive-domain/issues)
+[![GitHub stars](https://img.shields.io/github/stars/ReactiveDomain/reactive-domain.svg)](https://github.com/ReactiveDomain/reactive-domain/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/ReactiveDomain/reactive-domain.svg)](https://github.com/ReactiveDomain/reactive-domain/issues)
 
 # Reactive Domain
 
