@@ -24,10 +24,10 @@ This todo list contains items that need to be addressed for PR 169, which adds c
 
 ## Architecture Documentation Improvements
 
-- [ ] Add more detailed explanations of the CQRS pattern
-- [ ] Enhance documentation of Event Sourcing principles
-- [ ] Include diagrams showing the flow of commands and events
-- [ ] Document the relationship between different architectural components
+- [x] Add more detailed explanations of the CQRS pattern (added comprehensive section with core principles and benefits)
+- [x] Enhance documentation of Event Sourcing principles (expanded with detailed explanations and flow diagrams)
+- [x] Include diagrams showing the flow of commands and events (added multiple mermaid diagrams)
+- [x] Document the relationship between different architectural components (added new section on CQRS and Event Sourcing integration)
 
 ## Terminology and Consistency
 

@@ -110,45 +110,233 @@ Reactive Domain is built on several key design principles and patterns:
 
 ### 1. Event Sourcing
 
-Event sourcing is the core pattern in Reactive Domain, where:
+Event sourcing is the core pattern in Reactive Domain, where the state of an entity is determined by a sequence of events rather than by its current state alone. This approach provides a complete audit trail and enables powerful temporal queries and analytics.
 
-- The state of an entity is determined by a sequence of events
-- Events are immutable and represent facts that have occurred
-- The current state is derived by replaying events
-- Events are stored in an append-only event store
+#### Core Principles of Event Sourcing
 
-Implementation in Reactive Domain:
-- `IEventSource` interface defines the contract for event-sourced entities
-- `AggregateRoot` provides a base implementation for domain aggregates
-- Events are stored in EventStoreDB
-- Repositories handle loading and saving aggregates
+- **Events as the Source of Truth**: The sequence of events is the authoritative source of truth for the system
+- **Immutable Event Records**: Events are immutable facts that have occurred and cannot be changed
+- **State Reconstruction**: The current state is derived by replaying all events from the beginning
+- **Append-Only Store**: Events are stored in an append-only event store, ensuring a complete history
+- **Temporal Queries**: The ability to determine the state of the system at any point in time
+
+#### Event Sourcing Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Command
+    participant Aggregate
+    participant EventStore
+    participant ReadModel
+    
+    Client->>Command: Issue Command
+    Command->>Aggregate: Load Current State
+    Aggregate->>EventStore: Get Event History
+    EventStore-->>Aggregate: Return Events
+    Aggregate->>Aggregate: Apply Events to Build State
+    Aggregate->>Aggregate: Execute Command Logic
+    Aggregate->>Aggregate: Generate New Event(s)
+    Aggregate->>EventStore: Store New Event(s)
+    EventStore->>ReadModel: Publish Event(s)
+    ReadModel->>ReadModel: Update State
+```
+
+#### Benefits of Event Sourcing
+
+1. **Complete Audit Trail**: Every change to the system is recorded as an event
+2. **Temporal Queries**: Ability to reconstruct the state at any point in time
+3. **Event Replay**: System can be rebuilt by replaying events
+4. **Debugging**: Easier to debug by examining the sequence of events
+5. **Business Intelligence**: Events provide valuable data for analytics
+6. **Scalability**: Read and write operations can be scaled independently
+
+#### Implementation in Reactive Domain
+
+- **`IEventSource` Interface**: Defines the contract for event-sourced entities
+- **`AggregateRoot` Class**: Provides a base implementation for domain aggregates
+- **Event Store**: Events are stored in EventStoreDB, an optimized database for event sourcing
+- **Repositories**: Handle loading and saving aggregates by reading and writing events
+- **Event Handlers**: Process events to update read models and trigger side effects
+- **Snapshots**: Optimize performance by periodically saving aggregate state
 
 ### 2. Command Query Responsibility Segregation (CQRS)
 
-CQRS separates the command (write) and query (read) sides of an application:
+Command Query Responsibility Segregation (CQRS) is an architectural pattern that separates the command (write) and query (read) sides of an application. This separation allows each side to be optimized for its specific requirements, leading to better performance, scalability, and maintainability.
 
-- Commands modify state and generate events
-- Queries read from optimized read models
-- Read models are built by processing events
+#### Core Principles of CQRS
 
-Implementation in Reactive Domain:
-- Command handlers process commands and update aggregates
-- Event handlers update read models
-- Read models are optimized for specific query patterns
-- Separate repositories for command and query sides
+- **Separation of Concerns**: Write and read operations have different responsibilities and requirements
+- **Command Side**: Focuses on processing commands, validating business rules, and generating events
+- **Query Side**: Optimized for efficient data retrieval with denormalized read models
+- **Eventual Consistency**: Read models may be eventually consistent with the write models
+- **Independent Scaling**: Write and read sides can be scaled independently based on their specific loads
+
+#### CQRS Architecture
+
+```mermaid
+graph TD
+    Client[Client Application]
+    
+    %% Command Side
+    CommandAPI[Command API]
+    CommandBus[Command Bus]
+    CommandHandler[Command Handler]
+    Aggregate[Aggregate Root]
+    EventStore[Event Store]
+    
+    %% Query Side
+    QueryAPI[Query API]
+    ReadModel[Read Model]
+    QueryHandler[Query Handler]
+    ReadDB[Read Database]
+    
+    %% Event Flow
+    EventHandler[Event Handler]
+    
+    %% Command Flow
+    Client -->|Commands| CommandAPI
+    CommandAPI -->|Routes| CommandBus
+    CommandBus -->|Dispatches| CommandHandler
+    CommandHandler -->|Loads/Updates| Aggregate
+    Aggregate -->|Stores Events| EventStore
+    
+    %% Query Flow
+    Client -->|Queries| QueryAPI
+    QueryAPI -->|Routes| QueryHandler
+    QueryHandler -->|Reads from| ReadModel
+    ReadModel -->|Stored in| ReadDB
+    
+    %% Event Flow
+    EventStore -->|Publishes Events| EventHandler
+    EventHandler -->|Updates| ReadModel
+    
+    %% Styling
+    classDef commandSide fill:#f96,stroke:#333,stroke-width:2px
+    classDef querySide fill:#9cf,stroke:#333,stroke-width:2px
+    classDef eventFlow fill:#fc9,stroke:#333,stroke-width:2px
+    
+    class CommandAPI,CommandBus,CommandHandler,Aggregate,EventStore commandSide
+    class QueryAPI,ReadModel,QueryHandler,ReadDB querySide
+    class EventHandler eventFlow
+```
+
+#### Benefits of CQRS
+
+1. **Optimized Performance**: Each side can be optimized for its specific requirements
+2. **Scalability**: Write and read sides can be scaled independently
+3. **Flexibility**: Read models can be tailored for specific query patterns
+4. **Simplified Models**: Command models focus on business rules, read models on query efficiency
+5. **Maintainability**: Clearer separation of concerns makes the system easier to maintain
+6. **Evolvability**: Read models can evolve independently of the write models
+
+#### Implementation in Reactive Domain
+
+- **Command Handlers**: Process commands and update aggregates
+- **Event Handlers**: Update read models based on events from the write side
+- **Read Models**: Optimized for specific query patterns using `ReadModelBase`
+- **Command Bus**: Routes commands to the appropriate handlers
+- **Event Bus**: Publishes events to subscribers
+- **Separate Repositories**: Different repositories for command and query sides
+- **Correlation Tracking**: Ensures traceability between commands, events, and read model updates
 
 ### 3. Domain-Driven Design (DDD)
 
-Reactive Domain supports DDD principles:
+Domain-Driven Design (DDD) is a software development approach that focuses on creating a rich, expressive model of the business domain. Reactive Domain provides first-class support for DDD principles, enabling developers to build software that accurately reflects the business domain and its rules.
 
-- Aggregates encapsulate business rules and enforce invariants
-- Entities have identity and lifecycle
-- Value objects are immutable and have no identity
-- Domain events represent significant state changes
-- Repositories provide access to aggregates
+#### Core DDD Concepts in Reactive Domain
 
-Implementation in Reactive Domain:
-- `AggregateRoot` supports DDD aggregates
+```mermaid
+graph TD
+    Domain[Domain Model] --> BC[Bounded Context]
+    BC --> Agg[Aggregate]
+    Agg --> AR[Aggregate Root]
+    Agg --> E[Entity]
+    Agg --> VO[Value Object]
+    Domain --> DE[Domain Event]
+    Domain --> Repo[Repository]
+    Domain --> Service[Domain Service]
+    
+    classDef core fill:#f9f,stroke:#333,stroke-width:2px
+    class AR,DE,Repo core
+```
+
+#### Key DDD Elements
+
+1. **Bounded Context**: A logical boundary within which a particular domain model is defined and applicable
+   - Reactive Domain supports multiple bounded contexts with separate models
+   - Each bounded context can have its own event streams and read models
+
+2. **Aggregates**: Clusters of domain objects treated as a single unit for data changes
+   - **Aggregate Root**: The entry point to the aggregate, responsible for maintaining invariants
+   - **Entities**: Objects with identity and lifecycle, distinguished by their ID
+   - **Value Objects**: Immutable objects defined by their attributes, with no identity
+
+3. **Domain Events**: Record of something significant that happened in the domain
+   - Represent state changes in the system
+   - Provide a history of changes to aggregates
+   - Enable communication between bounded contexts
+
+4. **Repositories**: Provide access to aggregates
+   - Abstract the underlying storage mechanism
+   - Handle loading and saving aggregates
+   - Enforce aggregate boundaries
+
+5. **Domain Services**: Encapsulate domain operations that don't naturally fit within an entity
+   - Coordinate operations across multiple aggregates
+   - Implement complex business processes
+   - Provide domain-specific functionality
+
+#### DDD and Event Sourcing Integration
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AggregateRoot
+    participant Repository
+    participant EventStore
+    
+    Client->>AggregateRoot: Execute Domain Operation
+    AggregateRoot->>AggregateRoot: Validate Business Rules
+    AggregateRoot->>AggregateRoot: Generate Domain Event
+    AggregateRoot->>Repository: Save
+    Repository->>EventStore: Append Event
+    EventStore-->>Repository: Confirm
+    Repository-->>AggregateRoot: Return
+    AggregateRoot-->>Client: Operation Result
+```
+
+#### Implementation in Reactive Domain
+
+- **`AggregateRoot` Class**: Base class for implementing aggregate roots
+  - Enforces business rules and invariants
+  - Manages the lifecycle of the aggregate
+  - Raises domain events in response to commands
+  - Applies events to update state
+
+- **Domain Events**: Implemented as immutable classes
+  - Represent significant state changes
+  - Contain all data needed to understand what happened
+  - Support event versioning for schema evolution
+
+- **Repositories**: Provide access to aggregates
+  - `IRepository<T>` interface for aggregate repositories
+  - Event-sourced implementation using EventStoreDB
+  - Support for optimistic concurrency control
+
+- **Domain Services**: Implemented as classes that coordinate operations
+  - Process managers for complex workflows
+  - Saga pattern for distributed transactions
+  - Domain-specific services for specialized operations
+
+#### Benefits of DDD with Reactive Domain
+
+1. **Alignment with Business**: Models closely reflect the business domain
+2. **Expressive Models**: Rich domain models capture complex business rules
+3. **Maintainability**: Clear boundaries and responsibilities
+4. **Flexibility**: Ability to evolve the model as the domain changes
+5. **Scalability**: Natural fit with CQRS and Event Sourcing
+6. **Testability**: Easy to test business rules in isolation
 - Events represent domain events
 - Repositories provide aggregate persistence
 - Value objects can be used as event properties
@@ -167,6 +355,113 @@ Implementation in Reactive Domain:
 - Message buses route messages to handlers
 - Message handlers process messages and perform actions
 - Correlation and causation tracking links related messages
+
+### 4. CQRS and Event Sourcing Integration
+
+One of the most powerful aspects of Reactive Domain is how it seamlessly integrates Command Query Responsibility Segregation (CQRS) with Event Sourcing to create a robust, scalable, and maintainable architecture. This integration provides a comprehensive solution for building complex, event-driven systems.
+
+#### How CQRS and Event Sourcing Complement Each Other
+
+```mermaid
+graph TD
+    subgraph "Command Side (Write Model)"
+        Command[Command] --> CommandHandler[Command Handler]
+        CommandHandler --> AggregateRoot[Aggregate Root]
+        AggregateRoot --> Event[Domain Event]
+        Event --> EventStore[Event Store]
+    end
+    
+    subgraph "Query Side (Read Model)"
+        EventStore --> EventHandler[Event Handler]
+        EventHandler --> ReadModel[Read Model]
+        ReadModel --> QueryHandler[Query Handler]
+        QueryHandler --> Query[Query Result]
+    end
+    
+    classDef commandSide fill:#f96,stroke:#333,stroke-width:2px
+    classDef querySide fill:#9cf,stroke:#333,stroke-width:2px
+    classDef shared fill:#fc9,stroke:#333,stroke-width:2px
+    
+    class Command,CommandHandler,AggregateRoot commandSide
+    class ReadModel,QueryHandler,Query querySide
+    class Event,EventStore,EventHandler shared
+```
+
+#### Key Integration Points
+
+1. **Events as the Integration Mechanism**
+   - Events generated by the command side are the source of truth
+   - The query side consumes these events to build read models
+   - Events provide a clean, decoupled integration between the two sides
+
+2. **Event Store as the Central Hub**
+   - The event store serves as both the write-side database and the source for read-model updates
+   - It provides persistence, publication, and subscription capabilities
+   - It ensures that all read models eventually reflect all events
+
+3. **Eventual Consistency Model**
+   - Read models are eventually consistent with the write model
+   - This allows for independent scaling and optimization of each side
+   - The system can continue to function even if read models lag behind
+
+#### Complete Flow in Reactive Domain
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant CommandBus
+    participant CommandHandler
+    participant AggregateRoot
+    participant Repository
+    participant EventStore
+    participant EventBus
+    participant EventHandler
+    participant ReadModel
+    participant QueryHandler
+    
+    Client->>CommandBus: Send Command
+    CommandBus->>CommandHandler: Route Command
+    CommandHandler->>Repository: Get Aggregate
+    Repository->>EventStore: Load Events
+    EventStore-->>Repository: Return Events
+    Repository->>AggregateRoot: Apply Events
+    AggregateRoot->>AggregateRoot: Build Current State
+    AggregateRoot->>AggregateRoot: Execute Command Logic
+    AggregateRoot->>AggregateRoot: Validate Business Rules
+    AggregateRoot->>AggregateRoot: Generate Domain Event
+    AggregateRoot->>Repository: Save
+    Repository->>EventStore: Append Event
+    EventStore-->>Repository: Confirm
+    Repository-->>CommandHandler: Return Result
+    CommandHandler-->>Client: Command Result
+    
+    EventStore->>EventBus: Publish Event
+    EventBus->>EventHandler: Notify Subscribers
+    EventHandler->>ReadModel: Update Read Model
+    ReadModel->>ReadModel: Apply Event Data
+    
+    Client->>QueryHandler: Send Query
+    QueryHandler->>ReadModel: Get Data
+    ReadModel-->>QueryHandler: Return Data
+    QueryHandler-->>Client: Query Result
+```
+
+#### Benefits of the Integrated Approach
+
+1. **Separation with Coordination**: Clear separation of concerns while maintaining a coordinated system
+2. **Complete Audit Trail**: Every state change is recorded as an event
+3. **Scalability**: Each side can be scaled independently based on its specific load
+4. **Flexibility**: Read models can be tailored for specific query patterns
+5. **Resilience**: The system can continue to function even if parts of it fail
+6. **Evolution**: The system can evolve over time without breaking existing functionality
+
+#### Implementation Considerations
+
+- **Correlation and Causation**: Track the relationship between commands and events
+- **Idempotent Event Handlers**: Ensure that applying the same event multiple times is safe
+- **Versioning Strategy**: Plan for event schema evolution
+- **Consistency Boundaries**: Define clear aggregate boundaries to maintain consistency
+- **Read Model Rebuilding**: Design for the ability to rebuild read models from event streams
 
 ### 5. Reactive Programming
 
