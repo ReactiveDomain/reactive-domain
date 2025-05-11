@@ -57,7 +57,7 @@ public class Account : AggregateRoot
 }
 ```
 
-### AggregateRoot(Guid, IEnumerable<object>)
+### AggregateRoot(Guid, IEnumerable\<object\>)
 
 Initializes a new instance of the `AggregateRoot` class with the specified ID and restores it from the provided events. This constructor is typically used by repositories when reconstituting an aggregate from its event history.
 
@@ -427,5 +427,11 @@ public class Account : AggregateRoot
 - [ISnapshotSource](isnapshot-source.md): Interface for snapshot support
 - [IRepository](irepository.md): Interface for repositories that work with aggregates
 - [EventRecorder](event-recorder.md): Utility used internally by `AggregateRoot` to record events
+- [Command](./command.md): Messages that trigger state changes in aggregates
+- [Event](./event.md): Messages that represent state changes in aggregates
+- [MessageBuilder](./message-builder.md): Factory for creating correlated events from aggregates
+- [ReadModelBase](./read-model-base.md): Read models that are updated based on events from aggregates
+
+For a comprehensive view of how aggregates interact with other components, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide, particularly the [Command and Event Relationship](../../architecture.md#command-and-event-relationship) and [Aggregate and Repository Interaction](../../architecture.md#aggregate-and-repository-interaction) diagrams.
 
 [↑ Back to Top](#aggregateroot-class) | [← Back to API Reference](../README.md) | [← Back to Table of Contents](../../README.md)

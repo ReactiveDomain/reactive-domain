@@ -10,10 +10,10 @@ This todo list contains items that need to be addressed for PR 169, which adds c
 
 ## Documentation for Key Components
 
-- [ ] Add/enhance documentation for ReadModelBase
-- [ ] Add/enhance documentation for MessageBuilder factory
-- [ ] Improve documentation for Command and Event classes that implement ICorrelatedMessage
-- [ ] Document the relationship between different components
+- [x] Add/enhance documentation for ReadModelBase (documentation is comprehensive with good examples)
+- [x] Add/enhance documentation for MessageBuilder factory (documentation is comprehensive)
+- [x] Improve documentation for Command and Event classes that implement ICorrelatedMessage (documentation exists and is detailed)
+- [x] Document the relationship between different components (added new Key Component Relationships section to architecture.md and cross-references in component documentation)
 
 ## Code Example Corrections
 

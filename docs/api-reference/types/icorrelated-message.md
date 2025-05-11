@@ -165,6 +165,10 @@ public class AccountService
 - [Event](./event.md): Base class for events that implements `ICorrelatedMessage`
 - [MessageBuilder](./message-builder.md): Factory for creating correlated messages
 - [ICorrelatedRepository](./icorrelated-repository.md): Repository that preserves correlation information
+- [AggregateRoot](./aggregate-root.md): Domain entities that work with correlated messages
+- [ReadModelBase](./read-model-base.md): Read models that are updated by event handlers processing correlated events
+
+For a comprehensive view of how correlation works across components, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide, particularly the [Correlation and Causation Flow](../../architecture.md#correlation-and-causation-flow) diagram.
 
 ---
 

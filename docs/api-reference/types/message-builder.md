@@ -397,6 +397,9 @@ public void Handle(CreateAccount command)
 - [Event](./event.md): Base class for events that implements `ICorrelatedMessage`
 - [ICorrelatedRepository](./icorrelated-repository.md): Repository that preserves correlation information
 - [AggregateRoot](./aggregate-root.md): Base class for domain aggregates that work with correlated messages
+- [ReadModelBase](./read-model-base.md): Base class for read models that are updated by correlated events
+
+For a comprehensive view of how these components interact, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide, particularly the [MessageBuilder's Role](../../architecture.md#messagebuilders-role) and [Correlation and Causation Flow](../../architecture.md#correlation-and-causation-flow) diagrams.
 
 ---
 

@@ -369,6 +369,10 @@ public class SqlReadModelRepository<T> : IReadModelRepository<T> where T : ReadM
 - [Command](./command.md): Base class for command messages that trigger state changes
 - [Event](./event.md): Base class for event messages that update read models
 - [ICorrelatedMessage](./icorrelated-message.md): Interface for tracking message correlation
+- [AggregateRoot](./aggregate-root.md): The write-side counterpart to read models in CQRS
+- [MessageBuilder](./message-builder.md): Helps create correlated events that update read models
+
+For a comprehensive view of how these components interact, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide.
 
 ---
 

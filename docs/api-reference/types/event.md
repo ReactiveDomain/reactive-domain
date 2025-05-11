@@ -221,6 +221,11 @@ private void Dispatch(IEvent @event)
 - [ICorrelatedMessage](./icorrelated-message.md): Interface for messages with correlation information
 - [MessageBuilder](./message-builder.md): Factory for creating correlated messages
 - [IEventHandler](./ievent-handler.md): Interface for handling events
+- [AggregateRoot](./aggregate-root.md): Domain entities that raise events in response to commands
+- [Command](./command.md): Messages that trigger state changes resulting in events
+- [ReadModelBase](./read-model-base.md): Read models that are updated in response to events
+
+For a comprehensive view of how events interact with other components, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide, particularly the [Command and Event Relationship](../../architecture.md#command-and-event-relationship) and [ReadModelBase and Event Handlers](../../architecture.md#readmodelbase-and-event-handlers) diagrams.
 
 ---
 

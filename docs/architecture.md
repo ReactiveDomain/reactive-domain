@@ -261,6 +261,100 @@ Implementation in Reactive Domain:
    - Read models are optimized for specific query patterns
    - Read models can be in-memory, database tables, or other storage
 
+## Key Component Relationships
+
+Understanding how the key components in Reactive Domain relate to each other is essential for effective implementation. This section details the relationships between core components like AggregateRoot, Command, Event, MessageBuilder, and ReadModelBase.
+
+### Command and Event Relationship
+
+```mermaid
+graph TD
+    A[Command] -->|"Handled by"| B[CommandHandler]
+    B -->|"Loads/Updates"| C[AggregateRoot]
+    C -->|"Raises"| D[Event]
+    D -->|"Applied to"| C
+    D -->|"Persisted by"| E[Repository]
+    D -->|"Published to"| F[EventHandler]
+    F -->|"Updates"| G[ReadModelBase]
+```
+
+- **Command and Event**: Both implement `ICorrelatedMessage` for correlation tracking
+- **Command to Event Flow**: Commands are processed by aggregates to produce events
+- **Event to ReadModel Flow**: Events update read models through event handlers
+
+### MessageBuilder's Role
+
+```mermaid
+graph LR
+    A[Command] -->|"Source for"| B[MessageBuilder]
+    B -->|"Creates"| C[Event]
+    C -->|"Preserves correlation from"| A
+```
+
+- **MessageBuilder** acts as a factory for creating correlated messages
+- It ensures proper correlation and causation tracking between commands and events
+- It maintains the correlation chain across the entire message flow
+
+### Aggregate and Repository Interaction
+
+```mermaid
+sequenceDiagram
+    participant A as AggregateRoot
+    participant R as Repository
+    participant E as EventStore
+    
+    R->>E: Load Events
+    E-->>R: Return Events
+    R->>A: Apply Events
+    A->>A: Process Command
+    A->>A: Raise Events
+    A->>R: Save
+    R->>E: Append Events
+```
+
+- **AggregateRoot** is responsible for business logic and raising events
+- **Repository** loads and saves aggregates by reading/writing events
+- Events are applied to aggregates to reconstruct state
+
+### ReadModelBase and Event Handlers
+
+```mermaid
+graph TD
+    A[Event] -->|"Handled by"| B[EventHandler]
+    B -->|"Updates"| C[ReadModelBase]
+    C -->|"Stored in"| D[ReadModelRepository]
+    E[Query] -->|"Reads from"| D
+```
+
+- **ReadModelBase** provides the foundation for all read models
+- **Event Handlers** subscribe to events and update read models
+- Read models are optimized for specific query patterns
+- The separation between write models (aggregates) and read models enables CQRS
+
+### Correlation and Causation Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant CMD as Command
+    participant AGG as Aggregate
+    participant EVT as Event
+    participant MB as MessageBuilder
+    
+    C->>CMD: Create Command (new CorrelationId)
+    CMD->>AGG: Process Command
+    AGG->>MB: Create Event
+    MB->>EVT: Set CorrelationId from Command
+    MB->>EVT: Set CausationId as Command.MsgId
+```
+
+- **ICorrelatedMessage** is implemented by both Command and Event
+- **MessageBuilder** ensures proper correlation between commands and events
+- Correlation IDs track related messages across the entire system
+- Causation IDs establish direct cause-effect relationships
+
+Understanding these relationships is key to implementing effective event-sourced systems with Reactive Domain. The components work together to provide a comprehensive solution for CQRS and event sourcing.
+
 ## Extension Points
 
 Reactive Domain provides several extension points for customization:

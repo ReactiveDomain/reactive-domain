@@ -727,6 +727,9 @@ public class CreateAccountHandlerTests
 - [Event](./event.md): Base class for event messages that result from commands
 - [AggregateRoot](./aggregate-root.md): Base class for domain aggregates that process commands
 - [ICommandBus](./icommand-bus.md): Interface for routing commands to handlers
+- [ReadModelBase](./read-model-base.md): Base class for read models that are updated as a result of command processing
+
+For a comprehensive view of how commands interact with other components, see the [Key Component Relationships](../../architecture.md#key-component-relationships) section in the Architecture Guide, particularly the [Command and Event Relationship](../../architecture.md#command-and-event-relationship) diagram.
 
 ---
 
