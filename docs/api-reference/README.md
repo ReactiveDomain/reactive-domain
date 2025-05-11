@@ -26,6 +26,14 @@ Each type is documented with:
 - Usage examples and common patterns
 - Related types and interfaces
 
+## Navigation
+
+For easier navigation through the API reference, use these resources:
+
+- [Component Relationships](../component-relationships.md) - Visual guide showing how different components work together
+- [Navigation Index](../navigation-index.md) - Comprehensive index of all documentation with cross-references
+- [Related Components](#key-types) - Each component documentation includes links to related components
+
 ## Key Types
 
 ### Core Interfaces

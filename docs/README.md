@@ -37,6 +37,14 @@ For the best learning experience, we recommend following this progression:
 5. **Advanced**: [Architecture Guide](architecture.md) - Understand the system architecture
 6. **Production**: [Deployment Guide](deployment.md) and [Performance Optimization](performance.md) - Prepare for production
 
+## Navigation Resources
+
+To help you navigate the documentation more effectively, we've created these resources:
+
+- [Component Relationships](component-relationships.md) - Visual guide showing how different components work together
+- [Navigation Index](navigation-index.md) - Comprehensive index of all documentation with cross-references
+- [Quick Reference](#quick-reference) - Quick links to common tasks and key components
+
 ## Table of Contents
 
 1. [Core Concepts](core-concepts.md)

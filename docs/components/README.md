@@ -38,6 +38,32 @@ Each component documentation includes:
 - Usage examples
 - Integration with other components
 
+## Component Relationships
+
+The components in Reactive Domain are designed to work together to provide a complete event sourcing and CQRS framework. The following diagram shows the relationships between the components:
+
+```mermaid
+graph TD
+    A[Client Application] --> B[ReactiveDomain.Messaging]
+    B --> C[ReactiveDomain.Foundation]
+    C --> D[ReactiveDomain.Core]
+    C --> E[ReactiveDomain.Persistence]
+    E --> F[EventStoreDB]
+    B --> G[ReactiveDomain.Transport]
+    H[ReactiveDomain.Testing] --> C
+    I[ReactiveDomain.Tools] --> C
+    J[ReactiveDomain.Policy] --> C
+    K[ReactiveDomain.IdentityStorage] --> C
+```
+
+## Navigation Resources
+
+For easier navigation through the component documentation, use these resources:
+
+- [Component Relationships](../component-relationships.md) - Visual guide showing how different components work together
+- [Navigation Index](../navigation-index.md) - Comprehensive index of all documentation with cross-references
+- [API Reference](../api-reference/README.md) - Detailed API documentation for all components
+
 ---
 
 **Navigation**:
