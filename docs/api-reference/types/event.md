@@ -132,8 +132,8 @@ public class Account : AggregateRoot
     // Constructor for creating a new account
     public Account(Guid id, ICorrelatedMessage source) : base(id)
     {
-        // Create and apply the AccountCreated event
-        Apply(MessageBuilder.From(source, () => new AccountCreated(
+        // Create and raise the AccountCreated event
+        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(
             id, 
             "ACC-" + id.ToString().Substring(0, 8), 
             "New Customer"
@@ -154,8 +154,8 @@ public class Account : AggregateRoot
         if (amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
             
-        // Create and apply the FundsDeposited event
-        Apply(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
+        // Create and raise the FundsDeposited event
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
     }
     
     // Event handler for FundsDeposited

@@ -408,8 +408,8 @@ public class Account : AggregateRoot
         if (id == Guid.Empty)
             throw new ArgumentException("Account ID cannot be empty", nameof(id));
             
-        // Apply the creation event
-        Apply(MessageBuilder.From(source, () => new AccountCreated(
+        // Raise the creation event
+        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(
             id,
             ((CreateAccount)source).AccountNumber,
             ((CreateAccount)source).CustomerName,
@@ -426,8 +426,8 @@ public class Account : AggregateRoot
         if (amount <= 0)
             throw new ArgumentException("Deposit amount must be positive", nameof(amount));
             
-        // Apply the event
-        Apply(MessageBuilder.From(source, () => new FundsDeposited(
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(
             Id,
             amount,
             _balance + amount,
@@ -447,8 +447,8 @@ public class Account : AggregateRoot
         if (_balance + _overdraftLimit < amount)
             throw new InsufficientFundsException($"Insufficient funds. Balance: {_balance}, Overdraft Limit: {_overdraftLimit}");
             
-        // Apply the event
-        Apply(MessageBuilder.From(source, () => new FundsWithdrawn(
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new FundsWithdrawn(
             Id,
             amount,
             _balance - amount,
@@ -465,8 +465,8 @@ public class Account : AggregateRoot
         if (limit < 0)
             throw new ArgumentException("Overdraft limit cannot be negative", nameof(limit));
             
-        // Apply the event
-        Apply(MessageBuilder.From(source, () => new OverdraftLimitSet(
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new OverdraftLimitSet(
             Id,
             limit
         )));
@@ -481,8 +481,8 @@ public class Account : AggregateRoot
         if (_balance < 0)
             throw new InvalidOperationException("Cannot close account with negative balance");
             
-        // Apply the event
-        Apply(MessageBuilder.From(source, () => new AccountClosed(
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new AccountClosed(
             Id,
             DateTime.UtcNow
         )));

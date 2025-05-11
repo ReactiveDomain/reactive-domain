@@ -115,7 +115,7 @@ public void Handle(CreateAccount command)
 // 3. Aggregate applies an event
 public Account(Guid id, ICorrelatedMessage source) : base(id)
 {
-    Apply(MessageBuilder.From(source, () => new AccountCreated(id, source.CustomerName, source.InitialBalance)));
+    RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(id, source.CustomerName, source.InitialBalance)));
     // Event MsgId: B, CorrelationId: A, CausationId: A
 }
 
@@ -162,7 +162,7 @@ public class Account : AggregateRoot
     public Account(Guid id, ICorrelatedMessage source) : base(id)
     {
         // Create a new event from the source command
-        Apply(MessageBuilder.From(source, () => new AccountCreated(id, ((CreateAccount)source).CustomerName)));
+        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(id, ((CreateAccount)source).CustomerName)));
     }
     
     public void Deposit(decimal amount, ICorrelatedMessage source)
@@ -174,7 +174,7 @@ public class Account : AggregateRoot
             throw new ArgumentException("Amount must be positive", nameof(amount));
             
         // Create a new event from the source command
-        Apply(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
     }
     
     public void Withdraw(decimal amount, ICorrelatedMessage source)
@@ -189,7 +189,7 @@ public class Account : AggregateRoot
             throw new InvalidOperationException("Insufficient funds");
             
         // Create a new event from the source command
-        Apply(MessageBuilder.From(source, () => new FundsWithdrawn(Id, amount)));
+        RaiseEvent(MessageBuilder.From(source, () => new FundsWithdrawn(Id, amount)));
     }
     
     public void Close(ICorrelatedMessage source)
@@ -198,7 +198,7 @@ public class Account : AggregateRoot
             throw new InvalidOperationException("Account already closed");
             
         // Create a new event from the source command
-        Apply(MessageBuilder.From(source, () => new AccountClosed(Id)));
+        RaiseEvent(MessageBuilder.From(source, () => new AccountClosed(Id)));
     }
     
     private void Apply(AccountCreated @event)

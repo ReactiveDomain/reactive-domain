@@ -17,9 +17,9 @@ This todo list contains items that need to be addressed for PR 169, which adds c
 
 ## Code Example Corrections
 
-- [ ] Fix the use of `Apply()` vs `Raise()` methods in aggregates (Apply methods are for rehydration, not for creating new events)
-- [ ] Update examples in event.md to use `Raise(new AccountCreated(...))` instead of `Apply(...)`
-- [ ] Review all code examples for technical accuracy
+- [x] Fix the use of `Apply()` vs `RaiseEvent()` methods in aggregates (Apply methods are for rehydration, not for creating new events)
+- [x] Update examples in event.md to use `RaiseEvent(new AccountCreated(...))` instead of `Apply(...)`
+- [x] Review all code examples for technical accuracy in command.md and message-builder.md
 - [ ] Add more real-world examples to illustrate concepts
 
 ## Architecture Documentation Improvements
