@@ -19,10 +19,10 @@ This glossary provides definitions for key terms used in Reactive Domain and eve
 A cluster of domain objects treated as a single unit for data changes. In event sourcing, aggregates are the primary entities that generate events.
 
 ### Command
-A request for the system to perform an action. Commands are named in the imperative form (e.g., "CreateAccount", "DepositMoney").
+A request for the system to perform an action that may change state. Commands are named in the imperative form (e.g., "CreateAccount", "DepositMoney") and represent user intent. In Reactive Domain, commands implement the `ICommand` interface and typically extend the `Command` base class, which provides correlation tracking capabilities.
 
 ### Event
-An immutable record of something that happened in the system. Events are named in the past tense (e.g., "AccountCreated", "MoneyDeposited").
+An immutable record of something that happened in the system. Events are named in the past tense (e.g., "AccountCreated", "MoneyDeposited") and represent facts that have occurred. In Reactive Domain, events implement the `IEvent` interface and typically extend the `Event` base class, which provides correlation tracking capabilities. Events are the primary mechanism for state changes in an event-sourced system.
 
 ### Event Store
 A specialized database designed to store events. Reactive Domain uses EventStoreDB as its event store.
@@ -34,7 +34,7 @@ A sequence of events for a particular aggregate, ordered by version.
 A component that transforms events into queryable state. Projections are used to build read models.
 
 ### Read Model
-A representation of data optimized for querying. Read models are built by projections from events.
+A representation of data optimized for querying. Read models are built by projections from events and are typically denormalized for query efficiency. In Reactive Domain, read models often extend the `ReadModelBase` class, which provides common functionality for read models. Read models are part of the query side in CQRS and are eventually consistent with the write model.
 
 ### Snapshot
 A point-in-time capture of an aggregate's state, used to optimize loading performance.
@@ -96,7 +96,7 @@ A programming paradigm that focuses on asynchronous data streams and the propaga
 ## Reactive Domain-Specific Terminology
 
 ### AggregateRoot
-The base class for aggregates in Reactive Domain, providing common functionality for event sourcing.
+The base class for aggregates in Reactive Domain, providing common functionality for event sourcing. `AggregateRoot` implements the `IEventSource` interface and provides methods for raising events (`RaiseEvent()`) and applying events to reconstruct state (`Apply()`). It enforces business rules and maintains invariants within the aggregate boundary.
 
 ### Correlation ID
 An identifier that tracks a business transaction across multiple messages.
@@ -128,13 +128,25 @@ A component that provides a connection to EventStoreDB.
 ### StreamStoreRepository
 A repository implementation that stores and retrieves events from EventStoreDB.
 
+### RaiseEvent
+A method in the `AggregateRoot` class used to generate and record new events in response to commands. This is the primary mechanism for creating events in Reactive Domain. Events raised using this method are both applied to the aggregate to update its state and recorded for persistence.
+
+### Apply
+A method pattern used in event-sourced aggregates to handle the application of events to the aggregate's state. In Reactive Domain, private `Apply(EventType)` methods are used for event handlers that update the aggregate's state during both event replay (rehydration) and when new events are raised.
+
+### MessageBuilder
+A factory class in Reactive Domain that creates correlated messages, ensuring proper tracking of correlation and causation IDs across the system. It provides methods for creating new message chains and continuing existing chains.
+
+### ReadModelBase
+A base class for read models in Reactive Domain that provides common functionality, including identity management. Read models extending this class are typically updated by event handlers in response to domain events.
+
 ## Related Concepts
 
 ### Idempotence
 The property of certain operations in mathematics and computer science whereby they can be applied multiple times without changing the result beyond the initial application.
 
 ### Eventual Consistency
-A consistency model used in distributed computing to achieve high availability that informally guarantees that, if no new updates are made to a given data item, eventually all accesses to that item will return the last updated value.
+A consistency model used in distributed computing to achieve high availability that informally guarantees that, if no new updates are made to a given data item, eventually all accesses to that item will return the last updated value. In CQRS systems, read models are eventually consistent with the write model, meaning there may be a delay between when an event is generated and when it is reflected in the read model.
 
 ### Optimistic Concurrency
 A concurrency control method that assumes conflicts are rare and allows operations to proceed without locking, but checks for conflicts before committing changes.

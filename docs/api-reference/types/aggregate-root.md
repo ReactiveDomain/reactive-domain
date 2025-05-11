@@ -137,14 +137,17 @@ public void Save(AggregateRoot aggregate)
 
 ### RaiseEvent
 
-Raises an event, which will be recorded and applied to the aggregate. This is the primary method for changing the state of an aggregate in an event-sourced system.
+Raises an event, which will be recorded and applied to the aggregate. This is the primary method for creating and handling new events in an event-sourced system. When called, `RaiseEvent()` does two things:
+
+1. It applies the event to the aggregate's state by calling the appropriate `Apply()` method
+2. It records the event for persistence in the event store
 
 ```csharp
 protected void RaiseEvent(object @event);
 ```
 
 **Parameters**:
-- `event` (`System.Object`): The event to raise.
+- `event` (`System.Object`): The event to raise. This is typically created using the `MessageBuilder` to ensure proper correlation tracking.
 
 **Example**:
 ```csharp
@@ -247,8 +250,8 @@ public void Save(AggregateRoot aggregate)
 
 The `AggregateRoot` class is designed to be subclassed by domain aggregates. Subclasses should:
 
-1. Define private `Apply` methods for each event type to update the aggregate's state
-2. Use the `RaiseEvent` method to record and apply events when handling commands
+1. Define private `Apply` methods for each event type to update the aggregate's state (these are event handlers)
+2. Use the `RaiseEvent` method to create, record, and apply new events when handling commands
 3. Define public methods that represent domain operations and enforce business rules
 4. Keep the aggregate's state private and expose it through controlled methods
 
@@ -407,9 +410,9 @@ public class Account : AggregateRoot
 2. **Public State Modification**: Don't allow direct modification of aggregate state from outside
 3. **Missing Business Rules**: Ensure all business rules are enforced in command methods
 4. **Ignoring Version Conflicts**: Always handle optimistic concurrency exceptions properly
-5. **Complex Apply Methods**: Keep event handlers (Apply methods) simple and focused
-6. **Side Effects in Apply Methods**: Avoid side effects like I/O operations in Apply methods
-7. **Circular Event References**: Avoid raising events from within Apply methods
+5. **Complex Apply Methods**: Keep event handlers (Apply methods) simple and focused on updating state
+6. **Side Effects in Apply Methods**: Avoid side effects like I/O operations in Apply methods as they run during both event replay and new event creation
+7. **Circular Event References**: Never call `RaiseEvent()` from within `Apply()` methods as this creates an infinite loop
 
 ## Inheritance Hierarchy
 

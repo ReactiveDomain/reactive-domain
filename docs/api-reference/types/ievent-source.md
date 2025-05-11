@@ -6,7 +6,20 @@
 
 The `IEventSource` interface is the cornerstone of event sourcing in Reactive Domain. It represents a source of events from the perspective of restoring from and taking events, and is primarily used by infrastructure code. This interface defines the contract that all event-sourced entities must implement, providing the foundation for reconstructing entity state from a sequence of events.
 
-In event sourcing, the state of an entity is determined by the sequence of events that have occurred, rather than by its current state. The `IEventSource` interface enables this pattern by providing methods to restore an entity from its event history, update it with new events, and extract events that have been recorded but not yet persisted.
+In event sourcing, the state of an entity is determined by the sequence of events that have occurred, rather than by its current state. The `IEventSource` interface enables this pattern by providing methods to restore an entity from its event history, update it with new events, and extract events that have been recorded but not yet persisted. Implementations typically use private `Apply()` methods to handle specific event types and update the entity's state.
+
+## Implementation Notes
+
+1. The `IEventSource` interface is typically implemented by aggregate roots in a domain-driven design context
+2. Implement private `Apply` methods for each event type to update the entity's state
+   - These methods handle the application of events to update the entity's state
+   - They are called during both event replay (via `RestoreFromEvents`) and when new events are created
+   - They should be idempotent (applying the same event multiple times should not cause issues)
+   - They should not have side effects like I/O operations
+   - They should never raise new events to avoid infinite loops
+3. Use an `EventRecorder` to track events that have been applied but not yet persisted
+4. Ensure that the `ExpectedVersion` is properly maintained to support optimistic concurrency
+5. When creating new events, use the `RaiseEvent()` method (in `AggregateRoot`) which both applies the event to update state and records it for persistence
 
 **Namespace**: `ReactiveDomain`  
 **Assembly**: `ReactiveDomain.Core.dll`
@@ -141,6 +154,7 @@ public class Account : IEventSource
         }
     }
     
+    // This is the generic Apply method that dispatches to specific event handlers
     private void Apply(object @event)
     {
         switch (@event)
@@ -160,6 +174,23 @@ public class Account : IEventSource
             default:
                 throw new InvalidOperationException($"Unknown event type: {@event.GetType().Name}");
         }
+    }
+    
+    // Alternatively, many implementations use specific Apply methods for each event type
+    // These methods are called by the generic Apply method using reflection
+    private void Apply(AccountCreated @event)
+    {
+        // Initialize account properties
+    }
+    
+    private void Apply(AmountDeposited @event)
+    {
+        _balance += @event.Amount;
+    }
+    
+    private void Apply(AmountWithdrawn @event)
+    {
+        _balance -= @event.Amount;
     }
     
     // Implementation of other IEventSource members

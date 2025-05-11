@@ -6,7 +6,7 @@
 
 ## Overview
 
-Events in Reactive Domain represent immutable facts that have occurred in the system. They are the historical record of changes to the domain and form the basis of event sourcing. The `Event` base class provides common functionality for all event implementations, including correlation and causation tracking, which is essential for debugging and auditing in distributed systems.
+Events in Reactive Domain represent immutable facts that have occurred in the system. They are the historical record of changes to the domain and form the basis of event sourcing. Events are named in the past tense (e.g., `AccountCreated`, `FundsDeposited`) to emphasize that they represent facts that have already occurred. The `Event` base class provides common functionality for all event implementations, including correlation and causation tracking, which is essential for debugging and auditing in distributed systems.
 
 ## Class Definition
 
@@ -120,7 +120,11 @@ public class AccountCreatedHandler : IEventHandler<AccountCreated>
 
 ## Integration with Aggregates
 
-Events are produced by aggregates in response to commands. This is a core pattern in Domain-Driven Design and CQRS:
+Events are produced by aggregates in response to commands using the `RaiseEvent()` method. This is a core pattern in Domain-Driven Design and CQRS. When an aggregate raises an event:
+
+1. The event is applied to update the aggregate's state via the appropriate `Apply()` method
+2. The event is recorded for persistence in the event store
+3. Once persisted, the event can be published to event handlers and projections
 
 ```csharp
 public class Account : AggregateRoot
@@ -168,7 +172,7 @@ public class Account : AggregateRoot
 
 ## Event Sourcing
 
-Events are the foundation of event sourcing, where the state of an aggregate is reconstructed by replaying events:
+Events are the foundation of event sourcing, where the state of an aggregate is reconstructed by replaying events. This process, often called rehydration, applies each event in sequence to rebuild the aggregate's state:
 
 ```csharp
 public void LoadFromHistory(IEnumerable<IEvent> history)
@@ -205,6 +209,8 @@ private void Dispatch(IEvent @event)
 5. **Versioning Strategy**: Plan for event schema evolution to handle changes over time
 6. **Meaningful Events**: Design events to represent meaningful business occurrences, not just data changes
 7. **Event Documentation**: Document the purpose and content of each event type for better understanding
+8. **Use RaiseEvent()**: Always use the `RaiseEvent()` method in aggregates to create new events, not direct calls to `Apply()`
+9. **Idempotent Event Handlers**: Ensure `Apply()` methods are idempotent as they may be called multiple times during event replay
 
 ## Common Pitfalls
 

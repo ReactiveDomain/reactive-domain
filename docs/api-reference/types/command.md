@@ -6,9 +6,9 @@
 
 ## Overview
 
-Commands in Reactive Domain represent requests for the system to perform an action. They are part of the write side of the CQRS pattern and typically result in state changes. The `Command` base class provides common functionality for all command implementations, including correlation and causation tracking.
+Commands in Reactive Domain represent requests for the system to perform an action. They are part of the write side of the CQRS pattern and typically result in state changes. Commands are named in the imperative form (e.g., `CreateAccount`, `DepositFunds`) to emphasize that they represent intentions rather than facts. The `Command` base class provides common functionality for all command implementations, including correlation and causation tracking.
 
-In the Command Query Responsibility Segregation (CQRS) pattern, commands represent intentions to change the system state. Unlike events, which represent facts that have occurred, commands can be rejected if they violate business rules or if the system is in an inappropriate state to handle them.
+In the Command Query Responsibility Segregation (CQRS) pattern, commands represent intentions to change the system state. Unlike events, which represent facts that have occurred, commands can be rejected if they violate business rules or if the system is in an inappropriate state to handle them. When a command is processed successfully, it typically results in one or more events being raised via the `RaiseEvent()` method in the aggregate.
 
 ## Class Definition
 
@@ -392,7 +392,17 @@ public class CommandBusExample
 
 ## Integration with Aggregates
 
-Commands are used to modify aggregates, which then produce events:
+Commands are used to modify aggregates, which then produce events. The typical flow is:
+
+1. A command is sent to a command handler
+2. The command handler loads the appropriate aggregate
+3. The command handler calls a method on the aggregate, passing the command
+4. The aggregate validates the command against its current state and business rules
+5. If valid, the aggregate calls `RaiseEvent()` to create one or more events
+6. The `RaiseEvent()` method both updates the aggregate's state via `Apply()` methods and records the events
+7. The command handler saves the aggregate, persisting the new events
+
+This pattern ensures that all state changes are captured as events and that business rules are enforced consistently:
 
 ```csharp
 public class Account : AggregateRoot
@@ -694,15 +704,15 @@ public class CreateAccountHandlerTests
 
 ## Best Practices
 
-1. **Immutable Commands**: Make all command properties read-only to ensure they cannot be changed after creation
-2. **Descriptive Names**: Use verb-noun naming convention (e.g., `CreateAccount`, `DepositFunds`) to clearly communicate intent
-3. **Minimal Data**: Include only the data needed to perform the action, avoiding unnecessary information
-4. **Use MessageBuilder**: Always use `MessageBuilder` to create commands with proper correlation tracking
-5. **Validation**: Validate commands before processing them to ensure they meet business rules
-6. **Single Responsibility**: Each command should represent a single action or intention
-7. **Versioning Strategy**: Plan for command versioning from the beginning
-8. **Error Handling**: Implement proper error handling and reporting for command failures
-9. **Logging**: Log command processing with correlation IDs for traceability
+1. **Immutable Commands**: Make all command properties read-only to prevent modification after creation
+2. **Imperative Naming**: Use imperative verb naming convention (e.g., `CreateAccount`, `DepositFunds`)
+3. **Command Validation**: Validate commands early in the processing pipeline
+4. **Single Responsibility**: Each command should represent a single action or intention
+5. **Use MessageBuilder**: Use `MessageBuilder` to create commands with proper correlation information
+6. **Command Documentation**: Document the purpose, parameters, and possible outcomes of each command
+7. **Versioning Strategy**: Plan for command schema evolution to handle changes over time
+8. **Proper Event Creation**: Always use `RaiseEvent()` in aggregate methods that handle commands to create events
+9. **Business Rule Enforcement**: Enforce all business rules in command handlers or aggregate methods before raising events
 10. **Testing**: Thoroughly test command handlers with both valid and invalid commands
 
 ## Common Pitfalls

@@ -8,7 +8,7 @@
 
 Read models in Reactive Domain represent the query side of the CQRS pattern. They are optimized for querying and provide a denormalized view of the domain data. The `ReadModelBase` class provides a common foundation for implementing read models with consistent behavior.
 
-In a CQRS architecture, read models are separate from the write models (aggregates) and are specifically designed to efficiently answer queries. They typically contain denormalized data that is shaped according to the specific needs of the UI or API consumers.
+In a CQRS architecture, read models are separate from the write models (aggregates) and are specifically designed to efficiently answer queries. They typically contain denormalized data that is shaped according to the specific needs of the UI or API consumers. Read models are updated by event handlers in response to domain events raised by aggregates, creating an eventually consistent view of the domain state.
 
 ## Class Definition
 
@@ -126,7 +126,7 @@ public class CustomerDashboard : ReadModelBase
 
 ## Integration with Event Handlers
 
-Read models are typically updated by event handlers that subscribe to domain events. Here's a comprehensive example showing how to update read models in response to various events:
+Read models are typically updated by event handlers that subscribe to domain events raised by aggregates through the `RaiseEvent()` method. This creates an eventually consistent projection of the domain state optimized for querying. Here's a comprehensive example showing how to update read models in response to various events:
 
 ```csharp
 public class AccountEventHandler : 
@@ -347,6 +347,8 @@ public class SqlReadModelRepository<T> : IReadModelRepository<T> where T : ReadM
 8. **Rebuild Capability**: Design your system to be able to rebuild read models from event streams when needed
 9. **Caching Strategy**: Implement appropriate caching for frequently accessed read models
 10. **Monitoring**: Add monitoring to track the lag between write model updates and read model updates
+11. **Idempotent Updates**: Ensure read model updates are idempotent, as events may be processed multiple times
+12. **Event Handler Organization**: Organize event handlers by the read models they update rather than by event type
 
 ## Common Pitfalls
 

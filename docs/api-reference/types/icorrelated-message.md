@@ -6,7 +6,7 @@
 
 ## Overview
 
-In complex event-driven systems, tracking the flow of messages is crucial for debugging, auditing, and understanding causal relationships. The `ICorrelatedMessage` interface provides a standard way to track correlation and causation across message flows, enabling developers to trace the complete path of a business transaction through the system.
+In complex event-driven systems, tracking the flow of messages is crucial for debugging, auditing, and understanding causal relationships. The `ICorrelatedMessage` interface provides a standard way to track correlation and causation across message flows, enabling developers to trace the complete path of a business transaction through the system. This is particularly important in event-sourced systems where commands lead to events which may trigger other commands, creating a chain of related messages that should be traceable.
 
 ## Interface Definition
 
@@ -40,14 +40,15 @@ The causation ID establishes a direct cause-and-effect relationship between mess
 Consider the following message flow in a banking application:
 
 1. A client sends a `CreateAccount` command (ID: A, CorrelationID: A, CausationID: A)
-2. The command handler processes the command and creates an `AccountCreated` event (ID: B, CorrelationID: A, CausationID: A)
+2. The command handler processes the command and the aggregate calls `RaiseEvent()` with an `AccountCreated` event (ID: B, CorrelationID: A, CausationID: A)
 3. An event handler processes the event and sends a `SendWelcomeEmail` command (ID: C, CorrelationID: A, CausationID: B)
 4. The email service processes the command and creates an `EmailSent` event (ID: D, CorrelationID: A, CausationID: C)
 
 In this flow:
 - All messages share the same correlation ID (A), indicating they are part of the same business transaction
-- Each message's causation ID points to the ID of the message that caused it, creating a chain of causality
-- This chain allows for complete tracing of the transaction from initiation to completion
+- Each message's causation ID points to the ID of the message that directly caused it, creating a chain of causality
+- The `MessageBuilder` class is used with the `RaiseEvent()` method to ensure proper correlation tracking
+- This chain allows for complete tracing of the transaction from initiation to completion, which is invaluable for debugging and auditing
 
 ## Usage
 
@@ -149,6 +150,9 @@ public class AccountService
 5. **Consistent Implementation**: Ensure all messages in your system implement `ICorrelatedMessage` consistently
 6. **Documentation**: Document the correlation flow in your system for better understanding
 7. **Testing**: Test correlation chains to ensure they are maintained correctly
+8. **Use with RaiseEvent()**: Always use `MessageBuilder` when creating events to be raised with the `RaiseEvent()` method
+9. **Distributed Tracing**: Integrate with distributed tracing systems by including correlation IDs in trace contexts
+10. **Cross-Service Correlation**: Ensure correlation IDs are preserved when messages cross service boundaries
 
 ## Common Pitfalls
 

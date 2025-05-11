@@ -6,7 +6,7 @@
 
 ## Overview
 
-In event-sourced systems, tracking the flow of messages is crucial for debugging, auditing, and understanding causal relationships. The `MessageBuilder` factory provides a consistent way to create messages with properly set correlation and causation IDs.
+In event-sourced systems, tracking the flow of messages is crucial for debugging, auditing, and understanding causal relationships. The `MessageBuilder` factory provides a consistent way to create messages with properly set correlation and causation IDs. It is particularly important when using the `RaiseEvent()` method in aggregates to ensure that events maintain their correlation with the original commands.
 
 Correlation tracking is essential in distributed systems where a single business transaction might span multiple services, processes, or message handlers. The `MessageBuilder` ensures that all messages related to the same business transaction are properly linked, making it possible to trace the entire transaction flow.
 
@@ -112,9 +112,11 @@ public void Handle(CreateAccount command)
     _repository.Save(account, command);
 }
 
-// 3. Aggregate applies an event
+// 3. Aggregate raises an event using RaiseEvent()
 public Account(Guid id, ICorrelatedMessage source) : base(id)
 {
+    // Create a new event that maintains correlation with the source command
+    // and raise it to update state and record it for persistence
     RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(id, source.CustomerName, source.InitialBalance)));
     // Event MsgId: B, CorrelationId: A, CausationId: A
 }
@@ -372,10 +374,6 @@ public void Handle(CreateAccount command)
 4. **Event-Command Flow**: Use `From()` to create commands from events in process managers
 5. **Include Correlation IDs in Logs**: Add correlation and causation IDs to log messages
 6. **Correlation-Aware Repositories**: Use repositories that preserve correlation information
-7. **Consistent Naming**: Use consistent naming for correlation-related concepts
-8. **Documentation**: Document the correlation flow in complex business processes
-9. **Testing**: Test correlation chains to ensure they're maintained correctly
-10. **Monitoring**: Monitor correlation chains for breaks or inconsistencies
 
 ## Common Pitfalls
 
