@@ -6,6 +6,7 @@ This section provides practical code examples that demonstrate how to use Reacti
 
 ## Table of Contents
 
+### Basic Examples
 1. [Creating a New Aggregate Root](creating-aggregate-root.md)
 2. [Handling Commands and Generating Events](handling-commands-events.md)
 3. [Saving and Retrieving Aggregates](saving-retrieving-aggregates.md)
@@ -15,7 +16,12 @@ This section provides practical code examples that demonstrate how to use Reacti
 7. [Implementing Snapshots](implementing-snapshots.md)
 8. [Testing Aggregates and Event Handlers](testing.md)
 9. [Integration with ASP.NET Core](aspnet-integration.md)
-10. [Complete Sample Applications](sample-applications.md)
+
+### Real-World Domain Examples
+10. [Banking Domain Example](banking-domain-example.md)
+11. [E-Commerce Domain Example](ecommerce-domain-example.md)
+12. [Inventory Management Example](inventory-management-example.md)
+13. [Complete Sample Applications](sample-applications.md)
 
 Each example includes:
 
@@ -43,9 +49,23 @@ To run these examples, you'll need:
 
 ## Getting Started
 
-If you're new to Reactive Domain, we recommend starting with the [Creating a New Aggregate Root](creating-aggregate-root.md) example, followed by [Handling Commands and Generating Events](handling-commands-events.md) and [Saving and Retrieving Aggregates](saving-retrieving-aggregates.md).
+If you're new to Reactive Domain, we recommend starting with the basic examples:
+- [Creating a New Aggregate Root](creating-aggregate-root.md)
+- [Handling Commands and Generating Events](handling-commands-events.md)
+- [Saving and Retrieving Aggregates](saving-retrieving-aggregates.md)
 
-For more advanced scenarios, check out the [Complete Sample Applications](sample-applications.md) section.
+For intermediate to advanced scenarios, explore our real-world domain examples:
+- [Banking Domain Example](banking-domain-example.md) - For financial applications
+- [E-Commerce Domain Example](ecommerce-domain-example.md) - For online retail systems
+- [Inventory Management Example](inventory-management-example.md) - For warehouse and stock management
+
+These real-world examples demonstrate complete implementations including:
+- Command and event definitions with proper validation
+- Aggregate implementations with business rules
+- Command handlers with error handling
+- Read model projections
+- Process managers and sagas for complex workflows
+- API integration examples
 
 ---
 
