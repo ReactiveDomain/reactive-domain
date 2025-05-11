@@ -8,6 +8,8 @@
 
 In event-sourced systems, tracking the flow of messages is crucial for debugging, auditing, and understanding causal relationships. The `MessageBuilder` factory provides a consistent way to create messages with properly set correlation and causation IDs. It is particularly important when using the `RaiseEvent()` method in aggregates to ensure that events maintain their correlation with the original commands.
 
+> **Important**: When using `RaiseEvent()` in an aggregate, you must explicitly use `MessageBuilder.From(command, ...)` to maintain correlation information. The `AggregateRoot` class does not automatically add correlation information to events. Failing to use `MessageBuilder` will result in lost correlation tracking, making it difficult to trace message flows through your system.
+
 Correlation tracking is essential in distributed systems where a single business transaction might span multiple services, processes, or message handlers. The `MessageBuilder` ensures that all messages related to the same business transaction are properly linked, making it possible to trace the entire transaction flow.
 
 ## Class Definition
@@ -152,7 +154,7 @@ In this flow:
 
 ### In an Aggregate
 
-Messages are often created within aggregates in response to commands:
+Messages are often created within aggregates in response to commands. When using `RaiseEvent()` in an aggregate, you must explicitly use `MessageBuilder` to maintain correlation information:
 
 ```csharp
 public class Account : AggregateRoot
@@ -161,46 +163,50 @@ public class Account : AggregateRoot
     private bool _isActive;
     private string _ownerName;
     
-    public Account(Guid id, ICorrelatedMessage source) : base(id)
+    // When handling a command that needs correlation tracking
+    public void ProcessCreateAccountCommand(CreateAccount command)
     {
-        // Create a new event from the source command
-        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(id, ((CreateAccount)source).CustomerName)));
+        // Use MessageBuilder to maintain correlation information
+        RaiseEvent(MessageBuilder.From(command, () => new AccountCreated(Id, command.CustomerName)));
     }
     
-    public void Deposit(decimal amount, ICorrelatedMessage source)
+    // When handling a deposit command
+    public void ProcessDepositCommand(DepositFunds command)
     {
         if (!_isActive)
             throw new InvalidOperationException("Cannot deposit to inactive account");
             
-        if (amount <= 0)
-            throw new ArgumentException("Amount must be positive", nameof(amount));
+        if (command.Amount <= 0)
+            throw new ArgumentException("Amount must be positive", nameof(command.Amount));
             
-        // Create a new event from the source command
-        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
+        // Use MessageBuilder to maintain correlation information
+        RaiseEvent(MessageBuilder.From(command, () => new FundsDeposited(Id, command.Amount)));
     }
     
-    public void Withdraw(decimal amount, ICorrelatedMessage source)
+    // When handling a withdrawal command
+    public void ProcessWithdrawCommand(WithdrawFunds command)
     {
         if (!_isActive)
             throw new InvalidOperationException("Cannot withdraw from inactive account");
             
-        if (amount <= 0)
-            throw new ArgumentException("Amount must be positive", nameof(amount));
+        if (command.Amount <= 0)
+            throw new ArgumentException("Amount must be positive", nameof(command.Amount));
             
-        if (_balance < amount)
+        if (_balance < command.Amount)
             throw new InvalidOperationException("Insufficient funds");
             
-        // Create a new event from the source command
-        RaiseEvent(MessageBuilder.From(source, () => new FundsWithdrawn(Id, amount)));
+        // Use MessageBuilder to maintain correlation information
+        RaiseEvent(MessageBuilder.From(command, () => new FundsWithdrawn(Id, command.Amount)));
     }
     
-    public void Close(ICorrelatedMessage source)
+    // When handling a close account command
+    public void ProcessCloseAccountCommand(CloseAccount command)
     {
         if (!_isActive)
             throw new InvalidOperationException("Account already closed");
             
-        // Create a new event from the source command
-        RaiseEvent(MessageBuilder.From(source, () => new AccountClosed(Id)));
+        // Use MessageBuilder to maintain correlation information
+        RaiseEvent(MessageBuilder.From(command, () => new AccountClosed(Id)));
     }
     
     private void Apply(AccountCreated @event)
