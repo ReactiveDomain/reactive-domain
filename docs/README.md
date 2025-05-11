@@ -2,7 +2,7 @@
 
 Welcome to the comprehensive documentation for the Reactive Domain library, an open-source framework for implementing event sourcing in .NET projects using reactive programming principles.
 
-> **Version Information**: This documentation corresponds to the [reactive-documentation](https://github.com/linedata/reactive-domain/tree/reactive-documentation) branch, which was created from trunk commit [05e5268](https://github.com/linedata/reactive-domain/commit/05e5268f0ceef1034885905402590486fcb6fcad) ("Removes .NET 6 support", 2025-02-18). If you notice differences between this documentation and your code, please check which version of Reactive Domain you're using.
+> **Version Information**: This documentation corresponds to the [reactive-documentation](https://github.com/ReactiveDomain/reactive-domain/tree/reactive-documentation) branch, which was created from trunk commit [05e5268](https://github.com/ReactiveDomain/reactive-domain/commit/05e5268f0ceef1034885905402590486fcb6fcad) ("Removes .NET 6 support", 2025-02-18). If you notice differences between this documentation and your code, please check which version of Reactive Domain you're using.
 
 ## Introduction
 

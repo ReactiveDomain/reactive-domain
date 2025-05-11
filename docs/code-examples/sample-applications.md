@@ -52,7 +52,7 @@ BankingSample/
 
 ### Running the Sample
 
-1. Clone the repository: `git clone https://github.com/reactive-domain/banking-sample.git`
+1. Clone the repository: `git clone https://github.com/ReactiveDomain/banking-sample.git`
 2. Start EventStoreDB: `docker-compose up -d`
 3. Build the solution: `dotnet build`
 4. Run the API: `dotnet run --project src/BankingSample.Api/BankingSample.Api.csproj`
@@ -120,7 +120,7 @@ ECommerceSample/
 
 ### Running the Sample
 
-1. Clone the repository: `git clone https://github.com/reactive-domain/ecommerce-sample.git`
+1. Clone the repository: `git clone https://github.com/ReactiveDomain/ecommerce-sample.git`
 2. Start the infrastructure: `docker-compose up -d`
 3. Build the solution: `dotnet build`
 4. Run the API: `dotnet run --project src/ECommerceSample.Api/ECommerceSample.Api.csproj`
@@ -171,7 +171,7 @@ TaskManagementSample/
 
 ### Running the Sample
 
-1. Clone the repository: `git clone https://github.com/reactive-domain/task-management-sample.git`
+1. Clone the repository: `git clone https://github.com/ReactiveDomain/task-management-sample.git`
 2. Start EventStoreDB: `docker-compose up -d`
 3. Build the solution: `dotnet build`
 4. Run the API: `dotnet run --project src/TaskManagementSample.Api/TaskManagementSample.Api.csproj`

@@ -811,7 +811,7 @@ The workshop repository includes complete code samples for all exercises and add
 
 ### Reference Documentation
 
-- [Reactive Domain Documentation](https://github.com/ReactiveDomain/reactive-domain/docs)
+- [Reactive Domain Documentation](https://github.com/ReactiveDomain/reactive-domain/tree/master/docs)
 - [EventStoreDB Documentation](https://developers.eventstore.com/server/v21.10/docs/)
 - [CQRS Journey by Microsoft](https://docs.microsoft.com/en-us/previous-versions/msp-n-p/jj554200(v=pandp.10))
 

@@ -1,0 +1,56 @@
+# Todo List for PR 169 - Reactive Documentation
+
+This todo list contains items that need to be addressed for PR 169, which adds comprehensive documentation for the Reactive Domain library.
+
+## Badge and Reference Fixes
+
+- [x] Fix Badge URLs in README.md to point to the main ReactiveDomain repository instead of leopoldodonnell's fork (already completed)
+- [x] Update Travis CI badge to point to ReactiveDomain organization (already completed)
+- [x] Ensure all documentation links point to the correct repositories (updated links in README.md, sample-applications.md, and workshop-materials.md)
+
+## Documentation for Key Components
+
+- [ ] Add/enhance documentation for ReadModelBase
+- [ ] Add/enhance documentation for MessageBuilder factory
+- [ ] Improve documentation for Command and Event classes that implement ICorrelatedMessage
+- [ ] Document the relationship between different components
+
+## Code Example Corrections
+
+- [ ] Fix the use of `Apply()` vs `Raise()` methods in aggregates (Apply methods are for rehydration, not for creating new events)
+- [ ] Update examples in event.md to use `Raise(new AccountCreated(...))` instead of `Apply(...)`
+- [ ] Review all code examples for technical accuracy
+- [ ] Add more real-world examples to illustrate concepts
+
+## Architecture Documentation Improvements
+
+- [ ] Add more detailed explanations of the CQRS pattern
+- [ ] Enhance documentation of Event Sourcing principles
+- [ ] Include diagrams showing the flow of commands and events
+- [ ] Document the relationship between different architectural components
+
+## Terminology and Consistency
+
+- [ ] Ensure consistent use of terminology throughout the documentation
+- [ ] Review and correct any technical inaccuracies
+- [ ] Standardize formatting and style across all documentation files
+
+## API Reference Enhancements
+
+- [ ] Add missing classes and interfaces to API reference
+- [ ] Ensure all public APIs are properly documented
+- [ ] Add parameter descriptions for important methods
+- [ ] Document return values and exceptions
+
+## Navigation and Structure
+
+- [ ] Ensure logical progression through documentation
+- [ ] Fix any broken links between documentation pages
+- [ ] Improve component navigation to show relationships
+- [ ] Verify that the table of contents is accurate and complete
+
+## Learning Resources
+
+- [ ] Enhance the learning path for new users
+- [ ] Add links to additional resources and examples
+- [ ] Include troubleshooting section for common issues
