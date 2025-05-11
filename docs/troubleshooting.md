@@ -19,6 +19,71 @@ This guide addresses common issues and challenges when working with Reactive Dom
 
 ### Problem: Events Need to Change Over Time
 
+As your domain model evolves, you'll need to modify your event schemas. However, you still need to be able to process historical events that were serialized with the old schema.
+
+### Solution: Implement Event Versioning
+
+1. **Use Event Upcasting**
+
+```csharp
+public class EventUpcastingService : IEventUpcastingService
+{
+    public object Upcast(object @event)
+    {
+        if (@event is AccountCreatedV1 v1Event)
+        {
+            return new AccountCreatedV2
+            {
+                AccountId = v1Event.AccountId,
+                AccountNumber = v1Event.AccountNumber,
+                CustomerName = v1Event.CustomerName,
+                // New field in V2
+                CreatedDate = DateTime.UtcNow
+            };
+        }
+        
+        return @event;
+    }
+}
+```
+
+2. **Use Event Wrappers with Version Information**
+
+```csharp
+public class EventWrapper<T>
+{
+    public int Version { get; set; }
+    public T Data { get; set; }
+}
+```
+
+3. **Handle Missing Properties Gracefully**
+
+```csharp
+public void Apply(AccountCreated @event)
+{
+    _accountNumber = @event.AccountNumber;
+    _customerName = @event.CustomerName;
+    
+    // Handle optional property that might not exist in older events
+    if (@event.GetType().GetProperty("CreatedDate") != null)
+    {
+        _createdDate = (DateTime)@event.GetType().GetProperty("CreatedDate").GetValue(@event);
+    }
+    else
+    {
+        _createdDate = DateTime.UtcNow; // Default value
+    }
+}
+```
+
+### Best Practices
+
+1. **Never Delete or Modify Existing Events** - Always create new versions and implement upcasting.
+2. **Use Semantic Versioning** - Follow a consistent versioning scheme for your events.
+3. **Document Event Schema Changes** - Maintain a changelog of event schema modifications.
+4. **Test Event Upcasting** - Ensure that historical events can be properly upcasted to current versions.
+
 As your system evolves, you'll need to modify your event schemas to add, remove, or change properties.
 
 ### Solution: Event Versioning Strategies
@@ -132,6 +197,102 @@ As your system evolves, you'll need to modify your event schemas to add, remove,
 5. **Test Migration Paths**: Ensure that old events can be processed by new code.
 
 ## Handling Concurrency Conflicts
+
+### Problem: Concurrent Modifications to the Same Aggregate
+
+In event-sourced systems, concurrent modifications to the same aggregate can lead to concurrency conflicts when the second operation tries to save its changes.
+
+### Solution: Implement Optimistic Concurrency Control
+
+1. **Use Expected Version When Saving Events**
+
+```csharp
+public void Save<TAggregate>(TAggregate aggregate) where TAggregate : AggregateRoot, IEventSource
+{
+    var events = aggregate.GetUncommittedEvents().ToArray();
+    if (!events.Any()) return;
+    
+    var streamName = GetStreamName(aggregate.GetType(), aggregate.Id);
+    var expectedVersion = aggregate.Version - events.Length;
+    
+    try
+    {
+        _connection.AppendToStream(streamName, expectedVersion, events);
+        aggregate.ClearUncommittedEvents();
+    }
+    catch (WrongExpectedVersionException ex)
+    {
+        // Handle concurrency conflict
+        throw new ConcurrencyException($"Concurrency conflict when saving {aggregate.GetType().Name} with ID {aggregate.Id}", ex);
+    }
+}
+```
+
+2. **Implement Retry Logic with Conflict Resolution**
+
+```csharp
+public void HandleWithRetry(TransferFunds command)
+{
+    const int maxRetries = 3;
+    int retryCount = 0;
+    
+    while (true)
+    {
+        try
+        {
+            var account = _repository.GetById<Account>(command.AccountId);
+            account.Withdraw(command.Amount, command);
+            _repository.Save(account);
+            break; // Success, exit the loop
+        }
+        catch (ConcurrencyException)
+        {
+            if (++retryCount >= maxRetries)
+                throw new MaxRetriesExceededException($"Failed to process command after {maxRetries} attempts");
+                
+            // Optional: Add exponential backoff
+            Thread.Sleep(100 * (int)Math.Pow(2, retryCount));
+        }
+    }
+}
+```
+
+3. **Implement Command Merging for Conflict Resolution**
+
+```csharp
+public void HandleWithMerge(DepositFunds command)
+{
+    try
+    {
+        var account = _repository.GetById<Account>(command.AccountId);
+        account.Deposit(command.Amount, command);
+        _repository.Save(account);
+    }
+    catch (ConcurrencyException)
+    {
+        // Reload the latest state
+        var account = _repository.GetById<Account>(command.AccountId, true); // Force reload
+        
+        // Check if it's safe to apply the command to the updated state
+        if (account.IsClosed)
+        {
+            throw new AccountClosedException("Cannot deposit to a closed account");
+        }
+        
+        // Apply command to the updated state
+        account.Deposit(command.Amount, command);
+        _repository.Save(account);
+    }
+}
+```
+
+### Best Practices
+
+1. **Design Commands to be Idempotent** - Commands should be safely reapplied without causing duplicate effects.
+2. **Use Command IDs for Deduplication** - Assign unique IDs to commands to detect and prevent duplicate processing.
+3. **Consider Domain-Specific Conflict Resolution** - Implement business rules for merging conflicting changes.
+4. **Log Concurrency Conflicts** - Monitor and analyze patterns of concurrency conflicts to optimize your system.
+5. **Use Appropriate Retry Strategies** - Implement exponential backoff or circuit breakers for retry logic.
 
 ### Problem: Concurrent Updates to the Same Aggregate
 

@@ -28,14 +28,32 @@ Reactive Domain is built on several key design principles:
 
 ## Learning Path
 
+> **New to Reactive Domain?** Check out our [Complete Learning Path Guide](learning-path.md) for a structured approach to mastering event sourcing and CQRS with Reactive Domain.
+
 For the best learning experience, we recommend following this progression:
 
 1. **Start Here**: [Core Concepts](core-concepts.md) - Understand the fundamentals of event sourcing and CQRS
 2. **Next**: [Usage Patterns](usage-patterns.md) - Learn how to apply these concepts in practice
 3. **Then**: [Code Examples](code-examples/README.md) - See concrete implementations
+   - Begin with [Creating a New Aggregate Root](code-examples/creating-aggregate-root.md)
+   - Move on to [Handling Commands and Events](code-examples/handling-commands-events.md)
+   - Explore real-world examples like our [Banking Domain Example](code-examples/banking-domain-example.md)
 4. **Explore**: [API Reference](api-reference/README.md) - Dive into the details of specific components
 5. **Advanced**: [Architecture Guide](architecture.md) - Understand the system architecture
 6. **Production**: [Deployment Guide](deployment.md) and [Performance Optimization](performance.md) - Prepare for production
+
+### Learning Resources
+
+- **Books and Articles**
+  - "Domain-Driven Design" by Eric Evans
+  - "Implementing Domain-Driven Design" by Vaughn Vernon
+  - [Martin Fowler on Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
+  - [CQRS Journey by Microsoft](https://docs.microsoft.com/en-us/previous-versions/msp-n-p/jj554200(v=pandp.10))
+
+- **Community Resources**
+  - [EventStoreDB Documentation](https://developers.eventstore.com/)
+  - [DDD/CQRS Google Group](https://groups.google.com/g/dddcqrs)
+  - [Stack Overflow - Event Sourcing Tag](https://stackoverflow.com/questions/tagged/event-sourcing)
 
 ## Navigation Resources
 

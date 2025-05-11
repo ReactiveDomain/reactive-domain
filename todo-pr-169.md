@@ -51,6 +51,6 @@ This todo list contains items that need to be addressed for PR 169, which adds c
 
 ## Learning Resources
 
-- [ ] Enhance the learning path for new users
-- [ ] Add links to additional resources and examples
-- [ ] Include troubleshooting section for common issues
+- [x] Enhance the learning path for new users
+- [x] Add links to additional resources and examples
+- [x] Include troubleshooting section for common issues
