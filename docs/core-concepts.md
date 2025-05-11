@@ -8,6 +8,7 @@ This document explains the fundamental concepts of event sourcing as implemented
 
 - [Event Sourcing Fundamentals](#event-sourcing-fundamentals)
 - [Event Store Architecture](#event-store-architecture)
+- [Event-Driven State Machine](core-concepts/state-machine.md)
 - [CQRS Implementation](#cqrs-implementation)
 - [Reactive Programming Principles](#reactive-programming-principles)
 - [Domain-Driven Design Concepts](#domain-driven-design-concepts)
@@ -28,6 +29,7 @@ In Reactive Domain, event sourcing is implemented through the following key comp
 - **Aggregates**: Domain entities that encapsulate state and behavior
 - **Event Store**: A specialized database for storing and retrieving events
 - **Projections**: Components that transform events into queryable state
+- **Event-Driven State Machine**: The foundation for implementing event-sourced entities
 
 ### Benefits of Event Sourcing
 
@@ -52,6 +54,85 @@ graph TD
     D --> E[EventStoreDB]
     F[Event Serializer] --> C
 ```
+
+## Event-Driven State Machine
+
+The `EventDrivenStateMachine` is a core component in Reactive Domain that implements the finite state machine pattern for event-sourced entities. It serves as the base class for both aggregate roots and process managers, providing essential functionality for event handling, state transitions, and event recording.
+
+### Key Components
+
+- **Event Router**: Directs events to the appropriate handler methods based on their type
+- **Event Recorder**: Tracks new events that have been applied to the entity
+- **Version Control**: Manages optimistic concurrency through version tracking
+
+### Core Operations
+
+1. **Registering Event Handlers**: Associate event types with handler methods
+   ```csharp
+   Register<AccountCreated>(Apply);
+   Register<FundsDeposited>(Apply);
+   ```
+
+2. **Raising Events**: Apply events to the current state and record them for persistence
+   ```csharp
+   RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount, reference)));
+   ```
+
+3. **Restoring State**: Rebuild entity state by replaying historical events
+   ```csharp
+   RestoreFromEvents(events);
+   ```
+
+4. **Taking Uncommitted Events**: Retrieve new events for persistence
+   ```csharp
+   var newEvents = TakeEvents();
+   ```
+
+### Benefits
+
+- **Clear Separation of Concerns**: Command methods validate business rules and raise events, while event handlers update state
+- **Audit Trail**: All state changes are recorded as events, providing a complete history of the entity
+- **Temporal Queries**: The ability to determine the state of an entity at any point in time
+- **Testability**: Easy to test by verifying that the correct events are raised in response to commands
+
+### Example: Account State Machine
+
+```csharp
+public class Account : AggregateRoot // AggregateRoot inherits from EventDrivenStateMachine
+{
+    private decimal _balance;
+    private bool _isActive;
+    
+    public Account(Guid id) : base(id)
+    {
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+    }
+    
+    // Command handler
+    public void Deposit(decimal amount, ICorrelatedMessage source)
+    {
+        if (!_isActive)
+            throw new InvalidOperationException("Cannot deposit to a closed account");
+        
+        if (amount <= 0)
+            throw new ArgumentException("Deposit amount must be positive", nameof(amount));
+        
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
+    }
+    
+    // Event handler
+    private void Apply(FundsDeposited @event)
+    {
+        _balance += @event.Amount;
+    }
+}
+```
+
+For a comprehensive explanation of the Event-Driven State Machine, see the [detailed documentation](core-concepts/state-machine.md).
 
 ## CQRS Implementation
 
