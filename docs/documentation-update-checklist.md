@@ -33,8 +33,8 @@
 - [x] Verify separation of command and query models
 - [x] Update projection examples based on actual usage
 - [x] Check read model implementation patterns
-- [ ] Ensure query handling examples match actual usage
-- [ ] Verify event subscription mechanisms
+- [x] Ensure query handling examples match actual usage
+- [x] Verify event subscription mechanisms
 
 ## 6. Event Sourcing Patterns
 - [ ] Update event replay and state reconstruction examples

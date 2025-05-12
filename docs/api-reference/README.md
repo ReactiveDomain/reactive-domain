@@ -67,11 +67,17 @@ For easier navigation through the API reference, use these resources:
 
 - [StreamStoreRepository](types/stream-store-repository.md) - Implementation of IRepository
 - [CorrelatedStreamStoreRepository](types/correlated-stream-store-repository.md) - Implementation of ICorrelatedRepository
+- [IReadModelRepository](types/iread-model-repository.md) - Interface for read model repositories
 
 ### Event Store
 
 - [IStreamStoreConnection](types/istream-store-connection.md) - Interface for event store connections
 - [StreamStoreConnection](types/stream-store-connection.md) - Implementation of IStreamStoreConnection
+
+### CQRS Components
+
+- [Query Handling](types/query-handling.md) - Patterns and best practices for handling queries
+- [Event Subscription](types/event-subscription.md) - Patterns for subscribing to and processing events
 
 ## Namespaces
 
