@@ -164,9 +164,13 @@ public void LoadFromHistory_ShouldReconstructAggregateState()
 }
 ```
 
-### 5. Test Fixture for Aggregates
+### 5. Advanced Test Fixtures for Aggregates
 
-Create a test fixture to simplify aggregate testing:
+Test fixtures provide a powerful way to simplify and standardize your aggregate tests. Here are several approaches to creating effective test fixtures for event-sourced systems.
+
+#### 5.1 Basic Given-When-Then Test Fixture
+
+A fluent test fixture that follows the Given-When-Then pattern:
 
 ```csharp
 public class AggregateTestFixture<TAggregate, TId>
@@ -174,6 +178,7 @@ public class AggregateTestFixture<TAggregate, TId>
 {
     private readonly TAggregate _aggregate;
     private readonly List<object> _uncommittedEvents;
+    private Exception _caughtException;
     
     public AggregateTestFixture()
     {
@@ -189,24 +194,45 @@ public class AggregateTestFixture<TAggregate, TId>
     
     public AggregateTestFixture<TAggregate, TId> When(Action<TAggregate> action)
     {
-        action(_aggregate);
-        _uncommittedEvents.AddRange(_aggregate.GetUncommittedEvents());
+        try
+        {
+            action(_aggregate);
+            _uncommittedEvents.AddRange(_aggregate.GetUncommittedEvents());
+        }
+        catch (Exception ex)
+        {
+            _caughtException = ex;
+        }
         return this;
     }
     
     public void Then(Action<IEnumerable<object>> assertion)
     {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected events but got exception: {_caughtException}");
+        }
         assertion(_uncommittedEvents);
     }
     
     public void ThenState(Action<TAggregate> assertion)
     {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected state check but got exception: {_caughtException}");
+        }
         assertion(_aggregate);
     }
     
-    public void ThenException<TException>(Action<TAggregate> action) where TException : Exception
+    public void ThenException<TException>(Action<TException> assertion = null) where TException : Exception
     {
-        Assert.Throws<TException>(() => action(_aggregate));
+        Assert.NotNull(_caughtException);
+        Assert.IsType<TException>(_caughtException);
+        
+        if (assertion != null)
+        {
+            assertion((TException)_caughtException);
+        }
     }
 }
 
@@ -230,6 +256,464 @@ public void WithdrawFunds_WithSufficientBalance_ShouldProduceFundsWithdrawnEvent
             Assert.Equal(500.00m, withdrawalEvent.Amount);
         });
 }
+
+// Testing exceptions with detailed assertions
+[Fact]
+public void WithdrawFunds_WithInsufficientBalance_ShouldThrowInsufficientFundsException()
+{
+    var accountId = Guid.NewGuid();
+    
+    new AggregateTestFixture<Account, Guid>()
+        .Given(
+            new AccountCreated(accountId, "Test Account", "12345"),
+            new FundsDeposited(accountId, 100.00m))
+        .When(account => account.WithdrawFunds(500.00m))
+        .ThenException<InsufficientFundsException>(ex => 
+        {
+            Assert.Equal(accountId, ex.AccountId);
+            Assert.Equal(100.00m, ex.CurrentBalance);
+            Assert.Equal(500.00m, ex.WithdrawalAmount);
+        });
+}
+```
+
+#### 5.2 Event-Specific Test Fixture
+
+A more specialized test fixture that provides type-safe event assertions:
+
+```csharp
+public class EventTestFixture<TAggregate, TId>
+    where TAggregate : AggregateRoot<TId>, new()
+{
+    private readonly TAggregate _aggregate;
+    private readonly List<object> _uncommittedEvents;
+    private Exception _caughtException;
+    
+    public EventTestFixture()
+    {
+        _aggregate = new TAggregate();
+        _uncommittedEvents = new List<object>();
+    }
+    
+    public EventTestFixture<TAggregate, TId> Given(params object[] events)
+    {
+        _aggregate.LoadFromHistory(events);
+        return this;
+    }
+    
+    public EventTestFixture<TAggregate, TId> When(Action<TAggregate> action)
+    {
+        try
+        {
+            action(_aggregate);
+            _uncommittedEvents.AddRange(_aggregate.GetUncommittedEvents());
+        }
+        catch (Exception ex)
+        {
+            _caughtException = ex;
+        }
+        return this;
+    }
+    
+    public EventTestFixture<TAggregate, TId> ThenEventCount(int expectedCount)
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected {expectedCount} events but got exception: {_caughtException}");
+        }
+        
+        Assert.Equal(expectedCount, _uncommittedEvents.Count);
+        return this;
+    }
+    
+    public EventTestFixture<TAggregate, TId> ThenContainsEvent<TEvent>(Action<TEvent> assertion = null)
+        where TEvent : class
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected event of type {typeof(TEvent).Name} but got exception: {_caughtException}");
+        }
+        
+        var matchingEvent = _uncommittedEvents.OfType<TEvent>().FirstOrDefault();
+        Assert.NotNull(matchingEvent);
+        
+        assertion?.Invoke(matchingEvent);
+        return this;
+    }
+    
+    public EventTestFixture<TAggregate, TId> ThenNoEvents()
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected no events but got exception: {_caughtException}");
+        }
+        
+        Assert.Empty(_uncommittedEvents);
+        return this;
+    }
+    
+    public EventTestFixture<TAggregate, TId> ThenState(Action<TAggregate> assertion)
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected state check but got exception: {_caughtException}");
+        }
+        
+        assertion(_aggregate);
+        return this;
+    }
+    
+    public void ThenException<TException>(Action<TException> assertion = null) where TException : Exception
+    {
+        Assert.NotNull(_caughtException);
+        Assert.IsType<TException>(_caughtException);
+        
+        assertion?.Invoke((TException)_caughtException);
+    }
+}
+
+// Usage with fluent assertions
+[Fact]
+public void Account_WithMultipleOperations_ShouldHaveCorrectEvents()
+{
+    var accountId = Guid.NewGuid();
+    
+    new EventTestFixture<Account, Guid>()
+        .Given(
+            new AccountCreated(accountId, "Test Account", "12345"))
+        .When(account => 
+        {
+            account.DepositFunds(1000.00m);
+            account.WithdrawFunds(300.00m);
+            account.UpdateAccountName("Updated Account");
+        })
+        .ThenEventCount(3)
+        .ThenContainsEvent<FundsDeposited>(e => 
+        {
+            Assert.Equal(accountId, e.AccountId);
+            Assert.Equal(1000.00m, e.Amount);
+        })
+        .ThenContainsEvent<FundsWithdrawn>(e => 
+        {
+            Assert.Equal(accountId, e.AccountId);
+            Assert.Equal(300.00m, e.Amount);
+        })
+        .ThenContainsEvent<AccountNameUpdated>(e => 
+        {
+            Assert.Equal(accountId, e.AccountId);
+            Assert.Equal("Updated Account", e.NewName);
+        })
+        .ThenState(account => 
+        {
+            Assert.Equal("Updated Account", account.Name);
+            Assert.Equal(700.00m, account.Balance);
+        });
+}
+```
+
+#### 5.3 Scenario-Based Test Fixture
+
+A test fixture that supports complex test scenarios with multiple commands and events:
+
+```csharp
+public class ScenarioTestFixture<TAggregate, TId>
+    where TAggregate : AggregateRoot<TId>, new()
+{
+    private readonly TAggregate _aggregate;
+    private readonly List<object> _historicalEvents;
+    private readonly List<(string Description, Action<TAggregate> Command, List<object> Events)> _steps;
+    private Exception _lastException;
+    
+    public ScenarioTestFixture()
+    {
+        _aggregate = new TAggregate();
+        _historicalEvents = new List<object>();
+        _steps = new List<(string, Action<TAggregate>, List<object>)>();
+    }
+    
+    public ScenarioTestFixture<TAggregate, TId> Given(params object[] events)
+    {
+        _historicalEvents.AddRange(events);
+        return this;
+    }
+    
+    public ScenarioTestFixture<TAggregate, TId> WhenCommand(string description, Action<TAggregate> command)
+    {
+        _steps.Add((description, command, new List<object>()));
+        return this;
+    }
+    
+    public void Execute()
+    {
+        // Load historical events
+        _aggregate.LoadFromHistory(_historicalEvents);
+        
+        // Execute each command and collect events
+        foreach (var step in _steps)
+        {
+            try
+            {
+                // Clear uncommitted events before executing command
+                _aggregate.ClearUncommittedEvents();
+                
+                // Execute command
+                step.Command(_aggregate);
+                
+                // Collect events
+                step.Events.AddRange(_aggregate.GetUncommittedEvents());
+            }
+            catch (Exception ex)
+            {
+                _lastException = ex;
+                break;
+            }
+        }
+    }
+    
+    public void AssertEventsAt(int stepIndex, Action<IEnumerable<object>> assertion)
+    {
+        if (_lastException != null)
+        {
+            Assert.Fail($"Expected events at step {stepIndex} but got exception: {_lastException}");
+        }
+        
+        if (stepIndex >= _steps.Count)
+        {
+            Assert.Fail($"Step index {stepIndex} is out of range. Only {_steps.Count} steps were executed.");
+        }
+        
+        assertion(_steps[stepIndex].Events);
+    }
+    
+    public void AssertFinalState(Action<TAggregate> assertion)
+    {
+        if (_lastException != null)
+        {
+            Assert.Fail($"Expected final state check but got exception: {_lastException}");
+        }
+        
+        assertion(_aggregate);
+    }
+    
+    public void AssertException<TException>(Action<TException> assertion = null) where TException : Exception
+    {
+        Assert.NotNull(_lastException);
+        Assert.IsType<TException>(_lastException);
+        
+        assertion?.Invoke((TException)_lastException);
+    }
+    
+    public void PrintScenario()
+    {
+        Console.WriteLine("Scenario:");
+        Console.WriteLine("Given the following events:");
+        foreach (var evt in _historicalEvents)
+        {
+            Console.WriteLine($"  - {evt.GetType().Name}");
+        }
+        
+        Console.WriteLine("When the following commands are executed:");
+        for (int i = 0; i < _steps.Count; i++)
+        {
+            Console.WriteLine($"  {i+1}. {_steps[i].Description}");
+            Console.WriteLine($"     Resulting in events:");
+            foreach (var evt in _steps[i].Events)
+            {
+                Console.WriteLine($"     - {evt.GetType().Name}");
+            }
+        }
+    }
+}
+
+// Usage for complex scenarios
+[Fact]
+public void Account_ComplexScenario_ShouldBehaveCorrectly()
+{
+    var accountId = Guid.NewGuid();
+    var fixture = new ScenarioTestFixture<Account, Guid>()
+        .Given(
+            new AccountCreated(accountId, "Initial Account", "12345"))
+        .WhenCommand("Deposit $1000", account => account.DepositFunds(1000.00m))
+        .WhenCommand("Withdraw $300", account => account.WithdrawFunds(300.00m))
+        .WhenCommand("Update account name", account => account.UpdateAccountName("Updated Account"))
+        .WhenCommand("Deposit $200", account => account.DepositFunds(200.00m));
+    
+    fixture.Execute();
+    
+    // Assert events from specific steps
+    fixture.AssertEventsAt(0, events => 
+    {
+        Assert.Single(events);
+        var depositEvent = events.Single() as FundsDeposited;
+        Assert.Equal(1000.00m, depositEvent.Amount);
+    });
+    
+    fixture.AssertEventsAt(2, events => 
+    {
+        Assert.Single(events);
+        var nameUpdateEvent = events.Single() as AccountNameUpdated;
+        Assert.Equal("Updated Account", nameUpdateEvent.NewName);
+    });
+    
+    // Assert final state
+    fixture.AssertFinalState(account => 
+    {
+        Assert.Equal("Updated Account", account.Name);
+        Assert.Equal(900.00m, account.Balance);
+    });
+    
+    // Print scenario for documentation
+    fixture.PrintScenario();
+}
+```
+
+#### 5.4 Factory for Test Fixtures
+
+A factory approach for creating test fixtures with common setup:
+
+```csharp
+public class TestFixtureFactory
+{
+    public static AggregateTestFixture<Account, Guid> CreateAccountFixture(Guid? accountId = null)
+    {
+        var id = accountId ?? Guid.NewGuid();
+        return new AggregateTestFixture<Account, Guid>()
+            .Given(new AccountCreated(id, "Test Account", "12345"));
+    }
+    
+    public static AggregateTestFixture<Account, Guid> CreateAccountWithBalanceFixture(
+        decimal initialBalance, 
+        Guid? accountId = null)
+    {
+        var id = accountId ?? Guid.NewGuid();
+        return new AggregateTestFixture<Account, Guid>()
+            .Given(
+                new AccountCreated(id, "Test Account", "12345"),
+                new FundsDeposited(id, initialBalance));
+    }
+    
+    public static AggregateTestFixture<Order, Guid> CreateOrderFixture(
+        Guid? orderId = null,
+        Guid? customerId = null)
+    {
+        var id = orderId ?? Guid.NewGuid();
+        var custId = customerId ?? Guid.NewGuid();
+        return new AggregateTestFixture<Order, Guid>()
+            .Given(new OrderCreated(id, custId, DateTime.UtcNow));
+    }
+}
+
+// Usage
+[Fact]
+public void WithdrawFunds_WithSufficientBalance_ShouldProduceFundsWithdrawnEvent()
+{
+    TestFixtureFactory
+        .CreateAccountWithBalanceFixture(1000.00m)
+        .When(account => account.WithdrawFunds(500.00m))
+        .Then(events => 
+        {
+            Assert.Single(events);
+            var withdrawalEvent = events.Single() as FundsWithdrawn;
+            Assert.Equal(500.00m, withdrawalEvent.Amount);
+        });
+}
+```
+
+#### 5.5 Integration with Reactive Domain Test Framework
+
+Integrating with Reactive Domain's built-in test framework:
+
+```csharp
+public class ReactiveDomainTestFixture<TAggregate, TId>
+    where TAggregate : AggregateRoot<TId>, new()
+{
+    private readonly TestRepository<TAggregate, TId> _repository;
+    private readonly TestEventBus _eventBus;
+    private TAggregate _aggregate;
+    private Exception _caughtException;
+    
+    public ReactiveDomainTestFixture()
+    {
+        _eventBus = new TestEventBus();
+        _repository = new TestRepository<TAggregate, TId>(_eventBus);
+    }
+    
+    public ReactiveDomainTestFixture<TAggregate, TId> Given(TId id, params object[] events)
+    {
+        _repository.AddEvents(id, events);
+        return this;
+    }
+    
+    public async Task<ReactiveDomainTestFixture<TAggregate, TId>> WhenAsync(Func<TAggregate, Task> action)
+    {
+        try
+        {
+            _aggregate = await _repository.GetByIdAsync((dynamic)_repository.LastId);
+            await action(_aggregate);
+            await _repository.SaveAsync(_aggregate);
+        }
+        catch (Exception ex)
+        {
+            _caughtException = ex;
+        }
+        return this;
+    }
+    
+    public void ThenEvents(Action<IEnumerable<object>> assertion)
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected events but got exception: {_caughtException}");
+        }
+        
+        assertion(_eventBus.PublishedEvents);
+    }
+    
+    public void ThenState(Action<TAggregate> assertion)
+    {
+        if (_caughtException != null)
+        {
+            Assert.Fail($"Expected state check but got exception: {_caughtException}");
+        }
+        
+        assertion(_aggregate);
+    }
+    
+    public void ThenException<TException>(Action<TException> assertion = null) where TException : Exception
+    {
+        Assert.NotNull(_caughtException);
+        Assert.IsType<TException>(_caughtException);
+        
+        assertion?.Invoke((TException)_caughtException);
+    }
+}
+
+// Usage with async operations
+[Fact]
+public async Task Account_AsyncOperations_ShouldWorkCorrectly()
+{
+    var accountId = Guid.NewGuid();
+    var fixture = new ReactiveDomainTestFixture<Account, Guid>();
+    
+    await fixture
+        .Given(accountId, 
+            new AccountCreated(accountId, "Test Account", "12345"),
+            new FundsDeposited(accountId, 1000.00m))
+        .WhenAsync(async account => 
+        {
+            // Simulate async operation
+            await Task.Delay(10);
+            account.WithdrawFunds(500.00m);
+        });
+    
+    fixture.ThenEvents(events => 
+    {
+        var withdrawalEvent = events.OfType<FundsWithdrawn>().Single();
+        Assert.Equal(accountId, withdrawalEvent.AccountId);
+        Assert.Equal(500.00m, withdrawalEvent.Amount);
+    });
+}
+```
 ```
 
 ## Testing Event Handlers
