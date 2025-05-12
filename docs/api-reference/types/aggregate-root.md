@@ -52,7 +52,7 @@ public class Account : AggregateRoot
     public Account(Guid id, ICorrelatedMessage source) : base(id, source)
     {
         // Initialize a new account with correlation
-        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(id)));
+        RaiseEvent(MessageBuilder.From(source).Build(() => new AccountCreated(id)));
     }
 }
 ```
@@ -149,19 +149,32 @@ protected void RaiseEvent(object @event);
 **Parameters**:
 - `event` (`System.Object`): The event to raise. This is typically created using the `MessageBuilder` to ensure proper correlation tracking.
 
+> **Important**: The `RaiseEvent()` method does NOT automatically add correlation information to events. You must explicitly use `MessageBuilder.From(source).Build(...)` to create events with proper correlation information. Simply passing an event to `RaiseEvent()` without using MessageBuilder will result in lost correlation tracking.
+
 **Example**:
 ```csharp
 public class Account : AggregateRoot
 {
     private decimal _balance;
     
-    public void Deposit(decimal amount)
+    // INCORRECT: This will lose correlation tracking
+    public void DepositIncorrect(decimal amount)
     {
         if (amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
             
-        // Record and apply the event
+        // This will NOT maintain correlation information
         RaiseEvent(new AmountDeposited(Id, amount));
+    }
+    
+    // CORRECT: This maintains correlation tracking
+    public void Deposit(decimal amount, ICorrelatedMessage source)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Amount must be positive", nameof(amount));
+            
+        // This properly maintains correlation information
+        RaiseEvent(MessageBuilder.From(source).Build(() => new AmountDeposited(Id, amount)));
     }
     
     private void Apply(AmountDeposited @event)
@@ -276,7 +289,7 @@ public class Account : AggregateRoot
     public Account(Guid id, ICorrelatedMessage source) : base(id, source)
     {
         // Initialize with default values and maintain correlation
-        RaiseEvent(MessageBuilder.From(source, () => 
+        RaiseEvent(MessageBuilder.From(source).Build(() => 
             new AccountCreated(id, "ACC-" + id.ToString().Substring(0, 8), "New Customer")));
     }
     
@@ -299,7 +312,7 @@ public class Account : AggregateRoot
         // Create and apply the event
         if (source != null)
         {
-            RaiseEvent(MessageBuilder.From(source, () => new AmountDeposited(Id, amount)));
+            RaiseEvent(MessageBuilder.From(source).Build(() => new AmountDeposited(Id, amount)));
         }
         else
         {
@@ -323,7 +336,7 @@ public class Account : AggregateRoot
         // Create and apply the event
         if (source != null)
         {
-            RaiseEvent(MessageBuilder.From(source, () => new AmountWithdrawn(Id, amount)));
+            RaiseEvent(MessageBuilder.From(source).Build(() => new AmountWithdrawn(Id, amount)));
         }
         else
         {
@@ -344,7 +357,7 @@ public class Account : AggregateRoot
         // Create and apply the event
         if (source != null)
         {
-            RaiseEvent(MessageBuilder.From(source, () => new AccountClosed(Id)));
+            RaiseEvent(MessageBuilder.From(source).Build(() => new AccountClosed(Id)));
         }
         else
         {
