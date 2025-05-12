@@ -126,96 +126,131 @@ public class CustomerDashboard : ReadModelBase
 
 ## Integration with Event Handlers
 
-Read models are typically updated by event handlers that subscribe to domain events raised by aggregates through the `RaiseEvent()` method. This creates an eventually consistent projection of the domain state optimized for querying. Here's a comprehensive example showing how to update read models in response to various events:
+In Reactive Domain, read models typically implement the event handler interfaces directly. This pattern allows the read model to handle its own updates in response to domain events. Here's how read models should be implemented to handle events:
 
 ```csharp
-public class AccountEventHandler : 
+// The read model itself implements the event handler interfaces
+public class AccountSummaryReadModel : ReadModelBase,
     IEventHandler<AccountCreated>,
     IEventHandler<FundsDeposited>,
     IEventHandler<FundsWithdrawn>,
     IEventHandler<AccountClosed>
 {
-    private readonly IReadModelRepository<AccountSummary> _accountRepository;
-    private readonly IReadModelRepository<CustomerDashboard> _dashboardRepository;
+    private readonly IReadModelRepository<AccountSummaryReadModel> _repository;
     
-    public AccountEventHandler(
-        IReadModelRepository<AccountSummary> accountRepository,
-        IReadModelRepository<CustomerDashboard> dashboardRepository)
+    public string AccountNumber { get; private set; }
+    public string CustomerName { get; private set; }
+    public decimal Balance { get; private set; }
+    public bool IsActive { get; private set; }
+    public DateTime LastUpdated { get; private set; }
+    
+    // Constructor for creating a new read model instance
+    public AccountSummaryReadModel(Guid id, IReadModelRepository<AccountSummaryReadModel> repository) : base(id)
     {
-        _accountRepository = accountRepository;
-        _dashboardRepository = dashboardRepository;
+        _repository = repository;
     }
     
+    // Event handler for AccountCreated
     public void Handle(AccountCreated @event)
     {
-        // Update the account summary read model
-        var accountSummary = new AccountSummary(@event.AccountId);
-        accountSummary.Update(@event.AccountNumber, @event.CustomerName, @event.InitialBalance);
-        _accountRepository.Save(accountSummary);
+        // Update the read model state
+        AccountNumber = @event.AccountNumber;
+        CustomerName = @event.CustomerName;
+        Balance = @event.InitialBalance;
+        IsActive = true;
+        LastUpdated = DateTime.UtcNow;
         
-        // Update the customer dashboard read model
-        var dashboard = _dashboardRepository.GetById(@event.CustomerId) 
-            ?? new CustomerDashboard(@event.CustomerId);
-        
-        dashboard.UpdateCustomerInfo(@event.CustomerName, @event.CustomerEmail);
-        dashboard.AddAccount(accountSummary);
-        _dashboardRepository.Save(dashboard);
+        // Save the updated read model
+        _repository.Save(this);
     }
     
+    // Event handler for FundsDeposited
     public void Handle(FundsDeposited @event)
     {
-        // Update the account summary read model
-        var accountSummary = _accountRepository.GetById(@event.AccountId);
-        if (accountSummary != null)
+        // Ensure this is the correct account
+        if (@event.AccountId == Id)
         {
-            accountSummary.Update(
-                accountSummary.AccountNumber,
-                accountSummary.CustomerName,
-                accountSummary.Balance + @event.Amount);
-            _accountRepository.Save(accountSummary);
+            // Update the read model state
+            Balance += @event.Amount;
+            LastUpdated = DateTime.UtcNow;
             
-            // Update the customer dashboard read model
-            var customerId = GetCustomerIdForAccount(@event.AccountId);
-            var dashboard = _dashboardRepository.GetById(customerId);
-            if (dashboard != null)
-            {
-                dashboard.UpdateAccount(accountSummary);
-                
-                var transaction = new TransactionSummary
-                {
-                    Id = Guid.NewGuid(),
-                    AccountId = @event.AccountId,
-                    AccountNumber = accountSummary.AccountNumber,
-                    Type = "Deposit",
-                    Amount = @event.Amount,
-                    Balance = accountSummary.Balance,
-                    Timestamp = DateTime.UtcNow
-                };
-                
-                dashboard.AddTransaction(transaction);
-                _dashboardRepository.Save(dashboard);
-            }
+            // Save the updated read model
+            _repository.Save(this);
         }
     }
     
+    // Event handler for FundsWithdrawn
     public void Handle(FundsWithdrawn @event)
     {
-        // Similar implementation to FundsDeposited
-        // ...
+        // Ensure this is the correct account
+        if (@event.AccountId == Id)
+        {
+            // Update the read model state
+            Balance -= @event.Amount;
+            LastUpdated = DateTime.UtcNow;
+            
+            // Save the updated read model
+            _repository.Save(this);
+        }
     }
     
+    // Event handler for AccountClosed
     public void Handle(AccountClosed @event)
     {
-        // Implementation for account closure
-        // ...
+        // Ensure this is the correct account
+        if (@event.AccountId == Id)
+        {
+            // Update the read model state
+            IsActive = false;
+            LastUpdated = DateTime.UtcNow;
+            
+            // Save the updated read model
+            _repository.Save(this);
+        }
     }
     
-    private Guid GetCustomerIdForAccount(Guid accountId)
+}
+```
+
+## Registering Read Models with the Event Bus
+
+To make read models receive events, they need to be registered with the event bus. Here's how to register a read model as an event handler:
+
+```csharp
+public class ReadModelRegistration
+{
+    private readonly IEventBus _eventBus;
+    private readonly IReadModelRepository<AccountSummaryReadModel> _repository;
+    
+    public ReadModelRegistration(IEventBus eventBus, IReadModelRepository<AccountSummaryReadModel> repository)
     {
-        // In a real implementation, this would look up the customer ID
-        // from a mapping or another read model
-        // This is just a placeholder for the example
-        return Guid.Empty;
+        _eventBus = eventBus;
+        _repository = repository;
+    }
+    
+    public void RegisterReadModels()
+    {
+        // Create and register the read model for each account
+        var accounts = GetAllAccountIds();
+        foreach (var accountId in accounts)
+        {
+            // Create or retrieve the read model
+            var readModel = _repository.GetById(accountId) ?? 
+                new AccountSummaryReadModel(accountId, _repository);
+            
+            // Register the read model as an event handler
+            _eventBus.Subscribe<AccountCreated>(readModel);
+            _eventBus.Subscribe<FundsDeposited>(readModel);
+            _eventBus.Subscribe<FundsWithdrawn>(readModel);
+            _eventBus.Subscribe<AccountClosed>(readModel);
+        }
+    }
+    
+    private IEnumerable<Guid> GetAllAccountIds()
+    {
+        // In a real implementation, this would retrieve all account IDs
+        // from the event store or another source
+        return new List<Guid>();
     }
 }
 ```

@@ -183,9 +183,10 @@ public class CreateAccount : Command
     public readonly decimal InitialDeposit;
     public readonly AccountType AccountType;
     
+    // Simple constructor for command properties
     public CreateAccount(Guid accountId, string accountNumber, string customerName, 
                          decimal initialDeposit, AccountType accountType)
-        : base()
+        : base() // Default constructor creates new correlation IDs
     {
         AccountId = accountId;
         AccountNumber = accountNumber;
@@ -194,12 +195,37 @@ public class CreateAccount : Command
         AccountType = accountType;
     }
     
-    // Constructor for correlated commands
-    public CreateAccount(Guid accountId, string accountNumber, string customerName, 
+    // IMPORTANT: Do not create constructors that take correlation IDs directly
+    // Instead, use MessageBuilder to create correlated commands.
+    // 
+    // MessageBuilder will automatically set the correlation IDs as follows:
+    // 1. For MessageBuilder.New():
+    //    - MsgId = new Guid()           // A new unique ID
+    //    - CorrelationId = MsgId        // Same as MsgId
+    //    - CausationId = MsgId          // Same as MsgId
+    //
+    // 2. For MessageBuilder.From(source, ...):
+    //    - MsgId = new Guid()           // A new unique ID
+    //    - CorrelationId = source.CorrelationId  // Copied from source
+    //    - CausationId = source.MsgId   // Set to source message ID
+    //
+    // Example usage:
+    // ICorrelatedMessage sourceCommand = ...
+    // var newCommand = MessageBuilder.From(sourceCommand).Build(() => 
+    //     new CreateAccount(accountId, accountNumber, customerName, initialDeposit, accountType));
+    
+    // Private constructor for MessageBuilder
+    // This is used internally by MessageBuilder and should not be called directly
+    private CreateAccount(Guid accountId, string accountNumber, string customerName, 
                          decimal initialDeposit, AccountType accountType,
-                         Guid correlationId, Guid causationId)
-        : base(correlationId, causationId)
+                         Guid msgId, Guid correlationId, Guid causationId)
     {
+        // Properties set automatically by MessageBuilder
+        MsgId = msgId;
+        CorrelationId = correlationId;
+        CausationId = causationId;
+        
+        // Command-specific properties
         AccountId = accountId;
         AccountNumber = accountNumber;
         CustomerName = customerName;
@@ -217,29 +243,58 @@ public enum AccountType
 }
 ```
 
-### Using MessageBuilder with Commands
+### Creating Correlated Commands
 
-It's recommended to use the `MessageBuilder` factory to create commands with proper correlation:
+> **Important**: Always use `MessageBuilder` to create correlated commands. Do not manually set correlation and causation IDs by calling constructors directly.
+
+The recommended way to create commands that continue an existing correlation chain is to use the `MessageBuilder` class. This ensures proper correlation tracking and maintains the causality chain.
+
+#### How MessageBuilder Sets Correlation IDs
+
+When using MessageBuilder, correlation IDs are set automatically according to these rules:
+
+1. For `MessageBuilder.New()` (starting a new correlation chain):
+   - `MsgId` = new Guid() (a new unique ID)
+   - `CorrelationId` = MsgId (same as MsgId)
+   - `CausationId` = MsgId (same as MsgId)
+
+2. For `MessageBuilder.From(source).Build(...)` (continuing an existing correlation chain):
+   - `MsgId` = new Guid() (a new unique ID)
+   - `CorrelationId` = source.CorrelationId (copied from source message)
+   - `CausationId` = source.MsgId (set to the source message's ID)
+
+This approach ensures proper tracking of message relationships without exposing correlation details in your public API.
+
+#### Example Usage
 
 ```csharp
-// Create a new command that starts a correlation chain
+// Starting a new correlation chain with MessageBuilder.New()
 var createCommand = MessageBuilder.New(() => new CreateAccount(
-    Guid.NewGuid(), 
-    "ACC-123", 
+    Guid.NewGuid(),
+    "ACC-123456",
     "John Doe",
     1000.00m,
     AccountType.Checking
 ));
 
-// Create a command from an existing message
-var depositCommand = MessageBuilder.From(createCommand, () => new DepositFunds(
-    ((CreateAccount)createCommand).AccountId, 
+// INCORRECT - Do not create correlated commands this way:
+// var depositCommand = new DepositFunds(
+//     ((CreateAccount)createCommand).AccountId,
+//     500.00m,
+//     "Initial deposit",
+//     createCommand.CorrelationId,  // Don't pass correlation IDs directly
+//     createCommand.MsgId
+// );
+
+// CORRECT - Use MessageBuilder.From() to continue the correlation chain:
+var depositCommand = MessageBuilder.From(createCommand).Build(() => new DepositFunds(
+    ((CreateAccount)createCommand).AccountId,
     500.00m,
     "Initial deposit"
 ));
 
 // Create another command in the same correlation chain
-var setOverdraftCommand = MessageBuilder.From(createCommand, () => new SetOverdraftLimit(
+var setOverdraftCommand = MessageBuilder.From(createCommand).Build(() => new SetOverdraftLimit(
     ((CreateAccount)createCommand).AccountId,
     250.00m
 ));
@@ -378,7 +433,7 @@ public class CommandBusExample
         _commandBus.Send(createCommand);
         
         // Create a related command
-        var depositCommand = MessageBuilder.From(createCommand, () => new DepositFunds(
+        var depositCommand = MessageBuilder.From(createCommand).Build(() => new DepositFunds(
             ((CreateAccount)createCommand).AccountId,
             500.00m,
             "Bonus deposit"
