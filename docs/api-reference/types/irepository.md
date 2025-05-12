@@ -16,6 +16,7 @@ In event-sourced systems, the repository plays a critical role:
 2. **Aggregate Reconstruction**: When loading an aggregate, the repository retrieves its events and replays them to reconstruct the aggregate's state
 3. **Concurrency Control**: The repository manages optimistic concurrency through version checking
 4. **Transaction Boundaries**: Repository operations typically define transaction boundaries in the domain
+5. **Stream Naming**: The repository is responsible for consistent stream naming conventions
 
 Unlike traditional repositories that store the current state of entities, event-sourced repositories store the complete history of events that led to the current state. This approach provides several benefits, including:
 
@@ -23,6 +24,7 @@ Unlike traditional repositories that store the current state of entities, event-
 - **Temporal Queries**: The ability to reconstruct the state of an aggregate at any point in time
 - **Event Replay**: The ability to replay events for debugging or analysis
 - **Event Processing**: Events can be processed by other components for various purposes (e.g., building read models)
+- **Correlation Tracking**: The ability to track related events across multiple aggregates and services
 
 **Namespace**: `ReactiveDomain.Foundation`  
 **Assembly**: `ReactiveDomain.Foundation.dll`
@@ -315,67 +317,19 @@ catch (AggregateNotFoundException)
 The `IRepository` interface is used to store and retrieve event-sourced aggregates. It is typically implemented by the `StreamStoreRepository` class, which stores events in an event store. Here's a comprehensive example of using a repository in a typical application scenario:
 
 ```csharp
-// Create a repository
-var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-var eventStoreConnection = new StreamStoreConnection("MyApp", connectionSettings, "localhost", 1113);
-var serializer = new JsonMessageSerializer();
-var repository = new StreamStoreRepository(streamNameBuilder, eventStoreConnection, serializer);
-
-// Create a new aggregate
-var accountId = Guid.NewGuid();
-var account = new Account(accountId);
-account.Deposit(1000, command);
-
-// Save the aggregate
-repository.Save(account);
-Console.WriteLine($"Created account {accountId} with initial deposit of $1000");
-
-// Retrieve the aggregate
-var retrievedAccount = repository.GetById<Account>(accountId);
-Console.WriteLine($"Retrieved account balance: ${retrievedAccount.GetBalance()}");
-
-// Perform operations on the aggregate
-retrievedAccount.Withdraw(500, command);
-Console.WriteLine($"Withdrew $500, new balance: ${retrievedAccount.GetBalance()}");
-
-// Save the updated aggregate
-repository.Save(retrievedAccount);
-Console.WriteLine("Saved account after withdrawal");
-
-// Update the aggregate with the latest events
-repository.Update(ref retrievedAccount);
-Console.WriteLine($"Updated account balance: ${retrievedAccount.GetBalance()}");
-
-// Delete the aggregate (soft delete)
-repository.Delete(retrievedAccount);
-Console.WriteLine("Deleted account (soft delete)");
-
-// Hard delete the aggregate (permanent deletion)
-// repository.HardDelete(retrievedAccount);
-// Console.WriteLine("Permanently deleted account");
-```
-
-### Integration with Command Handlers
-
-Repositories are typically used within command handlers in a CQRS architecture. Here's an example of a command handler that uses a repository:
-
-```csharp
-public class AccountCommandHandler : 
-    ICommandHandler<CreateAccount>,
-    ICommandHandler<DepositFunds>,
-    ICommandHandler<WithdrawFunds>,
-    ICommandHandler<CloseAccount>
+// Create a repository with dependency injection (preferred approach)
+public class AccountService
 {
     private readonly IRepository _repository;
-    private readonly IEventBus _eventBus;
+    private readonly IEventPublisher _eventPublisher;
     
-    public AccountCommandHandler(IRepository repository, IEventBus eventBus)
+    public AccountService(IRepository repository, IEventPublisher eventPublisher)
     {
         _repository = repository;
-        _eventBus = eventBus;
+        _eventPublisher = eventPublisher;
     }
     
-    public void Handle(CreateAccount command)
+    public void CreateAccount(CreateAccount command)
     {
         // Check if account already exists
         Account account;
@@ -385,34 +339,140 @@ public class AccountCommandHandler :
         }
         
         // Create new account
-        account = new Account(command.AccountId);
-        account.CreateAccount(command.AccountNumber, command.InitialDeposit, command);
+        account = new Account(command.AccountId, command);
         
-        // Save the account
+        // Save the aggregate
         _repository.Save(account);
         
-        // Publish domain events to the event bus
-        foreach (var @event in account.TakeEvents())
+        // Publish events for read model updates and integration
+        var events = account.TakeEvents();
+        foreach (var @event in events)
         {
-            _eventBus.Publish(@event);
+            _eventPublisher.Publish(@event);
         }
     }
     
-    public void Handle(DepositFunds command)
+    public void DepositFunds(DepositFunds command)
     {
         // Get the account
         var account = _repository.GetById<Account>(command.AccountId);
         
         // Process the command
-        account.Deposit(command.Amount, command);
+        account.Deposit(command.Amount, command.Reference, command);
         
         // Save the account
         _repository.Save(account);
         
-        // Publish domain events
-        foreach (var @event in account.TakeEvents())
+        // Publish events
+        var events = account.TakeEvents();
+        foreach (var @event in events)
         {
-            _eventBus.Publish(@event);
+            _eventPublisher.Publish(@event);
+        }
+    }
+    
+    public decimal GetAccountBalance(Guid accountId)
+    {
+        var account = _repository.GetById<Account>(accountId);
+        return account.GetBalance();
+    }
+}
+```
+
+### Integration with Command Handlers
+
+Repositories are typically used within command handlers in a CQRS architecture. Here's an example of a modern command handler that uses a repository with proper correlation tracking:
+
+```csharp
+public class AccountCommandHandler : 
+    ICommandHandler<CreateAccount>,
+    ICommandHandler<DepositFunds>,
+    ICommandHandler<WithdrawFunds>,
+    ICommandHandler<CloseAccount>
+{
+    private readonly ICorrelatedRepository _repository;
+    private readonly IEventPublisher _eventPublisher;
+    
+    public AccountCommandHandler(ICorrelatedRepository repository, IEventPublisher eventPublisher)
+    {
+        _repository = repository;
+        _eventPublisher = eventPublisher;
+    }
+    
+    public void Handle(CreateAccount command)
+    {
+        // Check if account already exists
+        Account account;
+        if (_repository.TryGetById(command.AccountId, out account, command))
+        {
+            throw new InvalidOperationException($"Account {command.AccountId} already exists");
+        }
+        
+        // Create new account using the command constructor pattern
+        account = new Account(command.AccountId, command);
+        
+        try
+        {
+            // Save the account
+            _repository.Save(account);
+            
+            // Publish domain events to the event bus
+            var events = account.TakeEvents();
+            foreach (var @event in events)
+            {
+                _eventPublisher.Publish(@event);
+            }
+        }
+        catch (AggregateVersionException ex)
+        {
+            // Log the concurrency conflict
+            throw new CommandProcessingException(
+                $"Concurrent modification detected for account {command.AccountId}", 
+                ex, 
+                command);
+        }
+    }
+    
+    public void Handle(DepositFunds command)
+    {
+        try
+        {
+            // Get the account with correlation
+            var account = _repository.GetById<Account>(command.AccountId, command);
+            
+            // Process the command
+            account.Deposit(command.Amount, command.Reference, command);
+            
+            // Save the account
+            _repository.Save(account);
+            
+            // Publish domain events
+            var events = account.TakeEvents();
+            foreach (var @event in events)
+            {
+                _eventPublisher.Publish(@event);
+            }
+        }
+        catch (AggregateNotFoundException)
+        {
+            throw new CommandProcessingException(
+                $"Account {command.AccountId} not found", 
+                null, 
+                command);
+        }
+        catch (AggregateVersionException ex)
+        {
+            throw new CommandProcessingException(
+                $"Concurrent modification detected for account {command.AccountId}", 
+                ex, 
+                command);
+        }
+        catch (Exception ex) when (!(ex is CommandProcessingException))
+        {
+            throw new CommandProcessingException(
+                $"Error processing deposit for account {command.AccountId}", 
+                ex, 
+                command);
         }
     }
     
@@ -422,40 +482,102 @@ public class AccountCommandHandler :
 
 ### Handling Concurrency Conflicts
 
-Concurrency conflicts occur when multiple processes attempt to modify the same aggregate simultaneously. Here's an example of handling concurrency conflicts:
+Concurrency conflicts occur when multiple processes attempt to modify the same aggregate simultaneously. Here's a modern approach to handling concurrency conflicts with proper retry logic and correlation tracking:
 
 ```csharp
-public void TransferFunds(TransferFunds command)
+public class TransferFundsHandler : ICommandHandler<TransferFunds>
 {
-    var sourceAccount = _repository.GetById<Account>(command.SourceAccountId);
-    var targetAccount = _repository.GetById<Account>(command.TargetAccountId);
+    private readonly ICorrelatedRepository _repository;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<TransferFundsHandler> _logger;
+    private readonly int _maxRetries = 3;
     
-    try
+    public TransferFundsHandler(
+        ICorrelatedRepository repository, 
+        IEventPublisher eventPublisher,
+        ILogger<TransferFundsHandler> logger)
     {
-        // Withdraw from source account
-        sourceAccount.Withdraw(command.Amount, command);
-        
-        // Deposit to target account
-        targetAccount.Deposit(command.Amount, command);
-        
-        // Save both accounts
-        _repository.Save(sourceAccount);
-        _repository.Save(targetAccount);
+        _repository = repository;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
     }
-    catch (AggregateVersionException ex)
+    
+    public void Handle(TransferFunds command)
     {
-        // Handle concurrency conflict
-        if (ex.AggregateId == command.SourceAccountId)
+        int retryCount = 0;
+        bool success = false;
+        
+        while (!success && retryCount < _maxRetries)
         {
-            // Reload source account and retry
-            sourceAccount = _repository.GetById<Account>(command.SourceAccountId);
-            // Implement retry logic...
+            try
+            {
+                // Load both accounts with correlation
+                var sourceAccount = _repository.GetById<Account>(command.SourceAccountId, command);
+                var targetAccount = _repository.GetById<Account>(command.TargetAccountId, command);
+                
+                // Create a transfer record to track the operation
+                var transfer = new Transfer(Guid.NewGuid(), command);
+                transfer.Initialize(
+                    command.SourceAccountId, 
+                    command.TargetAccountId, 
+                    command.Amount, 
+                    command.Reference, 
+                    command);
+                
+                // Execute the transfer
+                sourceAccount.Withdraw(command.Amount, command.Reference, command);
+                targetAccount.Deposit(command.Amount, command.Reference, command);
+                transfer.MarkAsCompleted(command);
+                
+                // Save all aggregates in a specific order to minimize deadlocks
+                _repository.Save(transfer);      // Save transfer record first
+                _repository.Save(sourceAccount); // Save source account (most likely to fail)
+                _repository.Save(targetAccount); // Save target account
+                
+                // Publish all events
+                PublishEvents(transfer.TakeEvents());
+                PublishEvents(sourceAccount.TakeEvents());
+                PublishEvents(targetAccount.TakeEvents());
+                
+                success = true;
+                _logger.LogInformation(
+                    "Transfer {TransferId} completed: {Amount} from {SourceId} to {TargetId}",
+                    transfer.Id, command.Amount, command.SourceAccountId, command.TargetAccountId);
+            }
+            catch (AggregateVersionException ex)
+            {
+                retryCount++;
+                
+                if (retryCount >= _maxRetries)
+                {
+                    _logger.LogWarning(
+                        "Max retries reached for transfer from {SourceId} to {TargetId}",
+                        command.SourceAccountId, command.TargetAccountId);
+                    throw new CommandProcessingException(
+                        "Transfer failed due to concurrent modifications", ex, command);
+                }
+                
+                _logger.LogInformation(
+                    "Concurrency conflict detected, retrying transfer (attempt {RetryCount}/{MaxRetries})",
+                    retryCount, _maxRetries);
+                
+                // Add a small delay with jitter to reduce contention
+                var delay = (int)(Math.Pow(2, retryCount) * 100 + new Random().Next(50));
+                Thread.Sleep(delay);
+            }
+            catch (Exception ex) when (!(ex is CommandProcessingException))
+            {
+                _logger.LogError(ex, "Error processing transfer");
+                throw new CommandProcessingException("Transfer failed", ex, command);
+            }
         }
-        else
+    }
+    
+    private void PublishEvents(IEnumerable<object> events)
+    {
+        foreach (var @event in events)
         {
-            // Reload target account and retry
-            targetAccount = _repository.GetById<Account>(command.TargetAccountId);
-            // Implement retry logic...
+            _eventPublisher.Publish(@event);
         }
     }
 }
@@ -465,56 +587,93 @@ public void TransferFunds(TransferFunds command)
 
 ### Repository Design
 
-1. **Optimistic Concurrency**: Always handle `AggregateVersionException` to manage concurrent modifications
-2. **Aggregate Lifecycle**: Use `Delete` for logical deletion and `HardDelete` only when data must be permanently removed
-3. **Version Management**: Use the `version` parameter in `GetById` and `Update` to work with specific versions of aggregates
-4. **Error Handling**: Implement proper exception handling for repository operations
-5. **Transaction Boundaries**: Consider repository operations as transaction boundaries in your domain
-6. **Repository Abstraction**: Depend on the `IRepository` interface rather than concrete implementations
-7. **Correlation Tracking**: Use `ICorrelatedRepository` when correlation information needs to be maintained
+1. **Use Dependency Injection**: Always inject repositories into services and command handlers rather than creating them directly.
 
-### Performance Considerations
+2. **Prefer ICorrelatedRepository**: Use `ICorrelatedRepository` instead of `IRepository` to ensure proper correlation tracking across the entire system.
 
-1. **Snapshot Support**: Use snapshots for aggregates with many events to improve loading performance
-2. **Batch Operations**: Consider batching operations when working with multiple aggregates
-3. **Caching**: Implement caching strategies for frequently accessed aggregates
-4. **Asynchronous Operations**: Use asynchronous repository implementations for better scalability
-5. **Event Size**: Keep events small and focused to improve serialization and deserialization performance
+3. **Consistent Stream Naming**: Use a consistent stream naming convention, typically `{AggregateType}-{AggregateId}`, to avoid collisions and make debugging easier.
 
-### Testing
+4. **Optimistic Concurrency**: Always handle `AggregateVersionException` with appropriate retry logic or user feedback.
 
-1. **In-Memory Repository**: Use an in-memory repository implementation for unit testing
-2. **Test Doubles**: Create test doubles (mocks, stubs) for the repository interface
-3. **Event Verification**: Verify that the correct events are saved to the repository
-4. **Concurrency Testing**: Test concurrent operations to ensure proper handling of version conflicts
-5. **Integration Testing**: Use a real repository implementation for integration testing
+5. **Transactional Boundaries**: Treat each repository save operation as a transaction boundary. If you need to save multiple aggregates atomically, consider using a process manager or saga.
+
+6. **Event Publishing**: Always publish events after successful repository operations to update read models and trigger integrations.
+
+7. **Soft Deletion**: Prefer `Delete` (soft delete) over `HardDelete` to maintain a complete audit trail. Only use `HardDelete` for regulatory compliance (e.g., GDPR) or data lifecycle management.
+
+8. **Exception Wrapping**: Wrap repository exceptions in domain-specific exceptions that provide context about the failed operation.
+
+### Performance Optimization
+
+1. **Snapshot Support**: Implement snapshot support for aggregates with long event histories to improve loading performance.
+
+2. **Batched Event Publishing**: Consider batching event publishing for better throughput, especially in high-volume scenarios.
+
+3. **Asynchronous Operations**: Implement and use asynchronous repository methods (`GetByIdAsync`, `SaveAsync`) for better scalability.
+
+4. **Caching Strategy**: Implement a short-lived cache for frequently accessed aggregates, but ensure cache invalidation on updates.
+
+5. **Stream Size Management**: Monitor stream sizes and implement strategies to deal with large streams (e.g., archiving, snapshots, or stream splitting).
+
+6. **Bulk Loading**: Optimize for scenarios where multiple aggregates need to be loaded by implementing batch loading methods.
+
+### Testing Strategies
+
+1. **In-Memory Repository**: Use an in-memory repository implementation for unit testing command handlers and domain services.
+
+2. **Test-Specific Events**: Create test-specific event factories to make tests more readable and maintainable.
+
+3. **Event Stream Verification**: Verify the complete sequence of events produced by an operation, not just the final state.
+
+4. **Concurrency Simulation**: Test concurrent modifications by simulating version conflicts in unit tests.
+
+5. **Repository Decorators**: Use the decorator pattern to add cross-cutting concerns like logging, metrics, and caching to repositories.
 
 ## Common Pitfalls
 
-### Design Issues
+### Design and Architecture Issues
 
-1. **Ignoring Concurrency**: Failing to handle `AggregateVersionException` can lead to lost updates
-2. **Large Aggregates**: Storing too many events in a single aggregate can impact performance
-3. **Missing Version Checks**: Not checking versions when updating aggregates can lead to inconsistent state
-4. **Hard Deletion Overuse**: Using `HardDelete` when `Delete` would be more appropriate
-5. **Repository Leakage**: Allowing repository implementation details to leak into the domain model
-6. **Missing Error Handling**: Not properly handling repository exceptions
+1. **Missing Correlation**: Not using `ICorrelatedRepository` leads to lost correlation tracking, making it difficult to trace business transactions across the system.
 
-### Implementation Challenges
+2. **Repository in Domain Model**: Referencing repositories directly in domain entities violates the separation of concerns principle. Repositories should only be used in command handlers and domain services.
 
-1. **Event Schema Evolution**: Not handling changes to event schemas over time
-2. **Event Ordering**: Not maintaining the correct order of events
-3. **Event Serialization**: Issues with serializing and deserializing complex event structures
-4. **Stream Name Collisions**: Using non-unique stream names for different aggregates
-5. **Repository Dependencies**: Creating tight coupling between the repository and other components
+3. **Aggregate Boundaries**: Creating aggregates that are too large or too small. Aggregates should be designed around transactional consistency boundaries.
 
-### CQRS Integration Issues
+4. **Direct State Modification**: Modifying aggregate state directly instead of through events breaks the event sourcing pattern and loses the audit trail.
 
-1. **Read/Write Separation**: Not properly separating read and write repositories
-2. **Event Publishing**: Forgetting to publish events after saving aggregates
-3. **Command Validation**: Performing validation in the repository instead of in command handlers
-4. **Event Replay**: Not considering the impact of event replay on performance
-5. **Read Model Updates**: Not updating read models when events are saved
+5. **Missing Domain Events**: Not raising domain events for important state changes, leading to incomplete audit trails and integration issues.
+
+6. **Leaking Implementation Details**: Exposing repository implementation details (like stream names or serialization formats) to clients.
+
+### Implementation Pitfalls
+
+1. **Inconsistent Stream Naming**: Using different stream naming conventions across the application, leading to confusion and potential collisions.
+
+2. **Event Schema Evolution**: Not handling changes to event schemas over time, causing deserialization errors when loading older events.
+
+3. **Missing Retry Logic**: Not implementing proper retry logic for handling concurrency exceptions, leading to poor user experience.
+
+4. **Excessive Event Data**: Including too much data in events, causing performance issues with serialization and storage.
+
+5. **Ignoring Expected Version**: Not setting or checking the `ExpectedVersion` property when saving aggregates, bypassing optimistic concurrency control.
+
+6. **Circular Event References**: Including circular references in event data, causing serialization issues.
+
+7. **Inefficient Aggregate Loading**: Loading the entire event history when only a specific version or a subset of events is needed.
+
+### CQRS and Event Processing Issues
+
+1. **Missing Event Publishing**: Forgetting to publish events after saving aggregates, causing read models to become stale.
+
+2. **Synchronous Read Model Updates**: Updating read models synchronously within the command handling process, slowing down command processing.
+
+3. **Event Ordering**: Not preserving the order of events when publishing to event handlers, causing inconsistent read models.
+
+4. **Command-Side Queries**: Performing complex queries on the command side instead of using dedicated read models.
+
+5. **Event Replay Impact**: Not considering the performance impact of replaying events when designing event handlers and projections.
+
+6. **Missing Idempotency**: Not making event handlers idempotent, causing issues when events are processed multiple times.
 
 ## Advanced Scenarios
 

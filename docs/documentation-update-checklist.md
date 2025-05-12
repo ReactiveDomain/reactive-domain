@@ -23,11 +23,11 @@
 - [x] Verify event registration in constructor vs. other approaches
 
 ## 4. Repository Usage
-- [ ] Verify repository patterns used in PowerModels
-- [ ] Update examples of loading and saving aggregates
-- [ ] Check optimistic concurrency control implementation
-- [ ] Ensure correlation tracking in repositories is correctly documented
-- [ ] Update stream naming conventions if different
+- [x] Verify repository patterns used in PowerModels
+- [x] Update examples of loading and saving aggregates
+- [x] Check optimistic concurrency control implementation
+- [x] Ensure correlation tracking in repositories is correctly documented
+- [x] Update stream naming conventions if different
 
 ## 5. CQRS Implementation
 - [ ] Verify separation of command and query models

@@ -4,18 +4,22 @@
 
 ## Overview
 
-The `ICorrelatedRepository` interface extends the repository pattern with correlation support. It allows tracking correlation and causation IDs across message flows when working with event-sourced aggregates.
+The `ICorrelatedRepository` interface extends the repository pattern with correlation support. It allows tracking correlation and causation IDs across message flows when working with event-sourced aggregates. This interface is crucial for implementing robust, traceable, and maintainable event-sourced systems.
+
+In modern distributed applications, correlation tracking is not just a nice-to-have feature but an essential requirement for debugging, auditing, and monitoring business processes. The `ICorrelatedRepository` should be the default choice for all production systems.
 
 ## Correlation in Event Sourcing
 
 In distributed systems and complex business processes, tracking the flow of messages and events is crucial for:
 
-1. **Debugging and Troubleshooting**: Tracing the path of a business transaction through the system
-2. **Auditing**: Maintaining a complete record of what caused each state change
-3. **Business Process Monitoring**: Tracking the progress of long-running business processes
-4. **Distributed Tracing**: Following transactions across service boundaries
+1. **Debugging and Troubleshooting**: Tracing the path of a business transaction through the system, making it easier to identify the root cause of issues
+2. **Auditing and Compliance**: Maintaining a complete record of what caused each state change, essential for regulatory compliance and security investigations
+3. **Business Process Monitoring**: Tracking the progress of long-running business processes across multiple services and components
+4. **Distributed Tracing**: Following transactions across service boundaries in microservice architectures
+5. **Idempotency Handling**: Detecting and properly handling duplicate messages to ensure exactly-once processing semantics
+6. **Error Management**: Correlating errors with the operations that caused them for better error reporting and recovery
 
-The `ICorrelatedRepository` provides this capability by ensuring that correlation information is propagated from commands to the events they generate. When an aggregate is loaded with a source message, the correlation context is established, and all events raised by that aggregate will inherit the correlation information.
+The `ICorrelatedRepository` provides these capabilities by ensuring that correlation information is propagated from commands to the events they generate. When an aggregate is loaded with a source message, the correlation context is established, and all events raised by that aggregate will inherit the correlation information.
 
 **Namespace**: `ReactiveDomain.Foundation`  
 **Assembly**: `ReactiveDomain.Foundation.dll`
@@ -179,59 +183,51 @@ void HardDelete(IEventSource aggregate);
 
 ### Basic Usage with Correlation
 
-The `ICorrelatedRepository` interface is used to store and retrieve event-sourced aggregates with correlation information. It is typically implemented by the `CorrelatedStreamStoreRepository` class.
+The `ICorrelatedRepository` interface is used to store and retrieve event-sourced aggregates with correlation information. It is typically implemented by the `CorrelatedStreamStoreRepository` class and registered through dependency injection.
 
 ```csharp
-// Create a repository
-var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-var eventStoreConnection = new StreamStoreConnection("MyApp", connectionSettings, "localhost", 1113);
-var serializer = new JsonMessageSerializer();
-var repository = new StreamStoreRepository(streamNameBuilder, eventStoreConnection, serializer);
-var correlatedRepository = new CorrelatedStreamStoreRepository(repository);
+// Register repositories in your DI container (typically in Startup.cs or Program.cs)
+public void ConfigureServices(IServiceCollection services)
+{
+    // Register the base repository
+    services.AddSingleton<IStreamNameBuilder, PrefixedCamelCaseStreamNameBuilder>();
+    services.AddSingleton<IStreamStoreConnection>(provider => 
+        new StreamStoreConnection("MyApp", connectionSettings, "localhost", 1113));
+    services.AddSingleton<IMessageSerializer, JsonMessageSerializer>();
+    services.AddSingleton<IRepository, StreamStoreRepository>();
+    
+    // Register the correlated repository as the default implementation
+    services.AddSingleton<ICorrelatedRepository, CorrelatedStreamStoreRepository>();
+    
+    // Register command handlers and services
+    services.AddTransient<ICommandHandler<CreateAccount>, AccountCommandHandler>();
+    services.AddTransient<ICommandHandler<DepositFunds>, AccountCommandHandler>();
+    // ... other registrations
+}
 
-// Create a command with correlation information
-ICorrelatedMessage command = MessageBuilder.New(() => new CreateAccount(Guid.NewGuid()));
-
-// Create a new aggregate with correlation information
-var account = new Account(Guid.NewGuid());
-account.CreateAccount("12345", command); // Pass the command to establish correlation
-
-// Save the aggregate
-correlatedRepository.Save(account);
-
-// Retrieve the aggregate with correlation information
-var retrievedAccount = correlatedRepository.GetById<Account>(account.Id, command);
-
-// Update the aggregate with correlation
-retrievedAccount.Deposit(100, command);
-correlatedRepository.Save(retrievedAccount);
-
-// Delete the aggregate
-correlatedRepository.Delete(retrievedAccount);
-```
-
-### Integration with Command Handlers
-
-The `ICorrelatedRepository` is particularly useful in command handlers where correlation tracking is important:
-
-```csharp
-public class CorrelatedAccountCommandHandler : 
+// Example command handler using ICorrelatedRepository
+public class AccountCommandHandler : 
     ICommandHandler<CreateAccount>,
-    ICommandHandler<DepositFunds>,
-    ICommandHandler<WithdrawFunds>,
-    ICommandHandler<CloseAccount>
+    ICommandHandler<DepositFunds>
 {
     private readonly ICorrelatedRepository _repository;
-    private readonly IEventBus _eventBus;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<AccountCommandHandler> _logger;
     
-    public CorrelatedAccountCommandHandler(ICorrelatedRepository repository, IEventBus eventBus)
+    public AccountCommandHandler(
+        ICorrelatedRepository repository, 
+        IEventPublisher eventPublisher,
+        ILogger<AccountCommandHandler> logger)
     {
         _repository = repository;
-        _eventBus = eventBus;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
     }
     
     public void Handle(CreateAccount command)
     {
+        _logger.LogInformation("Processing CreateAccount command {CommandId}", command.MsgId);
+        
         // Check if account already exists
         Account account;
         if (_repository.TryGetById(command.AccountId, out account, command))
@@ -240,29 +236,192 @@ public class CorrelatedAccountCommandHandler :
         }
         
         // Create new account with correlation
-        account = new Account(command.AccountId);
-        account.CreateAccount(command.AccountNumber, command.InitialDeposit, command);
+        account = new Account(command.AccountId, command);
         
         // Save the account
         _repository.Save(account);
         
-        // Events are automatically correlated with the command
-        // This allows tracing the entire transaction flow
+        // Publish events for read models and integration
+        var events = account.TakeEvents();
+        foreach (var @event in events)
+        {
+            _eventPublisher.Publish(@event);
+            _logger.LogDebug("Published event {EventType} with ID {EventId}", 
+                @event.GetType().Name, 
+                (@event as ICorrelatedMessage)?.MsgId);
+        }
     }
     
     public void Handle(DepositFunds command)
     {
+        _logger.LogInformation("Processing DepositFunds command {CommandId}", command.MsgId);
+        
         // Get the account with correlation
         var account = _repository.GetById<Account>(command.AccountId, command);
         
         // Process the command with correlation
-        account.Deposit(command.Amount, command);
+        account.Deposit(command.Amount, command.Reference, command);
         
         // Save the account
         _repository.Save(account);
+        
+        // Publish events
+        var events = account.TakeEvents();
+        foreach (var @event in events)
+        {
+            _eventPublisher.Publish(@event);
+        }
+    }
+}
+```
+
+### Advanced Command Handler Patterns
+
+The `ICorrelatedRepository` enables sophisticated command handling patterns with robust error handling and correlation tracking:
+
+```csharp
+public abstract class BaseCommandHandler<TCommand> : ICommandHandler<TCommand> 
+    where TCommand : ICommand, ICorrelatedMessage
+{
+    protected readonly ICorrelatedRepository Repository;
+    protected readonly IEventPublisher EventPublisher;
+    protected readonly ILogger Logger;
+    
+    protected BaseCommandHandler(
+        ICorrelatedRepository repository,
+        IEventPublisher eventPublisher,
+        ILogger logger)
+    {
+        Repository = repository;
+        EventPublisher = eventPublisher;
+        Logger = logger;
     }
     
-    // Additional handlers...
+    public void Handle(TCommand command)
+    {
+        try
+        {
+            Logger.LogInformation(
+                "Processing command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+                
+            // Execute the command-specific logic
+            HandleCore(command);
+            
+            Logger.LogInformation(
+                "Successfully processed command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+        }
+        catch (AggregateNotFoundException ex)
+        {
+            Logger.LogWarning(
+                ex,
+                "Aggregate not found while processing command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+                
+            throw new CommandProcessingException(
+                $"The requested {GetAggregateTypeName(ex.AggregateType)} with ID {ex.AggregateId} was not found",
+                ex,
+                command);
+        }
+        catch (AggregateDeletedException ex)
+        {
+            Logger.LogWarning(
+                ex,
+                "Deleted aggregate accessed while processing command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+                
+            throw new CommandProcessingException(
+                $"The requested {GetAggregateTypeName(ex.AggregateType)} with ID {ex.AggregateId} has been deleted",
+                ex,
+                command);
+        }
+        catch (AggregateVersionException ex)
+        {
+            Logger.LogWarning(
+                ex,
+                "Concurrency conflict detected while processing command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+                
+            throw new ConcurrencyException(
+                $"The {GetAggregateTypeName(ex.AggregateType)} with ID {ex.AggregateId} has been modified by another process",
+                ex,
+                command);
+        }
+        catch (Exception ex) when (!(ex is CommandProcessingException))
+        {
+            Logger.LogError(
+                ex,
+                "Error processing command {CommandType} with ID {CommandId}",
+                typeof(TCommand).Name,
+                command.MsgId);
+                
+            throw new CommandProcessingException(
+                $"An error occurred while processing {typeof(TCommand).Name}",
+                ex,
+                command);
+        }
+    }
+    
+    protected abstract void HandleCore(TCommand command);
+    
+    protected void PublishEvents(IEnumerable<object> events)
+    {
+        foreach (var @event in events)
+        {
+            EventPublisher.Publish(@event);
+            
+            if (@event is ICorrelatedMessage correlatedEvent)
+            {
+                Logger.LogDebug(
+                    "Published event {EventType} with ID {EventId}, correlation {CorrelationId}",
+                    @event.GetType().Name,
+                    correlatedEvent.MsgId,
+                    correlatedEvent.CorrelationId);
+            }
+        }
+    }
+    
+    private string GetAggregateTypeName(Type aggregateType)
+    {
+        return aggregateType?.Name.Replace("Aggregate", "") ?? "entity";
+    }
+}
+
+// Concrete implementation for a specific command
+public class CreateAccountHandler : BaseCommandHandler<CreateAccount>
+{
+    public CreateAccountHandler(
+        ICorrelatedRepository repository,
+        IEventPublisher eventPublisher,
+        ILogger<CreateAccountHandler> logger)
+        : base(repository, eventPublisher, logger)
+    {
+    }
+    
+    protected override void HandleCore(CreateAccount command)
+    {
+        // Check if account already exists
+        Account account;
+        if (Repository.TryGetById(command.AccountId, out account, command))
+        {
+            throw new InvalidOperationException($"Account {command.AccountId} already exists");
+        }
+        
+        // Create new account with correlation
+        account = new Account(command.AccountId, command);
+        
+        // Save the account
+        Repository.Save(account);
+        
+        // Publish events
+        PublishEvents(account.TakeEvents());
+    }
 }
 ```
 
@@ -364,13 +523,69 @@ This chain allows tracing the entire business transaction from start to finish, 
 
 ## Best Practices
 
-1. **Always Use Correlation**: Use correlated repositories for all production systems to maintain traceability
-2. **Pass Commands to Aggregates**: Always pass the command to aggregate methods to maintain correlation
-3. **Correlation in Sagas**: Use correlation IDs to track long-running business processes (sagas)
-4. **Logging with Correlation**: Include correlation IDs in log messages for easier troubleshooting
-5. **Monitoring**: Set up monitoring based on correlation IDs to track business processes
-6. **Error Handling**: Use correlation IDs to track errors through the system
-7. **Testing**: Verify that correlation IDs are properly propagated in unit tests
+### Correlation Design
+
+1. **Default to ICorrelatedRepository**: Always use `ICorrelatedRepository` instead of the base `IRepository` interface in production systems. The minimal overhead is far outweighed by the benefits of correlation tracking.
+
+2. **Consistent Command Structure**: Ensure all commands implement `ICommand` and `ICorrelatedMessage` interfaces to maintain a consistent correlation chain.
+
+3. **Command-to-Aggregate Flow**: Always pass the command to aggregate methods to maintain correlation between commands and the events they generate.
+
+4. **Correlation in Process Managers**: Use correlation IDs to track long-running business processes across multiple aggregates and services.
+
+5. **Preserve Correlation Chain**: When creating new commands in response to events, use `MessageBuilder.From(sourceEvent, () => new DerivedCommand(...))` to maintain the correlation chain.
+
+### Operational Excellence
+
+1. **Structured Logging**: Include correlation IDs in structured log messages for easier troubleshooting and log aggregation.
+
+   ```csharp
+   _logger.LogInformation(
+       "Processing transfer {Amount} from {SourceId} to {TargetId} (Correlation: {CorrelationId})",
+       command.Amount,
+       command.SourceAccountId,
+       command.TargetAccountId,
+       command.CorrelationId);
+   ```
+
+2. **Monitoring and Alerting**: Set up monitoring dashboards based on correlation IDs to track business processes and detect anomalies.
+
+3. **Distributed Tracing**: Integrate with distributed tracing systems like OpenTelemetry by propagating correlation IDs across service boundaries.
+
+4. **Error Correlation**: Include correlation IDs in error reports and exception handling to link errors back to the originating commands.
+
+5. **Performance Tracking**: Measure and track performance metrics for business operations using correlation IDs as identifiers.
+
+### Testing and Quality Assurance
+
+1. **Correlation Verification**: Write unit tests that verify correlation IDs are properly propagated from commands to events.
+
+2. **Test Fixtures**: Create test fixtures that automatically set up correlation for testing command handlers and aggregates.
+
+3. **End-to-End Testing**: Use correlation IDs to trace operations through all components in end-to-end tests.
+
+4. **Debugging Support**: Add debugging tools that can filter logs and events by correlation ID during development and testing.
+
+5. **Correlation Assertions**: Include assertions in tests to verify that events have the expected correlation and causation IDs.
+
+   ```csharp
+   [Fact]
+   public void When_DepositingFunds_Should_MaintainCorrelation()
+   {
+       // Arrange
+       var command = MessageBuilder.New(() => new DepositFunds(accountId, 100));
+       var account = new Account(accountId, command);
+       
+       // Act
+       account.Deposit(100, "Test deposit", command);
+       var events = account.TakeEvents();
+       
+       // Assert
+       var depositedEvent = events.OfType<FundsDeposited>().Single();
+       Assert.Equal(command.CorrelationId, depositedEvent.CorrelationId);
+       Assert.Equal(command.MsgId, depositedEvent.CausationId);
+   }
+   ```
 
 ## Advanced Scenarios
 
