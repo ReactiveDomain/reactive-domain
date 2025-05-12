@@ -4,15 +4,29 @@
 
 ## Overview
 
-The `AggregateRoot` class is a base class for domain aggregates in Reactive Domain. It implements the `IEventSource` interface and provides common functionality for event sourcing. Aggregates are the central building blocks in Domain-Driven Design (DDD) and serve as the primary consistency boundary for business rules and invariants.
+The `AggregateRoot` class is a base class for domain aggregates in Reactive Domain. It inherits from `EventDrivenStateMachine` and implements the `IEventSource` interface, providing comprehensive functionality for event sourcing. Aggregates are the central building blocks in Domain-Driven Design (DDD) and serve as the primary consistency boundary for business rules and invariants.
 
-In event-sourced systems, aggregates don't store their state directly but instead derive it from a sequence of events. The `AggregateRoot` class provides the infrastructure to record, apply, and retrieve these events, making it easier to implement event-sourced aggregates.
+In event-sourced systems, aggregates don't store their state directly but instead derive it from a sequence of events. The `AggregateRoot` class provides the infrastructure to:
+
+1. **Record Events**: Capture domain events that represent state changes
+2. **Apply Events**: Update the aggregate's state based on these events
+3. **Enforce Invariants**: Validate business rules before state changes
+4. **Maintain Version**: Track the version for optimistic concurrency control
+5. **Support Correlation**: Maintain correlation and causation chains for traceability
+
+Aggregates in Reactive Domain follow the Command-Event pattern, where:
+
+- **Commands** are requests to change the aggregate's state, which may be rejected if they violate business rules
+- **Events** are facts that have occurred, representing actual state changes
+- **Apply Methods** update the aggregate's state in response to events
+
+This pattern ensures that all state changes are explicit, traceable, and can be replayed to reconstruct the aggregate's state at any point in time.
 
 ## Constructors
 
 ### AggregateRoot(Guid)
 
-Initializes a new instance of the `AggregateRoot` class with the specified ID. This constructor is typically used when creating a new aggregate.
+Initializes a new instance of the `AggregateRoot` class with the specified ID. This constructor is typically used when creating a new aggregate or when loading an aggregate from the repository.
 
 ```csharp
 protected AggregateRoot(Guid id);
@@ -25,10 +39,32 @@ protected AggregateRoot(Guid id);
 ```csharp
 public class Account : AggregateRoot
 {
+    private decimal _balance;
+    private bool _isActive;
+    private string _accountNumber;
+    
     public Account(Guid id) : base(id)
     {
-        // Initialize a new account
-        RaiseEvent(new AccountCreated(id));
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+        Register<AccountClosed>(Apply);
+    }
+    
+    // Method to initialize a new account
+    public void Initialize(string accountNumber, string customerName, ICorrelatedMessage source)
+    {
+        // Enforce business rules
+        if (string.IsNullOrEmpty(accountNumber))
+            throw new ArgumentException("Account number is required", nameof(accountNumber));
+            
+        if (string.IsNullOrEmpty(customerName))
+            throw new ArgumentException("Customer name is required", nameof(customerName));
+            
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(
+            Id, accountNumber, customerName, DateTime.UtcNow)));
     }
 }
 ```
@@ -49,10 +85,35 @@ protected AggregateRoot(Guid id, ICorrelatedMessage source);
 ```csharp
 public class Account : AggregateRoot
 {
-    public Account(Guid id, ICorrelatedMessage source) : base(id, source)
+    private decimal _balance;
+    private bool _isActive;
+    private string _accountNumber;
+    
+    // Constructor for creating a new account with correlation
+    public Account(Guid id, CreateAccount command) : base(id, command)
     {
-        // Initialize a new account with correlation
-        RaiseEvent(MessageBuilder.From(source).Build(() => new AccountCreated(id)));
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+        Register<AccountClosed>(Apply);
+        
+        // Initialize the aggregate by raising an event
+        RaiseEvent(MessageBuilder.From(command, () => new AccountCreated(
+            id, 
+            command.AccountNumber, 
+            command.CustomerName, 
+            DateTime.UtcNow)));
+            
+        // If initial deposit is provided, perform the deposit
+        if (command.InitialDeposit > 0)
+        {
+            RaiseEvent(MessageBuilder.From(command, () => new FundsDeposited(
+                id, 
+                command.InitialDeposit, 
+                "Initial deposit", 
+                DateTime.UtcNow)));
+        }
     }
 }
 ```
@@ -135,6 +196,38 @@ public void Save(AggregateRoot aggregate)
 
 ## Methods
 
+### Register<TEvent>
+
+Registers an event handler method for a specific event type. This method is typically called in the constructor of the aggregate to set up event handling.
+
+```csharp
+protected void Register<TEvent>(Action<TEvent> handler);
+```
+
+**Parameters**:
+- `handler` (`System.Action<TEvent>`): The method that will handle events of type `TEvent`.
+
+**Example**:
+```csharp
+public class Account : AggregateRoot
+{
+    public Account(Guid id) : base(id)
+    {
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+        Register<AccountClosed>(Apply);
+    }
+    
+    // Event handlers
+    private void Apply(AccountCreated @event) { /* ... */ }
+    private void Apply(FundsDeposited @event) { /* ... */ }
+    private void Apply(FundsWithdrawn @event) { /* ... */ }
+    private void Apply(AccountClosed @event) { /* ... */ }
+}
+```
+
 ### RaiseEvent
 
 Raises an event, which will be recorded and applied to the aggregate. This is the primary method for creating and handling new events in an event-sourced system. When called, `RaiseEvent()` does two things:
@@ -147,37 +240,37 @@ protected void RaiseEvent(object @event);
 ```
 
 **Parameters**:
-- `event` (`System.Object`): The event to raise. This is typically created using the `MessageBuilder` to ensure proper correlation tracking.
+- `event` (`System.Object`): The event to raise. This should be created using the `MessageBuilder` to ensure proper correlation tracking.
 
-> **Important**: The `RaiseEvent()` method does NOT automatically add correlation information to events. You must explicitly use `MessageBuilder.From(source).Build(...)` to create events with proper correlation information. Simply passing an event to `RaiseEvent()` without using MessageBuilder will result in lost correlation tracking.
+> **Important**: The `RaiseEvent()` method does NOT automatically add correlation information to events. You must explicitly use `MessageBuilder.From(source, () => new Event(...))` to create events with proper correlation information. Simply passing an event to `RaiseEvent()` without using MessageBuilder will result in lost correlation tracking.
 
 **Example**:
 ```csharp
 public class Account : AggregateRoot
 {
     private decimal _balance;
+    private bool _isActive;
     
-    // INCORRECT: This will lose correlation tracking
-    public void DepositIncorrect(decimal amount)
+    // Command handler method
+    public void Deposit(decimal amount, string reference, ICorrelatedMessage source)
     {
+        // Validate business rules
+        if (!_isActive)
+            throw new InvalidOperationException("Cannot deposit to an inactive account");
+            
         if (amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
             
-        // This will NOT maintain correlation information
-        RaiseEvent(new AmountDeposited(Id, amount));
+        // Raise the event with proper correlation
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(
+            Id, 
+            amount, 
+            reference, 
+            DateTime.UtcNow)));
     }
     
-    // CORRECT: This maintains correlation tracking
-    public void Deposit(decimal amount, ICorrelatedMessage source)
-    {
-        if (amount <= 0)
-            throw new ArgumentException("Amount must be positive", nameof(amount));
-            
-        // This properly maintains correlation information
-        RaiseEvent(MessageBuilder.From(source).Build(() => new AmountDeposited(Id, amount)));
-    }
-    
-    private void Apply(AmountDeposited @event)
+    // Event handler method
+    private void Apply(FundsDeposited @event)
     {
         _balance += @event.Amount;
     }
@@ -200,10 +293,13 @@ public void RestoreFromEvents(IEnumerable<object> events);
 // Inside a repository implementation
 public TAggregate GetById<TAggregate>(Guid id) where TAggregate : AggregateRoot, new()
 {
-    var events = _eventStore.GetEvents(id);
+    // Retrieve events from the event store
+    var events = _eventStore.GetEvents(GetStreamName(typeof(TAggregate), id));
+    
+    // Create a new instance of the aggregate
     var aggregate = new TAggregate();
     
-    // Use reflection to set the Id property
+    // Set the ID property
     typeof(TAggregate)
         .GetProperty("Id", BindingFlags.Public | BindingFlags.Instance)
         .SetValue(aggregate, id);
@@ -211,21 +307,12 @@ public TAggregate GetById<TAggregate>(Guid id) where TAggregate : AggregateRoot,
     // Restore the aggregate state from events
     aggregate.RestoreFromEvents(events);
     
+    // Set the expected version for optimistic concurrency
+    aggregate.ExpectedVersion = events.Count();
+    
     return aggregate;
 }
 ```
-
-### UpdateWithEvents
-
-Updates this aggregate with the provided events, starting from the expected version. This method is used when new events need to be applied to an existing aggregate, such as when handling concurrent modifications.
-
-```csharp
-public void UpdateWithEvents(IEnumerable<object> events, long expectedVersion);
-```
-
-**Parameters**:
-- `events` (`System.Collections.Generic.IEnumerable<object>`): The events to update with.
-- `expectedVersion` (`System.Int64`): The expected version to start from.
 
 ### TakeEvents
 
@@ -247,85 +334,188 @@ public void Save(AggregateRoot aggregate)
     
     if (events.Length > 0)
     {
-        // Persist the events to the event store
-        _eventStore.AppendToStream(
-            aggregate.Id,
-            aggregate.ExpectedVersion,
-            events);
+        try
+        {
+            // Persist the events to the event store
+            _eventStore.AppendToStream(
+                GetStreamName(aggregate.GetType(), aggregate.Id),
+                aggregate.ExpectedVersion,
+                events);
+                
+            // Update the expected version for next save
+            aggregate.ExpectedVersion += events.Length;
             
-        // Update the expected version for next save
-        aggregate.ExpectedVersion += events.Length;
+            // Publish events to event handlers
+            foreach (var @event in events)
+            {
+                _eventPublisher.Publish(@event);
+            }
+        }
+        catch (ConcurrencyException ex)
+        {
+            // Handle optimistic concurrency conflicts
+            throw new AggregateVersionException(
+                $"Aggregate {aggregate.Id} has been modified concurrently", 
+                ex);
+        }
+    }
+}
+```
+
+### Initialize
+
+A common pattern in Reactive Domain is to use an `Initialize` method instead of raising events directly in the constructor. This allows for more explicit validation and better control over the initialization process.
+
+```csharp
+public void Initialize(/* parameters */, ICorrelatedMessage source)
+{
+    // Validate parameters
+    // ...
+    
+    // Raise initialization event
+    RaiseEvent(MessageBuilder.From(source, () => new EntityCreated(/* ... */)));
+}
+```
+
+**Example**:
+```csharp
+public class Product : AggregateRoot
+{
+    private string _name;
+    private string _sku;
+    private decimal _price;
+    private bool _isActive;
+    
+    public Product(Guid id) : base(id)
+    {
+        Register<ProductCreated>(Apply);
+        Register<ProductPriceChanged>(Apply);
+        Register<ProductDeactivated>(Apply);
+    }
+    
+    public void Initialize(string name, string sku, decimal price, ICorrelatedMessage source)
+    {
+        // Validate business rules
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException("Product name is required", nameof(name));
+            
+        if (string.IsNullOrEmpty(sku))
+            throw new ArgumentException("SKU is required", nameof(sku));
+            
+        if (price <= 0)
+            throw new ArgumentException("Price must be greater than zero", nameof(price));
+            
+        // Raise the event
+        RaiseEvent(MessageBuilder.From(source, () => new ProductCreated(
+            Id, name, sku, price, DateTime.UtcNow)));
+    }
+    
+    private void Apply(ProductCreated @event)
+    {
+        _name = @event.Name;
+        _sku = @event.Sku;
+        _price = @event.Price;
+        _isActive = true;
     }
 }
 ```
 
 ## Usage
 
-The `AggregateRoot` class is designed to be subclassed by domain aggregates. Subclasses should:
+The `AggregateRoot` class is designed to be subclassed by domain aggregates. Here's a step-by-step guide for implementing aggregates in Reactive Domain:
 
-1. Define private `Apply` methods for each event type to update the aggregate's state (these are event handlers)
-2. Use the `RaiseEvent` method to create, record, and apply new events when handling commands
-3. Define public methods that represent domain operations and enforce business rules
-4. Keep the aggregate's state private and expose it through controlled methods
+1. **Create a Class**: Create a new class that inherits from `AggregateRoot`
+2. **Define State**: Define private fields to hold the aggregate's state
+3. **Register Event Handlers**: In the constructor, register event handlers using the `Register<TEvent>(Apply)` method
+4. **Implement Command Methods**: Create public methods that handle commands, validate business rules, and raise events
+5. **Implement Event Handlers**: Create private `Apply` methods for each event type to update the aggregate's state
+6. **Implement Initialization**: Use an `Initialize` method or command-handling constructor to set up new aggregates
 
 ## Example Implementation
 
 ```csharp
 public class Account : AggregateRoot
 {
+    // State fields
     private decimal _balance;
-    private bool _isClosed;
+    private bool _isActive;
     private string _accountNumber;
     private string _customerName;
+    private AccountType _accountType;
+    private DateTime _createdAt;
+    private DateTime? _closedAt;
     
-    // Constructor for creating a new account
+    // Constructor for new or loaded aggregates
     public Account(Guid id) : base(id)
     {
-        // Initialize with default values
-        RaiseEvent(new AccountCreated(id, "ACC-" + id.ToString().Substring(0, 8), "New Customer"));
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+        Register<AccountClosed>(Apply);
+        Register<AccountReopened>(Apply);
     }
     
-    // Constructor for creating a new account with correlation
-    public Account(Guid id, ICorrelatedMessage source) : base(id, source)
+    // Constructor for handling creation commands
+    public Account(Guid id, CreateAccount command) : base(id, command)
     {
-        // Initialize with default values and maintain correlation
-        RaiseEvent(MessageBuilder.From(source).Build(() => 
-            new AccountCreated(id, "ACC-" + id.ToString().Substring(0, 8), "New Customer")));
-    }
-    
-    // Constructor for restoring an account from events
-    protected Account(Guid id, IEnumerable<object> events) : base(id, events)
-    {
-        // The base constructor will call RestoreFromEvents
+        // Register event handlers
+        Register<AccountCreated>(Apply);
+        Register<FundsDeposited>(Apply);
+        Register<FundsWithdrawn>(Apply);
+        Register<AccountClosed>(Apply);
+        Register<AccountReopened>(Apply);
+        
+        // Validate command
+        if (string.IsNullOrEmpty(command.AccountNumber))
+            throw new ArgumentException("Account number is required", nameof(command.AccountNumber));
+            
+        if (string.IsNullOrEmpty(command.CustomerName))
+            throw new ArgumentException("Customer name is required", nameof(command.CustomerName));
+        
+        // Raise creation event
+        RaiseEvent(MessageBuilder.From(command, () => new AccountCreated(
+            id,
+            command.AccountNumber,
+            command.CustomerName,
+            command.AccountType,
+            DateTime.UtcNow)));
+            
+        // If initial deposit is provided, perform the deposit
+        if (command.InitialDeposit > 0)
+        {
+            RaiseEvent(MessageBuilder.From(command, () => new FundsDeposited(
+                id,
+                command.InitialDeposit,
+                "Initial deposit",
+                DateTime.UtcNow)));
+        }
     }
     
     // Command handler for deposit
-    public void Deposit(decimal amount, ICorrelatedMessage source = null)
+    public void Deposit(decimal amount, string reference, ICorrelatedMessage source)
     {
         // Enforce business rules
-        if (_isClosed)
-            throw new InvalidOperationException("Cannot deposit to a closed account");
+        if (!_isActive)
+            throw new InvalidOperationException("Cannot deposit to an inactive account");
             
         if (amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
         
-        // Create and apply the event
-        if (source != null)
-        {
-            RaiseEvent(MessageBuilder.From(source).Build(() => new AmountDeposited(Id, amount)));
-        }
-        else
-        {
-            RaiseEvent(new AmountDeposited(Id, amount));
-        }
+        // Create and apply the event with proper correlation
+        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(
+            Id, 
+            amount, 
+            reference, 
+            DateTime.UtcNow)));
     }
     
     // Command handler for withdrawal
-    public void Withdraw(decimal amount, ICorrelatedMessage source = null)
+    public void Withdraw(decimal amount, string reference, ICorrelatedMessage source)
     {
         // Enforce business rules
-        if (_isClosed)
-            throw new InvalidOperationException("Cannot withdraw from a closed account");
+        if (!_isActive)
+            throw new InvalidOperationException("Cannot withdraw from an inactive account");
             
         if (amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
@@ -333,99 +523,126 @@ public class Account : AggregateRoot
         if (_balance < amount)
             throw new InvalidOperationException("Insufficient funds");
         
-        // Create and apply the event
-        if (source != null)
-        {
-            RaiseEvent(MessageBuilder.From(source).Build(() => new AmountWithdrawn(Id, amount)));
-        }
-        else
-        {
-            RaiseEvent(new AmountWithdrawn(Id, amount));
-        }
+        // Create and apply the event with proper correlation
+        RaiseEvent(MessageBuilder.From(source, () => new FundsWithdrawn(
+            Id, 
+            amount, 
+            reference, 
+            DateTime.UtcNow)));
     }
     
     // Command handler for closing the account
-    public void Close(ICorrelatedMessage source = null)
+    public void Close(string reason, ICorrelatedMessage source)
     {
         // Enforce business rules
-        if (_isClosed)
+        if (!_isActive)
             throw new InvalidOperationException("Account is already closed");
-            
-        if (_balance > 0)
-            throw new InvalidOperationException("Cannot close account with positive balance");
         
-        // Create and apply the event
-        if (source != null)
-        {
-            RaiseEvent(MessageBuilder.From(source).Build(() => new AccountClosed(Id)));
-        }
-        else
-        {
-            RaiseEvent(new AccountClosed(Id));
-        }
+        // Create and apply the event with proper correlation
+        RaiseEvent(MessageBuilder.From(source, () => new AccountClosed(
+            Id, 
+            reason, 
+            DateTime.UtcNow)));
     }
     
-    // Query method for balance
-    public decimal GetBalance()
+    // Command handler for reopening the account
+    public void Reopen(ICorrelatedMessage source)
     {
-        return _balance;
+        // Enforce business rules
+        if (_isActive)
+            throw new InvalidOperationException("Account is already active");
+        
+        // Create and apply the event with proper correlation
+        RaiseEvent(MessageBuilder.From(source, () => new AccountReopened(
+            Id, 
+            DateTime.UtcNow)));
     }
     
-    // Query method for account status
-    public bool IsClosed()
-    {
-        return _isClosed;
-    }
+    // Query methods - expose state in a controlled manner
+    public decimal GetBalance() => _balance;
+    public bool IsActive() => _isActive;
+    public string GetAccountNumber() => _accountNumber;
+    public string GetCustomerName() => _customerName;
+    public AccountType GetAccountType() => _accountType;
     
-    // Event handler for AccountCreated
+    // Event handlers - update state based on events
     private void Apply(AccountCreated @event)
     {
         _accountNumber = @event.AccountNumber;
         _customerName = @event.CustomerName;
+        _accountType = @event.AccountType;
+        _createdAt = @event.CreatedAt;
         _balance = 0;
-        _isClosed = false;
+        _isActive = true;
     }
     
-    // Event handler for AmountDeposited
-    private void Apply(AmountDeposited @event)
+    private void Apply(FundsDeposited @event)
     {
         _balance += @event.Amount;
     }
     
-    // Event handler for AmountWithdrawn
-    private void Apply(AmountWithdrawn @event)
+    private void Apply(FundsWithdrawn @event)
     {
         _balance -= @event.Amount;
     }
     
-    // Event handler for AccountClosed
     private void Apply(AccountClosed @event)
     {
-        _isClosed = true;
+        _isActive = false;
+        _closedAt = @event.ClosedAt;
+    }
+    
+    private void Apply(AccountReopened @event)
+    {
+        _isActive = true;
+        _closedAt = null;
     }
 }
 ```
 
 ## Best Practices
 
-1. **Keep Aggregates Small**: Focus on a single business concept and limit the number of properties and methods
-2. **Enforce Invariants**: Use command methods to enforce business rules and maintain consistency
-3. **Event-First Design**: Design your events before your commands to focus on the business outcomes
-4. **Private State**: Keep aggregate state private and expose it through controlled methods
-5. **Idempotent Apply Methods**: Ensure that applying the same event multiple times doesn't cause issues
-6. **Immutable Events**: Use immutable events to ensure the event history remains unchanged
-7. **Correlation Tracking**: Use the correlation-aware constructor when creating aggregates from commands
-8. **Optimistic Concurrency**: Use the ExpectedVersion property to prevent lost updates
+1. **Register Event Handlers in Constructor**: Always register event handlers in the constructor to ensure they're available for event replay.
+
+2. **Separate Command and Query Methods**: Follow Command Query Responsibility Segregation (CQRS) by separating methods that modify state from those that read state.
+
+3. **Validate in Command Methods**: Validate all business rules in command methods before raising events. Once an event is raised, it's considered a fact that has occurred.
+
+4. **Use MessageBuilder for Events**: Always use `MessageBuilder.From(source, () => new Event(...))` to create events with proper correlation tracking.
+
+5. **Keep Apply Methods Simple**: Event handlers should only update state and never contain business logic or raise additional events.
+
+6. **Encapsulate State**: Keep all state private and expose it through controlled query methods.
+
+7. **Immutable Events**: Design events to be immutable to ensure the event history remains unchanged.
+
+8. **Explicit Initialization**: Use an `Initialize` method or command-handling constructor for creating new aggregates, rather than raising events directly in the constructor.
+
+9. **Optimistic Concurrency**: Use the `ExpectedVersion` property to prevent lost updates in concurrent scenarios.
+
+10. **Domain-Focused Naming**: Name aggregates, commands, and events using domain language that business stakeholders understand.
 
 ## Common Pitfalls
 
-1. **Large Aggregates**: Avoid creating aggregates that are too large or contain too many responsibilities
-2. **Public State Modification**: Don't allow direct modification of aggregate state from outside
-3. **Missing Business Rules**: Ensure all business rules are enforced in command methods
-4. **Ignoring Version Conflicts**: Always handle optimistic concurrency exceptions properly
-5. **Complex Apply Methods**: Keep event handlers (Apply methods) simple and focused on updating state
-6. **Side Effects in Apply Methods**: Avoid side effects like I/O operations in Apply methods as they run during both event replay and new event creation
-7. **Circular Event References**: Never call `RaiseEvent()` from within `Apply()` methods as this creates an infinite loop
+1. **Missing Event Registration**: Forgetting to register event handlers in the constructor will cause events to be ignored during replay.
+
+2. **Direct State Modification**: Modifying aggregate state directly instead of through events breaks the event sourcing pattern.
+
+3. **Losing Correlation**: Not using `MessageBuilder` when creating events results in lost correlation tracking.
+
+4. **Complex Aggregates**: Creating aggregates that are too large or contain too many responsibilities makes them difficult to maintain and can lead to performance issues.
+
+5. **Side Effects in Apply Methods**: Including side effects like I/O operations or external service calls in Apply methods can cause issues during event replay.
+
+6. **Circular Event References**: Calling `RaiseEvent()` from within `Apply()` methods creates an infinite loop.
+
+7. **Ignoring Version Conflicts**: Not handling optimistic concurrency exceptions properly can lead to data inconsistencies.
+
+8. **Exposing Mutable State**: Returning references to internal collections or complex objects allows external code to modify the aggregate's state directly.
+
+9. **Missing Null Checks**: Not validating inputs in command methods can lead to null reference exceptions or invalid state.
+
+10. **Inconsistent Event Naming**: Using inconsistent naming conventions for events makes the event stream harder to understand and analyze.
 
 ## Inheritance Hierarchy
 

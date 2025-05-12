@@ -15,11 +15,12 @@
 - [x] Review command handler implementation patterns
 
 ## 3. Aggregate Implementation
-- [ ] Compare aggregate initialization patterns with PowerModels
-- [ ] Verify how state is maintained in aggregates
-- [ ] Check event application methods (`Apply` methods)
-- [ ] Update aggregate root inheritance and usage patterns
-- [ ] Verify event registration in constructor vs. other approaches
+- [x] Compare aggregate initialization patterns with PowerModels
+- [x] Ensure proper event registration in constructors
+- [x] Update examples of command handling methods
+- [x] Verify event application patterns
+- [x] Document best practices for aggregate design
+- [x] Verify event registration in constructor vs. other approaches
 
 ## 4. Repository Usage
 - [ ] Verify repository patterns used in PowerModels
