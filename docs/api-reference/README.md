@@ -79,6 +79,13 @@ For easier navigation through the API reference, use these resources:
 - [Query Handling](types/query-handling.md) - Patterns and best practices for handling queries
 - [Event Subscription](types/event-subscription.md) - Patterns for subscribing to and processing events
 
+### Design Patterns
+
+- [Event Sourcing Patterns](patterns/event-sourcing-patterns.md) - Patterns and best practices for event sourcing
+- [Saga Implementation Patterns](patterns/saga-implementation-patterns.md) - Patterns for implementing sagas and process managers
+- [Error Handling Patterns](patterns/error-handling-patterns.md) - Patterns for error handling and recovery
+- [Testing Patterns](patterns/testing-patterns.md) - Patterns for testing event-sourced systems
+
 ## Namespaces
 
 The Reactive Domain library is organized into the following namespaces:
