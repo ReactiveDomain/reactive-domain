@@ -85,6 +85,8 @@ For easier navigation through the API reference, use these resources:
 - [Saga Implementation Patterns](patterns/saga-implementation-patterns.md) - Patterns for implementing sagas and process managers
 - [Error Handling Patterns](patterns/error-handling-patterns.md) - Patterns for error handling and recovery
 - [Testing Patterns](patterns/testing-patterns.md) - Patterns for testing event-sourced systems
+- [Infrastructure Setup](patterns/infrastructure-setup.md) - Comprehensive guide for setting up event-sourced infrastructure
+- [Performance Considerations](patterns/performance-considerations.md) - Optimization techniques for event-sourced systems
 
 ## Namespaces
 

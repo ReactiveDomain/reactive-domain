@@ -2,17 +2,20 @@
 
 [← Back to Code Examples](README.md) | [← Back to Table of Contents](../README.md)
 
-This example demonstrates how to create a new aggregate root in Reactive Domain.
+This example demonstrates how to create a new aggregate root in Reactive Domain, following current best practices and patterns.
 
 ## Basic Aggregate Root Structure
 
 ```csharp
 using System;
+using System.Collections.Generic;
 using ReactiveDomain.Foundation;
+using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Messages;
 
 namespace MyApp.Domain
 {
-    public class Account : AggregateRoot
+    public class Account : AggregateRoot<Guid>
     {
         // Private state fields
         private decimal _balance;
@@ -20,16 +23,16 @@ namespace MyApp.Domain
         private string _customerName;
         private bool _isClosed;
         
+        // Default constructor required for deserialization
+        public Account() : base()
+        {
+            // Required for deserialization
+        }
+        
         // Constructor for creating a new aggregate
         public Account(Guid id) : base(id)
         {
             // Initialize with default state
-        }
-        
-        // Constructor for loading from history
-        protected Account(Guid id, IEnumerable<object> events) : base(id, events)
-        {
-            // Base constructor will call RestoreFromEvents
         }
         
         // Constructor with correlation
@@ -45,8 +48,14 @@ namespace MyApp.Domain
             if (_accountNumber != null)
                 throw new InvalidOperationException("Account already created");
                 
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                throw new ArgumentException("Account number cannot be empty", nameof(accountNumber));
+                
+            if (string.IsNullOrWhiteSpace(customerName))
+                throw new ArgumentException("Customer name cannot be empty", nameof(customerName));
+                
             // Generate and apply event
-            RaiseEvent(new AccountCreated(Id, accountNumber, customerName));
+            Apply(new AccountCreated(Id, accountNumber, customerName));
         }
         
         public void Deposit(decimal amount)
@@ -56,10 +65,10 @@ namespace MyApp.Domain
                 throw new InvalidOperationException("Account is closed");
                 
             if (amount <= 0)
-                throw new ArgumentException("Amount must be positive");
+                throw new ArgumentException("Amount must be positive", nameof(amount));
                 
             // Generate and apply event
-            RaiseEvent(new FundsDeposited(Id, amount));
+            Apply(new FundsDeposited(Id, amount));
         }
         
         public void Withdraw(decimal amount)
@@ -69,13 +78,13 @@ namespace MyApp.Domain
                 throw new InvalidOperationException("Account is closed");
                 
             if (amount <= 0)
-                throw new ArgumentException("Amount must be positive");
+                throw new ArgumentException("Amount must be positive", nameof(amount));
                 
             if (_balance < amount)
                 throw new InvalidOperationException("Insufficient funds");
                 
             // Generate and apply event
-            RaiseEvent(new FundsWithdrawn(Id, amount));
+            Apply(new FundsWithdrawn(Id, amount));
         }
         
         public void Close()
@@ -88,7 +97,7 @@ namespace MyApp.Domain
                 throw new InvalidOperationException("Cannot close account with positive balance");
                 
             // Generate and apply event
-            RaiseEvent(new AccountClosed(Id));
+            Apply(new AccountClosed(Id));
         }
         
         // Query methods
@@ -102,7 +111,7 @@ namespace MyApp.Domain
             return _isClosed;
         }
         
-        // Event handlers
+        // Event handlers - these are called automatically by the base class
         private void Apply(AccountCreated @event)
         {
             _accountNumber = @event.AccountNumber;
@@ -125,6 +134,40 @@ namespace MyApp.Domain
         {
             _isClosed = true;
         }
+        
+        // Override to handle snapshot restoration if needed
+        protected override void RestoreFromSnapshot(object snapshot)
+        {
+            if (snapshot is AccountSnapshot s)
+            {
+                _accountNumber = s.AccountNumber;
+                _customerName = s.CustomerName;
+                _balance = s.Balance;
+                _isClosed = s.IsClosed;
+            }
+        }
+        
+        // Override to create snapshots if needed
+        protected override object CreateSnapshot()
+        {
+            return new AccountSnapshot
+            {
+                AccountNumber = _accountNumber,
+                CustomerName = _customerName,
+                Balance = _balance,
+                IsClosed = _isClosed
+            };
+        }
+        
+        // Snapshot class for serialization
+        [Serializable]
+        private class AccountSnapshot
+        {
+            public string AccountNumber { get; set; }
+            public string CustomerName { get; set; }
+            public decimal Balance { get; set; }
+            public bool IsClosed { get; set; }
+        }
     }
 }
 ```
@@ -136,13 +179,15 @@ using System;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Messages;
 
-namespace MyApp.Domain
+namespace MyApp.Domain.Events
 {
+    [Serializable]
     public class AccountCreated : Event
     {
         public readonly Guid AccountId;
         public readonly string AccountNumber;
         public readonly string CustomerName;
+        public readonly DateTime Timestamp;
         
         public AccountCreated(Guid accountId, string accountNumber, string customerName)
             : base()
@@ -150,74 +195,90 @@ namespace MyApp.Domain
             AccountId = accountId;
             AccountNumber = accountNumber;
             CustomerName = customerName;
+            Timestamp = DateTime.UtcNow;
         }
         
-        public AccountCreated(Guid accountId, string accountNumber, string customerName, 
-                             Guid correlationId, Guid causationId)
-            : base(correlationId, causationId)
+        // Constructor with explicit correlation
+        public AccountCreated(Guid accountId, string accountNumber, string customerName,
+                             ICorrelatedMessage source)
+            : base(source)
         {
             AccountId = accountId;
             AccountNumber = accountNumber;
             CustomerName = customerName;
+            Timestamp = DateTime.UtcNow;
         }
     }
     
+    [Serializable]
     public class FundsDeposited : Event
     {
         public readonly Guid AccountId;
         public readonly decimal Amount;
+        public readonly DateTime Timestamp;
         
         public FundsDeposited(Guid accountId, decimal amount)
             : base()
         {
             AccountId = accountId;
             Amount = amount;
+            Timestamp = DateTime.UtcNow;
         }
         
-        public FundsDeposited(Guid accountId, decimal amount, 
-                             Guid correlationId, Guid causationId)
-            : base(correlationId, causationId)
+        // Constructor with explicit correlation
+        public FundsDeposited(Guid accountId, decimal amount, ICorrelatedMessage source)
+            : base(source)
         {
             AccountId = accountId;
             Amount = amount;
+            Timestamp = DateTime.UtcNow;
         }
     }
     
+    [Serializable]
     public class FundsWithdrawn : Event
     {
         public readonly Guid AccountId;
         public readonly decimal Amount;
+        public readonly DateTime Timestamp;
         
         public FundsWithdrawn(Guid accountId, decimal amount)
             : base()
         {
             AccountId = accountId;
             Amount = amount;
+            Timestamp = DateTime.UtcNow;
         }
         
-        public FundsWithdrawn(Guid accountId, decimal amount, 
-                             Guid correlationId, Guid causationId)
-            : base(correlationId, causationId)
+        // Constructor with explicit correlation
+        public FundsWithdrawn(Guid accountId, decimal amount, ICorrelatedMessage source)
+            : base(source)
         {
             AccountId = accountId;
             Amount = amount;
+            Timestamp = DateTime.UtcNow;
         }
     }
     
+    [Serializable]
     public class AccountClosed : Event
     {
         public readonly Guid AccountId;
+        public readonly DateTime Timestamp;
         
         public AccountClosed(Guid accountId)
             : base()
         {
             AccountId = accountId;
+            Timestamp = DateTime.UtcNow;
         }
         
-        public AccountClosed(Guid accountId, Guid correlationId, Guid causationId)
-            : base(correlationId, causationId)
+        // Constructor with explicit correlation
+        public AccountClosed(Guid accountId, ICorrelatedMessage source)
+            : base(source)
         {
             AccountId = accountId;
+            Timestamp = DateTime.UtcNow;
         }
     }
 }
@@ -227,45 +288,53 @@ namespace MyApp.Domain
 
 ### Aggregate Structure
 
+- **Type Parameter**: Modern Reactive Domain aggregates inherit from `AggregateRoot<TId>` where `TId` is the identifier type
 - **Private State**: Aggregates maintain their state in private fields
 - **Command Methods**: Public methods that validate commands and generate events
 - **Query Methods**: Public methods that return information about the aggregate state
 - **Event Handlers**: Private `Apply` methods that update the aggregate state
+- **Snapshot Support**: Optional methods for creating and restoring from snapshots
 
 ### Constructors
 
-- **Default Constructor**: Used when creating a new aggregate
-- **History Constructor**: Used when loading an aggregate from its event history
+- **Default Constructor**: Required for deserialization
+- **ID Constructor**: Used when creating a new aggregate
 - **Correlated Constructor**: Used when creating an aggregate from a command with correlation information
 
 ### Command Validation
 
 - Commands are validated against the current state of the aggregate
 - Business rules are enforced before generating events
-- Exceptions are thrown when commands are invalid
+- Exceptions are thrown when commands are invalid, with proper parameter names
+- Input validation ensures data integrity
 
 ### Event Application
 
-- Events are generated using the `RaiseEvent` method
+- Events are generated using the `Apply` method (not `RaiseEvent` in newer versions)
 - Each event type has a corresponding `Apply` method
 - The `Apply` method updates the aggregate state based on the event
+- Events include timestamps for auditing and temporal queries
 
 ## Best Practices
 
-1. **Keep Aggregates Small**: Focus on a single business concept
-2. **Validate Commands**: Ensure all commands are valid before generating events
-3. **Immutable Events**: Make all event properties read-only
-4. **Private State**: Keep aggregate state private and expose it through controlled methods
-5. **Descriptive Event Names**: Use past tense for event names (e.g., `AccountCreated`, `FundsDeposited`)
-6. **Correlation Support**: Implement constructors that support correlation tracking
+1. **Keep Aggregates Small**: Focus on a single business concept and its invariants
+2. **Use Strong Typing**: Specify the ID type parameter in `AggregateRoot<TId>`
+3. **Validate Commands Thoroughly**: Check all preconditions and input parameters
+4. **Immutable Events**: Make all event properties read-only and mark events as `[Serializable]`
+5. **Include Timestamps**: Add creation timestamps to events for auditing
+6. **Implement Snapshots**: For aggregates with many events, implement snapshot support
+7. **Proper Correlation**: Use `ICorrelatedMessage` for tracking message chains
+8. **Descriptive Naming**: Use past tense for events and imperative for commands
 
 ## Common Pitfalls
 
-1. **Large Aggregates**: Avoid creating aggregates that are too large or contain too many responsibilities
-2. **Public State Modification**: Don't allow direct modification of aggregate state from outside
-3. **Missing Business Rules**: Ensure all business rules are enforced in command methods
-4. **Complex Apply Methods**: Keep event handlers simple and focused on updating state
-5. **Side Effects in Apply Methods**: Avoid side effects like I/O operations in Apply methods
+1. **Missing Default Constructor**: Forgetting the parameter-less constructor required for deserialization
+2. **Mutable State**: Exposing setters for aggregate state
+3. **Business Logic in Event Handlers**: Keep business logic in command methods, not in Apply methods
+4. **Side Effects in Apply Methods**: Avoid I/O, external calls, or generating new events in Apply methods
+5. **Overly Complex Aggregates**: Trying to model too many concepts in a single aggregate
+6. **Inconsistent Validation**: Not validating all inputs or checking all business rules
+7. **Ignoring Correlation**: Not properly maintaining correlation chains across messages
 
 ---
 
