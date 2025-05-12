@@ -137,7 +137,7 @@ public class Account : AggregateRoot
     public Account(Guid id, ICorrelatedMessage source) : base(id)
     {
         // Create and raise the AccountCreated event
-        RaiseEvent(MessageBuilder.From(source, () => new AccountCreated(
+        RaiseEvent(MessageBuilder.From(source).Build(() => new AccountCreated(
             id, 
             "ACC-" + id.ToString().Substring(0, 8), 
             "New Customer"
@@ -159,7 +159,7 @@ public class Account : AggregateRoot
             throw new ArgumentException("Amount must be positive", nameof(amount));
             
         // Create and raise the FundsDeposited event
-        RaiseEvent(MessageBuilder.From(source, () => new FundsDeposited(Id, amount)));
+        RaiseEvent(MessageBuilder.From(source).Build(() => new FundsDeposited(Id, amount)));
     }
     
     // Event handler for FundsDeposited
