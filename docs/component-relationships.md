@@ -42,16 +42,16 @@ graph TD
 
 ```mermaid
 graph TD
-    IEventSource[IEventSource] <|-- AggregateRoot[AggregateRoot]
-    ICorrelatedMessage[ICorrelatedMessage] <|-- Command[Command]
-    ICorrelatedMessage <|-- Event[Event]
-    IRepository[IRepository] <|-- StreamStoreRepository[StreamStoreRepository]
-    ICorrelatedRepository[ICorrelatedRepository] <|-- CorrelatedStreamStoreRepository[CorrelatedStreamStoreRepository]
-    ICorrelatedRepository --|extends|> IRepository
-    IEventBus[IEventBus] <|-- EventBus[EventBus]
-    ICommandBus[ICommandBus] <|-- CommandBus[CommandBus]
-    IEventProcessor[IEventProcessor] <|-- EventProcessor[EventProcessor]
-    ICheckpointStore[ICheckpointStore] <|-- CheckpointStore[CheckpointStore]
+    IEventSource[IEventSource] --> AggregateRoot[AggregateRoot]
+    ICorrelatedMessage[ICorrelatedMessage] --> Command[Command]
+    ICorrelatedMessage --> Event[Event]
+    IRepository[IRepository] --> StreamStoreRepository[StreamStoreRepository]
+    ICorrelatedRepository[ICorrelatedRepository] --> CorrelatedStreamStoreRepository[CorrelatedStreamStoreRepository]
+    ICorrelatedRepository --> IRepository
+    IEventBus[IEventBus] --> EventBus[EventBus]
+    ICommandBus[ICommandBus] --> CommandBus[CommandBus]
+    IEventProcessor[IEventProcessor] --> EventProcessor[EventProcessor]
+    ICheckpointStore[ICheckpointStore] --> CheckpointStore[CheckpointStore]
     
     style IEventSource fill:#f9f,stroke:#333,stroke-width:2px
     style ICorrelatedMessage fill:#bbf,stroke:#333,stroke-width:2px
