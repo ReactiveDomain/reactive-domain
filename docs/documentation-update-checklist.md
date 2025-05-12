@@ -30,9 +30,9 @@
 - [x] Update stream naming conventions if different
 
 ## 5. CQRS Implementation
-- [ ] Verify separation of command and query models
-- [ ] Update projection examples based on actual usage
-- [ ] Check read model implementation patterns
+- [x] Verify separation of command and query models
+- [x] Update projection examples based on actual usage
+- [x] Check read model implementation patterns
 - [ ] Ensure query handling examples match actual usage
 - [ ] Verify event subscription mechanisms
 
