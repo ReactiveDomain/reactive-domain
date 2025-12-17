@@ -55,7 +55,7 @@ namespace ReactiveDomain.Messaging.Tests {
         private CancellationTokenSource _tokenSource2;
         private TestTokenCancellableCmd _cmd1;
         private TestTokenCancellableCmd _cmd2;
-        private readonly Dispatcher _bus = new Dispatcher("test", 3);
+        private readonly Dispatcher _bus = new("test", 3);
         private long _releaseCmd;
         private long _gotCmd;
         private Guid _canceled;
@@ -86,8 +86,7 @@ namespace ReactiveDomain.Messaging.Tests {
             SpinWait.SpinUntil(() => Interlocked.Read(ref _releaseCmd) == 1, 5000);
             if (cmd.IsCanceled) {
                 _canceled = cmd.MsgId;
-            }
-            else {
+            } else {
                 _succeeded = cmd.MsgId;
             }
             Interlocked.Increment(ref _completed);
@@ -98,19 +97,17 @@ namespace ReactiveDomain.Messaging.Tests {
     public class can_cancel_commands_via_cancellation_token :
         IHandleCommand<TestTokenCancellableCmd>,
         IHandleCommand<TestTokenCancellableLongRunningCmd> {
-        private readonly IDispatcher _bus;
+        private readonly Dispatcher _bus = new(
+            nameof(can_cancel_nested_commands_via_cancellation_token),
+            3,
+            false,
+            TimeSpan.FromSeconds(2.5),
+            TimeSpan.FromSeconds(2.5));
         private long _canceled;
         private long _success;
         private long _gotCmd;
         CancellationTokenSource _tokenSource;
-        public can_cancel_commands_via_cancellation_token() {
-            _bus = new Dispatcher(
-                nameof(can_cancel_nested_commands_via_cancellation_token),
-                3,
-                false,
-                TimeSpan.FromSeconds(2.5),
-                TimeSpan.FromSeconds(2.5));
-        }
+
         [Fact]
         public void will_succeed_if_not_canceled() {
 
@@ -151,8 +148,7 @@ namespace ReactiveDomain.Messaging.Tests {
             if (command.IsCanceled) {
                 Interlocked.Exchange(ref _canceled, 1);
                 return command.Fail();
-            }
-            else {
+            } else {
                 Interlocked.Exchange(ref _success, 1);
                 return command.Succeed();
             }
@@ -207,12 +203,11 @@ namespace ReactiveDomain.Messaging.Tests {
         public CommandResponse Handle(TestTokenCancellableCmd command) {
 
             Interlocked.Increment(ref _gotCmd);
-            var nestedCommand = new NestedTestTokenCancellableCmd(command.CancellationToken.Value);
+            var nestedCommand = new NestedTestTokenCancellableCmd(command.CancellationToken);
             if (_cancelFirst) {
                 TokenSource.Cancel(); //global cancel
                 _bus.Send(nestedCommand); // a pre canceled command will just return
-            }
-            else {
+            } else {
                 AssertEx.CommandThrows<CommandCanceledException>(
                     () => {
                         _bus.Send(nestedCommand);
@@ -233,8 +228,8 @@ namespace ReactiveDomain.Messaging.Tests {
         public TokenCancellableCmdHandler(int maxTimeoutMs = 5000) {
             _maxTimeout = TimeSpan.FromMilliseconds(maxTimeoutMs);
         }
-        public ReadOnlyDictionary<Guid, ManualResetEventSlim> ParkedMessages => new ReadOnlyDictionary<Guid, ManualResetEventSlim>(_parkedMessages);
-        private readonly Dictionary<Guid, ManualResetEventSlim> _parkedMessages = new Dictionary<Guid, ManualResetEventSlim>();
+        public ReadOnlyDictionary<Guid, ManualResetEventSlim> ParkedMessages => new(_parkedMessages);
+        private readonly Dictionary<Guid, ManualResetEventSlim> _parkedMessages = new();
         public CommandResponse Handle(TestTokenCancellableCmd command) {
             var start = DateTime.Now;
             var release = new ManualResetEventSlim();
@@ -253,27 +248,13 @@ namespace ReactiveDomain.Messaging.Tests {
             return command.Fail(new TimeoutException());
         }
     }
-    public class TestTokenCancellableCmd : Command {
-       
-        public readonly bool RequestFail;
-        public TestTokenCancellableCmd(
-            bool requestFail,
-            CancellationToken cancellationToken) :
-            base(cancellationToken) {
-            RequestFail = requestFail;
-        }
-    }
-    public class TestTokenCancellableLongRunningCmd : Command {
-        public readonly bool RequestFail;
-        public TestTokenCancellableLongRunningCmd(
-            bool requestFail,
-            CancellationToken cancellationToken) :
-            base(cancellationToken) {
-            RequestFail = requestFail;
-        }
-    }
-    public class NestedTestTokenCancellableCmd : Command {      
-        public NestedTestTokenCancellableCmd( CancellationToken cancellationToken) : base( cancellationToken) {
-        }
-    }
+    public record TestTokenCancellableCmd(
+        bool RequestFail,
+        CancellationToken? CancellationToken)
+        : Command(CancellationToken);
+    public record TestTokenCancellableLongRunningCmd(
+        bool RequestFail,
+        CancellationToken? CancellationToken)
+        : Command(CancellationToken);
+    public record NestedTestTokenCancellableCmd(CancellationToken? CancellationToken) : Command(CancellationToken);
 }

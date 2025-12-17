@@ -1,41 +1,18 @@
 ﻿using System;
 using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging
-{
-    public abstract class CommandResponse : Message, ICorrelatedMessage, ICommandResponse
-    {
-        public Guid CorrelationId { get; set; }
-        public Guid CausationId { get; set; }
+namespace ReactiveDomain.Messaging;
 
-        public ICommand SourceCommand { get; }
-        public Type CommandType => SourceCommand.GetType();
-        public Guid CommandId => SourceCommand.MsgId;
+public abstract record CommandResponse(ICommand SourceCommand) : Message, ICorrelatedMessage, ICommandResponse {
+    public Guid CorrelationId { get; set; } = SourceCommand.CorrelationId;
+    public Guid CausationId { get; set; } = SourceCommand.MsgId;
 
-        protected CommandResponse(ICommand sourceCommand)
-        {
-            CorrelationId = sourceCommand.CorrelationId;
-            CausationId = sourceCommand.MsgId;
-            SourceCommand = sourceCommand;
-        }
-    }
-
-    public class Success : CommandResponse
-    {
-        public Success(ICommand sourceCommand) : base(sourceCommand) {}
-    }
-
-    public class Fail : CommandResponse
-    {
-        public Exception Exception { get; }
-        public Fail(ICommand sourceCommand, Exception exception) : base(sourceCommand) 
-        {
-            Exception = exception;
-        }
-    }
-
-    public class Canceled : Fail
-    {
-        public Canceled(ICommand sourceCommand) : base(sourceCommand, new CommandCanceledException(sourceCommand)) { }
-    }
+    public Type CommandType => SourceCommand.GetType();
+    public Guid CommandId => SourceCommand.MsgId;
 }
+
+public record Success(ICommand SourceCommand) : CommandResponse(SourceCommand);
+
+public record Fail(ICommand SourceCommand, Exception Exception) : CommandResponse(SourceCommand);
+
+public record Canceled(ICommand SourceCommand) : Fail(SourceCommand, new CommandCanceledException(SourceCommand));

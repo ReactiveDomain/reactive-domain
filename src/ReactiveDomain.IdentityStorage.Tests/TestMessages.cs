@@ -1,10 +1,7 @@
 ﻿using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.IdentityStorage.Tests
-{
-    class TestMessages
-    {
-        public class RootCommand : Command
-        { }
-    }
+namespace ReactiveDomain.IdentityStorage.Tests;
+
+class TestMessages {
+    public record RootCommand : Command;
 }

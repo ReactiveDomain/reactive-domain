@@ -1,51 +1,44 @@
 ﻿using Xunit;
 
-namespace ReactiveDomain.Messaging.Tests
-{
-    public class MessageExtensionsTests
-    {
-        [Fact]
-        public void can_write_and_read_metadatum()
-        {
-            var metadatum = new CustomMetadata { Data = "Test" };
-            var message = new TestEvent();
-            message.WriteMetadatum(metadatum);
+namespace ReactiveDomain.Messaging.Tests;
 
-            var md = message.ReadMetadatum<CustomMetadata>();
-            Assert.Equal(metadatum.Data, md.Data);
-        }
+public class MessageExtensionsTests {
+    [Fact]
+    public void can_write_and_read_metadatum() {
+        var metadatum = new CustomMetadata { Data = "Test" };
+        var message = new TestEvent();
+        message.WriteMetadatum(metadatum);
 
-        [Fact]
-        public void read_metadatum_throws_if_not_found()
-        {
-            var message = new TestEvent();
-            Assert.Throws<MetadatumNotFoundException>(() => message.ReadMetadatum<CustomMetadata>());
-        }
+        var md = message.ReadMetadatum<CustomMetadata>();
+        Assert.Equal(metadatum.Data, md.Data);
+    }
 
-        [Fact]
-        public void can_try_read_metadatum()
-        {
-            var metadatum = new CustomMetadata { Data = "Test" };
-            var message = new TestEvent();
-            message.WriteMetadatum(metadatum);
+    [Fact]
+    public void read_metadatum_throws_if_not_found() {
+        var message = new TestEvent();
+        Assert.Throws<MetadatumNotFoundException>(() => message.ReadMetadatum<CustomMetadata>());
+    }
 
-            Assert.True(message.TryReadMetadatum<CustomMetadata>(out var md));
-            Assert.Equal(metadatum.Data, md.Data);
-        }
+    [Fact]
+    public void can_try_read_metadatum() {
+        var metadatum = new CustomMetadata { Data = "Test" };
+        var message = new TestEvent();
+        message.WriteMetadatum(metadatum);
 
-        [Fact]
-        public void try_read_metadatum_reports_if_not_found()
-        {
-            var message = new TestEvent();
-            Assert.False(message.TryReadMetadatum<CustomMetadata>(out var md));
-            Assert.Equal(default, md);
-        }
+        Assert.True(message.TryReadMetadatum<CustomMetadata>(out var md));
+        Assert.Equal(metadatum.Data, md.Data);
+    }
 
-        public class TestEvent : Event { }
+    [Fact]
+    public void try_read_metadatum_reports_if_not_found() {
+        var message = new TestEvent();
+        Assert.False(message.TryReadMetadatum<CustomMetadata>(out var md));
+        Assert.Null(md);
+    }
 
-        public class CustomMetadata
-        {
-            public string Data;
-        }
+    public record TestEvent : Event;
+
+    public class CustomMetadata {
+        public string Data;
     }
 }

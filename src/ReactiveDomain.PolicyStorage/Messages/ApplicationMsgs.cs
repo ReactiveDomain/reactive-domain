@@ -1,290 +1,140 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Policy.Messages
-{
+namespace ReactiveDomain.Policy.Messages;
+
+/// <summary>
+/// Messages for the Application domain.
+/// </summary>
+public class ApplicationMsgs {
     /// <summary>
-    /// Messages for the Application domain.
+    /// Create a new application aggregate.
     /// </summary>
-    public class ApplicationMsgs
-    {
-        /// <summary>
-        /// Create a new application aggregate.
-        /// </summary>
-        public class CreateApplication : Command
-        {
-            /// <summary>The unique ID of the new application.</summary>
-            public readonly Guid ApplicationId;
-            /// <summary>The unique ID of the default policy that is to be created along with the secured application.</summary>
-            public readonly Guid DefaultPolicyId;
-            /// <summary>Application name</summary>
-            public readonly string Name;
-            /// <summary>Security model version</summary>
-            public readonly string SecurityModelVersion;
-            /// <summary>If true, each user may only have a single role.</summary>
-            public readonly bool OneRolePerUser;
+    /// <param name="ApplicationId">The unique ID of the new application.</param>
+    /// <param name="DefaultPolicyId">The unique ID of the default policy that is to be created along with the secured application.</param>
+    /// <param name="Name">Application name.</param>
+    /// <param name="SecurityModelVersion">The version of security model that applies to this application.</param>
+    /// <param name="OneRolePerUser">If true, each user may only have a single role.</param>
+    public record CreateApplication(
+        Guid ApplicationId,
+        Guid DefaultPolicyId,
+        string Name,
+        string SecurityModelVersion,
+        bool OneRolePerUser) : Command;
 
-            /// <summary>
-            /// Register a new application.
-            /// </summary>
-            /// <param name="applicationId">The unique ID of the new application.</param>
-            /// <param name="defaultPolicyId">The unique ID of the default policy that is to be created along with the secured application.</param>
-            /// <param name="name">Application name.</param>
-            /// <param name="securityModelVersion">Security model version</param>
-            /// <param name="oneRolePerUser">If true, each user may only have a single role.</param>
-            public CreateApplication(
-                Guid applicationId,
-                Guid defaultPolicyId,
-                string name,
-                string securityModelVersion,
-                bool oneRolePerUser)
-            {
-                ApplicationId = applicationId;
-                DefaultPolicyId = defaultPolicyId;
-                Name = name;
-                SecurityModelVersion = securityModelVersion;
-                OneRolePerUser = oneRolePerUser;
-            }
-        }
+    /// <summary>
+    /// A new application has been registered.
+    /// </summary>
+    /// <param name="ApplicationId">The unique ID of the new application.</param>
+    /// <param name="Name">The application name.</param>
+    /// <param name="SecurityModelVersion">The version of the application's security model.</param>
+    /// <param name="OneRolePerUser">If true, each user may only have a single role.</param>
+    public record ApplicationCreated(
+        Guid ApplicationId,
+        string Name,
+        string SecurityModelVersion,
+        bool OneRolePerUser) : Event;
 
-        /// <summary>
-        /// Application Created.
-        /// </summary>
-        public class ApplicationCreated : Event
-        {
-            /// <summary>The unique ID of the new application.</summary>
-            public readonly Guid ApplicationId;
+    /// <summary>
+    /// Indicate that an application is no longer in use.
+    /// </summary>
+    /// <param name="Id">The unique ID of the application to be retired.</param>
+    public record RetireApplication(Guid Id) : Command;
 
-            /// <summary> Application name</summary>
-            public readonly string Name;
+    /// <summary>
+    /// Indicates that an application is no longer in use.
+    /// </summary>
+    /// <param name="Id">The unique ID of the application that has been retired.</param>
+    public record ApplicationRetired(Guid Id) : Event;
 
-            /// <summary> Application name</summary>
-            public readonly string SecurityModelVersion;
+    /// <summary>
+    /// Put a retired application back in use.
+    /// </summary>
+    /// <param name="Id">The unique ID of the application to be returned to use.</param>
+    public record UnretireApplication(Guid Id) : Command;
 
-            /// <summary>If true, each user may only have a single role.</summary>
-            public readonly bool OneRolePerUser;
+    /// <summary>
+    /// Indicates that an application has been returned to use.
+    /// </summary>
+    /// <param name="Id">The unique ID of the application that has been returned to use.</param>
+    public record ApplicationUnretired(Guid Id) : Event;
 
-            /// <summary>
-            /// Register a new application.
-            /// </summary>
-            /// <param name="applicationId">The unique ID of the new application.</param>
-            /// <param name="name">The application name.</param>
-            /// <param name="securityModelVersion">The version of the application's security model.</param>
-            /// <param name="oneRolePerUser">If true, each user may only have a single role.</param>
-            public ApplicationCreated(
-                Guid applicationId,
-                string name,
-                string securityModelVersion,
-                bool oneRolePerUser)
-            {
-                ApplicationId = applicationId;
-                Name = name;
-                SecurityModelVersion = securityModelVersion;
-                OneRolePerUser = oneRolePerUser;
-            }
-        }
+    /// <summary>
+    /// Creates a new policy.
+    /// </summary>
+    /// <param name="PolicyId">The unique ID of the policy.</param>
+    /// <param name="ClientId">The unique ID of the client to which the policy applies.</param>
+    /// <param name="ApplicationId">The unique ID of the application to which the policy applies.</param>
+    public record CreatePolicy(
+        Guid PolicyId,
+        string ClientId,
+        Guid ApplicationId)
+        : Command;
 
-        /// <summary>
-        /// Indicate that an application is no longer in use.
-        /// </summary>
-        public class RetireApplication : Command
-        {
-            /// <summary>The unique ID of the application to be retired.</summary>
-            public Guid Id;
+    /// <summary>
+    /// A new policy is created.
+    /// </summary>
+    /// <param name="PolicyId">The unique ID of the policy.</param>
+    /// <param name="ClientId">The unique ID of the client to which the policy applies.</param>
+    /// <param name="ApplicationId">The unique ID of the application to which the policy applies.</param>
+    public record PolicyCreated(
+        Guid PolicyId,
+        string ClientId,
+        Guid ApplicationId,
+        bool OneRolePerUser)
+        : Event;
 
-            /// <summary>
-            /// Indicate that an application is no longer in use.
-            /// </summary>
-            /// <param name="id">The unique ID of the application to be retired.</param>
-            public RetireApplication(Guid id)
-            {
-                Id = id;
-            }
-        }
+    /// <summary>
+    /// Create a new Role.
+    /// </summary>
+    /// <param name="RoleId">The unique ID of the new role.</param>
+    /// <param name="Name">The name of the role.</param>
+    /// <param name="PolicyId">The policy this role applies to.</param>
+    /// <param name="AppId">The application this role applies to.</param>
+    public record CreateRole(
+        Guid? RoleId,
+        string Name,
+        Guid PolicyId,
+        Guid AppId) : Command;
 
-        /// <summary>
-        /// Indicates that an application is no longer in use.
-        /// </summary>
-        public class ApplicationRetired : Event
-        {
-            /// <summary>The unique ID of the application that has been retired.</summary>
-            public Guid Id;
-
-            /// <summary>
-            /// Indicates that an application is no longer in use.
-            /// </summary>
-            /// <param name="id">The unique ID of the application that has been retired.</param>
-            public ApplicationRetired(Guid id)
-            {
-                Id = id;
-            }
-        }
-
-        /// <summary>
-        /// Put a retired application back in use.
-        /// </summary>
-        public class UnretireApplication : Command
-        {
-            /// <summary>The unique ID of the application to be returned to use.</summary>
-            public Guid Id;
-
-            /// <summary>
-            /// Put a retired application back in use.
-            /// </summary>
-            /// <param name="id">The unique ID of the application to be returned to use.</param>
-            public UnretireApplication(Guid id)
-            {
-                Id = id;
-            }
-        }
-
-        /// <summary>
-        /// Indicates that an application has been returned to use.
-        /// </summary>
-        public class ApplicationUnretired : Event
-        {
-            /// <summary>The unique ID of the application that has been returned to use.</summary>
-            public Guid Id;
-
-            /// <summary>
-            /// Indicates that an application has been returned to use.
-            /// </summary>
-            /// <param name="id">The unique ID of the application that has been returned to use.</param>
-            public ApplicationUnretired(Guid id)
-            {
-                Id = id;
-            }
-        }
-
-        public class CreatePolicy : Command
-        {
-            public readonly Guid PolicyId;
-            public readonly string ClientId;
-            public readonly Guid ApplicationId;
-
-            public CreatePolicy(
-                Guid policyId,
-                string clientId,
-                Guid applicationId)
-            {
-                PolicyId = policyId;
-                ClientId = clientId;
-                ApplicationId = applicationId;
-            }
-        }
-
-        public class PolicyCreated : Event
-        {
-            public readonly Guid PolicyId;
-            public readonly string ClientId;
-            public readonly Guid ApplicationId;
-            public readonly bool OneRolePerUser;
-
-            public PolicyCreated(
-                Guid policyId,
-                string clientId,
-                Guid applicationId,
-                bool oneRolePerUser)
-            {
-                PolicyId = policyId;
-                ClientId = clientId;
-                ApplicationId = applicationId;
-                OneRolePerUser = oneRolePerUser;
-            }
-        }
-        /// <summary>
-        /// Create a new Role.
-        /// </summary>
-        public class CreateRole : Command
-        {
-            /// <summary>The unique ID of the new role.</summary>
-            public readonly Guid? RoleId;
-            /// <summary>The name of the role.</summary>
-            public readonly string Name;
-            /// <summary>The policy this role applies to.</summary>
-            public readonly Guid PolicyId;
-            /// <summary>The application this role applies to.</summary>
-            public readonly Guid AppId;
-
-            /// <summary>
-            /// Create a new Role.
-            /// </summary>
-            public CreateRole(
-                Guid? roleId,
-                string name,
-                Guid policyId,
-                Guid appId)
-            {
-                RoleId = roleId;
-                Name = name;
-                PolicyId = policyId;
-                AppId = appId;
-            }
-
-        }
+    /// <summary>
+    /// A new role was created.
+    /// </summary>
+    public record RoleCreated : Event {
+        /// <summary>The unique ID of the new role.</summary>
+        public readonly Guid RoleId;
+        /// <summary>The name of the role.</summary>
+        public readonly string Name;
+        /// <summary>The policy this role applies to.</summary>
+        public readonly Guid PolicyId;
 
         /// <summary>
         /// A new role was created.
         /// </summary>
-        public class RoleCreated : Event
-        {
-            /// <summary>The unique ID of the new role.</summary>
-            public readonly Guid RoleId;
-            /// <summary>The name of the role.</summary>
-            public readonly string Name;
-            /// <summary>The policy this role applies to.</summary>
-            public readonly Guid PolicyId;
-
-            /// <summary>
-            /// A new role was created.
-            /// </summary>
-            public RoleCreated(
-                Guid roleId,
-                string name,
-                Guid policyId)
-            {
-                RoleId = roleId;
-                Name = name;
-                PolicyId = policyId;
-            }
+        public RoleCreated(
+            Guid roleId,
+            string name,
+            Guid policyId) {
+            RoleId = roleId;
+            Name = name;
+            PolicyId = policyId;
         }
-        /// <summary>
-        /// Add a client registration for the token server
-        /// </summary>
-        public class AddClientRegistration : Command
-        {
-            /// <summary>The unique ID of the added client.</summary>
-            public readonly Guid ClientId;
-            /// <summary>The Application Id.</summary>
-            public readonly Guid ApplicationId;
-
-            public AddClientRegistration(
-                Guid clientId,
-                Guid applicationId)
-            {
-                ClientId = clientId;
-                ApplicationId = applicationId;
-            }
-        }
-
-        /// <summary>
-        /// Client registration for the token server Added
-        /// </summary>
-        public class ClientRegistrationAdded : Event
-        {
-            /// <summary>The unique ID of the added client.</summary>
-            public readonly Guid ClientId;
-            /// <summary>The Application Id.</summary>
-            public readonly Guid ApplicationId;
-          
-            public ClientRegistrationAdded(
-                Guid clientId,               
-                Guid applicationId)
-            {
-                ClientId = clientId;
-                ApplicationId = applicationId;
-            }
-        }
-
     }
+    /// <summary>
+    /// Add a client registration for the token server
+    /// </summary>
+    /// <param name="ClientId">The unique ID of the added client.</param>
+    /// <param name="ApplicationId">The Application ID.</param>
+    public record AddClientRegistration(
+        Guid ClientId,
+        Guid ApplicationId) : Command;
+
+    /// <summary>
+    /// Client registration for the token server Added
+    /// </summary>
+    /// <param name="ClientId">The unique ID of the added client.</param>
+    /// <param name="ApplicationId">The Application ID.</param>
+    public record ClientRegistrationAdded(
+        Guid ClientId,
+        Guid ApplicationId) : Event;
 }

@@ -63,6 +63,6 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
             }
 
         }
-        public class EventProjectionTestEvent : Event { }
+        public record EventProjectionTestEvent : Event;
     }
 }

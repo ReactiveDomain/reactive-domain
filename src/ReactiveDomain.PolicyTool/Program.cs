@@ -249,7 +249,7 @@ namespace PolicyTool
                     }
                     if (mainBus.TrySend(new UserMsgs.AddClientScope(userId, app), out _))
                     {
-                        var root = new CorrelatedRoot();
+                        var root = new RDMsg.CorrelatedRoot();
                         Console.WriteLine($"Access to {app} added;");
                         var policy = appRm.GetPolicies(app).First(); //There should only be one as multiple policies is not currently supported
                         if (policy.Users.Lookup(userId).HasValue)
