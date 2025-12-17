@@ -1,30 +1,18 @@
 ﻿using ReactiveDomain.Messaging;
 using System;
 
-// ReSharper disable MemberCanBeProtected.Global
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing {
+namespace ReactiveDomain.Testing;
 
-    public class TestMessage : Message {}
-    public class TestMessage2 : Message {}
-    public class TestMessage3 : Message {}
-    public class ParentTestMessage : Message {}
-    public class ChildTestMessage : ParentTestMessage {}
-    public class GrandChildTestMessage : ChildTestMessage {}
-    public class CountedTestMessage : Message
-    {
-        public int MessageNumber;
-        public CountedTestMessage(int msgNumber) {
-            MessageNumber = msgNumber;
-        }
-    }
+public record TestMessage : Message;
+public record TestMessage2 : Message;
+public record TestMessage3 : Message;
+public record ParentTestMessage : Message;
+public record ChildTestMessage : ParentTestMessage;
+public record GrandChildTestMessage : ChildTestMessage;
+public record CountedTestMessage(int MessageNumber) : Message;
 
-    public class CountedEvent : Message, ICorrelatedMessage {
-        public Guid CorrelationId { get; set; }
-        public Guid CausationId { get; set; }
-        public int MessageNumber;
-        public CountedEvent(int msgNumber) {
-            MessageNumber = msgNumber;
-        }
-    }
+public record CountedEvent(int MessageNumber) : Message, ICorrelatedMessage {
+    public Guid CorrelationId { get; set; }
+    public Guid CausationId { get; set; }
 }

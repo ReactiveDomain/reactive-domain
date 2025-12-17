@@ -1,16 +1,10 @@
-﻿using Newtonsoft.Json;
-using ReactiveDomain.Messaging;
-using System;
+﻿using ReactiveDomain.Messaging;
 
 // ReSharper disable MemberCanBeProtected.Global
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing
-{
-    public class TestEvent : Event { }
-    public class ParentTestEvent : Message { }
-    public class ChildTestEvent : ParentTestEvent { }
-    public class GrandChildTestEvent : ChildTestEvent { }
+namespace ReactiveDomain.Testing;
 
-
-}
-
+public record TestEvent : Event;
+public record ParentTestEvent : Message;
+public record ChildTestEvent : ParentTestEvent;
+public record GrandChildTestEvent : ChildTestEvent;

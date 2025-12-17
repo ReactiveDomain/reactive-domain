@@ -1,200 +1,73 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.IdentityStorage.Messages
-{
-    public class SubjectMsgs
-    {
-        /// <summary>
-        /// A new user login tracker was created.
-        /// </summary>
-        public class SubjectCreated : Event
-        {
-            /// <summary>The unique Id of the login identity subject.</summary>
-            public readonly Guid SubjectId;
+namespace ReactiveDomain.IdentityStorage.Messages;
 
-            /// <summary>The unique Id of the user.</summary>
-            public readonly Guid UserId;
+public class SubjectMsgs {
+    /// <summary>
+    /// A new user login tracker was created.
+    /// </summary>
+    ///  <param name="SubjectId">The unique ID of the login identity subject.</param>
+    ///  <param name="UserId">The unique ID of the user.</param>
+    ///  <param name="SubClaim">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
+    ///  <param name="AuthProvider">The identity provider.</param>
+    ///  <param name="AuthDomain">The user's domain.</param>
+    public record SubjectCreated(
+        Guid SubjectId,
+        Guid UserId,
+        string SubClaim,
+        string AuthProvider,
+        string AuthDomain) : Event;
 
-            /// <summary>The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</summary>
-            public readonly string SubClaim;
+    /// <summary>
+    /// A user was successfully authenticated.
+    /// </summary>
+    /// <param name="SubjectId">The ID of the authenticated user.</param>
+    /// <param name="TimeStamp">The date and time in UTC when the authentication was logged.</param>
+    /// <param name="HostIpAddress">The IP address of the host asking for authentication.</param>
+    /// <param name="ClientId">The ClientId of the application asking for authentication.</param>
+    public record Authenticated(
+        Guid SubjectId,
+        DateTime TimeStamp,
+        string HostIpAddress,
+        string ClientId) : Event;
 
-            /// <summary>The identity provider.</summary>
-            public readonly string AuthProvider;
+    /// <summary>
+    /// A user was not successfully authenticated because account is locked.
+    /// </summary>
+    /// <param name="SubjectId">The ID of the not authenticated user.</param>
+    /// <param name="TimeStamp">The date and time in UTC when the authentication attempt was logged.</param>
+    /// <param name="HostIpAddress">The IP address of the host asking for authentication.</param>
+    /// <param name="ClientId">The ClientId of the application asking for authentication.</param>
+    public record AuthenticationFailedAccountLocked(
+        Guid SubjectId,
+        DateTime TimeStamp,
+        string HostIpAddress,
+        string ClientId) : Event;
 
-            /// <summary>The user's domain.</summary>
-            public readonly string AuthDomain;
+    /// <summary>
+    /// A user was not successfully authenticated because account is disabled.
+    /// </summary>
+    /// <param name="SubjectId">The ID of the not authenticated user.</param>
+    /// <param name="TimeStamp">The date and time in UTC when the authentication attempt was logged.</param>
+    /// <param name="HostIpAddress">The IP address of the host asking for authentication.</param>
+    /// <param name="ClientId">The ClientId of the application asking for authentication.</param>
+    public record AuthenticationFailedAccountDisabled(
+        Guid SubjectId,
+        DateTime TimeStamp,
+        string HostIpAddress,
+        string ClientId) : Event;
 
-            ///  <summary>
-            ///  A new user was created.
-            ///  </summary>
-            ///  <param name="subjectId">The unique ID of the login identity subject.</param>
-            ///  <param name="userId">The unique Id of the user.</param>
-            ///  <param name="subClaim">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
-            ///  <param name="authProvider">The identity provider.</param>
-            ///  <param name="authDomain">The user's domain.</param>
-            public SubjectCreated(
-                Guid subjectId,
-                Guid userId,
-                string subClaim,
-                string authProvider,
-                string authDomain)
-            {
-                SubjectId = subjectId;
-                UserId = userId;
-                SubClaim = subClaim;
-                AuthProvider = authProvider;
-                AuthDomain = authDomain;
-            }
-        }
-
-        /// <summary>
-        /// A user was successfully authenticated.
-        /// </summary>
-        public class Authenticated : Event
-        {
-            /// <summary>The ID of the authenticated user.</summary>
-            public readonly Guid SubjectId;
-
-            /// <summary>The date and time in UTC when the authentication was logged.</summary>
-            public readonly DateTime TimeStamp;
-
-            /// <summary>The IP address of the host asking for authentication.</summary>
-            public readonly string HostIpAddress;
-
-            /// <summary>The ClientId of the application asking for authentication.</summary>
-            public readonly string ClientId;
-
-            /// <summary>
-            /// A user was successfully authenticated.
-            /// </summary>
-            /// <param name="subjectId">The ID of the authenticated user.</param>
-            /// <param name="timeStamp">The date and time in UTC when the authentication was logged.</param>
-            /// <param name="hostIpAddress">The IP address of the host asking for authentication.</param>
-            /// <param name="clientId">The ClientId of the application asking for authentication.</param>
-            public Authenticated(
-                Guid subjectId,
-                DateTime timeStamp,
-                string hostIpAddress,
-                string clientId)
-            {
-                SubjectId = subjectId;
-                TimeStamp = timeStamp;
-                HostIpAddress = hostIpAddress;
-                ClientId = clientId;
-            }
-        }
-
-        /// <summary>
-        /// A user was not successfully authenticated because account is locked.
-        /// </summary>
-        public class AuthenticationFailedAccountLocked : Event
-        {
-            /// <summary>The ID of the not authenticated user.</summary>
-            public readonly Guid SubjectId;
-
-            /// <summary>The date and time in UTC when the authentication was logged.</summary>
-            public readonly DateTime TimeStamp;
-
-            /// <summary>The IP address of the host asking for authentication.</summary>
-            public readonly string HostIpAddress;
-
-            /// <summary>The ClientId of the application asking for authentication.</summary>
-            public readonly string ClientId;
-
-            /// <summary>
-            /// A user was not successfully authenticated because account is locked.
-            /// </summary>
-            /// <param name="subjectId">The ID of the not authenticated user.</param>
-            /// <param name="timeStamp">The date and time in UTC when the authentication attempt was logged.</param>
-            /// <param name="hostIpAddress">The IP address of the host asking for authentication.</param>
-            /// <param name="clientId">The ClientId of the application asking for authentication.</param>
-            public AuthenticationFailedAccountLocked(
-                Guid subjectId,
-                DateTime timeStamp,
-                string hostIpAddress,
-                string clientId)
-            {
-                SubjectId = subjectId;
-                TimeStamp = timeStamp;
-                HostIpAddress = hostIpAddress;
-                ClientId = clientId;
-            }
-        }
-
-        /// <summary>
-        /// A user was not successfully authenticated because account is disabled.
-        /// </summary>
-        public class AuthenticationFailedAccountDisabled : Event
-        {
-            /// <summary>The ID of the not authenticated user.</summary>
-            public readonly Guid SubjectId;
-
-            /// <summary>The date and time in UTC when the authentication was logged.</summary>
-            public readonly DateTime TimeStamp;
-
-            /// <summary>The IP address of the host asking for authentication.</summary>
-            public readonly string HostIpAddress;
-
-            /// <summary>The ClientId of the application asking for authentication.</summary>
-            public readonly string ClientId;
-
-            /// <summary>
-            /// A user was not successfully authenticated because account is disabled.
-            /// </summary>
-            /// <param name="subjectId">The ID of the not authenticated user.</param>
-            /// <param name="timeStamp">The date and time in UTC when the authentication attempt was logged.</param>
-            /// <param name="hostIpAddress">The IP address of the host asking for authentication.</param>
-            /// <param name="clientId">The ClientId of the application asking for authentication.</param>
-            public AuthenticationFailedAccountDisabled(
-                Guid subjectId,
-                DateTime timeStamp,
-                string hostIpAddress,
-                string clientId)
-            {
-                SubjectId = subjectId;
-                TimeStamp = timeStamp;
-                HostIpAddress = hostIpAddress;
-                ClientId = clientId;
-            }
-        }
-
-        /// <summary>
-        /// A user was not successfully authenticated because invalid credentials were supplied.
-        /// </summary>
-        public class AuthenticationFailedInvalidCredentials : Event
-        {
-            /// <summary>The ID of the not authenticated user.</summary>
-            public readonly Guid SubjectId;
-
-            /// <summary>The date and time in UTC when the authentication was logged.</summary>
-            public readonly DateTime TimeStamp;
-
-            /// <summary>The IP address of the host asking for authentication.</summary>
-            public readonly string HostIpAddress;
-
-            /// <summary>The ClientId of the application asking for authentication.</summary>
-            public readonly string ClientId;
-
-            /// <summary>
-            /// A user was not successfully authenticated because invalid credentials were supplied.
-            /// </summary>
-            /// <param name="subjectId">The ID of the not authenticated user.</param>
-            /// <param name="timeStamp">The date and time in UTC when the authentication attempt was logged.</param>
-            /// <param name="hostIpAddress">The IP address of the host asking for authentication.</param>
-            /// <param name="clientId">The ClientId of the application asking for authentication.</param>
-            public AuthenticationFailedInvalidCredentials(
-                Guid subjectId,
-                DateTime timeStamp,
-                string hostIpAddress,
-                string clientId)
-            {
-                SubjectId = subjectId;
-                TimeStamp = timeStamp;
-                HostIpAddress = hostIpAddress;
-                ClientId = clientId;
-            }
-        }
-
-    }
+    /// <summary>
+    /// A user was not successfully authenticated because invalid credentials were supplied.
+    /// </summary>
+    /// <param name="SubjectId">The ID of the not authenticated user.</param>
+    /// <param name="TimeStamp">The date and time in UTC when the authentication attempt was logged.</param>
+    /// <param name="HostIpAddress">The IP address of the host asking for authentication.</param>
+    /// <param name="ClientId">The ClientId of the application asking for authentication.</param>
+    public record AuthenticationFailedInvalidCredentials(
+        Guid SubjectId,
+        DateTime TimeStamp,
+        string HostIpAddress,
+        string ClientId) : Event;
 }
