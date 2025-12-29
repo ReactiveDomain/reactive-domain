@@ -7,8 +7,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
     <PackageReference Include="System.CodeDom" Version="8.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3-beta1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
