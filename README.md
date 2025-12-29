@@ -1,5 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/oir89k5nyyouqtsm?svg=true)](https://ci.appveyor.com/project/jageall/reactive-domain)
-[![Build Status](https://travis-ci.org/linedata/reactive-domain.svg?branch=master)](https://travis-ci.org/linedata/reactive-domain)
+[![PR Build Checks](https://github.com/ReactiveDomain/reactive-domain/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/ReactiveDomain/reactive-domain/actions/workflows/pr-checks.yml)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
 # Reactive Domain
