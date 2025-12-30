@@ -8,11 +8,10 @@
 //      the code is regenerated.
 //  </auto-generated>
 // -----------------------------------------------------------------------------
-namespace Sample1 {
-    using System;
-    using Terminal.Gui;
-    
-    
+
+using Terminal.Gui;
+
+namespace PersistedMetadata {
     public partial class MessageWindow : Terminal.Gui.Window {
         
         private Terminal.Gui.Window send;
@@ -35,9 +34,9 @@ namespace Sample1 {
         
         private Terminal.Gui.Label msgType;
         
-        private Terminal.Gui.Label msgTextRecievedLabel;
+        private Terminal.Gui.Label msgTextReceivedLabel;
         
-        private Terminal.Gui.Label msgTextRecieved;
+        private Terminal.Gui.Label msgTextReceived;
         
         private Terminal.Gui.Label msgFromLabel;
         
@@ -58,8 +57,8 @@ namespace Sample1 {
             this.quit = new Terminal.Gui.Button();
             this.msgFrom = new Terminal.Gui.Label();
             this.msgFromLabel = new Terminal.Gui.Label();
-            this.msgTextRecieved = new Terminal.Gui.Label();
-            this.msgTextRecievedLabel = new Terminal.Gui.Label();
+            this.msgTextReceived = new Terminal.Gui.Label();
+            this.msgTextReceivedLabel = new Terminal.Gui.Label();
             this.msgType = new Terminal.Gui.Label();
             this.msgTypeLabel = new Terminal.Gui.Label();
             this.receive = new Terminal.Gui.Window();
@@ -159,7 +158,7 @@ namespace Sample1 {
             this.receive.Border.Effect3DBrush = null;
             this.receive.Border.DrawMarginFrame = true;
             this.receive.TextAlignment = Terminal.Gui.TextAlignment.Left;
-            this.receive.Title = "Recieve";
+            this.receive.Title = "Receive";
             this.Add(this.receive);
             this.msgTypeLabel.Width = 4;
             this.msgTypeLabel.Height = 1;
@@ -177,22 +176,22 @@ namespace Sample1 {
             this.msgType.Text = "[msg type]";
             this.msgType.TextAlignment = Terminal.Gui.TextAlignment.Left;
             this.receive.Add(this.msgType);
-            this.msgTextRecievedLabel.Width = 6;
-            this.msgTextRecievedLabel.Height = 1;
-            this.msgTextRecievedLabel.X = 0;
-            this.msgTextRecievedLabel.Y = 2;
-            this.msgTextRecievedLabel.Data = "msgTextRecievedLabel";
-            this.msgTextRecievedLabel.Text = "Message";
-            this.msgTextRecievedLabel.TextAlignment = Terminal.Gui.TextAlignment.Left;
-            this.receive.Add(this.msgTextRecievedLabel);
-            this.msgTextRecieved.Width = 10;
-            this.msgTextRecieved.Height = 1;
-            this.msgTextRecieved.X = 11;
-            this.msgTextRecieved.Y = 2;
-            this.msgTextRecieved.Data = "msgTextRecieved";
-            this.msgTextRecieved.Text = "[text recived]";
-            this.msgTextRecieved.TextAlignment = Terminal.Gui.TextAlignment.Left;
-            this.receive.Add(this.msgTextRecieved);
+            this.msgTextReceivedLabel.Width = 6;
+            this.msgTextReceivedLabel.Height = 1;
+            this.msgTextReceivedLabel.X = 0;
+            this.msgTextReceivedLabel.Y = 2;
+            this.msgTextReceivedLabel.Data = "msgTextReceivedLabel";
+            this.msgTextReceivedLabel.Text = "Message";
+            this.msgTextReceivedLabel.TextAlignment = Terminal.Gui.TextAlignment.Left;
+            this.receive.Add(this.msgTextReceivedLabel);
+            this.msgTextReceived.Width = 10;
+            this.msgTextReceived.Height = 1;
+            this.msgTextReceived.X = 11;
+            this.msgTextReceived.Y = 2;
+            this.msgTextReceived.Data = "msgTextReceived";
+            this.msgTextReceived.Text = "[text recived]";
+            this.msgTextReceived.TextAlignment = Terminal.Gui.TextAlignment.Left;
+            this.receive.Add(this.msgTextReceived);
             this.msgFromLabel.Width = 5;
             this.msgFromLabel.Height = 1;
             this.msgFromLabel.X = 0;
