@@ -7,30 +7,28 @@
 //      You can make changes to this file and they will not be overwritten when saving.
 //  </auto-generated>
 // -----------------------------------------------------------------------------
-namespace Sample1
+
+using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
+using Terminal.Gui;
+
+namespace PersistedMetadata
 {
-    using Metadata_Sample_App;
-    using ReactiveDomain;
-    using ReactiveDomain.Messaging;
-    using ReactiveDomain.Messaging.Bus;
-    using Terminal.Gui;
-
-
     public partial class MessageWindow
     {
-        private IBus _bus;
+        private readonly IBus _bus;
         private Messages.Sender _currentUser;
         public MessageWindow(InMemoryBus bus)
         {
             _bus = bus;
             InitializeComponent();
             quit.Clicked += () => Application.RequestStop();
-            bus.Subscribe(new AdHocHandler<Messages.Greeting>(msg => RecieveGreetings(msg)));
-            bus.Subscribe(new AdHocHandler<Messages.Farewell>(msg => RecieveFarewells(msg)));
+            bus.Subscribe(new AdHocHandler<Messages.Greeting>(ReceiveGreetings));
+            bus.Subscribe(new AdHocHandler<Messages.Farewell>(ReceiveFarewells));
             sendGreeting.Clicked += SendGreetings;
             sendFarewell.Clicked += SendFarewell;
-            editMeMenuItem1.Action = () => { _currentUser = new Messages.Sender() { Name = "Alice" }; senderName.Text = _currentUser.Name; };
-            editMeMenuItem2.Action = () => { _currentUser = new Messages.Sender() { Name = "Bob" }; senderName.Text = _currentUser.Name; };
+            editMeMenuItem1.Action = () => { _currentUser = new Messages.Sender { Name = "Alice" }; senderName.Text = _currentUser.Name; };
+            editMeMenuItem2.Action = () => { _currentUser = new Messages.Sender { Name = "Bob" }; senderName.Text = _currentUser.Name; };
         }
         private bool TryGetCurrentUser(out Messages.Sender user)
         {
@@ -45,7 +43,7 @@ namespace Sample1
 
         public void SendGreetings()
         {   
-            //get the logged in user
+            //get the logged-in user
             if(!TryGetCurrentUser(out var user)){ return;}
             //create message with greeting data
             var msg = new Messages.Greeting((string)msgText.Text);
@@ -55,32 +53,32 @@ namespace Sample1
         }
         public void SendFarewell()
         {
-            //get the logged in user
+            //get the logged-in user
             if(!TryGetCurrentUser(out var user)){ return;}
-            //create message with Frarewell data
+            //create message with Farewell data
             var msg = new Messages.Farewell((string)msgText.Text);
-            //add sender metadat to the message
+            //add sender metadata to the message
             msg.WriteMetadatum<Messages.Sender>(user);
             _bus.Publish(msg);
         }
-        public void RecieveGreetings(Messages.Greeting msg)
+        public void ReceiveGreetings(Messages.Greeting msg)
         {
             // message type
             msgType.Text = msg.GetType().Name;
 
             //read message data
-            msgTextRecieved.Text = msg.Text;
+            msgTextReceived.Text = msg.Text;
 
             //read sender metadata
             msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;
         }
-        public void RecieveFarewells(Messages.Farewell msg)
+        public void ReceiveFarewells(Messages.Farewell msg)
         {
             //message type
             msgType.Text = msg.GetType().Name;
 
             //read message data
-            msgTextRecieved.Text = msg.Text;
+            msgTextReceived.Text = msg.Text;
 
             //read sender metadata
             msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;

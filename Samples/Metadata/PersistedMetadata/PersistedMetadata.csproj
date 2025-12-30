@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Metadata_Sample_App</RootNamespace>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PersistedMetadata</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ReactiveDomain" Version="0.12.0" />
+    <PackageReference Include="ReactiveDomain" Version="0.13.0" />
     <PackageReference Include="Terminal.Gui" Version="1.10.1" />
   </ItemGroup>
 
