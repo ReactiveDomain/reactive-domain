@@ -2,12 +2,12 @@
 <package>
   <metadata>
     <id>ReactiveDomain</id>
-    <version>0.12.0.0</version>
+    <version>0.13.0.0</version>
     <authors>Reactive Domain Group</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Core assemblies</description>
-    <copyright>Copyright © 2024 Reactive Domain Group</copyright>
+    <copyright>Copyright © 2025 Reactive Domain Group</copyright>
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="EventStore.Client" version="22.0.0" exclude="Build,Analyzers" />
