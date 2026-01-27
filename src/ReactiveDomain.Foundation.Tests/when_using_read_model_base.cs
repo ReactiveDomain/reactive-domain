@@ -36,15 +36,15 @@ public class when_using_read_model_base :
         AppendEvents(10, _conn, _stream1, 2);
         AppendEvents(10, _conn, _stream2, 3);
 
-        _conn.TryConfirmStream(_stream1, 10);
-        _conn.TryConfirmStream(_stream2, 10);
-        _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
-    }
+            _conn.TryConfirmStream(_stream1, 10);          
+            _conn.TryConfirmStream(_stream2, 10);
+            _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
+        }
 
-    private void AppendEvents(
-        int numEventsToBeSent,
-        IStreamStoreConnection conn,
-        string streamName,
+        private void AppendEvents(
+                        int numEventsToBeSent,
+                        IStreamStoreConnection conn,
+                        string streamName,
         int value) {
         for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++) {
             var evt = new ReadModelTestEvent(evtNumber, value);
