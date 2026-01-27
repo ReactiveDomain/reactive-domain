@@ -55,7 +55,7 @@ public class when_using_read_model_base_with_reader :
         var aggId = Guid.NewGuid();
         var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
         AppendEvents(1, _conn, s1, 7);
-        Start<TestAggregate>(aggId);
+        Start<TestAggregate>(aggId, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 7);
     }
@@ -66,14 +66,14 @@ public class when_using_read_model_base_with_reader :
         AppendEvents(1, _conn, s1, 7);
         var s2 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
         AppendEvents(1, _conn, s2, 5);
-        Start<ReadModelTestCategoryAggregate>(null, true);
+        Start<ReadModelTestCategoryAggregate>(null, true, cancelWaitToken: TestContext.Current.CancellationToken);
 
         AssertEx.IsOrBecomesTrue(() => Count == 2, 1000, msg: $"Expected 2 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 12);
     }
     [Fact]
     public void can_read_one_stream() {
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
         //confirm checkpoints
@@ -82,8 +82,8 @@ public class when_using_read_model_base_with_reader :
     }
     [Fact]
     public void can_read_two_streams() {
-        Start(_stream1);
-        Start(_stream2);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50);
         //confirm checkpoints
@@ -94,23 +94,23 @@ public class when_using_read_model_base_with_reader :
     }
     [Fact]
     public void can_wait_for_one_stream_to_go_live() {
-        Start(_stream1, null, true);
+        Start(_stream1, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
     }
     [Fact]
     public void can_wait_for_two_streams_to_go_live() {
-        Start(_stream1, null, true);
+        Start(_stream1, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
 
-        Start(_stream2, null, true);
+        Start(_stream2, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 20, 100, msg: $"Expected 20 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50, 100);
     }
     [Fact]
     public void can_listen_to_one_stream() {
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
         //add more messages
@@ -124,8 +124,8 @@ public class when_using_read_model_base_with_reader :
     }
     [Fact]
     public void can_listen_to_two_streams() {
-        Start(_stream1);
-        Start(_stream2);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50);
         //add more messages
@@ -146,7 +146,7 @@ public class when_using_read_model_base_with_reader :
         Count = 9;
         Sum = 18;
         //start at the checkpoint
-        Start(_stream1, checkPoint);
+        Start(_stream1, checkPoint, cancelWaitToken: TestContext.Current.CancellationToken);
         //add the one recorded event
         AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
@@ -165,8 +165,8 @@ public class when_using_read_model_base_with_reader :
         var checkPoint2 = 5L;//Zero based, ignore the first 6 events
         Count = (9) + (6);
         Sum = (9 * 2) + (6 * 3);
-        Start(_stream1, checkPoint1);
-        Start(_stream2, checkPoint2);
+        Start(_stream1, checkPoint1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, checkPoint2, cancelWaitToken: TestContext.Current.CancellationToken);
         //add the recorded events 2 on stream 1 & 5 on stream 2
         AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50, msg: $"Expected 50 got {Sum}");
@@ -186,8 +186,8 @@ public class when_using_read_model_base_with_reader :
         Assert.Equal(0, Count);
         //weird but true
         //n.b. Don't do this on purpose
-        Start(_stream1);
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         //double events
         AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
         AssertEx.IsOrBecomesTrue(() => Sum == 40);

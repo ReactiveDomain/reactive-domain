@@ -10,13 +10,15 @@ using Xunit;
 namespace ReactiveDomain.Transport.Tests;
 
 [Collection("TCP bus tests")]
-public class TcpBusServerSideTests {
+public class TcpBusServerSideTests
+{
     private readonly IPAddress _hostAddress = IPAddress.Loopback;
     private const int Port = 10008;
     private readonly TaskCompletionSource<IMessage> _tcs = new();
 
     [Fact]
-    public void can_handle_split_frames() {
+    public void can_handle_split_frames()
+    {
         // 16kb large enough to cause the transport to split up the frame.
         // it would be better if we did the splitting manually so we were sure it really happened.
         // would require mocking more things.
@@ -48,7 +50,7 @@ public class TcpBusServerSideTests {
         tcpBusClientSide.Handle(new WoftamEvent(prop1, prop2));
 
         // expect to receive it in the server
-        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(gotMessage);
         var evt = Assert.IsType<WoftamEvent>(_tcs.Task.Result);
         Assert.Equal(prop1, evt.Property1);
@@ -56,7 +58,8 @@ public class TcpBusServerSideTests {
     }
 
     [Fact]
-    public void can_filter_out_message_types() {
+    public void can_filter_out_message_types()
+    {
         // server side
         var serverInbound = new QueuedHandler(
             new AdHocHandler<IMessage>(_tcs.SetResult),
@@ -82,7 +85,7 @@ public class TcpBusServerSideTests {
         tcpBusClientSide.Handle(new WoftamCommand("abc"));
 
         // expect to receive it in the server but drop it on the floor
-        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000), cancellationToken: TestContext.Current.CancellationToken);
         Assert.False(gotMessage);
     }
 }
