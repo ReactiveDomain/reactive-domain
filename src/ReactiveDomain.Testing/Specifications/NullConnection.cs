@@ -1,5 +1,5 @@
-﻿using ReactiveDomain.Util;
-using System;
+﻿using System;
+using System.Reactive;
 
 namespace ReactiveDomain.Testing
 {

@@ -1,5 +1,6 @@
 ﻿using System;
-using ReactiveDomain.Util;
+using System.Reactive;
+using EventStore.ClientAPI;
 
 namespace ReactiveDomain
 {
@@ -79,7 +80,7 @@ namespace ReactiveDomain
         /// <summary>
         /// Subscribes to a single event stream. Existing events from
         /// lastCheckpoint onwards are read from the stream
-        /// and presented to the user of <see cref="T:ReactiveDomain.EventStoreCatchUpSubscription" />
+        /// and presented to the user of <see cref="T:EventStoreCatchUpSubscription" />
         /// as if they had been pushed.
         /// 
         /// Once the end of the stream is read the subscription is
@@ -87,13 +88,13 @@ namespace ReactiveDomain
         /// they are written.
         /// 
         /// The action liveProcessingStarted is called when the
-        /// <see cref="T:ReactiveDomain.EventStoreCatchUpSubscription" /> switches from the reading
+        /// <see cref="T:EventStoreCatchUpSubscription" /> switches from the reading
         /// phase to the live subscription phase.
         /// </summary>
         /// <param name="stream">The stream to subscribe to.</param>
         /// <param name="lastCheckpoint">The event number from which to start.
         /// 
-        /// To receive all events in the stream, use <see cref="F:EventStore.ClientAPI.StreamCheckpoint.StreamStart" />.
+        /// To receive all events in the stream, use <see cref="F:StreamCheckpoint.StreamStart" />.
         /// If events have already been received and resubscription from the same point
         /// is desired, use the event number of the last event processed which
         /// appeared on the subscription.

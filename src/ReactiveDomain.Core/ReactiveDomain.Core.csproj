@@ -10,4 +10,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Reactive">
+      <HintPath>..\..\dependencies\system.reactive\6.0.1\lib\net6.0\System.Reactive.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Reactive;
 using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
-using ReactiveDomain.Util;
 using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 
 namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
@@ -24,7 +24,7 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
             conn = fixture.Connection;
             conn.Connect();
 
-            // Build an origin stream from strings to which the the events are appended
+            // Build an origin stream from strings to which the events are appended
             var originStreamName = $"testStream-{Guid.NewGuid():N}";
 
             var result = fixture.Connection.AppendToStream(

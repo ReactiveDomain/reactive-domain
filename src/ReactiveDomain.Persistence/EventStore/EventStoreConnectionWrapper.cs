@@ -1,6 +1,7 @@
 ﻿using ReactiveDomain.Util;
 using System;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using EventStore.ClientAPI.Exceptions;
 using ES = EventStore.ClientAPI;
