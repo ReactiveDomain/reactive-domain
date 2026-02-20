@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <Xunit>2.4.1</Xunit>
+        <Xunit>1.1.0</Xunit>
         <DotNetWatcher>1.0.1</DotNetWatcher>
         <NewtonsoftJson>12.0.2</NewtonsoftJson>
     </PropertyGroup>

@@ -42,7 +42,7 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
                    new PrefixedCamelCaseStreamNameBuilder(),
                    _eventSerializer);
             listener.EventStream.Subscribe(new AdHocHandler<Event>(Handle));
-            Assert.Throws<ArgumentException>(() => listener.Start(missingStream, validateStream: true));
+            Assert.Throws<ArgumentException>(() => listener.Start(missingStream, validateStream: true, cancelWaitToken: TestContext.Current.CancellationToken));
             listener.Dispose();
         }
         [Fact]
@@ -55,7 +55,7 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
                    new PrefixedCamelCaseStreamNameBuilder(),
                    _eventSerializer);
             listener.EventStream.Subscribe(new AdHocHandler<Event>(Handle));
-            listener.Start(missingStream, validateStream: false);
+            listener.Start(missingStream, validateStream: false, cancelWaitToken: TestContext.Current.CancellationToken);
             Assert.True(listener.IsLive);
             listener.Dispose();
         }

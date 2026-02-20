@@ -36,15 +36,15 @@ public class when_using_read_model_base :
         AppendEvents(10, _conn, _stream1, 2);
         AppendEvents(10, _conn, _stream2, 3);
 
-        _conn.TryConfirmStream(_stream1, 10);
-        _conn.TryConfirmStream(_stream2, 10);
-        _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
-    }
+            _conn.TryConfirmStream(_stream1, 10);          
+            _conn.TryConfirmStream(_stream2, 10);
+            _conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
+        }
 
-    private void AppendEvents(
-        int numEventsToBeSent,
-        IStreamStoreConnection conn,
-        string streamName,
+        private void AppendEvents(
+                        int numEventsToBeSent,
+                        IStreamStoreConnection conn,
+                        string streamName,
         int value) {
         for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++) {
             var evt = new ReadModelTestEvent(evtNumber, value);
@@ -56,7 +56,7 @@ public class when_using_read_model_base :
         var aggId = Guid.NewGuid();
         var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
         AppendEvents(1, _conn, s1, 7);
-        Start<TestAggregate>(aggId);
+        Start<TestAggregate>(aggId, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 2, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
         AssertEx.IsOrBecomesTrue(() => Sum == 7);
     }
@@ -67,14 +67,14 @@ public class when_using_read_model_base :
         AppendEvents(1, _conn, s1, 7);
         var s2 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
         AppendEvents(1, _conn, s2, 5);
-        Start<ReadModelTestCategoryAggregate>(null, true);
+        Start<ReadModelTestCategoryAggregate>(null, true, cancelWaitToken: TestContext.Current.CancellationToken);
 
         AssertEx.AtLeastModelVersion(this, 3, msg: $"Expected 3 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 12);
     }
     [Fact]
     public void can_read_one_stream() {
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 11, msg: $"Expected 11 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
         //confirm checkpoints
@@ -83,8 +83,8 @@ public class when_using_read_model_base :
     }
     [Fact]
     public void can_read_two_streams() {
-        Start(_stream1);
-        Start(_stream2);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 22, msg: $"Expected 22 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50);
         //confirm checkpoints
@@ -95,23 +95,23 @@ public class when_using_read_model_base :
     }
     [Fact]
     public void can_wait_for_one_stream_to_go_live() {
-        Start(_stream1, null, true);
+        Start(_stream1, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 11, TimeSpan.FromMilliseconds(100), msg: $"Expected 11 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20, 100);
     }
     [Fact]
     public void can_wait_for_two_streams_to_go_live() {
-        Start(_stream1, null, true);
+        Start(_stream1, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 11, TimeSpan.FromMilliseconds(100), msg: $"Expected 11 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20, 150);
 
-        Start(_stream2, null, true);
+        Start(_stream2, null, true, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 21, TimeSpan.FromMilliseconds(100), msg: $"Expected 21 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50, 150);
     }
     [Fact]
     public void can_listen_to_one_stream() {
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 11, msg: $"Expected 11 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
         //add more messages
@@ -125,8 +125,8 @@ public class when_using_read_model_base :
     }
     [Fact]
     public void can_listen_to_two_streams() {
-        Start(_stream1);
-        Start(_stream2);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, cancelWaitToken: TestContext.Current.CancellationToken);
         AssertEx.AtLeastModelVersion(this, 22, msg: $"Expected 22 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50);
         //add more messages
@@ -146,7 +146,7 @@ public class when_using_read_model_base :
         var checkPoint = 8L;//Zero based, ignore the first 9 events
         Sum = 18;
         //start at the checkpoint
-        Start(_stream1, checkPoint);
+        Start(_stream1, checkPoint, cancelWaitToken: TestContext.Current.CancellationToken);
         //add the one recorded event
         AssertEx.AtLeastModelVersion(this, 2, TimeSpan.FromMilliseconds(100), msg: $"Expected 2 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 20);
@@ -166,8 +166,8 @@ public class when_using_read_model_base :
         var checkPoint1 = 8L;//Zero based, ignore the first 9 events
         var checkPoint2 = 5L;//Zero based, ignore the first 6 events
         Sum = (9 * 2) + (6 * 3);
-        Start(_stream1, checkPoint1);
-        Start(_stream2, checkPoint2);
+        Start(_stream1, checkPoint1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream2, checkPoint2, cancelWaitToken: TestContext.Current.CancellationToken);
         //add the recorded events 2 on stream 1 & 5 on stream 2
         AssertEx.AtLeastModelVersion(this, 7, msg: $"Expected 7 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 50, msg: $"Expected 50 got {Sum}");
@@ -187,8 +187,8 @@ public class when_using_read_model_base :
         Assert.Equal(0, Version);
         //weird but true
         //n.b. Don't do this on purpose
-        Start(_stream1);
-        Start(_stream1);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
+        Start(_stream1, cancelWaitToken: TestContext.Current.CancellationToken);
         //double events
         AssertEx.AtLeastModelVersion(this, 22, msg: $"Expected 22 got {Version}");
         AssertEx.IsOrBecomesTrue(() => Sum == 40);

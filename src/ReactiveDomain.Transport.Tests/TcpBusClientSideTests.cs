@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -68,7 +69,6 @@ public class TcpBusClientSideTests : IDisposable {
         // wait for tcp connection to be established
         AssertEx.IsOrBecomesTrue(() => _tcpBusClientSide.IsConnected, 200);
     }
-
     [Fact]
     public void can_send_command() {
         var handler = new WoftamCommandHandler(_longProp);
@@ -78,7 +78,7 @@ public class TcpBusClientSideTests : IDisposable {
         _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
 
         // expect to receive it on the client side
-        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(gotMessage);
         Assert.IsType<Success>(_tcs.Task.Result);
     }
@@ -95,7 +95,7 @@ public class TcpBusClientSideTests : IDisposable {
         _tcpBusClientSide.Handle(MessageBuilder.New(() => new WoftamCommand(ShortProp)));
 
         // expect to receive it on the client side
-        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000));
+        var gotMessage = _tcs.Task.Wait(TimeSpan.FromMilliseconds(1000), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(gotMessage);
         var response = Assert.IsType<WoftamCommandResponse>(_tcs.Task.Result);
         Assert.Equal(_longProp, response.PropertyA);
