@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
@@ -13,7 +14,8 @@ using Xunit;
 namespace ReactiveDomain.Transport.Tests;
 
 [Collection("TCP bus tests")]
-public class TcpBusClientSideTests : IDisposable {
+public class TcpBusClientSideTests : IDisposable
+{
     private const string ShortProp = "abc";
     // 16kb is large enough to cause the transport to split up the frame.
     // It would be better if we did the splitting manually so we were sure it really happened.
@@ -26,9 +28,19 @@ public class TcpBusClientSideTests : IDisposable {
     private readonly TcpBusClientSide _tcpBusClientSide;
     private readonly TaskCompletionSource<IMessage> _tcs;
 
-    public TcpBusClientSideTests() {
+    private static int GetFreePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    public TcpBusClientSideTests()
+    {
         var hostAddress = IPAddress.Loopback;
-        const int port = 10008;
+        var port = GetFreePort();
         _tcs = new TaskCompletionSource<IMessage>();
 
         // server side
@@ -70,7 +82,8 @@ public class TcpBusClientSideTests : IDisposable {
     }
 
     [Fact]
-    public void can_send_command() {
+    public void can_send_command()
+    {
         var handler = new WoftamCommandHandler(_longProp);
         _subscriptions.Add(_localBus.Subscribe(handler));
 
@@ -101,8 +114,10 @@ public class TcpBusClientSideTests : IDisposable {
         Assert.Equal(_longProp, response.PropertyA);
     }
 
-    public void Dispose() {
-        foreach (var subscription in _subscriptions) {
+    public void Dispose()
+    {
+        foreach (var subscription in _subscriptions)
+        {
             subscription.Dispose();
         }
         _localBus?.Dispose();
@@ -113,33 +128,46 @@ public class TcpBusClientSideTests : IDisposable {
 
 public record WoftamCommand(string Property1) : Command;
 
-public record WoftamCommandResponse : Success {
+public record WoftamCommandResponse : Success
+{
     public readonly string PropertyA;
 
     public WoftamCommandResponse(WoftamCommand source, string propertyA)
-        : base(source) {
+        : base(source)
+    {
         PropertyA = propertyA;
     }
 
-    public class Serializer : Serialization.IMessageSerializer {
-        public IMessage DeserializeMessage(string json, Type messageType) {
+    public class Serializer : Serialization.IMessageSerializer
+    {
+        public IMessage DeserializeMessage(string json, Type messageType)
+        {
             var reader = new JsonTextReader(new StringReader(json));
             var propA = "";
             var correlationId = Guid.Empty;
             var causationId = Guid.Empty;
             WoftamCommand sourceCommand = null;
-            while (reader.Read()) {
-                if (reader.TokenType == JsonToken.PropertyName) {
-                    if (reader.Value.ToString() == nameof(PropertyA)) {
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.PropertyName)
+                {
+                    if (reader.Value.ToString() == nameof(PropertyA))
+                    {
                         reader.Read();
                         propA = reader.Value.ToString();
-                    } else if (reader.Value.ToString() == "CorrelationId") {
+                    }
+                    else if (reader.Value.ToString() == "CorrelationId")
+                    {
                         reader.Read();
                         correlationId = Guid.Parse(reader.Value.ToString());
-                    } else if (reader.Value.ToString() == "CausationId") {
+                    }
+                    else if (reader.Value.ToString() == "CausationId")
+                    {
                         reader.Read();
                         causationId = Guid.Parse(reader.Value.ToString());
-                    } else if (reader.Value.ToString() == "SourceCommand") {
+                    }
+                    else if (reader.Value.ToString() == "SourceCommand")
+                    {
                         reader.Read();
                         var serializer = new JsonSerializer();
                         sourceCommand = serializer.Deserialize<WoftamCommand>(reader);
@@ -158,20 +186,24 @@ public record WoftamCommandResponse : Success {
         }
 
 
-        public string SerializeMessage(IMessage message) {
+        public string SerializeMessage(IMessage message)
+        {
             return JsonConvert.SerializeObject(message, Json.JsonSettings);
         }
     }
 }
 
-public class WoftamCommandHandler : IHandleCommand<WoftamCommand> {
+public class WoftamCommandHandler : IHandleCommand<WoftamCommand>
+{
     private readonly string _prop;
     public bool ReturnCustomResponse { get; set; }
 
-    public WoftamCommandHandler(string prop) {
+    public WoftamCommandHandler(string prop)
+    {
         _prop = prop;
     }
-    public CommandResponse Handle(WoftamCommand command) {
+    public CommandResponse Handle(WoftamCommand command)
+    {
         return ReturnCustomResponse ? new WoftamCommandResponse(command, _prop) : command.Succeed();
     }
 }

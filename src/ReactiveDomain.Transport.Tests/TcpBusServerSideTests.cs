@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -10,13 +11,23 @@ using Xunit;
 namespace ReactiveDomain.Transport.Tests;
 
 [Collection("TCP bus tests")]
-public class TcpBusServerSideTests {
+public class TcpBusServerSideTests
+{
     private readonly IPAddress _hostAddress = IPAddress.Loopback;
-    private const int Port = 10008;
     private readonly TaskCompletionSource<IMessage> _tcs = new();
 
+    private static int GetFreePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
     [Fact]
-    public void can_handle_split_frames() {
+    public void can_handle_split_frames()
+    {
         // 16kb large enough to cause the transport to split up the frame.
         // it would be better if we did the splitting manually so we were sure it really happened.
         // would require mocking more things.
@@ -30,16 +41,18 @@ public class TcpBusServerSideTests {
             true,
             TimeSpan.FromMilliseconds(1000));
 
+        var port = GetFreePort();
+
         using var tcpBusServerSide = new TcpBusServerSide(
             _hostAddress,
-            Port,
+            port,
             inboundNondiscardingMessageTypes: [typeof(WoftamEvent)],
             inboundNondiscardingMessageQueuedHandler: serverInbound);
 
         serverInbound.Start();
 
         // client side
-        using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, Port);
+        using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
         // wait for tcp connection to be established
         AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
@@ -56,7 +69,8 @@ public class TcpBusServerSideTests {
     }
 
     [Fact]
-    public void can_filter_out_message_types() {
+    public void can_filter_out_message_types()
+    {
         // server side
         var serverInbound = new QueuedHandler(
             new AdHocHandler<IMessage>(_tcs.SetResult),
@@ -64,16 +78,18 @@ public class TcpBusServerSideTests {
             true,
             TimeSpan.FromMilliseconds(1000));
 
+        var port = GetFreePort();
+
         using var tcpBusServerSide = new TcpBusServerSide(
             _hostAddress,
-            Port,
+            port,
             inboundNondiscardingMessageTypes: [typeof(WoftamEvent)],
             inboundNondiscardingMessageQueuedHandler: serverInbound);
 
         serverInbound.Start();
 
         // client side
-        using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, Port);
+        using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
         // wait for tcp connection to be established
         AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
