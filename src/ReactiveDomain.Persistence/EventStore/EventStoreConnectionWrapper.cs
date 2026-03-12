@@ -41,13 +41,16 @@ namespace ReactiveDomain.EventStore
         /// <exception cref="CannotEstablishConnectionException">Thrown if a connection cannot be established to the ESDB.</exception>
         public void Connect()
         {
-            if(_connected){ return;}
-            try {
+            if (_connected) { return; }
+            try
+            {
                 EsConnection.ConnectAsync().Wait();
                 _connected = true;
             }
-            catch (AggregateException aggregate) {
-                if (aggregate.InnerException is CannotEstablishConnectionException) {
+            catch (AggregateException aggregate)
+            {
+                if (aggregate.InnerException is CannotEstablishConnectionException)
+                {
                     throw new CannotEstablishConnectionException(aggregate.InnerException.Message, aggregate.InnerException);
                 }
                 throw;
@@ -148,7 +151,7 @@ namespace ReactiveDomain.EventStore
             var sub = EsConnection.SubscribeToStreamAsync(
                                 stream,
                                 true,
-                                async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
+                                async (_, evt) => { if (evt.Event != null) eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
                                 (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
                                 (credentials ?? _credentials)?.ToESCredentials()).Result;
             return new Disposer(() =>
@@ -173,7 +176,7 @@ namespace ReactiveDomain.EventStore
                                             stream,
                                             (int?)lastCheckpoint,
                                             settings?.ToCatchUpSubscriptionSettings() ?? ES.CatchUpSubscriptionSettings.Default,
-                                            async (_, evt) => { eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
+                                            async (_, evt) => { if (evt.Event != null) eventAppeared(evt.Event.ToRecordedEvent(evt.OriginalEvent.EventNumber)); await Task.FromResult(Unit.Default); },
                                             _ => liveProcessingStarted?.Invoke(Unit.Default),
                                             (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
                                             (credentials ?? _credentials)?.ToESCredentials());
@@ -196,7 +199,7 @@ namespace ReactiveDomain.EventStore
                 resolveLinkTos,
                 async (_, evt) =>
                 {
-                    eventAppeared(evt.Event.ToRecordedEvent());
+                    if (evt.Event != null) eventAppeared(evt.Event.ToRecordedEvent());
                     await Task.FromResult(Unit.Default);
                 },
                 (_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
@@ -224,7 +227,7 @@ namespace ReactiveDomain.EventStore
                 settings?.ToCatchUpSubscriptionSettings(),
                 async (_, evt) =>
                 {
-                    eventAppeared(evt.Event.ToRecordedEvent());
+                    if (evt.Event != null) eventAppeared(evt.Event.ToRecordedEvent());
                     await Task.FromResult(Unit.Default);
                 },
                 __ => { liveProcessingStarted?.Invoke(); },
@@ -252,7 +255,7 @@ namespace ReactiveDomain.EventStore
             {
                 if (EsConnection != null)
                 {
-                    EsConnection.Close();                   
+                    EsConnection.Close();
                     EsConnection.Dispose();
                 }
             }
@@ -290,17 +293,26 @@ namespace ReactiveDomain.EventStore
                     slice.IsEndOfStream);
         }
 
+        /// <summary>
+        /// Converts an array of ES ResolvedEvents to ReactiveDomain RecordedEvents.
+        /// When EventStore resolves link events ($&gt;) against deleted or scavenged streams,
+        /// the resolved Event property is null while the link event (OriginalEvent) retains
+        /// its position in the stream. These null entries are skipped — stream positions are
+        /// immutable, so downstream checkpoints remain valid regardless of deletions.
+        /// The resulting array may be shorter than the input when deletions are present.
+        /// </summary>
         public static RecordedEvent[] ToRecordedEvents(this ES.ResolvedEvent[] resolvedEvents)
         {
             Ensure.NotNull(resolvedEvents, nameof(resolvedEvents));
-            var events = new RecordedEvent[resolvedEvents.Length];
+            var events = new System.Collections.Generic.List<RecordedEvent>(resolvedEvents.Length);
             for (int i = 0; i < resolvedEvents.Length; i++)
             {
                 var evt = resolvedEvents[i].Event;
+                if (evt == null) continue; // skip null events from deleted/scavenged streams
                 //we want the event number from the stream we're reading not the original stream
-                events[i] = evt.ToRecordedEvent(resolvedEvents[i].OriginalEvent.EventNumber);
+                events.Add(evt.ToRecordedEvent(resolvedEvents[i].OriginalEvent.EventNumber));
             }
-            return events;
+            return events.ToArray();
         }
 
         public static RecordedEvent ToRecordedEvent(this ES.RecordedEvent recordedEvent, long? eventNumber = null)

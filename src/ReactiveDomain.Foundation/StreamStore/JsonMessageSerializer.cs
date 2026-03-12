@@ -90,7 +90,7 @@ namespace ReactiveDomain.Foundation
                 }
                 commonMetadata.EventAssembly = @event.GetType().Assembly.GetName().ToString();
                 md.Write(commonMetadata);
-                
+
                 //Audit Data Policy User
                 headers.TryGetValue("PolicyUserId", out var userId);
                 if (userId is Guid userIdGuid && userIdGuid != Guid.Empty)
@@ -105,7 +105,7 @@ namespace ReactiveDomain.Foundation
                     };
                     md.Write(auditRecord);
                 }
-                
+
                 metadata = md.GetData().ToJsonBytes();
             }
 
@@ -116,8 +116,18 @@ namespace ReactiveDomain.Foundation
             return new EventData(Guid.NewGuid(), typeName, true, data, metadata);
         }
 
+        /// <summary>
+        /// Deserializes an event from its stored representation.
+        /// Returns null when Metadata or Data is null or empty. This occurs for system events
+        /// or events whose target streams have been deleted/scavenged. Aggregate streams always
+        /// carry valid metadata and data, so a null return in that context indicates data
+        /// corruption and callers (e.g. StreamStoreRepository) should treat it as an error.
+        /// </summary>
         public object Deserialize(IEventData @event)
         {
+            if (@event.Metadata == null || @event.Metadata.Length == 0
+                || @event.Data == null || @event.Data.Length == 0)
+                return null;
             var metaDataObject = JObject.Parse(Encoding.UTF8.GetString(@event.Metadata));
             var clrQualifiedName = (string)metaDataObject.Property(EventClrQualifiedTypeHeader)?.Value;
             if (string.IsNullOrWhiteSpace(clrQualifiedName) || _preferIMetadataSource)

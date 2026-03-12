@@ -1,0 +1,963 @@
+Connected to ESDB on tcp://127.0.0.1:1113
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ  SCENARIO 1: BASELINE (no delete)                   Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Wrote 4 events to 'spike-ab385fcb133c4945a9e813fbdf17227c'
+
+ΓöÇΓöÇ Direct read ΓöÇΓöÇ
+  Status: Success, Events: 4
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: NormalEvent
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 180
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"cb9ecbdc-722d-4dc9-a9f3-b8fcadc037ce","Foo":"bar","Version":1,"CorrelationId":"c77770a7-2907-4723-b666-54193a8ded8d","CausationId":"fec6af1f-6571-4cd2-9d15-3d6b4a12a56f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.NormalEvent, NullLinkToSpike"}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: MarkerEvent
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 168
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"73a77cbf-8dcf-4bb1-a003-36c313b235c7","Version":1,"CorrelationId":"9a1abef5-f788-4730-b3ad-a8d4af6f8a35","CausationId":"64c29fb8-bc4a-4c77-a008-a6ed8580c80f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.MarkerEvent, NullLinkToSpike"}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé OriginalEventNumber: 2
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: EmptyMdEvent
+  Γöé   EventNumber: 2
+  Γöé   IsJson: True
+  Γöé   Data.Length: 59
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"MsgId":"04b68776-1e24-483b-b165-8e894e8f60f2","Value":42}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé OriginalEventNumber: 3
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: EmptyDataEvent
+  Γöé   EventNumber: 3
+  Γöé   IsJson: True
+  Γöé   Data.Length: 0
+  Γöé   Metadata.Length: 74
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.TestEvent, NullLinkToSpike"}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+ΓöÇΓöÇ Read via $ce-spike (resolve links) ΓöÇΓöÇ
+  Status: Success, Events: 14
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-08642fb102fd4947b446acdcc1e36d37
+  Γöé   Type: NormalEvent
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 180
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"cf8284c4-3463-41d7-a648-b7cb964ba175","Foo":"bar","Version":1,"CorrelationId":"dec40938-b5dc-4ab8-aee2-8d4eda759dcb","CausationId":"1fd3b5ca-5aa8-4363-8445-8b060214691c"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.NormalEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 0
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 0@spike-08642fb102fd4947b446acdcc1e36d37
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-08642fb102fd4947b446acdcc1e36d37
+  Γöé   Type: MarkerEvent
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 168
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"c9817d79-5088-4046-a6f0-d8b2b5c73a60","Version":1,"CorrelationId":"6045fef3-712f-4116-9093-e53ee7e628a3","CausationId":"6906182c-5dc7-4f8e-9616-befcfe015f03"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.MarkerEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 1
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 1@spike-08642fb102fd4947b446acdcc1e36d37
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 2
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-08642fb102fd4947b446acdcc1e36d37
+  Γöé   Type: EmptyMdEvent
+  Γöé   EventNumber: 2
+  Γöé   IsJson: True
+  Γöé   Data.Length: 59
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"MsgId":"5fc6e9c3-7574-47a9-8be6-ee87c203e9ae","Value":42}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 2
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 2@spike-08642fb102fd4947b446acdcc1e36d37
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 3
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 3
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 0@spike-b10673f339d44653a1c530933235bae2
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 4
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 4
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 1@spike-b10673f339d44653a1c530933235bae2
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 5
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 5
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 2@spike-b10673f339d44653a1c530933235bae2
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 6
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: $$spike-b10673f339d44653a1c530933235bae2
+  Γöé   Type: $metadata
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 27
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"$tb":9223372036854775807}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 6
+  Γöé   Data.Length: 42
+  Γöé   Metadata.Length: 150
+  Γöé   Data: 0@$$spike-b10673f339d44653a1c530933235bae2
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 7
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 7
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 0@spike-5c4b9c86b71b4c229c9bab51b4511315
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 8
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 8
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 1@spike-5c4b9c86b71b4c229c9bab51b4511315
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 9
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 9
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 136
+  Γöé   Data: 2@spike-5c4b9c86b71b4c229c9bab51b4511315
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 10
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 10
+  Γöé   Data.Length: 58
+  Γöé   Metadata.Length: 150
+  Γöé   Data: 9223372036854775807@spike-5c4b9c86b71b4c229c9bab51b4511315
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 11
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: NormalEvent
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 180
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"cb9ecbdc-722d-4dc9-a9f3-b8fcadc037ce","Foo":"bar","Version":1,"CorrelationId":"c77770a7-2907-4723-b666-54193a8ded8d","CausationId":"fec6af1f-6571-4cd2-9d15-3d6b4a12a56f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.NormalEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 11
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-ab385fcb133c4945a9e813fbdf17227c
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 12
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: MarkerEvent
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 168
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"73a77cbf-8dcf-4bb1-a003-36c313b235c7","Version":1,"CorrelationId":"9a1abef5-f788-4730-b3ad-a8d4af6f8a35","CausationId":"64c29fb8-bc4a-4c77-a008-a6ed8580c80f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.MarkerEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 12
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-ab385fcb133c4945a9e813fbdf17227c
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 13
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-ab385fcb133c4945a9e813fbdf17227c
+  Γöé   Type: EmptyMdEvent
+  Γöé   EventNumber: 2
+  Γöé   IsJson: True
+  Γöé   Data.Length: 59
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"MsgId":"04b68776-1e24-483b-b165-8e894e8f60f2","Value":42}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 13
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-ab385fcb133c4945a9e813fbdf17227c
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ  SCENARIO 2: SOFT DELETE                            Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Wrote 4 events to 'spike-023d626260b94ea6b226640e2d5e8b71'
+
+ΓöÇΓöÇ $ce-spike BEFORE soft-delete ΓöÇΓöÇ
+  Total in $ce-spike: 17, matching 'spike-023d626260b94ea6b226640e2d5e8b71': 3
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 14
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-023d626260b94ea6b226640e2d5e8b71
+  Γöé   Type: NormalEvent
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 180
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"cb9ecbdc-722d-4dc9-a9f3-b8fcadc037ce","Foo":"bar","Version":1,"CorrelationId":"c77770a7-2907-4723-b666-54193a8ded8d","CausationId":"fec6af1f-6571-4cd2-9d15-3d6b4a12a56f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.NormalEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 14
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 15
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-023d626260b94ea6b226640e2d5e8b71
+  Γöé   Type: MarkerEvent
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 168
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"73a77cbf-8dcf-4bb1-a003-36c313b235c7","Version":1,"CorrelationId":"9a1abef5-f788-4730-b3ad-a8d4af6f8a35","CausationId":"64c29fb8-bc4a-4c77-a008-a6ed8580c80f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.MarkerEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 15
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 16
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-023d626260b94ea6b226640e2d5e8b71
+  Γöé   Type: EmptyMdEvent
+  Γöé   EventNumber: 2
+  Γöé   IsJson: True
+  Γöé   Data.Length: 59
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"MsgId":"04b68776-1e24-483b-b165-8e894e8f60f2","Value":42}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 16
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+Soft-deleted 'spike-023d626260b94ea6b226640e2d5e8b71'
+
+ΓöÇΓöÇ Direct read after soft-delete ΓöÇΓöÇ
+  Status: StreamNotFound
+
+ΓöÇΓöÇ $ce-spike AFTER soft-delete (resolve links) ΓöÇΓöÇ
+  Total in $ce-spike: 18, matching 'spike-023d626260b94ea6b226640e2d5e8b71': 4
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 14
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 14
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 15
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 15
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 16
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 16
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 17
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: $$spike-023d626260b94ea6b226640e2d5e8b71
+  Γöé   Type: $metadata
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 27
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"$tb":9223372036854775807}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 17
+  Γöé   Data.Length: 42
+  Γöé   Metadata.Length: 158
+  Γöé   Data: 0@$$spike-023d626260b94ea6b226640e2d5e8b71
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ  SCENARIO 3: HARD DELETE + SCAVENGE                 Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Wrote 4 events to 'spike-599abc50a3cd49eebc8821258c6adf35'
+
+ΓöÇΓöÇ $ce-spike BEFORE hard-delete ΓöÇΓöÇ
+  Total in $ce-spike: 21, matching 'spike-599abc50a3cd49eebc8821258c6adf35': 3
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 18
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-599abc50a3cd49eebc8821258c6adf35
+  Γöé   Type: NormalEvent
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 180
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"cb9ecbdc-722d-4dc9-a9f3-b8fcadc037ce","Foo":"bar","Version":1,"CorrelationId":"c77770a7-2907-4723-b666-54193a8ded8d","CausationId":"fec6af1f-6571-4cd2-9d15-3d6b4a12a56f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.NormalEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 18
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 19
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-599abc50a3cd49eebc8821258c6adf35
+  Γöé   Type: MarkerEvent
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 168
+  Γöé   Metadata.Length: 76
+  Γöé   Data: {"MsgId":"73a77cbf-8dcf-4bb1-a003-36c313b235c7","Version":1,"CorrelationId":"9a1abef5-f788-4730-b3ad-a8d4af6f8a35","CausationId":"64c29fb8-bc4a-4c77-a008-a6ed8580c80f"}
+  Γöé   Metadata: {"EventClrQualifiedTypeName":"NullLinkToSpike.MarkerEvent, NullLinkToSpike"}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 19
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 20
+  Γöé OriginalPosition: 
+  Γöé IsResolved: True
+  Γöé Event:
+  Γöé   Stream: spike-599abc50a3cd49eebc8821258c6adf35
+  Γöé   Type: EmptyMdEvent
+  Γöé   EventNumber: 2
+  Γöé   IsJson: True
+  Γöé   Data.Length: 59
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"MsgId":"04b68776-1e24-483b-b165-8e894e8f60f2","Value":42}
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 20
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+Hard-deleted 'spike-599abc50a3cd49eebc8821258c6adf35'
+
+ΓöÇΓöÇ $ce-spike AFTER hard-delete, BEFORE scavenge ΓöÇΓöÇ
+  Total in $ce-spike: 21, matching 'spike-599abc50a3cd49eebc8821258c6adf35': 3
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 18
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 18
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 19
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 19
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 20
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 20
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+Triggering scavenge...
+Scavenge response: OK
+Scavenge body: ScavengeId: 2146b935-c27e-46e3-807c-fa7afe6da61c
+Waiting for scavenge to complete...
+  Last scavenge event: $scavengeCompleted
+  Data: {
+  "scavengeId": "2146b935-c27e-46e3-807c-fa7afe6da61c",
+  "nodeEndpoint": "127.0.0.1:2113",
+  "result": "Success",
+  "error": null,
+  "timeTaken": "00:00:00.6114185",
+  "spaceSaved": 0,
+  "maxChunkScavenged": 1
+}
+  Scavenge completed!
+
+ΓöÇΓöÇ $ce-spike AFTER scavenge (resolve links) ΓöÇΓöÇ
+  Total in $ce-spike: 22, matching 'spike-599abc50a3cd49eebc8821258c6adf35': 4
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 18
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 18
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 0@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 19
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 19
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 1@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 20
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 20
+  Γöé   Data.Length: 40
+  Γöé   Metadata.Length: 144
+  Γöé   Data: 2@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $ce-spike
+  Γöé OriginalEventNumber: 21
+  Γöé OriginalPosition: 
+  Γöé IsResolved: False
+  Γöé Event: *** NULL ***
+  Γöé Link:
+  Γöé   Stream: $ce-spike
+  Γöé   Type: $>
+  Γöé   EventNumber: 21
+  Γöé   Data.Length: 58
+  Γöé   Metadata.Length: 158
+  Γöé   Data: 9223372036854775807@spike-599abc50a3cd49eebc8821258c6adf35
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ  SCENARIO 4: SYSTEM EVENTS FROM $all               Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $$$scavenges
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 558/558
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $$$scavenges
+  Γöé   Type: $metadata
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 74
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"$maxAge":2592000,"$acl":{"$r":"$ops","$w":[],"$d":[],"$mr":[],"$mw":[]}}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 743/743
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionsInitialized
+  Γöé   EventNumber: 0
+  Γöé   IsJson: False
+  Γöé   Data.Length: 0
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 873/873
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionCreated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: False
+  Γöé   Data.Length: 8
+  Γöé   Metadata.Length: 0
+  Γöé   Data: $streams
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 2
+  Γöé OriginalPosition: 1006/1006
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionCreated
+  Γöé   EventNumber: 2
+  Γöé   IsJson: False
+  Γöé   Data.Length: 19
+  Γöé   Metadata.Length: 0
+  Γöé   Data: $stream_by_category
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 3
+  Γöé OriginalPosition: 1150/1150
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionCreated
+  Γöé   EventNumber: 3
+  Γöé   IsJson: False
+  Γöé   Data.Length: 12
+  Γöé   Metadata.Length: 0
+  Γöé   Data: $by_category
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 4
+  Γöé OriginalPosition: 1287/1287
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionCreated
+  Γöé   EventNumber: 4
+  Γöé   IsJson: False
+  Γöé   Data.Length: 14
+  Γöé   Metadata.Length: 0
+  Γöé   Data: $by_event_type
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$all
+  Γöé OriginalEventNumber: 5
+  Γöé OriginalPosition: 1426/1426
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$all
+  Γöé   Type: $ProjectionCreated
+  Γöé   EventNumber: 5
+  Γöé   IsJson: False
+  Γöé   Data.Length: 18
+  Γöé   Metadata.Length: 0
+  Γöé   Data: $by_correlation_id
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$streams
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 1569/1569
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$streams
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 740
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_category
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 2438/2438
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_category
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 766
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$stream_by_category
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 3337/3337
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$stream_by_category
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 760
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_correlation_id
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 4237/4237
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_correlation_id
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 760
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_event_type
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 5136/5136
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_event_type
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 721
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$streams
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 5992/5992
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$streams
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 760
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_category
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 6881/6881
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_category
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 786
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$stream_by_category
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 7800/7800
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$stream_by_category
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 780
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_correlation_id
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 8720/8720
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_correlation_id
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 780
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $projections-$by_event_type
+  Γöé OriginalEventNumber: 1
+  Γöé OriginalPosition: 9639/9639
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $projections-$by_event_type
+  Γöé   Type: $ProjectionUpdated
+  Γöé   EventNumber: 1
+  Γöé   IsJson: True
+  Γöé   Data.Length: 741
+  Γöé   Metadata.Length: 0
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $$$et
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 10515/10515
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $$$et
+  Γöé   Type: $metadata
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 35
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"$acl":{"$r":"$all","$mr":"$all"}}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $et
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 10654/10654
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $et
+  Γöé   Type: $Checkpoint
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 16
+  Γöé   Metadata.Length: 32
+  Γöé   Data: {"$c":0,"$p":-1}
+  Γöé   Metadata: {"$v":"4:-1:1:4","$c":0,"$p":-1}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  ΓöîΓöÇ ResolvedEvent ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Γöé OriginalStreamId: $$$streams
+  Γöé OriginalEventNumber: 0
+  Γöé OriginalPosition: 11999/11999
+  Γöé IsResolved: False
+  Γöé Event:
+  Γöé   Stream: $$$streams
+  Γöé   Type: $metadata
+  Γöé   EventNumber: 0
+  Γöé   IsJson: True
+  Γöé   Data.Length: 35
+  Γöé   Metadata.Length: 0
+  Γöé   Data: {"$acl":{"$r":"$all","$mr":"$all"}}
+  Γöé Link: null
+  ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+
+=== ALL SCENARIOS COMPLETE ===
