@@ -10,7 +10,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DynamicData" Version="8.4.1" />
+    <PackageReference Include="DynamicData" Version="9.4.1" />
     <PackageReference Include="IdentityModel" Version="4.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
