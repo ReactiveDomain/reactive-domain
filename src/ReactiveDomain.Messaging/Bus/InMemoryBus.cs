@@ -38,7 +38,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         public string Name { get; }
 
-        private Dictionary<Type, List<IMessageHandler>> _handlers = new Dictionary<Type, List<IMessageHandler>>();
+        private readonly Dictionary<Type, List<IMessageHandler>> _handlers = new();
 
         private readonly bool _watchSlowMsg;
         private readonly TimeSpan _slowMsgThreshold;
@@ -211,7 +211,7 @@ namespace ReactiveDomain.Messaging.Bus
                 {
                     return handlers.ToArray();
                 }
-                return new IMessageHandler[] { };
+                return [];
             }
         }
 

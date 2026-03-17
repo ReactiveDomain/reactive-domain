@@ -10,6 +10,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
+    <PackageReference Include="System.Reactive" Version="6.1.0" />
     <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
   </ItemGroup>
   <ItemGroup>

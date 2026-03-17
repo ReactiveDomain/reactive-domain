@@ -2,7 +2,6 @@
 using System.Threading;
 using ReactiveDomain.Messaging;
 
-
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing;
 
@@ -54,7 +53,7 @@ public class TestCommands {
             Data = data;
         }
     }
-    public record FailedResponse : Messaging.Fail {
+    public record FailedResponse : ReactiveDomain.Messaging.Fail {
         public int Data { get; }
         public FailedResponse(
             TypedResponse sourceCommand,
