@@ -7,7 +7,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <description>Package includes all ReactiveDomain Core assemblies</description>
-    <copyright>Copyright © 2025 Reactive Domain Group</copyright>
+    <copyright>Copyright © 2026 Reactive Domain Group</copyright>
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="EventStore.Client" version="22.0.0" exclude="Build,Analyzers" />
