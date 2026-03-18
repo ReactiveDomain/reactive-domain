@@ -29,14 +29,6 @@
     <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'!='net48'">
-    <Compile Remove="DispatcherUtil.cs" />
-    <Compile Remove="WpfAsserts.cs" />
-    <Reference Remove="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
 </Project>
