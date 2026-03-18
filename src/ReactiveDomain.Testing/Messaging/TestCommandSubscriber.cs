@@ -1,11 +1,12 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing
 {
-    public class TestCommandSubscriber :
+    public class TestCommandSubscriber : IDisposable,
                 IHandleCommand<TestCommands.Command2>,
                 IHandleCommand<TestCommands.Command3>
     {
@@ -19,7 +20,7 @@ namespace ReactiveDomain.Testing
         {
             _bus = bus;
             TestCommand2Handled = 0;
-            _bus.Subscribe<TestCommands.Command2> (this);
+            _bus.Subscribe<TestCommands.Command2>(this);
             _bus.Subscribe<TestCommands.Command3>(this);
         }
               
@@ -34,6 +35,12 @@ namespace ReactiveDomain.Testing
         {
             Interlocked.Increment(ref TestCommand3Handled);
             return command.Succeed();
+        }
+
+        public void Dispose()
+        {
+            _bus.Unsubscribe<TestCommands.Command2>(this);
+            _bus.Unsubscribe<TestCommands.Command3>(this);
         }
     }
 }
