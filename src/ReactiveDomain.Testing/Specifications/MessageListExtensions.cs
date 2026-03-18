@@ -118,12 +118,12 @@ public static class MessageListExtensions {
     /// <param name="num">The minimum number of messages of type TMsg to wait for. Must be greater than or equal to zero.</param>
     /// <param name="timeout">The maximum duration to wait for the required number of messages to appear.</param>
     /// <exception cref="TimeoutException">Thrown if the required number of messages of type TMsg are not present in the collection before the timeout
-    /// elapses.</exception>
+    /// expires.</exception>
     public static void WaitForMultiple<TMsg>(this IList<IMessage> messages, uint num, TimeSpan timeout) where TMsg : IMessage {
         var startTime = Environment.TickCount; //returns MS since machine start
         var endTime = startTime + (int)timeout.TotalMilliseconds;
         var delay = 1;
-        while (messages.Count(x => x is TMsg) < num) {
+        while (messages.ToArray().Count(x => x is TMsg) < num) {
             var now = Environment.TickCount;
             if (endTime - now <= 0)
                 throw new TimeoutException();
