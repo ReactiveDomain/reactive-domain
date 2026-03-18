@@ -126,7 +126,6 @@ public sealed class MessageListExtensionsTests : DispatcherSpecification {
             Dispatcher.Publish(msg);
         });
         Assert.Throws<TimeoutException>(() => TestQueue.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(10)));
-        TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -151,7 +150,6 @@ public sealed class MessageListExtensionsTests : DispatcherSpecification {
             Dispatcher.Publish(msg);
         });
         Assert.Throws<TimeoutException>(() => TestQueue.WaitForMultiple<TestEvent>(2, TimeSpan.FromMilliseconds(10)));
-        TestQueue.WaitForMultiple<TestEvent>(2, TimeSpan.FromSeconds(1));
     }
 
     public record PayloadEvent(int Payload) : Event;

@@ -106,18 +106,7 @@ public static class MessageListExtensions {
     /// <param name="timeout">The maximum duration to wait for a message of the specified type to appear.</param>
     /// <exception cref="TimeoutException">Thrown if a message of the specified type does not appear in the collection before the timeout expires.</exception>
     public static void WaitFor<TMsg>(this IList<IMessage> messages, TimeSpan timeout) where TMsg : IMessage {
-        var startTime = Environment.TickCount; //returns MS since machine start
-        var endTime = startTime + (int)timeout.TotalMilliseconds;
-        var delay = 1;
-        while (messages.All(x => x is not TMsg)) {
-            var now = Environment.TickCount;
-            if (endTime - now <= 0)
-                throw new TimeoutException();
-            if (delay < 250)
-                delay <<= 1;
-            delay = Math.Min(delay, endTime - now);
-            Thread.Sleep(delay);
-        }
+        messages.WaitForMultiple<TMsg>(1, timeout);
     }
 
     /// <summary>
