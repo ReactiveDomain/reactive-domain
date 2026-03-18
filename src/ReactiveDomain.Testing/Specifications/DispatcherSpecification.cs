@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.Messaging;
 
@@ -11,11 +10,12 @@ public abstract class DispatcherSpecification : IDisposable {
     public readonly CapturingSubscribableBus LocalBus = new();
 
     /// <summary>
-    /// Gets a snapshot of the list of messages that have been published or sent on the <see cref="Dispatcher"/>,
-    /// in the order they were placed on the bus.
+    /// Gets the list of messages that have been published or sent on the <see cref="Dispatcher"/>,
+    /// in the order they were placed on the bus. The returned list is updated when more messages
+    /// are added.
     /// </summary>
     /// <remarks>This is actually a List, not a Queue, but the name is preserved for backward compatibility.</remarks>
-    public List<IMessage> TestQueue => Dispatcher.AllMessages.ToList();
+    public IList<IMessage> TestQueue => Dispatcher.AllMessages;
 
     public virtual void ClearQueues() {
         Dispatcher.ClearMessages();

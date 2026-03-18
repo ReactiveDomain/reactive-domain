@@ -1,5 +1,7 @@
 ﻿#nullable enable
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ReactiveDomain.Messaging;
 using Xunit;
 using Xunit.Sdk;
@@ -104,6 +106,52 @@ public sealed class MessageListExtensionsTests : DispatcherSpecification {
         var msg = MessageBuilder.New(() => new TestEvent());
         Dispatcher.Publish(msg);
         Assert.Throws<Exception>(() => TestQueue.AssertEmpty());
+    }
+
+    [Fact]
+    public void CanWaitForAMessageOnAList() {
+        Task.Run(() => {
+            Thread.Sleep(20);
+            var msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+        });
+        TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void WaitForTimesOutWhenMessageDoesNotArriveInTime() {
+        Task.Run(() => {
+            Thread.Sleep(20);
+            var msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+        });
+        Assert.Throws<TimeoutException>(() => TestQueue.WaitFor<TestEvent>(TimeSpan.FromMilliseconds(10)));
+        TestQueue.WaitFor<TestEvent>(TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void CanWaitForMultipleMessagesOnAList() {
+        Task.Run(() => {
+            Thread.Sleep(20);
+            var msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+            msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+        });
+        TestQueue.WaitForMultiple<TestEvent>(2, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void WaitForTimesOutWhenMultipleMessagesDoNotArriveInTime() {
+        Task.Run(() => {
+            Thread.Sleep(20);
+            var msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+            msg = MessageBuilder.New(() => new TestEvent());
+            Dispatcher.Publish(msg);
+        });
+        Assert.Throws<TimeoutException>(() => TestQueue.WaitForMultiple<TestEvent>(2, TimeSpan.FromMilliseconds(10)));
+        TestQueue.WaitForMultiple<TestEvent>(2, TimeSpan.FromSeconds(1));
     }
 
     public record PayloadEvent(int Payload) : Event;

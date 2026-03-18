@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using ReactiveDomain.Messaging;
 using Xunit;
 
@@ -94,5 +95,39 @@ public static class MessageListExtensions {
             return typedMsg;
         }
         throw new Exception($"Type <{typeof(TMsg).Name}> is not next item, instead <{msg.GetType().Name}> found.");
+    }
+
+    /// <summary>
+    /// Blocks the calling thread until a message of the specified type is present in the collection or the timeout
+    /// elapses.
+    /// </summary>
+    /// <remarks>This method blocks the calling thread until the specified condition is met or the timeout
+    /// expires. The method uses a spin-wait, which may impact CPU usage if the wait duration is long.</remarks>
+    /// <typeparam name="TMsg">The type of message to wait for. Must implement the IMessage interface.</typeparam>
+    /// <param name="messages">The collection of messages to monitor for the specified message type. Cannot be null.</param>
+    /// <param name="timeout">The maximum duration to wait for a message of the specified type to appear.</param>
+    /// <exception cref="TimeoutException">Thrown if a message of the specified type does not appear in the collection before the timeout expires.</exception>
+    public static void WaitFor<TMsg>(this IList<IMessage> messages, TimeSpan timeout) where TMsg : IMessage {
+        var result = SpinWait.SpinUntil(() => messages.Any(x => x is TMsg), timeout);
+        if (!result)
+            throw new TimeoutException();
+    }
+
+    /// <summary>
+    /// Waits until at least the specified number of messages of type TMsg are present in the collection or the timeout
+    /// elapses.
+    /// </summary>
+    /// <remarks>This method blocks the calling thread until the specified condition is met or the timeout
+    /// expires. The method uses a spin-wait, which may impact CPU usage if the wait duration is long.</remarks>
+    /// <typeparam name="TMsg">The type of message to wait for. Must implement the IMessage interface.</typeparam>
+    /// <param name="messages">The collection of messages to monitor for instances of type TMsg. Cannot be null.</param>
+    /// <param name="num">The minimum number of messages of type TMsg to wait for. Must be greater than or equal to zero.</param>
+    /// <param name="timeout">The maximum duration to wait for the required number of messages to appear.</param>
+    /// <exception cref="TimeoutException">Thrown if the required number of messages of type TMsg are not present in the collection before the timeout
+    /// elapses.</exception>
+    public static void WaitForMultiple<TMsg>(this IList<IMessage> messages, uint num, TimeSpan timeout) where TMsg : IMessage {
+        var result = SpinWait.SpinUntil(() => messages.Count(x => x is TMsg) >= num, timeout);
+        if (!result)
+            throw new TimeoutException();
     }
 }

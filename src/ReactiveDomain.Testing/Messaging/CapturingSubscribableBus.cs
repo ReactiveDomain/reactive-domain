@@ -21,17 +21,17 @@ public sealed class CapturingSubscribableBus : IDispatcher {
     private readonly List<IMessage> _allMessages = [];
 
     /// <summary>
-    /// Gets a read-only list of all commands that have been sent.
+    /// Gets a list of all commands that have been sent.
     /// </summary>
-    public IReadOnlyList<ICommand> SentCommands => _sentCommands.AsReadOnly();
+    public IList<ICommand> SentCommands => _sentCommands;
     /// <summary>
-    /// Gets a read-only list of all messages that have been published.
+    /// Gets a list of all messages that have been published.
     /// </summary>
-    public IReadOnlyList<IMessage> PublishedMessages => _publishedMessages.AsReadOnly();
+    public IList<IMessage> PublishedMessages => _publishedMessages;
     /// <summary>
-    /// Gets a read-only list of all messages that have been published or sent.
+    /// Gets a list of all messages that have been published or sent.
     /// </summary>
-    public IReadOnlyList<IMessage> AllMessages => _allMessages.AsReadOnly();
+    public IList<IMessage> AllMessages => _allMessages;
 
     /// <summary>
     /// Clears all lists of published and sent messages.
