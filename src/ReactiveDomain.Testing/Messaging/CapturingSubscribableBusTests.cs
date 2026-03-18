@@ -47,7 +47,7 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
 
     [Fact]
     public void CanUnsubscribeFromCommands() {
-        var subscriber = new TransientCommandSubscriber(_sut);
+        var subscriber = new QueuedCommandSubscriber(_sut);
         _sut.Send(new TestCommands.Command2());
         subscriber.Dispose();
         Assert.Throws<CommandTimedOutException>(() => _sut.Send(new TestCommands.Command2()));
@@ -73,7 +73,17 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
-    public void FailedCommandIsCapturedOnSend() {
+    public void FailedCommandIsCapturedOnSendWithQueuedSubscriber() {
+        using var subscriber = new QueuedCommandSubscriber(_sut) { FailOnSend = true };
+        var cmd = MessageBuilder.New(() => new TestCommands.Command2());
+        AssertEx.CommandThrows<Exception>(() => _sut.Send(cmd));
+        var c = Assert.Single(_sut.SentCommands);
+        Assert.Same(cmd, c);
+        Assert.Empty(_sut.PublishedMessages);
+    }
+
+    [Fact]
+    public void FailedCommandIsCapturedOnSendWithSynchronousSubscriber() {
         using var subscriber = new TransientCommandSubscriber(_sut) { FailOnSend = true };
         var cmd = MessageBuilder.New(() => new TestCommands.Command2());
         AssertEx.CommandThrows<Exception>(() => _sut.Send(cmd));
@@ -83,15 +93,24 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
-    public void SubscriberHandlesSentCommand() {
-        using var subscriber = new TestCommandSubscriber(_sut);
+    public void QueuedSubscriberHandlesSentCommand() {
+        using var subscriber = new QueuedCommandSubscriber(_sut);
         var cmd = new TestCommands.Command2();
         _sut.Send(cmd);
-        Assert.Equal(1, subscriber.TestCommand2Handled);
+        // ReSharper disable once AccessToDisposedClosure
+        AssertEx.IsOrBecomesTrue(() => subscriber.NumHandled == 1);
     }
 
     [Fact]
-    public void CanCaptureCommandInTrySend() {
+    public void SynchronousSubscriberHandlesSentCommand() {
+        using var subscriber = new TransientCommandSubscriber(_sut);
+        var cmd = new TestCommands.Command2();
+        _sut.Send(cmd);
+        Assert.Equal(1, subscriber.NumHandled);
+    }
+
+    [Fact]
+    public void CanCaptureCommandInTrySendWithSynchronousSubscriber() {
         using var subscriber = new TestCommandSubscriber(_sut);
         var cmd = new TestCommands.Command2();
         _sut.TrySend(cmd, out var response);
@@ -102,8 +121,19 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
+    public void CanCaptureCommandInTrySendWithQueuedSubscriber() {
+        using var subscriber = new QueuedCommandSubscriber(_sut);
+        var cmd = new TestCommands.Command2();
+        _sut.TrySend(cmd, out var response);
+        Assert.IsType<Success>(response);
+        var c = Assert.Single(_sut.SentCommands);
+        Assert.Same(cmd, c);
+        Assert.Empty(_sut.PublishedMessages);
+    }
+
+    [Fact]
     public void TrySendCapturesCommandOnFailure() {
-        using var subscriber = new TransientCommandSubscriber(_sut) { FailOnSend = true };
+        using var subscriber = new QueuedCommandSubscriber(_sut) { FailOnSend = true };
         var cmd = new TestCommands.Command2();
         _sut.TrySend(cmd, out _);
         var c = Assert.Single(_sut.SentCommands);
@@ -112,8 +142,16 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
-    public void TrySendOutputsCorrectResponseOnFailure() {
+    public void TrySendOutputsCorrectResponseOnFailureWithSynchronousSubscriber() {
         using var subscriber = new TransientCommandSubscriber(_sut) { FailOnSend = true };
+        var cmd = new TestCommands.Command2();
+        _sut.TrySend(cmd, out var response);
+        Assert.IsType<Fail>(response);
+    }
+
+    [Fact]
+    public void TrySendOutputsCorrectResponseOnFailureWithQueuedSubscriber() {
+        using var subscriber = new QueuedCommandSubscriber(_sut) { FailOnSend = true };
         var cmd = new TestCommands.Command2();
         _sut.TrySend(cmd, out var response);
         Assert.IsType<Fail>(response);
@@ -127,7 +165,7 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
-    public void CanCaptureCommandInTrySendAsync() {
+    public void CanCaptureCommandInTrySendAsyncWithSynchronousSubscriber() {
         using var subscriber = new TestCommandSubscriber(_sut);
         var cmd = new TestCommands.Command2();
         Assert.True(_sut.TrySendAsync(cmd));
@@ -137,7 +175,17 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
-    public void TrySendAsyncCapturesCommandOnFailure() {
+    public void CanCaptureCommandInTrySendAsyncWithQueuedSubscriber() {
+        using var subscriber = new QueuedCommandSubscriber(_sut);
+        var cmd = new TestCommands.Command2();
+        Assert.True(_sut.TrySendAsync(cmd));
+        var c = Assert.Single(_sut.SentCommands);
+        Assert.Same(cmd, c);
+        Assert.Empty(_sut.PublishedMessages);
+    }
+
+    [Fact]
+    public void TrySendAsyncCapturesCommandOnFailureWithSynchronousSubscriber() {
         using var subscriber = new TransientCommandSubscriber(_sut) { FailOnSend = true };
         var cmd = new TestCommands.Command2();
         _sut.TrySendAsync(cmd);
@@ -147,8 +195,18 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
     }
 
     [Fact]
+    public void TrySendAsyncCapturesCommandOnFailureWithQueuedSubscriber() {
+        using var subscriber = new QueuedCommandSubscriber(_sut) { FailOnSend = true };
+        var cmd = new TestCommands.Command2();
+        _sut.TrySendAsync(cmd);
+        var c = Assert.Single(_sut.SentCommands);
+        Assert.Same(cmd, c);
+        Assert.Empty(_sut.PublishedMessages);
+    }
+
+    [Fact]
     public void TrySendAsyncReturnsCorrectResponseOnFailure() {
-        using var subscriber = new TransientCommandSubscriber(_sut) { FailOnSend = true };
+        using var subscriber = new QueuedCommandSubscriber(_sut) { FailOnSend = true };
         var cmd = new TestCommands.Command2();
         Assert.False(_sut.TrySendAsync(cmd));
     }
@@ -208,11 +266,25 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
 
     private class TransientCommandSubscriber : TransientSubscriber, IHandleCommand<TestCommands.Command2> {
         public bool FailOnSend { get; init; }
+        public int NumHandled { get; set; }
         public TransientCommandSubscriber(IDispatcher bus) : base(bus) {
             // ReSharper disable once RedundantTypeArgumentsOfMethod
             Subscribe<TestCommands.Command2>(this);
         }
         public CommandResponse Handle(TestCommands.Command2 command) {
+            NumHandled++;
+            return FailOnSend ? throw new Exception("Command failed") : command.Succeed();
+        }
+    }
+    private class QueuedCommandSubscriber : QueuedSubscriber, IHandleCommand<TestCommands.Command2> {
+        public bool FailOnSend { get; init; }
+        public int NumHandled { get; set; }
+        public QueuedCommandSubscriber(IDispatcher bus) : base(bus) {
+            // ReSharper disable once RedundantTypeArgumentsOfMethod
+            Subscribe<TestCommands.Command2>(this);
+        }
+        public CommandResponse Handle(TestCommands.Command2 command) {
+            NumHandled++;
             return FailOnSend ? throw new Exception("Command failed") : command.Succeed();
         }
     }

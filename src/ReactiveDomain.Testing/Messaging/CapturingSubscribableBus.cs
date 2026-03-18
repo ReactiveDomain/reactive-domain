@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging;
+﻿#nullable enable
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 using System;
@@ -14,7 +15,7 @@ namespace ReactiveDomain.Testing.Messaging;
 /// synchronous.
 /// </summary>
 public sealed class CapturingSubscribableBus : IDispatcher {
-    private readonly InMemoryBus _bus = new("messages");
+    private readonly SingleThreadedBus _bus = new();
     private readonly Dictionary<Type, object> _handlerWrappers = new();
     private readonly List<ICommand> _sentCommands = [];
     private readonly List<IMessage> _publishedMessages = [];
@@ -76,20 +77,42 @@ public sealed class CapturingSubscribableBus : IDispatcher {
     }
 
     public void Publish(IMessage message) {
-        _publishedMessages.Add(message);
-        _allMessages.Add(message);
+        if (message is not (ICommand or AckCommand or CommandResponse)) {
+            _publishedMessages.Add(message);
+            _allMessages.Add(message);
+        }
         _bus.Publish(message);
     }
 
-    public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+    public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
         _sentCommands.Add(command);
         _allMessages.Add(command);
-        if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler))
-            throw new CommandTimedOutException("Could not find a handler", command);
-        try {
-            handler.GetType().GetMethod("Handle")?.Invoke(handler, [command]);
-        } catch (TargetInvocationException ex) {
-            throw new CommandException("Command failed", ex.InnerException, command);
+        responseTimeout ??= TimeSpan.FromSeconds(5); // Default timeout long enough for heavy load on slow test machines
+        if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler)) {
+            // If there's a subscriber to this command type that uses an internal queue, then it will have subscribed
+            // using IHandle<T> and will not handle synchronously. In those cases we publish on the internal bus, and
+            // then wait for a CommandResponse to be published onto that bus.
+            if (_bus.HasSubscriberFor(command.GetType())) {
+                CommandResponse? response = null;
+                using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => response = r));
+                _bus.Publish(command);
+                var startTime = Environment.TickCount; //returns MS since machine start
+                var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
+                while (response is null) {
+                    var now = Environment.TickCount;
+                    if (endTime - now <= 0)
+                        throw new CommandTimedOutException(command);
+                }
+                if (response is Fail f)
+                    throw new CommandException("Command failed", f.Exception, command);
+            } else
+                throw new CommandTimedOutException("Could not find a handler", command);
+        } else {
+            try {
+                handler.GetType().GetMethod("Handle")?.Invoke(handler, [command]);
+            } catch (TargetInvocationException ex) {
+                throw new CommandException("Command failed", ex.InnerException, command);
+            }
         }
         command.Succeed();
     }
@@ -98,7 +121,33 @@ public sealed class CapturingSubscribableBus : IDispatcher {
         TimeSpan? ackTimeout = null) {
         _sentCommands.Add(command);
         _allMessages.Add(command);
+        responseTimeout ??= TimeSpan.FromSeconds(5); // Default timeout long enough for heavy load on slow test machines
         if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler)) {
+            // If there's a subscriber to this command type that uses an internal queue, then it will have subscribed
+            // using IHandle<T> and will not handle synchronously. In those cases we publish on the internal bus, and
+            // then wait for a CommandResponse to be published onto that bus.
+            if (_bus.HasSubscriberFor(command.GetType())) {
+                CommandResponse? resp = null;
+                using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => resp = r));
+                _bus.Publish(command);
+                var startTime = Environment.TickCount; //returns MS since machine start
+                var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
+                while (resp is null) {
+                    var now = Environment.TickCount;
+                    if (endTime - now <= 0) {
+                        response = command.Fail(new CommandTimedOutException(command));
+                        return false;
+                    }
+                }
+                if (resp is Fail f) {
+                    response = command.Fail(f.Exception);
+                    return false;
+                }
+
+                response = command.Succeed();
+                return true;
+            }
+
             response = command.Fail(new CommandTimedOutException("Could not find a handler", command));
             return false;
         }
@@ -106,7 +155,7 @@ public sealed class CapturingSubscribableBus : IDispatcher {
         try {
             var directHandler = handler.GetType();
             directHandler.GetMethod("Handle")?.Invoke(handler, [command]);
-            response = (CommandResponse)directHandler.GetProperty("Response")!.GetValue(handler);
+            response = (CommandResponse)directHandler.GetProperty("Response")!.GetValue(handler)!;
         } catch (Exception ex) {
             response = command.Fail(ex);
         }
@@ -116,8 +165,20 @@ public sealed class CapturingSubscribableBus : IDispatcher {
     public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
         _sentCommands.Add(command);
         _allMessages.Add(command);
-        if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler))
-            return false;
+        responseTimeout ??= TimeSpan.FromSeconds(5); // Default timeout long enough for heavy load on slow test machines
+        if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler)) {
+            CommandResponse? response = null;
+            using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => response = r));
+            _bus.Publish(command);
+            var startTime = Environment.TickCount; //returns MS since machine start
+            var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
+            while (response is null) {
+                var now = Environment.TickCount;
+                if (endTime - now <= 0)
+                    return false;
+            }
+            return response is not Fail;
+        }
         try {
             handler.GetType().GetMethod("Handle")?.Invoke(handler, [command]);
         } catch (Exception) {
@@ -132,7 +193,7 @@ public sealed class CapturingSubscribableBus : IDispatcher {
     }
 
     private class DirectCommandHandler<T>(IHandleCommand<T> handler) : IHandle<T> where T : class, ICommand {
-        public CommandResponse Response { get; private set; }
+        public CommandResponse? Response { get; private set; }
 
         public void Handle(T message) {
             Response = handler.Handle(message);

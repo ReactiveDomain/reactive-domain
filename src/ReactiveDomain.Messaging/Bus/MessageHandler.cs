@@ -9,8 +9,8 @@ namespace ReactiveDomain.Messaging.Bus
         bool TryHandle(IMessage message);
         bool IsSame(Type messagesType, object handler);
     }
-    
-    internal class MessageHandler<T> : IMessageHandler where T : class, IMessage
+
+    public class MessageHandler<T> : IMessageHandler where T : class, IMessage
     {
         public string HandlerName { get; private set; }
 
@@ -18,7 +18,7 @@ namespace ReactiveDomain.Messaging.Bus
 
         private readonly IHandle<T> _handler;
 
-        internal MessageHandler(IHandle<T> handler, string handlerName)
+        public MessageHandler(IHandle<T> handler, string handlerName)
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
