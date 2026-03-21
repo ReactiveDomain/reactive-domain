@@ -8,7 +8,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="ReactiveDomain.Persistence" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
     <PackageReference Include="System.Reactive" Version="6.1.0" />
   </ItemGroup>
 </Project>

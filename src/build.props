@@ -50,7 +50,7 @@
     </When>
   </Choose>
   <PropertyGroup>
-    <LibTargetFrameworks>net8.0</LibTargetFrameworks>
-    <TestTargetFrameworks>net8.0</TestTargetFrameworks>
+    <LibTargetFrameworks>net8.0;net10.0</LibTargetFrameworks>
+    <TestTargetFrameworks>net8.0;net10.0</TestTargetFrameworks>
   </PropertyGroup>
 </Project>
