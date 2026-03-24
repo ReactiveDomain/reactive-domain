@@ -1,202 +1,320 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation
+namespace ReactiveDomain.Foundation;
+
+public abstract class ReadModelBase :
+    IHandle<IMessage>,
+    IHandle<Message>,
+    IPublisher,
+    IDisposable
 {
-    public abstract class ReadModelBase :
-        IHandle<IMessage>,
-        IHandle<Message>,
-        IPublisher,
-        IDisposable
+    private readonly Func<IListener> _getListener;
+    private readonly List<IListener> _listeners;
+    private readonly Func<IStreamReader> _getReader;
+    private readonly List<Task> _readTasks = [];
+    private readonly InMemoryBus _bus;
+    private readonly QueuedHandler _queue;
+    public int MessageCount => _queue.MessageCount;
+    public bool Idle => _queue.Idle;
+
+    /// <summary>
+    /// ReaderLock locks the event handler and can be used when reading the model 
+    /// to ensure model state is unchanged during read.
+    /// The lock should *not* be used in Handle methods as they are inside the lock already by default.
+    /// </summary>
+    protected readonly object ReaderLock = new();
+
+    /// <summary>
+    /// The version is equal to the number of messages passed to the read model.
+    /// The version is incremented after all handlers have been processed.
+    /// The number of handlers (including none) will not impact the version.
+    /// This can be used to ensure read model state for tests. This is *not*
+    /// the same as the version of any particular stream being read. This can
+    /// include <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/>,
+    /// which may result in the Version being 1 greater than otherwise expected.
+    /// </summary>
+    public int Version { get; private set; }
+
+    /// <summary>
+    /// Gets a task that completes when all streams started using a <c>StartAsync</c> overload are live.
+    /// </summary>
+    /// <remarks>The returned task represents the aggregate completion of all underlying read tasks. Awaiting
+    /// this property allows callers to determine when all read operations are complete.</remarks>
+    public Task IsLive => Task.WhenAll(_readTasks);
+
+    /// <summary>
+    /// Creates a read model using the provided stream store connection. Reads existing events using a
+    /// reader, then transitions to a listener for live events.
+    /// </summary>
+    /// <param name="name">The name of the read model. Also used as the names of the listener and reader.</param>
+    /// <param name="connection">A connection to a stream store.</param>
+    protected ReadModelBase(string name, IConfiguredConnection connection)
     {
-        private readonly Func<IListener> _getListener;
-        private readonly List<IListener> _listeners;
-        private readonly Func<IStreamReader> _getReader;
-        private readonly InMemoryBus _bus;
-        private readonly QueuedHandler _queue;
-        public int MessageCount => _queue.MessageCount;
-        public bool Idle => _queue.Idle;
+        Ensure.NotNull(connection, nameof(connection));
+        _getReader = () => connection.GetReader(name, Handle);
+        _getListener = () => connection.GetListener(name);
+        _listeners = [];
+        _bus = new InMemoryBus($"{nameof(ReadModelBase)}:{name} bus", false);
+        _queue = new QueuedHandler(new AdHocHandler<IMessage>(DequeueMessage),
+            $"{nameof(ReadModelBase)}:{name} queue");
+        _queue.Start();
+    }
 
-        /// <summary>
-        /// ReaderLock locks the event handler and can be used when reading the model 
-        /// to ensure model state is unchanged during read.
-        /// The lock should *not* be used in Handle methods as they are inside the lock already by default.
-        /// </summary>
-        protected readonly object ReaderLock = new object();
-
-        /// <summary>
-        /// The version is equal to the number of messages passed to the read model.
-        /// The version is incremented after all handlers have been processed.
-        /// The number of handlers (including none) will not impact the version.
-        /// This can be used to ensure read model state for tests. This is *not*
-        /// the same as the version of any particular stream being read. This can
-        /// include <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/>,
-        /// which may result in the Version being 1 greater than otherwise expected.
-        /// </summary>
-        public int Version { get; private set; }
-
-        /// <summary>
-        /// Creates a read model using the provided stream store connection. Reads existing events using a
-        /// reader, then transitions to a listener for live events.
-        /// </summary>
-        /// <param name="name">The name of the read model. Also used as the names of the listener and reader.</param>
-        /// <param name="connection">A connection to a stream store.</param>
-        protected ReadModelBase(string name, IConfiguredConnection connection)
+    /// <summary>
+    /// Every message handled by the read model will pass through here.
+    /// </summary>
+    private void DequeueMessage(IMessage message)
+    {
+        lock (ReaderLock)
         {
-            Ensure.NotNull(connection, nameof(connection));
-            _getReader = () => connection.GetReader(name, Handle);
-            _getListener = () => connection.GetListener(name);
-            _listeners = new List<IListener>();
-            _bus = new InMemoryBus($"{nameof(ReadModelBase)}:{name} bus", false);
-            _queue = new QueuedHandler(new AdHocHandler<IMessage>(DequeueMessage), $"{nameof(ReadModelBase)}:{name} queue");
-            _queue.Start();
+            _bus.Handle(message);
+            Version++;
+        }
+    }
+
+    private IListener AddNewListener()
+    {
+        var l = _getListener();
+        lock (_listeners)
+        {
+            _listeners.Add(l);
         }
 
-        /// <summary>
-        /// Every message handled by the read model will pass through here.
-        /// </summary>
-        private void DequeueMessage(IMessage message)
+        l.EventStream.SubscribeToAll(_queue);
+        return l;
+    }
+
+    /// <summary>
+    /// Get the positions of all listeners.
+    /// </summary>
+    /// <returns>A list of Tuples of listener names and checkpoints.</returns>
+    public List<Tuple<string, long>> GetCheckpoint()
+    {
+        lock (_listeners)
         {
-            lock (ReaderLock)
+            return _listeners.Select(l => new Tuple<string, long>(l.StreamName, l.Position)).ToList();
+        }
+    }
+
+    /// <summary>
+    /// The stream of events that handlers should subscribe to.
+    /// </summary>
+    public ISubscriber EventStream => _bus;
+
+    /// <summary>
+    /// Start playback of a named stream.
+    /// </summary>
+    /// <param name="stream">The name of the stream to play back.</param>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.
+    /// <br/>
+    /// <b>This parameter is deprecated and will be removed in a future release. Use <see cref="StartAsync"/> and
+    /// await <see cref="IsLive"/> instead.</b></param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false,
+        bool validateStream = false, CancellationToken cancelWaitToken = default)
+    {
+        if (_getReader != null)
+        {
+            using var reader = _getReader();
+            reader.Read(stream, () => Idle, checkpoint);
+            checkpoint = reader.Position ?? checkpoint;
+        }
+
+        AddNewListener().Start(stream, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
+    }
+
+    /// <summary>
+    /// Start playback of a named stream on a task pool thread.
+    /// Await <see cref="IsLive"/> to know when all streams are caught up.
+    /// </summary>
+    /// <param name="stream">The name of the stream to play back.</param>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void StartAsync(string stream, long? checkpoint = null, bool validateStream = false,
+        CancellationToken cancelWaitToken = default)
+    {
+        _readTasks.Add(Task.Run(() =>
+        {
+            if (_getReader != null)
             {
-                _bus.Handle(message);
-                Version++;
+                using var reader = _getReader();
+                reader.Read(stream, () => Idle, checkpoint);
+                checkpoint = reader.Position ?? checkpoint;
             }
+
+            AddNewListener().Start(stream, checkpoint, false, validateStream, cancelWaitToken);
+        }, cancelWaitToken));
+    }
+
+    /// <summary>
+    /// Start playback of a specific stream of type <typeparamref name="TAggregate"/>.
+    /// </summary>
+    /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
+    /// <param name="id">The ID of the stream to play back.</param>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.
+    /// <br/>
+    /// <b>This parameter is deprecated and will be removed in a future release. Use
+    /// <see cref="StartAsync{TAggregate}(System.Guid,long?,bool,System.Threading.CancellationToken)"/> and
+    /// await <see cref="IsLive"/> instead.</b></param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false,
+        bool validateStream = false, CancellationToken cancelWaitToken = default)
+        where TAggregate : class, IEventSource
+    {
+        if (_getReader != null)
+        {
+            using var reader = _getReader();
+            reader.Read<TAggregate>(id, () => Idle, checkpoint);
+            checkpoint = reader.Position;
         }
 
-        private IListener AddNewListener()
+        AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
+    }
+
+    /// <summary>
+    /// Start playback of a specific stream of type <typeparamref name="TAggregate"/> on a task pool thread.
+    /// Await <see cref="IsLive"/> to know when all streams are caught up.
+    /// </summary>
+    /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
+    /// <param name="id">The ID of the stream to play back.</param>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void StartAsync<TAggregate>(Guid id, long? checkpoint = null, bool validateStream = false,
+        CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
+    {
+        _readTasks.Add(Task.Run(() =>
         {
-            var l = _getListener();
+            if (_getReader != null)
+            {
+                using var reader = _getReader();
+                reader.Read<TAggregate>(id, () => Idle, checkpoint);
+                checkpoint = reader.Position;
+            }
+
+            AddNewListener().Start<TAggregate>(id, checkpoint, false, validateStream, cancelWaitToken);
+        }, cancelWaitToken));
+    }
+
+    /// <summary>
+    /// Start a category listener for type <typeparamref name="TAggregate"/>.
+    /// </summary>
+    /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.
+    /// <br/>
+    /// <b>This parameter is deprecated and will be removed in a future release. Use
+    /// <see cref="StartAsync{TAggregate}(long?,bool,System.Threading.CancellationToken)"/> and await
+    /// <see cref="IsLive"/> instead.</b></param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false,
+        CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
+    {
+        if (_getReader != null)
+        {
+            using var reader = _getReader();
+            reader.Read<TAggregate>(() => Idle, checkpoint);
+            checkpoint = reader.Position;
+        }
+
+        AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, validateStream, cancelWaitToken);
+    }
+
+    /// <summary>
+    /// Start a category listener for type <typeparamref name="TAggregate"/>.
+    /// Events are played back on a task pool thread.
+    /// Await <see cref="IsLive"/> to know when all streams are caught up.
+    /// </summary>
+    /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
+    /// <param name="checkpoint">The event to start with.</param>
+    /// <param name="validateStream">ensure the stream exists on start</param>
+    /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
+    public void StartAsync<TAggregate>(long? checkpoint = null, bool validateStream = false,
+        CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
+    {
+        _readTasks.Add(Task.Run(() =>
+        {
+            if (_getReader != null)
+            {
+                using var reader = _getReader();
+                reader.Read<TAggregate>(() => Idle, checkpoint);
+                checkpoint = reader.Position;
+            }
+
+            AddNewListener().Start<TAggregate>(checkpoint, false, validateStream, cancelWaitToken);
+        }, cancelWaitToken));
+    }
+
+    /// <summary>
+    /// Dispose of resources.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private bool _disposed;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
             lock (_listeners)
             {
-                _listeners.Add(l);
+                _listeners?.ForEach(l => l?.Dispose());
             }
-            l.EventStream.SubscribeToAll(_queue);
-            return l;
+
+            _queue?.RequestStop();
+            _bus?.Dispose();
         }
 
-        /// <summary>
-        /// Get the positions of all listeners.
-        /// </summary>
-        /// <returns>A list of Tuples of listener names and checkpoints.</returns>
-        public List<Tuple<string, long>> GetCheckpoint()
-        {
-            lock (_listeners)
-            {
-                return _listeners.Select(l => new Tuple<string, long>(l.StreamName, l.Position)).ToList();
-            }
-        }
+        _disposed = true;
+    }
 
-        /// <summary>
-        /// The stream of events that handlers should subscribe to.
-        /// </summary>
-        public ISubscriber EventStream => _bus;
+    /// <summary>
+    /// Applies a message synchronously to the read model while ensuring that the <see cref="ReaderLock"/>
+    /// is respected and bypasses both the queue and listeners. This is primarily useful in tests.
+    /// </summary>
+    /// <param name="message">The message to apply.</param>
+    public void DirectApply(IMessage message)
+    {
+        DequeueMessage(message);
+    }
 
-        /// <summary>
-        /// Start playback of a named stream.
-        /// </summary>
-        /// <param name="stream">The name of the stream to play back.</param>
-        /// <param name="checkpoint">The event to start with.</param>
-        /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
-        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default)
-        {
-            if (_getReader != null)
-            {
-                using (var reader = _getReader())
-                {
-                    reader.Read(stream, () => Idle, checkpoint);
-                    checkpoint = reader.Position ?? checkpoint;
-                }
-            }
-            AddNewListener().Start(stream, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
-        }
+    public void Handle(Message message)
+    {
+        ((IHandle<IMessage>)_queue).Handle(message);
+    }
 
-        /// <summary>
-        /// Start playback of a specific stream of type TAggregate.
-        /// </summary>
-        /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
-        /// <param name="id">The ID of the stream to play back.</param>
-        /// <param name="checkpoint">The event to start with.</param>
-        /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
-        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
-        {
-            if (_getReader != null)
-            {
-                using (var reader = _getReader())
-                {
-                    reader.Read<TAggregate>(id, () => Idle, checkpoint);
-                    checkpoint = reader.Position;
-                }
-            }
-            AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
-        }
+    public void Handle(IMessage message)
+    {
+        ((IHandle<IMessage>)_queue).Handle(message);
+    }
 
-        /// <summary>
-        /// Start a category listener for type TAggregate.
-        /// </summary>
-        /// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
-        /// <param name="checkpoint">The event to start with.</param>
-        /// <param name="blockUntilLive">If true, blocks returning from this method until the listener has caught up.</param>
-        /// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
-        public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource
-        {
-            if (_getReader != null)
-            {
-                using (var reader = _getReader())
-                {
-                    reader.Read<TAggregate>(() => Idle, checkpoint);
-                    checkpoint = reader.Position;
-                }
-            }
-            AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, validateStream, cancelWaitToken);
-        }
-
-        /// <summary>
-        /// Dispose of resources.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed) return;
-            if (disposing)
-            {
-                lock (_listeners)
-                {
-                    _listeners?.ForEach(l => l?.Dispose());
-                }
-                _queue?.RequestStop();
-                _bus?.Dispose();
-            }
-            _disposed = true;
-        }
-        /// <summary>
-        /// Applies a message synchronously to the read model while ensuring that the <see cref="ReaderLock"/>
-        /// is respected and bypasses both the queue and listeners. This is primarily useful in tests.
-        /// </summary>
-        /// <param name="message">The message to apply.</param>
-        public void DirectApply(IMessage message) { DequeueMessage(message); }
-        public void Handle(Message message) { ((IHandle<IMessage>)_queue).Handle(message); }
-        public void Handle(IMessage message) { ((IHandle<IMessage>)_queue).Handle(message); }
-        /// <summary>
-        /// Publishes a message onto the read model's internal queue.
-        /// This bypasses the Listeners while ensuring that the <see cref="ReaderLock"/>
-        /// is respected. All messages will be processed in order from the queue thread.
-        /// </summary>
-        /// <param name="message">The message to publish.</param>
-        public void Publish(IMessage message) { ((IPublisher)_queue).Publish(message); }
+    /// <summary>
+    /// Publishes a message onto the read model's internal queue.
+    /// This bypasses the Listeners while ensuring that the <see cref="ReaderLock"/>
+    /// is respected. All messages will be processed in order from the queue thread.
+    /// </summary>
+    /// <param name="message">The message to publish.</param>
+    public void Publish(IMessage message)
+    {
+        ((IPublisher)_queue).Publish(message);
     }
 }
