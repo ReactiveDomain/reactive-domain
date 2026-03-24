@@ -1,42 +1,37 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using EventStore.ClientAPI.Exceptions;
-using ReactiveDomain.Util;
+using ReactiveDomain.Testing.Messaging;
 
 // ReSharper disable MemberCanBePrivate.Global
 namespace ReactiveDomain.Testing.EventStore
 {
     public sealed class MockStreamStoreConnection : IStreamStoreConnection
     {
-        private object ReaderWriterLock = new object();
-        public const string CategoryStreamNamePrefix = @"$ce";
-        public const string EventTypeStreamNamePrefix = @"$et";
-        public const string AllStreamName = @"$All";
+        private readonly object _readerWriterLock = new();
+        public const string CategoryStreamNamePrefix = "$ce";
+        public const string EventTypeStreamNamePrefix = "$et";
+        public const string AllStreamName = "$All";
         private readonly Dictionary<string, List<RecordedEvent>> _store;
-        private readonly List<RecordedEvent> _allStream = new List<RecordedEvent>();
-        private readonly QueuedHandler _inboundEventHandler;
-        private readonly IBus _inboundEventBus;
+        private readonly List<RecordedEvent> _allStream = [];
+        private readonly AdHocHandler<IMessage> _inboundEventHandler;
+        private readonly SingleThreadedBus _inboundEventBus;
         private readonly List<IDisposable> _subscriptions;
         private bool _connected;
         private bool _disposed;
 
         public MockStreamStoreConnection(string name)
         {
-            _subscriptions = new List<IDisposable>();
+            _subscriptions = [];
 
             _store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
-            _inboundEventBus = new InMemoryBus(nameof(_inboundEventBus), false);
+            _inboundEventBus = new SingleThreadedBus();
 
-            _inboundEventHandler = new QueuedHandler(
-                new AdHocHandler<IMessage>(_inboundEventBus.Publish),
-                nameof(_inboundEventHandler),
-                false);
-            _inboundEventHandler.Start();
+            _inboundEventHandler = new AdHocHandler<IMessage>(_inboundEventBus.Publish);
             ConnectionName = name;
         }
 
@@ -54,8 +49,8 @@ namespace ReactiveDomain.Testing.EventStore
             _subscriptions.ForEach(s => s?.Dispose());
         }
 
-        public event EventHandler<ClientConnectionEventArgs> Connected = (p1, p2) => { };
-        public event EventHandler<ClientConnectionEventArgs> Disconnected = (p1, p2) => { };
+        public event EventHandler<ClientConnectionEventArgs> Connected = (_, _) => { };
+        public event EventHandler<ClientConnectionEventArgs> Disconnected = (_, _) => { };
 
         public WriteResult AppendToStream(
             string stream,
@@ -68,7 +63,7 @@ namespace ReactiveDomain.Testing.EventStore
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
             if (string.IsNullOrWhiteSpace(stream))
                 throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 List<RecordedEvent> eventStream;
                 if (expectedVersion == ExpectedVersion.Any)
@@ -85,7 +80,7 @@ namespace ReactiveDomain.Testing.EventStore
 
                     if (streamExists && expectedVersion == ExpectedVersion.NoStream)
                         throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
-                    if (!streamExists && (expectedVersion == ExpectedVersion.StreamExists))
+                    if (!streamExists && expectedVersion == ExpectedVersion.StreamExists)
                         throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
                     if (!streamExists)
@@ -182,7 +177,7 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 if (!_connected) throw new InvalidOperationException("Not Connected");
                 if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -191,8 +186,8 @@ namespace ReactiveDomain.Testing.EventStore
                 List<RecordedEvent> stream;
                 lock (_store)
                 {
-                    if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
-                    stream = _store[streamName].ToList();
+                    if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
+                    stream = events.ToList();
                 }
                 return ReadFromStream(streamName, start, count, stream, ReadDirection.Forward);
             }
@@ -203,7 +198,7 @@ namespace ReactiveDomain.Testing.EventStore
                                     long count,
                                     UserCredentials credentials = null)
         {
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 if (!_connected) throw new InvalidOperationException("Not Connected");
                 if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -212,8 +207,8 @@ namespace ReactiveDomain.Testing.EventStore
                 List<RecordedEvent> stream;
                 lock (_store)
                 {
-                    if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
-                    stream = _store[streamName].ToList();
+                    if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
+                    stream = events.ToList();
                 }
                 return ReadFromStream(streamName, start, count, stream, ReadDirection.Backward);
             }
@@ -225,7 +220,7 @@ namespace ReactiveDomain.Testing.EventStore
                                     List<RecordedEvent> stream,
                                     ReadDirection direction)
         {
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 if (!_connected) throw new InvalidOperationException("Not Connected");
                 if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -370,9 +365,9 @@ namespace ReactiveDomain.Testing.EventStore
             long currentPos = 0;
             lock (_store)
             {
-                if (_store.ContainsKey(stream))
+                if (_store.TryGetValue(stream, out var events))
                 {
-                    currentPos = _store[stream].Count - 1;
+                    currentPos = events.Count - 1;
                 }
             }
 
@@ -398,12 +393,12 @@ namespace ReactiveDomain.Testing.EventStore
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
             var start = (lastCheckpoint ?? -1) + 1;
-            RecordedEvent[] curEvents = { };
+            RecordedEvent[] curEvents = [];
             lock (_store)
             {
-                if (_store.ContainsKey(stream))
+                if (_store.TryGetValue(stream, out var events))
                 {
-                    curEvents = _store[stream].Skip((int)start).ToArray();
+                    curEvents = events.Skip((int)start).ToArray();
                 }
             }
             while (curEvents.Length > 0)
@@ -434,18 +429,18 @@ namespace ReactiveDomain.Testing.EventStore
 
 
 
-        public IDisposable SubscribeToAllFrom(Position @from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
+        public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
                                               Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
                                               UserCredentials credentials = null, bool resolveLinkTos = true)
         {
             if (!_connected) throw new InvalidOperationException("Not Connected");
             if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            var current = (int)@from.CommitPosition;
-            var currentEvents = new RecordedEvent[] { };
+            var current = (int)from.CommitPosition;
+            RecordedEvent[] currentEvents = [];
             lock (_allStream)
             {
-                if (@from == Position.End)
+                if (from == Position.End)
                 {
                     current = _allStream.Count - 1;
                 }
@@ -488,7 +483,7 @@ namespace ReactiveDomain.Testing.EventStore
 
         public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 if (!_connected) throw new InvalidOperationException("Not Connected");
                 if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -504,21 +499,15 @@ namespace ReactiveDomain.Testing.EventStore
                 }
                 lock (_store)
                 {
-                    if (_store.ContainsKey(stream))
-                    {
-                        _store.Remove(stream);
-                    }
-                    if (expectedVersion == ExpectedVersion.StreamExists)
-                    {
-                        throw new ArgumentOutOfRangeException();
-                    }
+                    _store.Remove(stream);
+                    ArgumentOutOfRangeException.ThrowIfEqual(expectedVersion, ExpectedVersion.StreamExists);
                 }
             }
         }
 
         public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
         {
-            lock (ReaderWriterLock)
+            lock (_readerWriterLock)
             {
                 if (!_connected) throw new InvalidOperationException("Not Connected");
                 if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
@@ -534,10 +523,7 @@ namespace ReactiveDomain.Testing.EventStore
                 }
                 lock (_store)
                 {
-                    if (_store.ContainsKey(stream))
-                    {
-                        _store.Remove(stream);
-                    }
+                    _store.Remove(stream);
                     if (expectedVersion == ExpectedVersion.StreamExists)
                     {
                         throw new ArgumentOutOfRangeException();
@@ -641,7 +627,6 @@ namespace ReactiveDomain.Testing.EventStore
             _disposed = true;
             Close();
             _subscriptions?.ForEach(s => s?.Dispose());
-            _inboundEventHandler?.Stop();
         }
 
         public class EventWritten : IMessage
