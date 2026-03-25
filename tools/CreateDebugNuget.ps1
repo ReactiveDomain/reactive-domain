@@ -206,6 +206,28 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             $refnode.version = $pRef.Version
         }      
     }   
+
+    $net10 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net10.0']"
+    $net10Nodes = $net10.Node.ChildNodes
+       
+    foreach($refnode in $net10Nodes)
+    {
+        if ( $refnode.id -match "ReactiveDomain")
+        {
+            $refnode.version = $RDVersion
+            continue
+        }
+
+        $pRef = GetPackageRefFromProject $refnode.id $CsProj "net10.0"
+        if ((($pRef.ComparisonOperator -eq "" -or $pRef.Framework -eq "") -or 
+            ($pRef.ComparisonOperator -eq "==" -and $pRef.Framework -eq "net10.0") -or 
+            ($pRef.ComparisonOperator -eq "!=" -and $pRef.Framework -ne "net10.0")) -and
+            ($pRef.version -ne ""))
+        {
+            $refnode.version = $pRef.Version
+        }      
+    }   
+
     $xml.Save($Nuspec)
     Write-Host "Updated dependency versions of: $Nuspec"
 }
