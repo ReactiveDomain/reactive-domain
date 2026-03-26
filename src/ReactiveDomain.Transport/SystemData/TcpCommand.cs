@@ -25,71 +25,69 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
-namespace ReactiveDomain.Transport.SystemData
-{
-    internal enum TcpCommand: byte
-    {
-        HeartbeatRequestCommand = 0x01,
-        HeartbeatResponseCommand = 0x02,
+namespace ReactiveDomain.Transport.SystemData;
 
-        Ping = 0x03,
-        Pong = 0x04,
+internal enum TcpCommand : byte {
+	HeartbeatRequestCommand = 0x01,
+	HeartbeatResponseCommand = 0x02,
 
-        PrepareAck = 0x05,
-        CommitAck = 0x06,
+	Ping = 0x03,
+	Pong = 0x04,
 
-        SlaveAssignment = 0x07,
-        CloneAssignment = 0x08,
+	PrepareAck = 0x05,
+	CommitAck = 0x06,
 
-        SubscribeReplica = 0x10,
-        ReplicaLogPositionAck = 0x11,
-        CreateChunk = 0x12,
-        RawChunkBulk = 0x13,
-        DataChunkBulk = 0x14,
-        ReplicaSubscriptionRetry = 0x15,
-        ReplicaSubscribed = 0x16,
+	SlaveAssignment = 0x07,
+	CloneAssignment = 0x08,
 
-        // CLIENT COMMANDS
-//        CreateStream = 0x80,
-//        CreateStreamCompleted = 0x81,
+	SubscribeReplica = 0x10,
+	ReplicaLogPositionAck = 0x11,
+	CreateChunk = 0x12,
+	RawChunkBulk = 0x13,
+	DataChunkBulk = 0x14,
+	ReplicaSubscriptionRetry = 0x15,
+	ReplicaSubscribed = 0x16,
 
-        WriteEvents = 0x82,
-        WriteEventsCompleted = 0x83,
+	// CLIENT COMMANDS
+	//        CreateStream = 0x80,
+	//        CreateStreamCompleted = 0x81,
 
-        TransactionStart = 0x84,
-        TransactionStartCompleted = 0x85,
-        TransactionWrite = 0x86,
-        TransactionWriteCompleted = 0x87,
-        TransactionCommit = 0x88,
-        TransactionCommitCompleted = 0x89,
+	WriteEvents = 0x82,
+	WriteEventsCompleted = 0x83,
 
-        DeleteStream = 0x8A,
-        DeleteStreamCompleted = 0x8B,
+	TransactionStart = 0x84,
+	TransactionStartCompleted = 0x85,
+	TransactionWrite = 0x86,
+	TransactionWriteCompleted = 0x87,
+	TransactionCommit = 0x88,
+	TransactionCommitCompleted = 0x89,
 
-        ReadEvent = 0xB0,
-        ReadEventCompleted = 0xB1,
-        ReadStreamEventsForward = 0xB2,
-        ReadStreamEventsForwardCompleted = 0xB3,
-        ReadStreamEventsBackward = 0xB4,
-        ReadStreamEventsBackwardCompleted = 0xB5,
-        ReadAllEventsForward = 0xB6,
-        ReadAllEventsForwardCompleted = 0xB7,
-        ReadAllEventsBackward = 0xB8,
-        ReadAllEventsBackwardCompleted = 0xB9,
+	DeleteStream = 0x8A,
+	DeleteStreamCompleted = 0x8B,
 
-        SubscribeToStream = 0xC0,
-        SubscriptionConfirmation = 0xC1,
-        StreamEventAppeared = 0xC2,
-        UnsubscribeFromStream = 0xC3,
-        SubscriptionDropped = 0xC4,
+	ReadEvent = 0xB0,
+	ReadEventCompleted = 0xB1,
+	ReadStreamEventsForward = 0xB2,
+	ReadStreamEventsForwardCompleted = 0xB3,
+	ReadStreamEventsBackward = 0xB4,
+	ReadStreamEventsBackwardCompleted = 0xB5,
+	ReadAllEventsForward = 0xB6,
+	ReadAllEventsForwardCompleted = 0xB7,
+	ReadAllEventsBackward = 0xB8,
+	ReadAllEventsBackwardCompleted = 0xB9,
 
-        ScavengeDatabase = 0xD0,
-        ScavengeDatabaseCompleted = 0xD1,
+	SubscribeToStream = 0xC0,
+	SubscriptionConfirmation = 0xC1,
+	StreamEventAppeared = 0xC2,
+	UnsubscribeFromStream = 0xC3,
+	SubscriptionDropped = 0xC4,
 
-        BadRequest = 0xF0,
-        NotHandled = 0xF1,
-        Authenticate = 0xF2,
-        Authenticated = 0xF3,
-        NotAuthenticated = 0xF4
-   }
+	ScavengeDatabase = 0xD0,
+	ScavengeDatabaseCompleted = 0xD1,
+
+	BadRequest = 0xF0,
+	NotHandled = 0xF1,
+	Authenticate = 0xF2,
+	Authenticated = 0xF3,
+	NotAuthenticated = 0xF4
 }

@@ -28,13 +28,10 @@
 
 using System;
 
-namespace ReactiveDomain.Transport.BufferManagement
-{
-    public class UnableToAllocateBufferException : Exception
-    {
-        public UnableToAllocateBufferException()
-            : base("Couldn't allocate buffer after few trials.")
-        {
-        }
-    }
+namespace ReactiveDomain.Transport.BufferManagement;
+
+public class UnableToAllocateBufferException : Exception {
+	public UnableToAllocateBufferException()
+		: base("Couldn't allocate buffer after few trials.") {
+	}
 }

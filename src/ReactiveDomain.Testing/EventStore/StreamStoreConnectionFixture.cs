@@ -1,23 +1,18 @@
 //#define LIVE_ES_CONNECTION
 
 using System;
-using ReactiveDomain.EventStore;
-using ES = EventStore.ClientAPI;
-using System.Net;
 
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing
-{
-    public class StreamStoreConnectionFixture : IDisposable
-    {
-        private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
+namespace ReactiveDomain.Testing;
 
-        private readonly IDisposable _node = null;
+public class StreamStoreConnectionFixture : IDisposable {
+	private static readonly TimeSpan TimeToStop = TimeSpan.FromSeconds(5);
 
-        public StreamStoreConnectionFixture()
-        {
-            AdminCredentials = new UserCredentials("admin", "changeit");
+	private readonly IDisposable _node = null;
+
+	public StreamStoreConnectionFixture() {
+		AdminCredentials = new UserCredentials("admin", "changeit");
 #if LIVE_ES_CONNECTION
             //Connection = new EventStoreConnectionWrapper(
             //                  EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500"));
@@ -41,23 +36,22 @@ namespace ReactiveDomain.Testing
             Connection.Connect();           
 #else
 
-            Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
-            Connection.Connect();
+		Connection = new ReactiveDomain.Testing.EventStore.MockStreamStoreConnection("Test Fixture");
+		Connection.Connect();
 #endif
-        }
+	}
 
-        public IStreamStoreConnection Connection { get; }
+	public IStreamStoreConnection Connection { get; }
 
-        public UserCredentials AdminCredentials { get; }
+	public UserCredentials AdminCredentials { get; }
 
-        private bool _disposed;
-        public void Dispose()
-        {
-            if (_disposed) return;
-            Connection?.Close();
-            Connection?.Dispose();
-            _node?.Dispose();
-            _disposed = true;
-        }
-    }
+	private bool _disposed;
+	public void Dispose() {
+		if (_disposed)
+			return;
+		Connection?.Close();
+		Connection?.Dispose();
+		_node?.Dispose();
+		_disposed = true;
+	}
 }

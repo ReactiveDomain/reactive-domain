@@ -1,49 +1,43 @@
 using System;
 
-namespace ReactiveDomain.Messaging.Bus
-{
-    public interface IMessageHandler
-    {
-        string HandlerName { get; }
-        Type MessageType { get; }
-        bool TryHandle(IMessage message);
-        bool IsSame(Type messagesType, object handler);
-    }
+namespace ReactiveDomain.Messaging.Bus;
 
-    public class MessageHandler<T> : IMessageHandler where T : class, IMessage
-    {
-        public string HandlerName { get; private set; }
+public interface IMessageHandler {
+	string HandlerName { get; }
+	Type MessageType { get; }
+	bool TryHandle(IMessage message);
+	bool IsSame(Type messagesType, object handler);
+}
 
-        public Type MessageType { get; private set; }
+public class MessageHandler<T> : IMessageHandler where T : class, IMessage {
+	public string HandlerName { get; private set; }
 
-        private readonly IHandle<T> _handler;
+	public Type MessageType { get; private set; }
 
-        public MessageHandler(IHandle<T> handler, string handlerName)
-        {
-            if (handler == null)
-                throw new ArgumentNullException(nameof(handler));
-            _handler = handler;
-            HandlerName = handlerName ?? string.Empty;
-            MessageType = typeof(T);
-        }
+	private readonly IHandle<T> _handler;
 
-        public bool TryHandle(IMessage message)
-        {
-            var msg = message as T;
-            if (msg == null) return false;
+	public MessageHandler(IHandle<T> handler, string handlerName) {
+		if (handler == null)
+			throw new ArgumentNullException(nameof(handler));
+		_handler = handler;
+		HandlerName = handlerName ?? string.Empty;
+		MessageType = typeof(T);
+	}
 
-            _handler.Handle(msg); //if this throws let it bubble up.
-            return true;
-        }
+	public bool TryHandle(IMessage message) {
+		var msg = message as T;
+		if (msg == null)
+			return false;
 
-        public bool IsSame(Type messageType, object handler)
-        {
-            return ReferenceEquals(_handler, handler) && typeof(T) == messageType;
-        }
+		_handler.Handle(msg); //if this throws let it bubble up.
+		return true;
+	}
 
-        public override string ToString()
-        {
-            return string.IsNullOrEmpty(HandlerName) ? _handler.ToString() : HandlerName;
-        }
-    }
+	public bool IsSame(Type messageType, object handler) {
+		return ReferenceEquals(_handler, handler) && typeof(T) == messageType;
+	}
+
+	public override string ToString() {
+		return string.IsNullOrEmpty(HandlerName) ? _handler.ToString() : HandlerName;
+	}
 }

@@ -1,7 +1,5 @@
-﻿namespace ReactiveDomain
-{
-	public interface ISnapshotSerializer
-	{
-		StorableMessage Serialize(Snapshot snapshot);
-	}
+﻿namespace ReactiveDomain;
+
+public interface ISnapshotSerializer {
+	StorableMessage Serialize(Snapshot snapshot);
 }

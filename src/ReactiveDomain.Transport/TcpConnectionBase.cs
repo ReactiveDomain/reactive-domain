@@ -4,175 +4,145 @@ using System.Net.Sockets;
 using System.Threading;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Transport
-{
-    public class TcpConnectionBase : IMonitoredTcpConnection
-    {
-        public EndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _localEndPoint; } }
+namespace ReactiveDomain.Transport;
 
-        public bool IsInitialized { get { return _socket != null; } }
-        public bool IsClosed { get { return _isClosed; } }
-        public bool InSend { get { return Interlocked.Read(ref _lastSendStarted) >= 0; } }
-        public bool InReceive { get { return Interlocked.Read(ref _lastReceiveStarted) >= 0; } }
-        public int PendingSendBytes { get { return _pendingSendBytes; } }
-        public int InSendBytes { get { return _inSendBytes; } }
-        public int PendingReceivedBytes { get { return _pendingReceivedBytes; } }
-        public long TotalBytesSent { get { return Interlocked.Read(ref _totalBytesSent); } }
-        public long TotalBytesReceived { get { return Interlocked.Read(ref _totalBytesReceived); } }
-        public int SendCalls { get { return _sentAsyncs; } }
-        public int SendCallbacks { get { return _sentAsyncCallbacks; } }
-        public int ReceiveCalls { get { return _recvAsyncs; } }
-        public int ReceiveCallbacks { get { return _recvAsyncCallbacks; } }
+public class TcpConnectionBase : IMonitoredTcpConnection {
+	public EndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
+	public EndPoint LocalEndPoint { get { return _localEndPoint; } }
 
-        public bool IsReadyForSend
-        {
-            get
-            {
-                try
-                {
-                    return !_isClosed && _socket.Poll(0, SelectMode.SelectWrite);
-                }
-                catch (ObjectDisposedException)
-                {
-                    //TODO: why do we get this?
-                    return false;
-                }
-            }
-        }
+	public bool IsInitialized { get { return _socket != null; } }
+	public bool IsClosed { get { return _isClosed; } }
+	public bool InSend { get { return Interlocked.Read(ref _lastSendStarted) >= 0; } }
+	public bool InReceive { get { return Interlocked.Read(ref _lastReceiveStarted) >= 0; } }
+	public int PendingSendBytes { get { return _pendingSendBytes; } }
+	public int InSendBytes { get { return _inSendBytes; } }
+	public int PendingReceivedBytes { get { return _pendingReceivedBytes; } }
+	public long TotalBytesSent { get { return Interlocked.Read(ref _totalBytesSent); } }
+	public long TotalBytesReceived { get { return Interlocked.Read(ref _totalBytesReceived); } }
+	public int SendCalls { get { return _sentAsyncs; } }
+	public int SendCallbacks { get { return _sentAsyncCallbacks; } }
+	public int ReceiveCalls { get { return _recvAsyncs; } }
+	public int ReceiveCallbacks { get { return _recvAsyncCallbacks; } }
 
-        public bool IsReadyForReceive
-        {
-            get
-            {
-                try
-                {
-                    return !_isClosed && _socket.Poll(0, SelectMode.SelectRead);
-                }
-                catch (ObjectDisposedException)
-                {
-                    //TODO: why do we get this?
-                    return false;
-                }
-            }
-        }
+	public bool IsReadyForSend {
+		get {
+			try {
+				return !_isClosed && _socket.Poll(0, SelectMode.SelectWrite);
+			} catch (ObjectDisposedException) {
+				//TODO: why do we get this?
+				return false;
+			}
+		}
+	}
 
-        public bool IsFaulted
-        {
-            get
-            {
-                try
-                {
-                    return !_isClosed && _socket.Poll(0, SelectMode.SelectError);
-                }
-                catch (ObjectDisposedException)
-                {
-                    //TODO: why do we get this?
-                    return false;
-                }
-            }
-        }
+	public bool IsReadyForReceive {
+		get {
+			try {
+				return !_isClosed && _socket.Poll(0, SelectMode.SelectRead);
+			} catch (ObjectDisposedException) {
+				//TODO: why do we get this?
+				return false;
+			}
+		}
+	}
 
-        public DateTime? LastSendStarted
-        {
-            get
-            {
-                var ticks = Interlocked.Read(ref _lastSendStarted);
-                return ticks >= 0 ? new DateTime(ticks) : (DateTime?)null;
-            }
-        }
+	public bool IsFaulted {
+		get {
+			try {
+				return !_isClosed && _socket.Poll(0, SelectMode.SelectError);
+			} catch (ObjectDisposedException) {
+				//TODO: why do we get this?
+				return false;
+			}
+		}
+	}
 
-        public DateTime? LastReceiveStarted
-        {
-            get
-            {
-                var ticks = Interlocked.Read(ref _lastReceiveStarted);
-                return ticks >= 0 ? new DateTime(ticks) : (DateTime?)null;
-            }
-        }
+	public DateTime? LastSendStarted {
+		get {
+			var ticks = Interlocked.Read(ref _lastSendStarted);
+			return ticks >= 0 ? new DateTime(ticks) : (DateTime?)null;
+		}
+	}
 
-        private Socket _socket;
-        private readonly EndPoint _remoteEndPoint;
-        private EndPoint _localEndPoint;
+	public DateTime? LastReceiveStarted {
+		get {
+			var ticks = Interlocked.Read(ref _lastReceiveStarted);
+			return ticks >= 0 ? new DateTime(ticks) : (DateTime?)null;
+		}
+	}
 
-        private long _lastSendStarted = -1;
-        private long _lastReceiveStarted = -1;
-        private bool _isClosed;
+	private Socket _socket;
+	private readonly EndPoint _remoteEndPoint;
+	private EndPoint _localEndPoint;
 
-        private int _pendingSendBytes;
-        private int _inSendBytes;
-        private int _pendingReceivedBytes;
-        private long _totalBytesSent;
-        private long _totalBytesReceived;
+	private long _lastSendStarted = -1;
+	private long _lastReceiveStarted = -1;
+	private bool _isClosed;
 
-        private int _sentAsyncs;
-        private int _sentAsyncCallbacks;
-        private int _recvAsyncs;
-        private int _recvAsyncCallbacks;
+	private int _pendingSendBytes;
+	private int _inSendBytes;
+	private int _pendingReceivedBytes;
+	private long _totalBytesSent;
+	private long _totalBytesReceived;
 
-        public TcpConnectionBase(EndPoint remoteEndPoint)
-        {
-            Ensure.NotNull(remoteEndPoint, "remoteEndPoint");
-            _remoteEndPoint = remoteEndPoint;
+	private int _sentAsyncs;
+	private int _sentAsyncCallbacks;
+	private int _recvAsyncs;
+	private int _recvAsyncCallbacks;
 
-            TcpConnectionMonitor.Default.Register(this);
-        }
+	public TcpConnectionBase(EndPoint remoteEndPoint) {
+		Ensure.NotNull(remoteEndPoint, "remoteEndPoint");
+		_remoteEndPoint = remoteEndPoint;
 
-        protected void InitConnectionBase(Socket socket)
-        {
-            Ensure.NotNull(socket, "socket");
+		TcpConnectionMonitor.Default.Register(this);
+	}
 
-            _socket = socket;
-            _localEndPoint = Helper.EatException(() => socket.LocalEndPoint);
-        }
+	protected void InitConnectionBase(Socket socket) {
+		Ensure.NotNull(socket, "socket");
 
-        protected void NotifySendScheduled(int bytes)
-        {
-            Interlocked.Add(ref _pendingSendBytes, bytes);
-        }
+		_socket = socket;
+		_localEndPoint = Helper.EatException(() => socket.LocalEndPoint);
+	}
 
-        protected void NotifySendStarting(int bytes)
-        {
-            if (Interlocked.CompareExchange(ref _lastSendStarted, DateTime.UtcNow.Ticks, -1) != -1)
-                throw new Exception("Concurrent send detected.");
-            Interlocked.Add(ref _pendingSendBytes, -bytes);
-            Interlocked.Add(ref _inSendBytes, bytes);
-            Interlocked.Increment(ref _sentAsyncs);
-        }
+	protected void NotifySendScheduled(int bytes) {
+		Interlocked.Add(ref _pendingSendBytes, bytes);
+	}
 
-        protected void NotifySendCompleted(int bytes)
-        {
-            Interlocked.Exchange(ref _lastSendStarted, -1);
-            Interlocked.Add(ref _inSendBytes, -bytes);
-            Interlocked.Add(ref _totalBytesSent, bytes);
-            Interlocked.Increment(ref _sentAsyncCallbacks);
-        }
+	protected void NotifySendStarting(int bytes) {
+		if (Interlocked.CompareExchange(ref _lastSendStarted, DateTime.UtcNow.Ticks, -1) != -1)
+			throw new Exception("Concurrent send detected.");
+		Interlocked.Add(ref _pendingSendBytes, -bytes);
+		Interlocked.Add(ref _inSendBytes, bytes);
+		Interlocked.Increment(ref _sentAsyncs);
+	}
 
-        protected void NotifyReceiveStarting()
-        {
-            if (Interlocked.CompareExchange(ref _lastReceiveStarted, DateTime.UtcNow.Ticks, -1) != -1)
-                throw new Exception("Concurrent receive detected.");
+	protected void NotifySendCompleted(int bytes) {
+		Interlocked.Exchange(ref _lastSendStarted, -1);
+		Interlocked.Add(ref _inSendBytes, -bytes);
+		Interlocked.Add(ref _totalBytesSent, bytes);
+		Interlocked.Increment(ref _sentAsyncCallbacks);
+	}
 
-            Interlocked.Increment(ref _recvAsyncs);
-        }
+	protected void NotifyReceiveStarting() {
+		if (Interlocked.CompareExchange(ref _lastReceiveStarted, DateTime.UtcNow.Ticks, -1) != -1)
+			throw new Exception("Concurrent receive detected.");
 
-        protected void NotifyReceiveCompleted(int bytes)
-        {
-            Interlocked.Exchange(ref _lastReceiveStarted, -1);
-            Interlocked.Add(ref _pendingReceivedBytes, bytes);
-            Interlocked.Add(ref _totalBytesReceived, bytes);
-            Interlocked.Increment(ref _recvAsyncCallbacks);
-        }
+		Interlocked.Increment(ref _recvAsyncs);
+	}
 
-        protected void NotifyReceiveDispatched(int bytes)
-        {
-            Interlocked.Add(ref _pendingReceivedBytes, -bytes);
-        }
+	protected void NotifyReceiveCompleted(int bytes) {
+		Interlocked.Exchange(ref _lastReceiveStarted, -1);
+		Interlocked.Add(ref _pendingReceivedBytes, bytes);
+		Interlocked.Add(ref _totalBytesReceived, bytes);
+		Interlocked.Increment(ref _recvAsyncCallbacks);
+	}
 
-        protected void NotifyClosed()
-        {
-            _isClosed = true;
-            TcpConnectionMonitor.Default.Unregister(this);
-        }
-    }
+	protected void NotifyReceiveDispatched(int bytes) {
+		Interlocked.Add(ref _pendingReceivedBytes, -bytes);
+	}
+
+	protected void NotifyClosed() {
+		_isClosed = true;
+		TcpConnectionMonitor.Default.Unregister(this);
+	}
 }

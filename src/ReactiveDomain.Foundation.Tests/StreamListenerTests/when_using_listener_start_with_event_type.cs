@@ -1,68 +1,62 @@
 ﻿using System;
 using System.Threading;
+using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 
-namespace ReactiveDomain.Foundation.Tests.StreamListenerTests
-{
-    // ReSharper disable once InconsistentNaming
-    [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-    public class when_using_listener_start_with_event_type
-    {
-        private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
+namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
-        public when_using_listener_start_with_event_type(StreamStoreConnectionFixture fixture)
-        {
-            var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-            var conn = fixture.Connection;
-            conn.Connect();
+// ReSharper disable once InconsistentNaming
+[Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
+public class when_using_listener_start_with_event_type {
+	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
 
-            var originalAggregateStream =
-                    streamNameBuilder.GenerateForAggregate(
-                                            typeof(TestAggregate),
-                                            Guid.NewGuid());
-            var evt = new EventProjectionTestEvent();
-            //drop the event into the stream
-            var result = conn.AppendToStream(
-                                originalAggregateStream,
-                                ExpectedVersion.NoStream,
-                                null,
-                                _eventSerializer.Serialize(evt));
-            Assert.True(result.NextExpectedVersion == 0);
+	public when_using_listener_start_with_event_type(StreamStoreConnectionFixture fixture) {
+		var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
+		var conn = fixture.Connection;
+		conn.Connect();
 
-            //wait for the projection to be written
-            CommonHelpers.WaitForStream(conn, streamNameBuilder.GenerateForEventType(nameof(EventProjectionTestEvent)));
+		var originalAggregateStream =
+			streamNameBuilder.GenerateForAggregate(
+				typeof(TestAggregate),
+				Guid.NewGuid());
+		var evt = new EventProjectionTestEvent();
+		//drop the event into the stream
+		var result = conn.AppendToStream(
+			originalAggregateStream,
+			ExpectedVersion.NoStream,
+			null,
+			_eventSerializer.Serialize(evt));
+		Assert.True(result.NextExpectedVersion == 0);
 
-            //build the listener
-            StreamListener listener = new QueuedStreamListener(
-                "event listener",
-                conn,
-                streamNameBuilder,
-                _eventSerializer);
+		//wait for the projection to be written
+		CommonHelpers.WaitForStream(conn, streamNameBuilder.GenerateForEventType(nameof(EventProjectionTestEvent)));
 
-            listener.EventStream.Subscribe(new AdHocHandler<EventProjectionTestEvent>(Handle));
-            listener.Start(typeof(EventProjectionTestEvent));
-        }
+		//build the listener
+		StreamListener listener = new QueuedStreamListener(
+			"event listener",
+			conn,
+			streamNameBuilder,
+			_eventSerializer);
 
-        private long _testEventCount;
-        [Fact]
-        public void can_get_events_from_event_type_stream()
-        {
-            AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000, "Event Not Received");
-        }
+		listener.EventStream.Subscribe(new AdHocHandler<EventProjectionTestEvent>(Handle));
+		listener.Start(typeof(EventProjectionTestEvent));
+	}
 
-        private void Handle(IMessage message)
-        {
-            dynamic evt = message;
-            if (evt is EventProjectionTestEvent)
-            {
-                Interlocked.Increment(ref _testEventCount);
-            }
+	private long _testEventCount;
+	[Fact]
+	public void can_get_events_from_event_type_stream() {
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000, "Event Not Received");
+	}
 
-        }
-        public record EventProjectionTestEvent : Event;
-    }
+	private void Handle(IMessage message) {
+		dynamic evt = message;
+		if (evt is EventProjectionTestEvent) {
+			Interlocked.Increment(ref _testEventCount);
+		}
+
+	}
+	public record EventProjectionTestEvent : Event;
 }

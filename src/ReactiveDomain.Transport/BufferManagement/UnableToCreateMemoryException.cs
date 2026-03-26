@@ -28,13 +28,10 @@
 
 using System;
 
-namespace ReactiveDomain.Transport.BufferManagement
-{
-    public class UnableToCreateMemoryException : Exception
-    {
-        public UnableToCreateMemoryException()
-            : base("All buffers were in use and acquiring more memory has been disabled.")
-        {
-        }
-    }
+namespace ReactiveDomain.Transport.BufferManagement;
+
+public class UnableToCreateMemoryException : Exception {
+	public UnableToCreateMemoryException()
+		: base("All buffers were in use and acquiring more memory has been disabled.") {
+	}
 }

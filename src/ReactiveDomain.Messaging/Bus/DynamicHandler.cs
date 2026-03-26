@@ -1,18 +1,14 @@
-﻿namespace ReactiveDomain.Messaging.Bus
-{
-    public class DynamicHandler:IHandle<IMessage>
-    {
-        private readonly dynamic _target;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
-        public DynamicHandler(dynamic target)
-        {
-            _target = target;
-        }
+public class DynamicHandler : IHandle<IMessage> {
+	private readonly dynamic _target;
 
-        public void Handle(IMessage message)
-        {
-            dynamic msg = message;
-            _target.Handle(msg);
-        }
-    }
+	public DynamicHandler(dynamic target) {
+		_target = target;
+	}
+
+	public void Handle(IMessage message) {
+		dynamic msg = message;
+		_target.Handle(msg);
+	}
 }

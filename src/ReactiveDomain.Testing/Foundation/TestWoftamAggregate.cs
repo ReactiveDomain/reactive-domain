@@ -1,26 +1,21 @@
 using System;
 
-namespace ReactiveDomain.Testing
-{
-    public class TestWoftamAggregate : EventDrivenStateMachine
-    {
-        public TestWoftamAggregate(Guid aggregateId) : this()
-        {
-            Raise(new TestWoftamAggregateCreated(aggregateId));
-        }
-       
-        private TestWoftamAggregate()
-        {
-            Register<TestWoftamAggregateCreated>(e => Id = e.AggregateId);
-            Register<WoftamEvent>(e => AppliedEventCount++);
-        }
+namespace ReactiveDomain.Testing;
 
-        public int AppliedEventCount { get; private set; }
+public class TestWoftamAggregate : EventDrivenStateMachine {
+	public TestWoftamAggregate(Guid aggregateId) : this() {
+		Raise(new TestWoftamAggregateCreated(aggregateId));
+	}
 
-        public void ProduceEvents(int count)
-        {
-            for (int i = 0; i < count; i++)
-                Raise(new WoftamEvent("Woftam1-" + i, "Woftam2-" + i));
-        }
-    }
+	private TestWoftamAggregate() {
+		Register<TestWoftamAggregateCreated>(e => Id = e.AggregateId);
+		Register<WoftamEvent>(e => AppliedEventCount++);
+	}
+
+	public int AppliedEventCount { get; private set; }
+
+	public void ProduceEvents(int count) {
+		for (int i = 0; i < count; i++)
+			Raise(new WoftamEvent("Woftam1-" + i, "Woftam2-" + i));
+	}
 }

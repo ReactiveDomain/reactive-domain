@@ -31,24 +31,22 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ReactiveDomain.Transport
-{
-    public interface ITcpConnection
-    {
-        event Action<ITcpConnection, SocketError> ConnectionClosed;
+namespace ReactiveDomain.Transport;
 
-        Guid ConnectionId { get; }
-        EndPoint RemoteEndPoint { get; }
-        EndPoint LocalEndPoint { get; }
-        int SendQueueSize { get; }
-        bool IsInitialized { get; }
-        bool IsClosed { get; }
-        bool IsReadyForSend { get; }
-        bool IsReadyForReceive { get; }
-        bool IsFaulted { get; }
+public interface ITcpConnection {
+	event Action<ITcpConnection, SocketError> ConnectionClosed;
 
-        void ReceiveAsync(Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback);
-        void EnqueueSend(IEnumerable<ArraySegment<byte>> data);
-        void Close(string reason);
-    }
+	Guid ConnectionId { get; }
+	EndPoint RemoteEndPoint { get; }
+	EndPoint LocalEndPoint { get; }
+	int SendQueueSize { get; }
+	bool IsInitialized { get; }
+	bool IsClosed { get; }
+	bool IsReadyForSend { get; }
+	bool IsReadyForReceive { get; }
+	bool IsFaulted { get; }
+
+	void ReceiveAsync(Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback);
+	void EnqueueSend(IEnumerable<ArraySegment<byte>> data);
+	void Close(string reason);
 }

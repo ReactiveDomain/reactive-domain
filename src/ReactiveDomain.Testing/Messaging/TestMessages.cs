@@ -1,5 +1,5 @@
-﻿using ReactiveDomain.Messaging;
-using System;
+﻿using System;
+using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing;
@@ -13,6 +13,6 @@ public record GrandChildTestMessage : ChildTestMessage;
 public record CountedTestMessage(int MessageNumber) : Message;
 
 public record CountedEvent(int MessageNumber) : Message, ICorrelatedMessage {
-    public Guid CorrelationId { get; set; }
-    public Guid CausationId { get; set; }
+	public Guid CorrelationId { get; set; }
+	public Guid CausationId { get; set; }
 }

@@ -1,29 +1,25 @@
 ﻿using System;
 using System.Reactive;
 
-namespace ReactiveDomain.Util
-{
-    public class Disposer:IDisposable
-    {
-        private Func<Unit> _disposeFunc;
+namespace ReactiveDomain.Util;
 
-        public Disposer(Func<Unit> disposeFunc)
-        {
-            _disposeFunc = disposeFunc ?? throw new ArgumentNullException(nameof(disposeFunc));
-        }
+public class Disposer : IDisposable {
+	private Func<Unit> _disposeFunc;
 
-        private bool _disposed;
-        public void Dispose()
-        {
-            if (_disposed) return;
-            try{
-                _disposeFunc();
-                _disposeFunc = null;
-            }
-            catch {
-               //ignore
-            }
-            _disposed = true;
-        }
-    }
+	public Disposer(Func<Unit> disposeFunc) {
+		_disposeFunc = disposeFunc ?? throw new ArgumentNullException(nameof(disposeFunc));
+	}
+
+	private bool _disposed;
+	public void Dispose() {
+		if (_disposed)
+			return;
+		try {
+			_disposeFunc();
+			_disposeFunc = null;
+		} catch {
+			//ignore
+		}
+		_disposed = true;
+	}
 }

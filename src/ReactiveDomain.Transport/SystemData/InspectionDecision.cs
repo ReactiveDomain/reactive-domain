@@ -26,14 +26,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  
 
-namespace ReactiveDomain.Transport.SystemData
-{
-    internal enum InspectionDecision
-    {
-        DoNothing,
-        EndOperation,
-        Retry,
-        Reconnect,
-        Subscribed
-    }
+namespace ReactiveDomain.Transport.SystemData;
+
+internal enum InspectionDecision {
+	DoNothing,
+	EndOperation,
+	Retry,
+	Reconnect,
+	Subscribed
 }

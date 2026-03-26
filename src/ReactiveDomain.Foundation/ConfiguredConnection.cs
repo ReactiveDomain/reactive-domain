@@ -1,55 +1,46 @@
-﻿using ReactiveDomain.Foundation.StreamStore;
+﻿using System;
+using ReactiveDomain.Foundation.StreamStore;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
-using System;
 
-namespace ReactiveDomain.Foundation
-{
-    public class ConfiguredConnection : IConfiguredConnection
-    {
+namespace ReactiveDomain.Foundation;
 
-        public ConfiguredConnection(
-            IStreamStoreConnection conn,
-            IStreamNameBuilder namer,
-            IEventSerializer serializer)
-        {
-            Connection = conn;
-            StreamNamer = namer;
-            Serializer = serializer;
-        }
+public class ConfiguredConnection : IConfiguredConnection {
 
-        public IStreamStoreConnection Connection { get; }
-        public IStreamNameBuilder StreamNamer { get; }
+	public ConfiguredConnection(
+		IStreamStoreConnection conn,
+		IStreamNameBuilder namer,
+		IEventSerializer serializer) {
+		Connection = conn;
+		StreamNamer = namer;
+		Serializer = serializer;
+	}
 
-        public IEventSerializer Serializer { get; }
+	public IStreamStoreConnection Connection { get; }
+	public IStreamNameBuilder StreamNamer { get; }
 
-        public IListener GetListener(string name)
-        {
-            return new StreamListener(name, Connection, StreamNamer, Serializer);
-        }
-        public IListener GetQueuedListener(string name)
-        {
-            return new QueuedStreamListener(name, Connection, StreamNamer, Serializer);
-        }
+	public IEventSerializer Serializer { get; }
 
-        public IStreamReader GetReader(string name, Action<IMessage> handle)
-        {
-            return new StreamReader(name, Connection, StreamNamer, Serializer, handle);
-        }
+	public IListener GetListener(string name) {
+		return new StreamListener(name, Connection, StreamNamer, Serializer);
+	}
+	public IListener GetQueuedListener(string name) {
+		return new QueuedStreamListener(name, Connection, StreamNamer, Serializer);
+	}
 
-        public IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null)
-        {
-            IRepository repo = new StreamStoreRepository(StreamNamer, Connection, Serializer, currentPolicyUserId);
-            return caching
-                ? new ReadThroughAggregateCache(repo)
-                : repo;
-        }
+	public IStreamReader GetReader(string name, Action<IMessage> handle) {
+		return new StreamReader(name, Connection, StreamNamer, Serializer, handle);
+	}
 
-        public ICorrelatedRepository GetCorrelatedRepository(
-            IRepository baseRepository = null, bool caching = false, Func<Guid> currentPolicyUserId = null)
-        {
-            return new CorrelatedStreamStoreRepository(baseRepository ?? GetRepository(caching, currentPolicyUserId));
-        }
+	public IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null) {
+		IRepository repo = new StreamStoreRepository(StreamNamer, Connection, Serializer, currentPolicyUserId);
+		return caching
+			? new ReadThroughAggregateCache(repo)
+			: repo;
+	}
 
-    }
+	public ICorrelatedRepository GetCorrelatedRepository(
+		IRepository baseRepository = null, bool caching = false, Func<Guid> currentPolicyUserId = null) {
+		return new CorrelatedStreamStoreRepository(baseRepository ?? GetRepository(caching, currentPolicyUserId));
+	}
+
 }

@@ -2,29 +2,25 @@ using System;
 using System.Net;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Transport.SystemData
-{
-    internal class InspectionResult
-    {
-        public readonly InspectionDecision Decision;
-        public readonly string Description;
-        public readonly IPEndPoint TcpEndPoint;
-        public readonly IPEndPoint SecureTcpEndPoint;
+namespace ReactiveDomain.Transport.SystemData;
 
-        public InspectionResult(InspectionDecision decision, string description, IPEndPoint tcpEndPoint = null, IPEndPoint secureTcpEndPoint = null)
-        {
-            if (decision == InspectionDecision.Reconnect)
-                Ensure.NotNull(tcpEndPoint, "tcpEndPoint");
-            else
-            {
-                if (tcpEndPoint != null)
-                    throw new ArgumentException(string.Format("tcpEndPoint is not null for decision {0}.", decision));
-            }
+internal class InspectionResult {
+	public readonly InspectionDecision Decision;
+	public readonly string Description;
+	public readonly IPEndPoint TcpEndPoint;
+	public readonly IPEndPoint SecureTcpEndPoint;
 
-            Decision = decision;
-            Description = description;
-            TcpEndPoint = tcpEndPoint;
-            SecureTcpEndPoint = secureTcpEndPoint;
-        }
-    }
+	public InspectionResult(InspectionDecision decision, string description, IPEndPoint tcpEndPoint = null, IPEndPoint secureTcpEndPoint = null) {
+		if (decision == InspectionDecision.Reconnect)
+			Ensure.NotNull(tcpEndPoint, "tcpEndPoint");
+		else {
+			if (tcpEndPoint != null)
+				throw new ArgumentException(string.Format("tcpEndPoint is not null for decision {0}.", decision));
+		}
+
+		Decision = decision;
+		Description = description;
+		TcpEndPoint = tcpEndPoint;
+		SecureTcpEndPoint = secureTcpEndPoint;
+	}
 }

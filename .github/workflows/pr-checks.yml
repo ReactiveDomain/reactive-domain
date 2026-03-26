@@ -76,3 +76,6 @@ jobs:
       working-directory: src
       run: dotnet test ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -p:ParallelizeTestCollections=false -c Release  --no-build 
 
+    # Format
+    - name: Check Formatting
+      run: dotnet format ReactiveDomain.sln --verify-no-changes --no-restore

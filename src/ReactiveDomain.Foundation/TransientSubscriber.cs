@@ -5,58 +5,50 @@ using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable RedundantTypeArgumentsOfMethod
 
-namespace ReactiveDomain.Foundation
-{
-    public abstract class TransientSubscriber : IDisposable
-    {
-        private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
-        private readonly ISubscriber _eventSubscriber;
-        private readonly ICommandSubscriber _commandSubscriber;
+namespace ReactiveDomain.Foundation;
 
-        protected TransientSubscriber(IDispatcher bus) : this((IBus)bus)
-        {
-            _commandSubscriber = bus ?? throw new ArgumentNullException(nameof(bus));
-        }
+public abstract class TransientSubscriber : IDisposable {
+	private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
+	private readonly ISubscriber _eventSubscriber;
+	private readonly ICommandSubscriber _commandSubscriber;
 
-        protected TransientSubscriber(IBus bus) : this((ISubscriber) bus) {}
+	protected TransientSubscriber(IDispatcher bus) : this((IBus)bus) {
+		_commandSubscriber = bus ?? throw new ArgumentNullException(nameof(bus));
+	}
 
-        protected TransientSubscriber(ISubscriber subscriber)
-        {
-            _eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-        }
-        protected TransientSubscriber(ICommandSubscriber subscriber)
-        {
-            _commandSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-        }
+	protected TransientSubscriber(IBus bus) : this((ISubscriber)bus) { }
 
-        protected void Subscribe<T>(IHandle<T> handler) where T : class, IMessage
-        {
-            if (_eventSubscriber == null) throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with EventBus to register on.");
+	protected TransientSubscriber(ISubscriber subscriber) {
+		_eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+	}
+	protected TransientSubscriber(ICommandSubscriber subscriber) {
+		_commandSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+	}
 
-            _subscriptions.Add(_eventSubscriber.Subscribe<T>(handler));
-        }
+	protected void Subscribe<T>(IHandle<T> handler) where T : class, IMessage {
+		if (_eventSubscriber == null)
+			throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with EventBus to register on.");
 
-        protected void Subscribe<T>(IHandleCommand<T> handler) where T : Command
-        {
-            if (_commandSubscriber == null) throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with CommandBus to register on.");
-            _subscriptions.Add(_commandSubscriber.Subscribe<T>(handler));
-        }
+		_subscriptions.Add(_eventSubscriber.Subscribe<T>(handler));
+	}
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-            if (disposing){
-                _subscriptions?.ForEach(s => s.Dispose());
-            }
-           _disposed = true;
-        }
-    }
+	protected void Subscribe<T>(IHandleCommand<T> handler) where T : Command {
+		if (_commandSubscriber == null)
+			throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with CommandBus to register on.");
+		_subscriptions.Add(_commandSubscriber.Subscribe<T>(handler));
+	}
+
+	public void Dispose() {
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+	private bool _disposed;
+	protected virtual void Dispose(bool disposing) {
+		if (_disposed)
+			return;
+		if (disposing) {
+			_subscriptions?.ForEach(s => s.Dispose());
+		}
+		_disposed = true;
+	}
 }
-
