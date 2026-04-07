@@ -8,91 +8,78 @@ using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Formatting;
 using ReactiveDomain.Transport.Framing;
 
-namespace ReactiveDomain.Transport
-{
-    public class TcpTypedConnection<T>
-    {
-        // ReSharper disable once StaticMemberInGenericType
-        private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+namespace ReactiveDomain.Transport;
 
-        public event Action<TcpTypedConnection<T>, SocketError> ConnectionClosed;
+public class TcpTypedConnection<T> {
+	// ReSharper disable once StaticMemberInGenericType
+	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
-        private readonly ITcpConnection _connection;
-        private readonly IMessageFormatter<T> _formatter;
-        private readonly IMessageFramer _framer;
+	public event Action<TcpTypedConnection<T>, SocketError> ConnectionClosed;
 
-        private Action<TcpTypedConnection<T>, T> _receiveCallback;
+	private readonly ITcpConnection _connection;
+	private readonly IMessageFormatter<T> _formatter;
+	private readonly IMessageFramer _framer;
 
-        public EndPoint RemoteEndPoint { get { return _connection.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _connection.LocalEndPoint; } }
+	private Action<TcpTypedConnection<T>, T> _receiveCallback;
 
-        public int SendQueueSize
-        {
-            get { return _connection.SendQueueSize; }
-        }
+	public EndPoint RemoteEndPoint { get { return _connection.RemoteEndPoint; } }
+	public EndPoint LocalEndPoint { get { return _connection.LocalEndPoint; } }
 
-        public TcpTypedConnection(ITcpConnection connection,
-                                  IMessageFormatter<T> formatter,
-                                  IMessageFramer framer)
-        {
-            _connection = connection;
-            _formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
-            _framer = framer ?? throw new ArgumentNullException(nameof(framer));
+	public int SendQueueSize {
+		get { return _connection.SendQueueSize; }
+	}
 
-            connection.ConnectionClosed += OnConnectionClosed;
+	public TcpTypedConnection(ITcpConnection connection,
+		IMessageFormatter<T> formatter,
+		IMessageFramer framer) {
+		_connection = connection;
+		_formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
+		_framer = framer ?? throw new ArgumentNullException(nameof(framer));
 
-            //Setup callback for incoming messages
-            framer.RegisterMessageArrivedCallback(IncomingMessageArrived);
-        }
+		connection.ConnectionClosed += OnConnectionClosed;
 
-        private void OnConnectionClosed(ITcpConnection connection, SocketError socketError)
-        {
-            connection.ConnectionClosed -= OnConnectionClosed;
+		//Setup callback for incoming messages
+		framer.RegisterMessageArrivedCallback(IncomingMessageArrived);
+	}
 
-            var handler = ConnectionClosed;
-            if (handler != null)
-                handler(this, socketError);
-        }
+	private void OnConnectionClosed(ITcpConnection connection, SocketError socketError) {
+		connection.ConnectionClosed -= OnConnectionClosed;
 
-        public void EnqueueSend(T message)
-        {
-            var data = _formatter.ToArraySegment(message);
-            _connection.EnqueueSend(_framer.FrameData(data));
-        }
+		var handler = ConnectionClosed;
+		if (handler != null)
+			handler(this, socketError);
+	}
 
-        public void ReceiveAsync(Action<TcpTypedConnection<T>, T> callback)
-        {
-            if (_receiveCallback != null)
-                throw new InvalidOperationException("ReceiveAsync should be called just once.");
+	public void EnqueueSend(T message) {
+		var data = _formatter.ToArraySegment(message);
+		_connection.EnqueueSend(_framer.FrameData(data));
+	}
 
-            _receiveCallback = callback ?? throw new ArgumentNullException(nameof(callback));
+	public void ReceiveAsync(Action<TcpTypedConnection<T>, T> callback) {
+		if (_receiveCallback != null)
+			throw new InvalidOperationException("ReceiveAsync should be called just once.");
 
-            _connection.ReceiveAsync(OnRawDataReceived);
-        }
+		_receiveCallback = callback ?? throw new ArgumentNullException(nameof(callback));
 
-        private void OnRawDataReceived(ITcpConnection connection, IEnumerable<ArraySegment<byte>> data)
-        {
-            try
-            {
-                _framer.UnFrameData(connection.ConnectionId, data);
-            }
-            catch (PackageFramingException exc)
-            {
-                Log.InfoException(exc,"Invalid TCP frame received.");
-                Close("Invalid TCP frame received.");
-                return;
-            }
-            connection.ReceiveAsync(OnRawDataReceived);
-        }
+		_connection.ReceiveAsync(OnRawDataReceived);
+	}
 
-        private void IncomingMessageArrived(Guid connectionId, ArraySegment<byte> message)
-        {
-            _receiveCallback(this, _formatter.From(message));
-        }
+	private void OnRawDataReceived(ITcpConnection connection, IEnumerable<ArraySegment<byte>> data) {
+		try {
+			_framer.UnFrameData(connection.ConnectionId, data);
+		} catch (PackageFramingException exc) {
+			Log.InfoException(exc, "Invalid TCP frame received.");
+			Close("Invalid TCP frame received.");
+			return;
+		}
+		connection.ReceiveAsync(OnRawDataReceived);
+	}
 
-        public void Close(string reason = null)
-        {
-            _connection.Close(reason);
-        }
-    }
+	private void IncomingMessageArrived(Guid connectionId, ArraySegment<byte> message) {
+		_receiveCallback(this, _formatter.From(message));
+	}
+
+	public void Close(string reason = null) {
+		_connection.Close(reason);
+	}
 }

@@ -1,669 +1,614 @@
-﻿using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using EventStore.ClientAPI.Exceptions;
+using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing.Messaging;
 
 // ReSharper disable MemberCanBePrivate.Global
-namespace ReactiveDomain.Testing.EventStore
-{
-    public sealed class MockStreamStoreConnection : IStreamStoreConnection
-    {
-        private readonly object _readerWriterLock = new();
-        public const string CategoryStreamNamePrefix = "$ce";
-        public const string EventTypeStreamNamePrefix = "$et";
-        public const string AllStreamName = "$All";
-        private readonly Dictionary<string, List<RecordedEvent>> _store;
-        private readonly List<RecordedEvent> _allStream = [];
-        private readonly AdHocHandler<IMessage> _inboundEventHandler;
-        private readonly SingleThreadedBus _inboundEventBus;
-        private readonly List<IDisposable> _subscriptions;
-        private bool _connected;
-        private bool _disposed;
+namespace ReactiveDomain.Testing.EventStore;
 
-        public MockStreamStoreConnection(string name)
-        {
-            _subscriptions = [];
+public sealed class MockStreamStoreConnection : IStreamStoreConnection {
+	private readonly object _readerWriterLock = new();
+	public const string CategoryStreamNamePrefix = "$ce";
+	public const string EventTypeStreamNamePrefix = "$et";
+	public const string AllStreamName = "$All";
+	private readonly Dictionary<string, List<RecordedEvent>> _store;
+	private readonly List<RecordedEvent> _allStream = [];
+	private readonly AdHocHandler<IMessage> _inboundEventHandler;
+	private readonly SingleThreadedBus _inboundEventBus;
+	private readonly List<IDisposable> _subscriptions;
+	private bool _connected;
+	private bool _disposed;
 
-            _store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
-            _inboundEventBus = new SingleThreadedBus();
+	public MockStreamStoreConnection(string name) {
+		_subscriptions = [];
 
-            _inboundEventHandler = new AdHocHandler<IMessage>(_inboundEventBus.Publish);
-            ConnectionName = name;
-        }
+		_store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
+		_inboundEventBus = new SingleThreadedBus();
+
+		_inboundEventHandler = new AdHocHandler<IMessage>(_inboundEventBus.Publish);
+		ConnectionName = name;
+	}
 
 
-        public string ConnectionName { get; }
+	public string ConnectionName { get; }
 
-        public void Connect()
-        {
-            _connected = true;
-        }
+	public void Connect() {
+		_connected = true;
+	}
 
-        public void Close()
-        {
-            _connected = false;
-            _subscriptions.ForEach(s => s?.Dispose());
-        }
+	public void Close() {
+		_connected = false;
+		_subscriptions.ForEach(s => s?.Dispose());
+	}
 
-        public event EventHandler<ClientConnectionEventArgs> Connected = (_, _) => { };
-        public event EventHandler<ClientConnectionEventArgs> Disconnected = (_, _) => { };
+	public event EventHandler<ClientConnectionEventArgs> Connected = (_, _) => { };
+	public event EventHandler<ClientConnectionEventArgs> Disconnected = (_, _) => { };
 
-        public WriteResult AppendToStream(
-            string stream,
-            long expectedVersion,
-            UserCredentials credentials = null,
-            params EventData[] events)
-        {
+	public WriteResult AppendToStream(
+		string stream,
+		long expectedVersion,
+		UserCredentials credentials = null,
+		params EventData[] events) {
 
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-            if (string.IsNullOrWhiteSpace(stream))
-                throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
-            lock (_readerWriterLock)
-            {
-                List<RecordedEvent> eventStream;
-                if (expectedVersion == ExpectedVersion.Any)
-                {
-                    eventStream = GetOrCreateStream(stream);
-                }
-                else
-                {
-                    bool streamExists;
-                    lock (_store)
-                    {
-                        streamExists = _store.TryGetValue(stream, out eventStream);
-                    }
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+		if (string.IsNullOrWhiteSpace(stream))
+			throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
+		lock (_readerWriterLock) {
+			List<RecordedEvent> eventStream;
+			if (expectedVersion == ExpectedVersion.Any) {
+				eventStream = GetOrCreateStream(stream);
+			} else {
+				bool streamExists;
+				lock (_store) {
+					streamExists = _store.TryGetValue(stream, out eventStream);
+				}
 
-                    if (streamExists && expectedVersion == ExpectedVersion.NoStream)
-                        throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
-                    if (!streamExists && expectedVersion == ExpectedVersion.StreamExists)
-                        throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
+				if (streamExists && expectedVersion == ExpectedVersion.NoStream)
+					throw new WrongExpectedVersionException($"Stream {stream} exists, expected no stream");
+				if (!streamExists && expectedVersion == ExpectedVersion.StreamExists)
+					throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
-                    if (!streamExists)
-                    {
-                        eventStream = new List<RecordedEvent>();
-                        lock (_store)
-                        {
-                            _store.Add(stream, eventStream);
-                        }
-                    }
-                    var startingPosition = eventStream.Count - 1;
-                    if (expectedVersion != ExpectedVersion.NoStream &&
-                        expectedVersion != startingPosition)
-                        throw new WrongExpectedVersionException(
-                            $"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
-                }
-                var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                for (var i = 0; i < events.Length; i++)
-                {
-                    var created = DateTime.UtcNow;
-                    var epochTime = (long)(created - epochStart).TotalSeconds;
-                    var recordedEvent = new RecordedEvent(
-                        stream,
-                        events[i].EventId,
-                        eventStream.Count,
-                        events[i].EventType,
-                        events[i].Data,
-                        events[i].Metadata,
-                        events[i].IsJson,
-                        created,
-                        epochTime);
+				if (!streamExists) {
+					eventStream = new List<RecordedEvent>();
+					lock (_store) {
+						_store.Add(stream, eventStream);
+					}
+				}
+				var startingPosition = eventStream.Count - 1;
+				if (expectedVersion != ExpectedVersion.NoStream &&
+					expectedVersion != startingPosition)
+					throw new WrongExpectedVersionException(
+						$"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
+			}
+			var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			for (var i = 0; i < events.Length; i++) {
+				var created = DateTime.UtcNow;
+				var epochTime = (long)(created - epochStart).TotalSeconds;
+				var recordedEvent = new RecordedEvent(
+					stream,
+					events[i].EventId,
+					eventStream.Count,
+					events[i].EventType,
+					events[i].Data,
+					events[i].Metadata,
+					events[i].IsJson,
+					created,
+					epochTime);
 
-                    _allStream.Add(recordedEvent);
-                    _inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
-                    eventStream.Add(recordedEvent);
-                    var written = new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber);
-                    _inboundEventHandler.Handle(written);
-                    WriteToByCategoryProjection(written);
-                    WriteToByEventProjection(written);
-                }
-                return new WriteResult(eventStream.Count - 1);
-            }
-        }
+				_allStream.Add(recordedEvent);
+				_inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
+				eventStream.Add(recordedEvent);
+				var written = new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber);
+				_inboundEventHandler.Handle(written);
+				WriteToByCategoryProjection(written);
+				WriteToByEventProjection(written);
+			}
+			return new WriteResult(eventStream.Count - 1);
+		}
+	}
 
-        /// <summary>
-        /// Get or Create the By-Category projection Stream for Category
-        /// </summary>
-        /// <remarks>
-        /// <see href="https://eventstore.org/docs/projections/system-projections/index.html"/>
-        /// The category stream name is generated by spiting the event stream at the first dash. This is the default 
-        /// configuration setting (prefix (a category) by splitting a stream id by a configurable separator.)
-        /// </remarks>
-        /// <param name="event">Original event whose name is in the aggregate-GUID format</param>
-        /// <param name="streamName">the generated name for the stream</param>
-        /// <returns>categoryStreamName: string</returns>
-        private List<RecordedEvent> GetOrCreateCategoryStream(EventWritten @event, out string streamName)
-        {
-            var category = @event.StreamName.Split('-')[0];
-            streamName = $"{CategoryStreamNamePrefix}-{category}";
-            return GetOrCreateStream(streamName);
-        }
+	/// <summary>
+	/// Get or Create the By-Category projection Stream for Category
+	/// </summary>
+	/// <remarks>
+	/// <see href="https://eventstore.org/docs/projections/system-projections/index.html"/>
+	/// The category stream name is generated by spiting the event stream at the first dash. This is the default 
+	/// configuration setting (prefix (a category) by splitting a stream id by a configurable separator.)
+	/// </remarks>
+	/// <param name="event">Original event whose name is in the aggregate-GUID format</param>
+	/// <param name="streamName">the generated name for the stream</param>
+	/// <returns>categoryStreamName: string</returns>
+	private List<RecordedEvent> GetOrCreateCategoryStream(EventWritten @event, out string streamName) {
+		var category = @event.StreamName.Split('-')[0];
+		streamName = $"{CategoryStreamNamePrefix}-{category}";
+		return GetOrCreateStream(streamName);
+	}
 
-        /// <summary>
-        /// Get or Create the EventType Projection Stream for Event Type
-        /// </summary>
-        /// <remarks>
-        /// <see href="https://eventstore.org/docs/projections/system-projections/index.html"/>
-        /// The event stream name is generated from the event type. In the event store, this is not configurable.
-        /// </remarks>
-        /// <param name="event">Original event whose name is in the aggregate-GUID format</param>
-        /// <param name="streamName">the generated name for the stream</param>
-        /// <returns>eventStreamName: string</returns>
-        private List<RecordedEvent> GetOrCreateEventTypeStream(EventWritten @event, out string streamName)
-        {
-            streamName = $"{EventTypeStreamNamePrefix}-{@event.Event.EventType}";
-            return GetOrCreateStream(streamName);
-        }
-        private List<RecordedEvent> GetOrCreateStream(string streamName)
-        {
-            List<RecordedEvent> stream;
-            lock (_store)
-            {
-                if (!_store.TryGetValue(streamName, out stream))
-                {
-                    stream = new List<RecordedEvent>();
-                    _store.Add(streamName, stream);
-                }
-            }
-            return stream;
-        }
-        public StreamEventsSlice ReadStreamForward(
-                                    string streamName,
-                                    long start,
-                                    long count,
-                                    UserCredentials credentials = null)
-        {
-            lock (_readerWriterLock)
-            {
-                if (!_connected) throw new InvalidOperationException("Not Connected");
-                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	/// <summary>
+	/// Get or Create the EventType Projection Stream for Event Type
+	/// </summary>
+	/// <remarks>
+	/// <see href="https://eventstore.org/docs/projections/system-projections/index.html"/>
+	/// The event stream name is generated from the event type. In the event store, this is not configurable.
+	/// </remarks>
+	/// <param name="event">Original event whose name is in the aggregate-GUID format</param>
+	/// <param name="streamName">the generated name for the stream</param>
+	/// <returns>eventStreamName: string</returns>
+	private List<RecordedEvent> GetOrCreateEventTypeStream(EventWritten @event, out string streamName) {
+		streamName = $"{EventTypeStreamNamePrefix}-{@event.Event.EventType}";
+		return GetOrCreateStream(streamName);
+	}
+	private List<RecordedEvent> GetOrCreateStream(string streamName) {
+		List<RecordedEvent> stream;
+		lock (_store) {
+			if (!_store.TryGetValue(streamName, out stream)) {
+				stream = new List<RecordedEvent>();
+				_store.Add(streamName, stream);
+			}
+		}
+		return stream;
+	}
+	public StreamEventsSlice ReadStreamForward(
+		string streamName,
+		long start,
+		long count,
+		UserCredentials credentials = null) {
+		lock (_readerWriterLock) {
+			if (!_connected)
+				throw new InvalidOperationException("Not Connected");
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-                if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
-                List<RecordedEvent> stream;
-                lock (_store)
-                {
-                    if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
-                    stream = events.ToList();
-                }
-                return ReadFromStream(streamName, start, count, stream, ReadDirection.Forward);
-            }
-        }
-        public StreamEventsSlice ReadStreamBackward(
-                                    string streamName,
-                                    long start,
-                                    long count,
-                                    UserCredentials credentials = null)
-        {
-            lock (_readerWriterLock)
-            {
-                if (!_connected) throw new InvalidOperationException("Not Connected");
-                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+			if (start < 0)
+				throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
+			List<RecordedEvent> stream;
+			lock (_store) {
+				if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
+				stream = events.ToList();
+			}
+			return ReadFromStream(streamName, start, count, stream, ReadDirection.Forward);
+		}
+	}
+	public StreamEventsSlice ReadStreamBackward(
+		string streamName,
+		long start,
+		long count,
+		UserCredentials credentials = null) {
+		lock (_readerWriterLock) {
+			if (!_connected)
+				throw new InvalidOperationException("Not Connected");
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-                if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
-                List<RecordedEvent> stream;
-                lock (_store)
-                {
-                    if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
-                    stream = events.ToList();
-                }
-                return ReadFromStream(streamName, start, count, stream, ReadDirection.Backward);
-            }
-        }
-        private StreamEventsSlice ReadFromStream(
-                                    string streamName,
-                                    long start,
-                                    long count,
-                                    List<RecordedEvent> stream,
-                                    ReadDirection direction)
-        {
-            lock (_readerWriterLock)
-            {
-                if (!_connected) throw new InvalidOperationException("Not Connected");
-                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+			if (start < -1)
+				throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
+			List<RecordedEvent> stream;
+			lock (_store) {
+				if (!_store.TryGetValue(streamName, out var events)) { return new StreamNotFoundSlice(streamName); }
+				stream = events.ToList();
+			}
+			return ReadFromStream(streamName, start, count, stream, ReadDirection.Backward);
+		}
+	}
+	private StreamEventsSlice ReadFromStream(
+		string streamName,
+		long start,
+		long count,
+		List<RecordedEvent> stream,
+		ReadDirection direction) {
+		lock (_readerWriterLock) {
+			if (!_connected)
+				throw new InvalidOperationException("Not Connected");
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-                var result = new List<RecordedEvent>();
-                var next = start == -1 ? stream.Count - 1 : (int)start;
-                for (int i = 0; i < count; i++)
-                {
-                    if (next < stream.Count && next >= 0)
-                    {
-                        long current = next;
-                        result.Add(stream[(int)current]);
-                    }
-                    next += (int)direction;
-                }
+			var result = new List<RecordedEvent>();
+			var next = start == -1 ? stream.Count - 1 : (int)start;
+			for (int i = 0; i < count; i++) {
+				if (next < stream.Count && next >= 0) {
+					long current = next;
+					result.Add(stream[(int)current]);
+				}
+				next += (int)direction;
+			}
 
-                bool isEnd;
+			bool isEnd;
 
-                if (direction == ReadDirection.Forward)
-                {
-                    isEnd = next >= stream.Count;
-                    if (next > stream.Count)
-                    {
-                        next = stream.Count;
-                    }
-                }
-                else  //Direction.Backward
-                {
-                    isEnd = next < 0;
-                    if (next < 0)
-                    {
-                        next = StreamPosition.End;
-                    }
-                    if (next > stream.Count + 1)
-                    {
-                        next = stream.Count - 1;
-                    }
-                    else if (next > stream.Count)
-                    {
-                        next = stream.Count;
-                    }
-                }
-                var slice = new StreamEventsSlice(
-                                    streamName,
-                                    start,
-                                    direction,
-                                    result.ToArray(),
-                                    next,
-                                    stream.Count - 1,
-                                    isEnd);
+			if (direction == ReadDirection.Forward) {
+				isEnd = next >= stream.Count;
+				if (next > stream.Count) {
+					next = stream.Count;
+				}
+			} else  //Direction.Backward
+			{
+				isEnd = next < 0;
+				if (next < 0) {
+					next = StreamPosition.End;
+				}
+				if (next > stream.Count + 1) {
+					next = stream.Count - 1;
+				} else if (next > stream.Count) {
+					next = stream.Count;
+				}
+			}
+			var slice = new StreamEventsSlice(
+				streamName,
+				start,
+				direction,
+				result.ToArray(),
+				next,
+				stream.Count - 1,
+				isEnd);
 
-                return slice;
-            }
-        }
+			return slice;
+		}
+	}
 
-        public sealed class AllStreamSubscription :
-            IHandle<EventCommitted>,
-            IDisposable
-        {
-            private long _position;
-            private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
-            private readonly Action<RecordedEvent> _eventAppeared;
-            public IDisposable BusSubscription;
+	public sealed class AllStreamSubscription :
+		IHandle<EventCommitted>,
+		IDisposable {
+		private long _position;
+		private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
+		private readonly Action<RecordedEvent> _eventAppeared;
+		public IDisposable BusSubscription;
 
-            public AllStreamSubscription(
-                long startPosition,
-                Action<SubscriptionDropReason, Exception> subscriptionDropped,
-                Action<RecordedEvent> eventAppeared)
-            {
-                _position = startPosition;
-                _subscriptionDropped = subscriptionDropped;
-                _eventAppeared = eventAppeared;
-            }
-            public void Handle(EventCommitted evt)
-            {
-                if (evt.RecordedPosition > _position)
-                {
-                    _position = evt.RecordedPosition;
-                    _eventAppeared(evt.Event);
-                }
-            }
-            private bool _disposed;
-            public void Dispose()
-            {
-                if (_disposed) return;
-                _disposed = true;
-                _subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
-                BusSubscription?.Dispose();
-            }
-        }
-        public sealed class Subscription :
-            IHandle<EventWritten>,
-            IDisposable
-        {
-            private readonly string _streamName;
-            private long _position;
-            private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
-            private readonly Action<RecordedEvent> _eventAppeared;
-            public IDisposable BusSubscription;
+		public AllStreamSubscription(
+			long startPosition,
+			Action<SubscriptionDropReason, Exception> subscriptionDropped,
+			Action<RecordedEvent> eventAppeared) {
+			_position = startPosition;
+			_subscriptionDropped = subscriptionDropped;
+			_eventAppeared = eventAppeared;
+		}
+		public void Handle(EventCommitted evt) {
+			if (evt.RecordedPosition > _position) {
+				_position = evt.RecordedPosition;
+				_eventAppeared(evt.Event);
+			}
+		}
+		private bool _disposed;
+		public void Dispose() {
+			if (_disposed)
+				return;
+			_disposed = true;
+			_subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
+			BusSubscription?.Dispose();
+		}
+	}
+	public sealed class Subscription :
+		IHandle<EventWritten>,
+		IDisposable {
+		private readonly string _streamName;
+		private long _position;
+		private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
+		private readonly Action<RecordedEvent> _eventAppeared;
+		public IDisposable BusSubscription;
 
-            public Subscription(
-                string streamName,
-                long startPosition,
-                Action<SubscriptionDropReason, Exception> subscriptionDropped,
-                Action<RecordedEvent> eventAppeared)
-            {
-                _streamName = streamName;
-                _position = startPosition;
-                _subscriptionDropped = subscriptionDropped;
-                _eventAppeared = eventAppeared;
-            }
-            public void Handle(EventWritten evt)
-            {
-                if (string.CompareOrdinal(_streamName, evt.StreamName) == 0 ||
-                    string.CompareOrdinal(_streamName, AllStreamName) == 0)
-                {
-                    if (evt.RecordedPosition > _position)
-                    {
-                        _position = evt.RecordedPosition;
-                        _eventAppeared(evt.Event);
-                    }
-                }
-            }
-            private bool _disposed;
-            public void Dispose()
-            {
-                if (_disposed) return;
-                _disposed = true;
-                _subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
-                BusSubscription?.Dispose();
-            }
-        }
+		public Subscription(
+			string streamName,
+			long startPosition,
+			Action<SubscriptionDropReason, Exception> subscriptionDropped,
+			Action<RecordedEvent> eventAppeared) {
+			_streamName = streamName;
+			_position = startPosition;
+			_subscriptionDropped = subscriptionDropped;
+			_eventAppeared = eventAppeared;
+		}
+		public void Handle(EventWritten evt) {
+			if (string.CompareOrdinal(_streamName, evt.StreamName) == 0 ||
+				string.CompareOrdinal(_streamName, AllStreamName) == 0) {
+				if (evt.RecordedPosition > _position) {
+					_position = evt.RecordedPosition;
+					_eventAppeared(evt.Event);
+				}
+			}
+		}
+		private bool _disposed;
+		public void Dispose() {
+			if (_disposed)
+				return;
+			_disposed = true;
+			_subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
+			BusSubscription?.Dispose();
+		}
+	}
 
-        public IDisposable SubscribeToStream(
-            string stream,
-            Action<RecordedEvent> eventAppeared,
-            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials credentials = null)
-        {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
-            long currentPos = 0;
-            lock (_store)
-            {
-                if (_store.TryGetValue(stream, out var events))
-                {
-                    currentPos = events.Count - 1;
-                }
-            }
+	public IDisposable SubscribeToStream(
+		string stream,
+		Action<RecordedEvent> eventAppeared,
+		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+		UserCredentials credentials = null) {
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+		long currentPos = 0;
+		lock (_store) {
+			if (_store.TryGetValue(stream, out var events)) {
+				currentPos = events.Count - 1;
+			}
+		}
 
-            return SubscribeToStreamFrom(
-                stream,
-                currentPos,
-                CatchUpSubscriptionSettings.Default,
-                eventAppeared,
-                null, //live processing started
-                subscriptionDropped,
-                credentials);
-        }
-        public IDisposable SubscribeToStreamFrom(
-            string stream,
-            long? lastCheckpoint,
-            CatchUpSubscriptionSettings settings,
-            Action<RecordedEvent> eventAppeared,
-            Action<Unit> liveProcessingStarted = null,
-            Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-            UserCredentials credentials = null)
-        {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+		return SubscribeToStreamFrom(
+			stream,
+			currentPos,
+			CatchUpSubscriptionSettings.Default,
+			eventAppeared,
+			null, //live processing started
+			subscriptionDropped,
+			credentials);
+	}
+	public IDisposable SubscribeToStreamFrom(
+		string stream,
+		long? lastCheckpoint,
+		CatchUpSubscriptionSettings settings,
+		Action<RecordedEvent> eventAppeared,
+		Action<Unit> liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+		UserCredentials credentials = null) {
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            var start = (lastCheckpoint ?? -1) + 1;
-            RecordedEvent[] curEvents = [];
-            lock (_store)
-            {
-                if (_store.TryGetValue(stream, out var events))
-                {
-                    curEvents = events.Skip((int)start).ToArray();
-                }
-            }
-            while (curEvents.Length > 0)
-            {
-                for (int i = 0; i < curEvents.Length; i++)
-                {
-                    eventAppeared(curEvents[i]);
-                }
+		var start = (lastCheckpoint ?? -1) + 1;
+		RecordedEvent[] curEvents = [];
+		lock (_store) {
+			if (_store.TryGetValue(stream, out var events)) {
+				curEvents = events.Skip((int)start).ToArray();
+			}
+		}
+		while (curEvents.Length > 0) {
+			for (int i = 0; i < curEvents.Length; i++) {
+				eventAppeared(curEvents[i]);
+			}
 
-                start = start + curEvents.Length;
-                lock (_store)
-                {
-                    curEvents = _store[stream].Skip((int)start).ToArray();
-                }
-            }
-            //n.b. this leaves a possible gap in the events at switchover, #mock-life
+			start = start + curEvents.Length;
+			lock (_store) {
+				curEvents = _store[stream].Skip((int)start).ToArray();
+			}
+		}
+		//n.b. this leaves a possible gap in the events at switchover, #mock-life
 
 
 
-            var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
-            subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
-            _subscriptions.Add(subscription);
-            liveProcessingStarted?.Invoke(Unit.Default);
-            return subscription;
+		var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
+		subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
+		_subscriptions.Add(subscription);
+		liveProcessingStarted?.Invoke(Unit.Default);
+		return subscription;
 
-        }
+	}
 
 
 
 
-        public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
-                                              Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                              UserCredentials credentials = null, bool resolveLinkTos = true)
-        {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
+		Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+		UserCredentials credentials = null, bool resolveLinkTos = true) {
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            var current = (int)from.CommitPosition;
-            RecordedEvent[] currentEvents = [];
-            lock (_allStream)
-            {
-                if (from == Position.End)
-                {
-                    current = _allStream.Count - 1;
-                }
+		var current = (int)from.CommitPosition;
+		RecordedEvent[] currentEvents = [];
+		lock (_allStream) {
+			if (from == Position.End) {
+				current = _allStream.Count - 1;
+			}
 
-                if (current < _allStream.Count - 1)
-                {
-                    var events = new RecordedEvent[_allStream.Count - current];
-                    _allStream.CopyTo(events, current);
-                    currentEvents = events;
-                }
-            }
+			if (current < _allStream.Count - 1) {
+				var events = new RecordedEvent[_allStream.Count - current];
+				_allStream.CopyTo(events, current);
+				currentEvents = events;
+			}
+		}
 
-            for (int i = 0; i < currentEvents.Length; i++)
-            {
-                eventAppeared(currentEvents[i]);
-            }
+		for (int i = 0; i < currentEvents.Length; i++) {
+			eventAppeared(currentEvents[i]);
+		}
 
-            var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
-            subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
-            _subscriptions.Add(subscription);
-            liveProcessingStarted?.Invoke();
-            return subscription;
+		var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
+		subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
+		_subscriptions.Add(subscription);
+		liveProcessingStarted?.Invoke();
+		return subscription;
 
-        }
+	}
 
-        public IDisposable SubscribeToAll(
-                                Action<RecordedEvent> eventAppeared,
-                                Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-                                UserCredentials credentials = null,
-                                bool resolveLinkTos = true)
-        {
-            return SubscribeToAllFrom(
-                Position.Start,
-                eventAppeared,
-                null,
-                null,
-                subscriptionDropped,
-                credentials);
-        }
+	public IDisposable SubscribeToAll(
+		Action<RecordedEvent> eventAppeared,
+		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
+		UserCredentials credentials = null,
+		bool resolveLinkTos = true) {
+		return SubscribeToAllFrom(
+			Position.Start,
+			eventAppeared,
+			null,
+			null,
+			subscriptionDropped,
+			credentials);
+	}
 
-        public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-        {
-            lock (_readerWriterLock)
-            {
-                if (!_connected) throw new InvalidOperationException("Not Connected");
-                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+		lock (_readerWriterLock) {
+			if (!_connected)
+				throw new InvalidOperationException("Not Connected");
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-                if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-               stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
-                }
-                if (stream.StartsWith("$"))
-                {
-                    throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
-                }
-                lock (_store)
-                {
-                    _store.Remove(stream);
-                    ArgumentOutOfRangeException.ThrowIfEqual(expectedVersion, ExpectedVersion.StreamExists);
-                }
-            }
-        }
+			if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
+				stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
+				throw new ArgumentOutOfRangeException(nameof(stream), $"Deleting {stream} failed. Cannot delete standard projection streams");
+			}
+			if (stream.StartsWith("$")) {
+				throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
+			}
+			lock (_store) {
+				_store.Remove(stream);
+				ArgumentOutOfRangeException.ThrowIfEqual(expectedVersion, ExpectedVersion.StreamExists);
+			}
+		}
+	}
 
-        public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-        {
-            lock (_readerWriterLock)
-            {
-                if (!_connected) throw new InvalidOperationException("Not Connected");
-                if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+		lock (_readerWriterLock) {
+			if (!_connected)
+				throw new InvalidOperationException("Not Connected");
+			if (_disposed)
+				throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-                if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
-                   stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
-                }
-                if (stream.StartsWith("$"))
-                {
-                    throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
-                }
-                lock (_store)
-                {
-                    _store.Remove(stream);
-                    if (expectedVersion == ExpectedVersion.StreamExists)
-                    {
-                        throw new ArgumentOutOfRangeException();
-                    }
-                }
-            }
-        }
+			if (stream.StartsWith(CategoryStreamNamePrefix, StringComparison.OrdinalIgnoreCase) ||
+				stream.StartsWith(EventTypeStreamNamePrefix, StringComparison.OrdinalIgnoreCase)) {
+				throw new ArgumentOutOfRangeException(nameof(stream), $"Hard deleting {stream} failed. Cannot hard delete standard projection streams");
+			}
+			if (stream.StartsWith("$")) {
+				throw new AggregateException(new AccessDeniedException($"Write permission denied for {stream}."));
+			}
+			lock (_store) {
+				_store.Remove(stream);
+				if (expectedVersion == ExpectedVersion.StreamExists) {
+					throw new ArgumentOutOfRangeException();
+				}
+			}
+		}
+	}
 
-        /// <summary>
-        /// Write to the Category Stream
-        /// </summary>
-        /// <remarks>
-        /// If the category stream doesn't exist, create it.
-        /// The data in the event parameter includes the original stream, the recorded event, and messageId.
-        /// <seealso cref="EventWritten"/>
-        /// Generate the name from the original stream. <see cref="GetOrCreateCategoryStream"/>
-        /// The caller sets up the Category Stream, append the events."/>
-        /// </remarks>
-        /// <param name="event">Event to be written to the category stream</param>
-        private void WriteToByCategoryProjection(EventWritten @event)
-        {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	/// <summary>
+	/// Write to the Category Stream
+	/// </summary>
+	/// <remarks>
+	/// If the category stream doesn't exist, create it.
+	/// The data in the event parameter includes the original stream, the recorded event, and messageId.
+	/// <seealso cref="EventWritten"/>
+	/// Generate the name from the original stream. <see cref="GetOrCreateCategoryStream"/>
+	/// The caller sets up the Category Stream, append the events."/>
+	/// </remarks>
+	/// <param name="event">Event to be written to the category stream</param>
+	private void WriteToByCategoryProjection(EventWritten @event) {
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            if (@event.ProjectedEvent) { return; }
-            var stream = GetOrCreateCategoryStream(@event, out var streamName);
-            var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var created = DateTime.UtcNow;
-            var epochTime = (long)(created - epochStart).TotalSeconds;
+		if (@event.ProjectedEvent) { return; }
+		var stream = GetOrCreateCategoryStream(@event, out var streamName);
+		var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		var created = DateTime.UtcNow;
+		var epochTime = (long)(created - epochStart).TotalSeconds;
 
-            var projectedEvent = new ProjectedEvent(
-                    streamName,
-                    @event.Event.EventNumber,
-                    @event.Event.EventStreamId,
-                    @event.Event.EventId, // reusing since the projection is linking to the original event
-                    stream.Count,
-                    @event.Event.EventType,
-                    @event.Event.Data,
-                    @event.Event.Metadata,
-                    @event.Event.IsJson,
-                    created,
-                    epochTime);
-            lock (_allStream)
-            {
-                _allStream.Add(projectedEvent);
-                _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
-            }
+		var projectedEvent = new ProjectedEvent(
+			streamName,
+			@event.Event.EventNumber,
+			@event.Event.EventStreamId,
+			@event.Event.EventId, // reusing since the projection is linking to the original event
+			stream.Count,
+			@event.Event.EventType,
+			@event.Event.Data,
+			@event.Event.Metadata,
+			@event.Event.IsJson,
+			created,
+			epochTime);
+		lock (_allStream) {
+			_allStream.Add(projectedEvent);
+			_inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
+		}
 
-            stream.Add(projectedEvent);
+		stream.Add(projectedEvent);
 
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
-        }
+		_inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
+	}
 
-        /// <summary>
-        /// Write to the Event Stream
-        /// </summary>
-        /// <remarks>
-        /// If the event stream doesn't exist, create it.
-        /// The data in the event parameter includes the original stream, the recorded event, and messageId.
-        /// <seealso cref="EventWritten"/>
-        /// Generate the name from the event type passed in the original stream. <see cref="GetOrCreateEventTypeStream"/>
-        /// The caller sets up the Event Stream, append the events."/>
-        /// </remarks>
-        /// <param name="event">Event to be written to the event stream</param>
-        private void WriteToByEventProjection(EventWritten @event)
-        {
-            if (!_connected) throw new InvalidOperationException("Not Connected");
-            if (_disposed) throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+	/// <summary>
+	/// Write to the Event Stream
+	/// </summary>
+	/// <remarks>
+	/// If the event stream doesn't exist, create it.
+	/// The data in the event parameter includes the original stream, the recorded event, and messageId.
+	/// <seealso cref="EventWritten"/>
+	/// Generate the name from the event type passed in the original stream. <see cref="GetOrCreateEventTypeStream"/>
+	/// The caller sets up the Event Stream, append the events."/>
+	/// </remarks>
+	/// <param name="event">Event to be written to the event stream</param>
+	private void WriteToByEventProjection(EventWritten @event) {
+		if (!_connected)
+			throw new InvalidOperationException("Not Connected");
+		if (_disposed)
+			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-            if (@event.ProjectedEvent) { return; }
-            var stream = GetOrCreateEventTypeStream(@event, out var streamName);
-            var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var created = DateTime.UtcNow;
-            var epochTime = (long)(created - epochStart).TotalSeconds;
+		if (@event.ProjectedEvent) { return; }
+		var stream = GetOrCreateEventTypeStream(@event, out var streamName);
+		var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		var created = DateTime.UtcNow;
+		var epochTime = (long)(created - epochStart).TotalSeconds;
 
-            var projectedEvent = new ProjectedEvent(
-                streamName,
-                @event.Event.EventNumber,
-                @event.Event.EventStreamId,
-                @event.Event.EventId, // reusing since the projection is linking to the original event
-                stream.Count,
-                @event.Event.EventType,
-                @event.Event.Data,
-                @event.Event.Metadata,
-                @event.Event.IsJson,
-                created,
-                epochTime);
-            lock (_allStream)
-            {
-                _allStream.Add(projectedEvent);
-                _inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
-            }
-            stream.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
-        }
+		var projectedEvent = new ProjectedEvent(
+			streamName,
+			@event.Event.EventNumber,
+			@event.Event.EventStreamId,
+			@event.Event.EventId, // reusing since the projection is linking to the original event
+			stream.Count,
+			@event.Event.EventType,
+			@event.Event.Data,
+			@event.Event.Metadata,
+			@event.Event.IsJson,
+			created,
+			epochTime);
+		lock (_allStream) {
+			_allStream.Add(projectedEvent);
+			_inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
+		}
+		stream.Add(projectedEvent);
+		_inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
+	}
 
 
-        public void Dispose()
-        {
-            if (_disposed) return;
-            _disposed = true;
-            Close();
-            _subscriptions?.ForEach(s => s?.Dispose());
-        }
+	public void Dispose() {
+		if (_disposed)
+			return;
+		_disposed = true;
+		Close();
+		_subscriptions?.ForEach(s => s?.Dispose());
+	}
 
-        public class EventWritten : IMessage
-        {
-            public Guid MsgId { get; private set; }
-            public readonly string StreamName;
-            public readonly RecordedEvent Event;
-            public readonly bool ProjectedEvent;
-            public readonly long RecordedPosition;
+	public class EventWritten : IMessage {
+		public Guid MsgId { get; private set; }
+		public readonly string StreamName;
+		public readonly RecordedEvent Event;
+		public readonly bool ProjectedEvent;
+		public readonly long RecordedPosition;
 
-            public EventWritten(
-                string streamName,
-                RecordedEvent @event,
-                bool projectedEvent,
-                long recordedPosition)
-            {
-                MsgId = Guid.NewGuid();
-                StreamName = streamName;
-                Event = @event;
-                ProjectedEvent = projectedEvent;
-                RecordedPosition = recordedPosition;
-            }
-        }
-        public class EventCommitted : IMessage
-        {
-            public Guid MsgId { get; private set; }
-            public readonly RecordedEvent Event;
-            public readonly long RecordedPosition;
+		public EventWritten(
+			string streamName,
+			RecordedEvent @event,
+			bool projectedEvent,
+			long recordedPosition) {
+			MsgId = Guid.NewGuid();
+			StreamName = streamName;
+			Event = @event;
+			ProjectedEvent = projectedEvent;
+			RecordedPosition = recordedPosition;
+		}
+	}
+	public class EventCommitted : IMessage {
+		public Guid MsgId { get; private set; }
+		public readonly RecordedEvent Event;
+		public readonly long RecordedPosition;
 
-            public EventCommitted(
-                RecordedEvent @event,
-                long recordedPosition)
-            {
-                MsgId = Guid.NewGuid();
-                RecordedPosition = recordedPosition;
-                Event = @event;
-            }
-        }
-    }
+		public EventCommitted(
+			RecordedEvent @event,
+			long recordedPosition) {
+			MsgId = Guid.NewGuid();
+			RecordedPosition = recordedPosition;
+			Event = @event;
+		}
+	}
 }

@@ -1,17 +1,13 @@
-﻿namespace ReactiveDomain.Foundation.Tests.Domain
-{
-    public class CapturingRoute
-    {
-        public CapturingRoute()
-        {
-            Captured = null;
-        }
+﻿namespace ReactiveDomain.Foundation.Tests.Domain;
 
-        public void Capture<TEvent>(TEvent result)
-        {
-            Captured = result;
-        }
+public class CapturingRoute {
+	public CapturingRoute() {
+		Captured = null;
+	}
 
-        public object Captured { get; private set; }
-    }
+	public void Capture<TEvent>(TEvent result) {
+		Captured = result;
+	}
+
+	public object Captured { get; private set; }
 }

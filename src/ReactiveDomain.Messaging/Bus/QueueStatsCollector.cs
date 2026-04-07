@@ -8,154 +8,138 @@ using ReactiveDomain.Util;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace ReactiveDomain.Messaging.Bus
-{
-    public class QueueStatsCollector
-    {
-        private static readonly TimeSpan MinRefreshPeriod = TimeSpan.FromMilliseconds(100);
+namespace ReactiveDomain.Messaging.Bus;
 
-        public readonly string Name;
+public class QueueStatsCollector {
+	private static readonly TimeSpan MinRefreshPeriod = TimeSpan.FromMilliseconds(100);
 
-        public readonly string GroupName;
+	public readonly string Name;
 
-        public Type InProgressMessage { get { return _inProgressMsgType; } }
+	public readonly string GroupName;
 
-        private readonly object _statisticsLock = new object(); // this lock is mostly acquired from a single thread (+ rarely to get statistics), so performance penalty is not too high
+	public Type InProgressMessage { get { return _inProgressMsgType; } }
 
-        private readonly Stopwatch _busyWatch = new Stopwatch();
-        private readonly Stopwatch _idleWatch = new Stopwatch();
-        private readonly Stopwatch _totalIdleWatch = new Stopwatch();
-        private readonly Stopwatch _totalBusyWatch = new Stopwatch();
-        private readonly Stopwatch _totalTimeWatch = new Stopwatch();
-        private TimeSpan _lastTotalIdleTime;
-        private TimeSpan _lastTotalBusyTime;
-        private TimeSpan _lastTotalTime;
+	private readonly object _statisticsLock = new object(); // this lock is mostly acquired from a single thread (+ rarely to get statistics), so performance penalty is not too high
 
-        private long _totalItems;
-        private long _lastTotalItems;
-        private int _lifetimeQueueLengthPeak;
-        private int _currentQueueLengthPeak;
-        private Type _lastProcessedMsgType;
-        private Type _inProgressMsgType;
+	private readonly Stopwatch _busyWatch = new Stopwatch();
+	private readonly Stopwatch _idleWatch = new Stopwatch();
+	private readonly Stopwatch _totalIdleWatch = new Stopwatch();
+	private readonly Stopwatch _totalBusyWatch = new Stopwatch();
+	private readonly Stopwatch _totalTimeWatch = new Stopwatch();
+	private TimeSpan _lastTotalIdleTime;
+	private TimeSpan _lastTotalBusyTime;
+	private TimeSpan _lastTotalTime;
 
-        private bool _wasIdle;
+	private long _totalItems;
+	private long _lastTotalItems;
+	private int _lifetimeQueueLengthPeak;
+	private int _currentQueueLengthPeak;
+	private Type _lastProcessedMsgType;
+	private Type _inProgressMsgType;
 
-        public QueueStatsCollector(string name, string groupName = null)
-        {
-            Ensure.NotNull(name, "name");
+	private bool _wasIdle;
 
-            Name = name;
-            GroupName = groupName;
-        }
+	public QueueStatsCollector(string name, string groupName = null) {
+		Ensure.NotNull(name, "name");
 
-        public void Start()
-        {
-            _totalTimeWatch.Start();
-            EnterIdle();
-        }
+		Name = name;
+		GroupName = groupName;
+	}
 
-        public void Stop()
-        {
-            EnterIdle();
-            _totalTimeWatch.Stop();
-        }
+	public void Start() {
+		_totalTimeWatch.Start();
+		EnterIdle();
+	}
 
-        public void ProcessingStarted<T>(int queueLength)
-        {
-            ProcessingStarted(typeof(T), queueLength);
-        }
+	public void Stop() {
+		EnterIdle();
+		_totalTimeWatch.Stop();
+	}
 
-        public void ProcessingStarted(Type msgType, int queueLength)
-        {
-            _lifetimeQueueLengthPeak = _lifetimeQueueLengthPeak > queueLength ? _lifetimeQueueLengthPeak : queueLength;
-            _currentQueueLengthPeak = _currentQueueLengthPeak > queueLength ? _currentQueueLengthPeak : queueLength;
+	public void ProcessingStarted<T>(int queueLength) {
+		ProcessingStarted(typeof(T), queueLength);
+	}
 
-            _inProgressMsgType = msgType;
-        }
+	public void ProcessingStarted(Type msgType, int queueLength) {
+		_lifetimeQueueLengthPeak = _lifetimeQueueLengthPeak > queueLength ? _lifetimeQueueLengthPeak : queueLength;
+		_currentQueueLengthPeak = _currentQueueLengthPeak > queueLength ? _currentQueueLengthPeak : queueLength;
 
-        public void ProcessingEnded(int itemsProcessed)
-        {
-            Interlocked.Add(ref _totalItems, itemsProcessed);
-            _lastProcessedMsgType = _inProgressMsgType;
-            _inProgressMsgType = null;
-        }
+		_inProgressMsgType = msgType;
+	}
 
-        public void EnterIdle()
-        {
-            if (_wasIdle)
-                return;
-            _wasIdle = true;
+	public void ProcessingEnded(int itemsProcessed) {
+		Interlocked.Add(ref _totalItems, itemsProcessed);
+		_lastProcessedMsgType = _inProgressMsgType;
+		_inProgressMsgType = null;
+	}
 
-            //NOTE: the following locks are primarily acquired in main thread, 
-            //      so not too high performance penalty
-            lock (_statisticsLock)
-            {
-                _totalIdleWatch.Start();
-                _idleWatch.Restart();
+	public void EnterIdle() {
+		if (_wasIdle)
+			return;
+		_wasIdle = true;
 
-                _totalBusyWatch.Stop();
-                _busyWatch.Reset();
-            }
-        }
+		//NOTE: the following locks are primarily acquired in main thread, 
+		//      so not too high performance penalty
+		lock (_statisticsLock) {
+			_totalIdleWatch.Start();
+			_idleWatch.Restart();
 
-        public void EnterBusy()
-        {
-            if (!_wasIdle)
-                return;
-            _wasIdle = false;
+			_totalBusyWatch.Stop();
+			_busyWatch.Reset();
+		}
+	}
 
-            lock (_statisticsLock)
-            {
-                _totalIdleWatch.Stop();
-                _idleWatch.Reset();
+	public void EnterBusy() {
+		if (!_wasIdle)
+			return;
+		_wasIdle = false;
 
-                _totalBusyWatch.Start();
-                _busyWatch.Restart();
-            }
-        }
+		lock (_statisticsLock) {
+			_totalIdleWatch.Stop();
+			_idleWatch.Reset();
 
-        public QueueStats GetStatistics(int currentQueueLength)
-        {
-            lock (_statisticsLock)
-            {
-                var totalTime = _totalTimeWatch.Elapsed;
-                var totalIdleTime = _totalIdleWatch.Elapsed;
-                var totalBusyTime = _totalBusyWatch.Elapsed;
-                var totalItems = Interlocked.Read(ref _totalItems);
+			_totalBusyWatch.Start();
+			_busyWatch.Restart();
+		}
+	}
 
-                var lastRunMs = totalTime - _lastTotalTime;
-                var lastItems = totalItems - _lastTotalItems;
-                var avgItemsPerSecond = lastRunMs.Ticks != 0 ? (int)(TimeSpan.TicksPerSecond * lastItems / lastRunMs.Ticks) : 0;
-                var avgProcessingTime = lastItems != 0 ? (totalBusyTime - _lastTotalBusyTime).TotalMilliseconds / lastItems : 0;
-                var idleTimePercent = Math.Min(100.0, lastRunMs.Ticks != 0 ? 100.0 * (totalIdleTime - _lastTotalIdleTime).Ticks / lastRunMs.Ticks : 100);
+	public QueueStats GetStatistics(int currentQueueLength) {
+		lock (_statisticsLock) {
+			var totalTime = _totalTimeWatch.Elapsed;
+			var totalIdleTime = _totalIdleWatch.Elapsed;
+			var totalBusyTime = _totalBusyWatch.Elapsed;
+			var totalItems = Interlocked.Read(ref _totalItems);
 
-                var stats = new QueueStats(
-                    Name,
-                    GroupName,
-                    currentQueueLength,
-                    avgItemsPerSecond,
-                    avgProcessingTime,
-                    idleTimePercent,
-                    _busyWatch.IsRunning ? _busyWatch.Elapsed : (TimeSpan?)null,
-                    _idleWatch.IsRunning ? _idleWatch.Elapsed : (TimeSpan?)null,
-                    totalItems,
-                    _currentQueueLengthPeak,
-                    _lifetimeQueueLengthPeak,
-                    _lastProcessedMsgType,
-                    _inProgressMsgType);
+			var lastRunMs = totalTime - _lastTotalTime;
+			var lastItems = totalItems - _lastTotalItems;
+			var avgItemsPerSecond = lastRunMs.Ticks != 0 ? (int)(TimeSpan.TicksPerSecond * lastItems / lastRunMs.Ticks) : 0;
+			var avgProcessingTime = lastItems != 0 ? (totalBusyTime - _lastTotalBusyTime).TotalMilliseconds / lastItems : 0;
+			var idleTimePercent = Math.Min(100.0, lastRunMs.Ticks != 0 ? 100.0 * (totalIdleTime - _lastTotalIdleTime).Ticks / lastRunMs.Ticks : 100);
 
-                if (totalTime - _lastTotalTime >= MinRefreshPeriod)
-                {
-                    _lastTotalTime = totalTime;
-                    _lastTotalIdleTime = totalIdleTime;
-                    _lastTotalBusyTime = totalBusyTime;
-                    _lastTotalItems = totalItems;
+			var stats = new QueueStats(
+				Name,
+				GroupName,
+				currentQueueLength,
+				avgItemsPerSecond,
+				avgProcessingTime,
+				idleTimePercent,
+				_busyWatch.IsRunning ? _busyWatch.Elapsed : (TimeSpan?)null,
+				_idleWatch.IsRunning ? _idleWatch.Elapsed : (TimeSpan?)null,
+				totalItems,
+				_currentQueueLengthPeak,
+				_lifetimeQueueLengthPeak,
+				_lastProcessedMsgType,
+				_inProgressMsgType);
 
-                    _currentQueueLengthPeak = 0;
-                }
-                return stats;
-            }
-        }
-    }
+			if (totalTime - _lastTotalTime >= MinRefreshPeriod) {
+				_lastTotalTime = totalTime;
+				_lastTotalIdleTime = totalIdleTime;
+				_lastTotalBusyTime = totalBusyTime;
+				_lastTotalItems = totalItems;
+
+				_currentQueueLengthPeak = 0;
+			}
+			return stats;
+		}
+	}
 }
-

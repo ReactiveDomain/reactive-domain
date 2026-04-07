@@ -1,22 +1,18 @@
 ﻿using ReactiveDomain.Messaging.Bus;
 
-namespace ReactiveDomain.Messaging
-{
-    // USE ONLY WHEN YOU KNOW WHAT YOU ARE DOING
-    public class SendToThisEnvelope : IEnvelope
-    {
-        private readonly object _receiver;
+namespace ReactiveDomain.Messaging;
 
-        public SendToThisEnvelope(object receiver)
-        {
-            _receiver = receiver;
-        }
+// USE ONLY WHEN YOU KNOW WHAT YOU ARE DOING
+public class SendToThisEnvelope : IEnvelope {
+	private readonly object _receiver;
 
-        public void ReplyWith<T>(T message) where T : IMessage
-        {
-            var x = _receiver as IHandle<T>;
-            if (x != null)
-                x.Handle(message);
-        }
-    }
+	public SendToThisEnvelope(object receiver) {
+		_receiver = receiver;
+	}
+
+	public void ReplyWith<T>(T message) where T : IMessage {
+		var x = _receiver as IHandle<T>;
+		if (x != null)
+			x.Handle(message);
+	}
 }

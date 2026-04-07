@@ -3,139 +3,121 @@ using System.Collections.Generic;
 using System.Linq;
 using ReactiveDomain.Util;
 
-namespace ReactiveDomain.Messaging.Monitoring.Stats
-{
-    public class StatsContainer
-    {
-        private readonly Dictionary<string, object> _stats = new Dictionary<string, object>();
+namespace ReactiveDomain.Messaging.Monitoring.Stats;
 
-        private const string Separator = "-";
-        private static readonly string[] SplitSeparator =  { Separator };
+public class StatsContainer {
+	private readonly Dictionary<string, object> _stats = new Dictionary<string, object>();
 
-        public void Add(IDictionary<string, object> statGroup)
-        {
-            Ensure.NotNull(statGroup, "statGroup");
+	private const string Separator = "-";
+	private static readonly string[] SplitSeparator = { Separator };
 
-            foreach (var stat in statGroup)
-                _stats.Add(stat.Key, stat.Value);
-        }
+	public void Add(IDictionary<string, object> statGroup) {
+		Ensure.NotNull(statGroup, "statGroup");
 
-        public Dictionary<string, object> GetStats(bool useGrouping, bool useMetadata)
-        {
-            if (useGrouping && useMetadata)
-                return GetGroupedStatsWithMetadata();
+		foreach (var stat in statGroup)
+			_stats.Add(stat.Key, stat.Value);
+	}
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (useGrouping && !useMetadata)
-                return GetGroupedStats();
+	public Dictionary<string, object> GetStats(bool useGrouping, bool useMetadata) {
+		if (useGrouping && useMetadata)
+			return GetGroupedStatsWithMetadata();
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (!useGrouping && useMetadata)
-                return GetRawStatsWithMetadata();
+		// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+		if (useGrouping && !useMetadata)
+			return GetGroupedStats();
 
-            //if (!useGrouping && !useMetadata)
-            return GetRawStats();
-        }
+		// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+		if (!useGrouping && useMetadata)
+			return GetRawStatsWithMetadata();
 
-        private Dictionary<string, object> GetGroupedStatsWithMetadata()
-        {
-            var grouped = Group(_stats);
-            return grouped;
-        }
+		//if (!useGrouping && !useMetadata)
+		return GetRawStats();
+	}
 
-        private Dictionary<string, object> GetGroupedStats()
-        {
-            var values = GetStatsValues(_stats);
-            var grouped = Group(values);
-            return grouped;
-        }
+	private Dictionary<string, object> GetGroupedStatsWithMetadata() {
+		var grouped = Group(_stats);
+		return grouped;
+	}
 
-        private Dictionary<string, object> GetRawStatsWithMetadata()
-        {
-            return new Dictionary<string, object>(_stats);
-        }
+	private Dictionary<string, object> GetGroupedStats() {
+		var values = GetStatsValues(_stats);
+		var grouped = Group(values);
+		return grouped;
+	}
 
-        private Dictionary<string, object> GetRawStats()
-        {
-            var values = GetStatsValues(_stats);
-            return values;
-        }
+	private Dictionary<string, object> GetRawStatsWithMetadata() {
+		return new Dictionary<string, object>(_stats);
+	}
 
-        private static Dictionary<string, object> GetStatsValues(Dictionary<string, object> dictionary)
-        {
-            return dictionary.ToDictionary(
-                kvp => kvp.Key,
-                kvp =>
-                {
-                    var statInfo = kvp.Value as StatMetadata;
-                    return statInfo == null ? kvp.Value : statInfo.Value;
-                });
-        }
+	private Dictionary<string, object> GetRawStats() {
+		var values = GetStatsValues(_stats);
+		return values;
+	}
 
-        private static Dictionary<string, object> Group(Dictionary<string, object> input)
-        {
-            Ensure.NotNull(input, "input");
+	private static Dictionary<string, object> GetStatsValues(Dictionary<string, object> dictionary) {
+		return dictionary.ToDictionary(
+			kvp => kvp.Key,
+			kvp => {
+				var statInfo = kvp.Value as StatMetadata;
+				return statInfo == null ? kvp.Value : statInfo.Value;
+			});
+	}
 
-            if (input.IsEmpty())
-                return input;
+	private static Dictionary<string, object> Group(Dictionary<string, object> input) {
+		Ensure.NotNull(input, "input");
 
-            var groupContainer = NewDictionary();
-            var hasSubGroups = false;
+		if (input.IsEmpty())
+			return input;
 
-            foreach (var entry in input)
-            {
-                var groups = entry.Key.Split(SplitSeparator, StringSplitOptions.RemoveEmptyEntries);
-                if (groups.Length < 2)
-                {
-                    groupContainer.Add(entry.Key, entry.Value);
-                    continue;
-                }
+		var groupContainer = NewDictionary();
+		var hasSubGroups = false;
 
-                hasSubGroups = true;
+		foreach (var entry in input) {
+			var groups = entry.Key.Split(SplitSeparator, StringSplitOptions.RemoveEmptyEntries);
+			if (groups.Length < 2) {
+				groupContainer.Add(entry.Key, entry.Value);
+				continue;
+			}
 
-                string prefix = groups[0];
-                string remaining = string.Join(Separator, groups.Skip(1).ToArray());
+			hasSubGroups = true;
 
-                if (!groupContainer.ContainsKey(prefix))
-                    groupContainer.Add(prefix, NewDictionary());
+			string prefix = groups[0];
+			string remaining = string.Join(Separator, groups.Skip(1).ToArray());
 
-                ((Dictionary<string, object>)groupContainer[prefix]).Add(remaining, entry.Value);
-            }
+			if (!groupContainer.ContainsKey(prefix))
+				groupContainer.Add(prefix, NewDictionary());
 
-            if (!hasSubGroups)
-                return groupContainer;
+			((Dictionary<string, object>)groupContainer[prefix]).Add(remaining, entry.Value);
+		}
 
-            // we must first iterate through all dictionary and then aggregate it again
-            var result = NewDictionary();
+		if (!hasSubGroups)
+			return groupContainer;
 
-            foreach (var entry in groupContainer)
-            {
-                var subgroup = entry.Value as Dictionary<string, object>;
-                if (subgroup != null)
-                    result[entry.Key] = Group(subgroup);
-                else
-                    result[entry.Key] = entry.Value;
-            }
+		// we must first iterate through all dictionary and then aggregate it again
+		var result = NewDictionary();
 
-            return result;
-        }
+		foreach (var entry in groupContainer) {
+			var subgroup = entry.Value as Dictionary<string, object>;
+			if (subgroup != null)
+				result[entry.Key] = Group(subgroup);
+			else
+				result[entry.Key] = entry.Value;
+		}
 
-        private static Dictionary<string, object> NewDictionary()
-        {
-            return new Dictionary<string, object>(new CaseInsensitiveStringComparer());
-        }
+		return result;
+	}
 
-        private class CaseInsensitiveStringComparer : IEqualityComparer<string>
-        {
-            public bool Equals(string x, string y)
-            {
-                return string.Equals(x, y, StringComparison.InvariantCultureIgnoreCase);
-            }
+	private static Dictionary<string, object> NewDictionary() {
+		return new Dictionary<string, object>(new CaseInsensitiveStringComparer());
+	}
 
-            public int GetHashCode(string obj)
-            {
-                return obj != null ? obj.ToUpperInvariant().GetHashCode() : -1;
-            }
-        }
-    }
+	private class CaseInsensitiveStringComparer : IEqualityComparer<string> {
+		public bool Equals(string x, string y) {
+			return string.Equals(x, y, StringComparison.InvariantCultureIgnoreCase);
+		}
+
+		public int GetHashCode(string obj) {
+			return obj != null ? obj.ToUpperInvariant().GetHashCode() : -1;
+		}
+	}
 }

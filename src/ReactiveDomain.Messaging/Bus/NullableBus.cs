@@ -1,128 +1,115 @@
 ﻿using System;
 
-namespace ReactiveDomain.Messaging.Bus
-{
-    /// <summary>
-    /// A bus you can turn off.
-    /// 
-    /// Subscriptions and unsubscribe are always redirected to the target.
-    /// 
-    /// When RedirectToNull == true.
-    /// Drops all command and Events published.
-    /// Returns success for any TryFire.
-    /// 
-    /// </summary>
-    public class NullableBus : IDispatcher
-    {
-        private IDispatcher _target;
-        public bool Idle => _target.Idle;
+namespace ReactiveDomain.Messaging.Bus;
 
-        public NullableBus(IDispatcher target, bool directToNull = true, string name = null)
-        {
-            _target = target ?? throw new ArgumentNullException(nameof(target));
-            Name = name ?? _target.Name;
-            RedirectToNull = directToNull;
-        }
+/// <summary>
+/// A bus you can turn off.
+/// 
+/// Subscriptions and unsubscribe are always redirected to the target.
+/// 
+/// When RedirectToNull == true.
+/// Drops all command and Events published.
+/// Returns success for any TryFire.
+/// 
+/// </summary>
+public class NullableBus : IDispatcher {
+	private IDispatcher _target;
+	public bool Idle => _target.Idle;
 
-        public bool RedirectToNull { get; set; }
+	public NullableBus(IDispatcher target, bool directToNull = true, string name = null) {
+		_target = target ?? throw new ArgumentNullException(nameof(target));
+		Name = name ?? _target.Name;
+		RedirectToNull = directToNull;
+	}
 
-        #region Implementation of ICommandPublisher
+	public bool RedirectToNull { get; set; }
 
-        public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
-        {
-            if (RedirectToNull || _target == null) return;
-            _target.Send(command, exceptionMsg, responseTimeout, ackTimeout);
-        }
+	#region Implementation of ICommandPublisher
 
-        public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null,
-            TimeSpan? ackTimeout = null)
-        {
-            if (RedirectToNull || _target == null)
-            {
-                response = command.Succeed();
-                return true;
-            }
-            return _target.TrySend(command, out response, responseTimeout, ackTimeout);
-        }
+	public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		if (RedirectToNull || _target == null)
+			return;
+		_target.Send(command, exceptionMsg, responseTimeout, ackTimeout);
+	}
 
-        public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
-        {
-            if (RedirectToNull) return true;
-            return _target?.TrySendAsync(command, responseTimeout, ackTimeout) ?? false;
-        }
+	public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null,
+		TimeSpan? ackTimeout = null) {
+		if (RedirectToNull || _target == null) {
+			response = command.Succeed();
+			return true;
+		}
+		return _target.TrySend(command, out response, responseTimeout, ackTimeout);
+	}
 
-        #endregion
+	public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		if (RedirectToNull)
+			return true;
+		return _target?.TrySendAsync(command, responseTimeout, ackTimeout) ?? false;
+	}
 
-        #region Implementation of ICommandSubscriber
+	#endregion
 
-        public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
-        {
-            return _target?.Subscribe(handler);
-        }
-        
-        public void Unsubscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
-        {
-            _target?.Unsubscribe(handler);
-        }
+	#region Implementation of ICommandSubscriber
 
-        #endregion
+	public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
+		return _target?.Subscribe(handler);
+	}
 
-        #region Implementation of IPublisher
+	public void Unsubscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
+		_target?.Unsubscribe(handler);
+	}
 
-        public void Publish(IMessage message)
-        {
-            if (RedirectToNull) return;
-            _target?.Publish(message);
-        }
+	#endregion
 
-        #endregion
+	#region Implementation of IPublisher
 
-        #region Implementation of ISubscriber
+	public void Publish(IMessage message) {
+		if (RedirectToNull)
+			return;
+		_target?.Publish(message);
+	}
 
-        public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class,IMessage
-        {
+	#endregion
 
-            return _target?.Subscribe(handler);
-        }
-        public IDisposable SubscribeToAll(IHandle<IMessage> handler)
-        {
-            return _target?.SubscribeToAll(handler);
-        }
+	#region Implementation of ISubscriber
 
-        public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage
-        {
+	public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage {
 
-            _target?.Unsubscribe(handler);
-        }
+		return _target?.Subscribe(handler);
+	}
+	public IDisposable SubscribeToAll(IHandle<IMessage> handler) {
+		return _target?.SubscribeToAll(handler);
+	}
 
-        public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage
-        {
+	public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage {
 
-            return _target?.HasSubscriberFor<T>(includeDerived) ?? false;
-        }
+		_target?.Unsubscribe(handler);
+	}
 
-        #endregion
+	public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage {
 
-        #region Implementation of IBus
+		return _target?.HasSubscriberFor<T>(includeDerived) ?? false;
+	}
 
-        public string Name { get; }
+	#endregion
 
-        #endregion
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed) return;
-            if (disposing)
-            {
-                RedirectToNull = true;
-                _target = null;
-            }
-            _disposed = true;
-        }
-    }
+	#region Implementation of IBus
+
+	public string Name { get; }
+
+	#endregion
+	public void Dispose() {
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+	private bool _disposed;
+	protected virtual void Dispose(bool disposing) {
+		if (_disposed)
+			return;
+		if (disposing) {
+			RedirectToNull = true;
+			_target = null;
+		}
+		_disposed = true;
+	}
 }

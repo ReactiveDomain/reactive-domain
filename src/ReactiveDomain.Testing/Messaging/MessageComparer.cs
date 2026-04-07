@@ -2,18 +2,14 @@
 using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing
-{
-    public class MessageIdComparer: IEqualityComparer<IMessage>
-    {
-        public bool Equals(IMessage x, IMessage y)
-        {
-            return x.MsgId == y.MsgId;
-        }
+namespace ReactiveDomain.Testing;
 
-        public int GetHashCode(IMessage obj)
-        {
-            return obj.MsgId.GetHashCode();
-        }
-    }
+public class MessageIdComparer : IEqualityComparer<IMessage> {
+	public bool Equals(IMessage x, IMessage y) {
+		return x.MsgId == y.MsgId;
+	}
+
+	public int GetHashCode(IMessage obj) {
+		return obj.MsgId.GetHashCode();
+	}
 }

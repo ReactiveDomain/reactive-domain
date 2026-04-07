@@ -1,9 +1,5 @@
-﻿using System;
+﻿namespace ReactiveDomain.Messaging;
 
-namespace ReactiveDomain.Messaging
-{
-    //marker interface for events
-    public interface IEvent : IMessage
-    {
-    }
+//marker interface for events
+public interface IEvent : IMessage {
 }

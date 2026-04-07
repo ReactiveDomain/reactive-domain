@@ -3,48 +3,50 @@ using System.Threading;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation {
-    public abstract class SnapshotReadModel : ReadModelBase {
-        protected ReadModelState StartingState { get; private set; }
+namespace ReactiveDomain.Foundation;
 
-        protected SnapshotReadModel(
-                string name,
-                IConfiguredConnection connection)
-            : base(name, connection) {
-        }
+public abstract class SnapshotReadModel : ReadModelBase {
+	protected ReadModelState StartingState { get; private set; }
 
-        protected virtual void Restore(
-                                ReadModelState snapshot,
-                                bool startListeners = true, 
-                                bool block = false,
-                                bool validateStreams = false,
-                                CancellationToken cancelWaitToken = default(CancellationToken)) {
-            if(StartingState != null) {
-                throw new InvalidOperationException("ReadModel has already been restored.");
-            }
-            Ensure.NotNull(snapshot, nameof(snapshot));
-            StartingState = snapshot;
-            ApplyState(StartingState);
-            if (!startListeners || StartingState.Checkpoints == null) return;
+	protected SnapshotReadModel(
+		string name,
+		IConfiguredConnection connection)
+		: base(name, connection) {
+	}
 
-            foreach (var stream in StartingState.Checkpoints) {
-                Start(stream.Item1,stream.Item2, block, validateStreams, cancelWaitToken);
-            }
-        }
+	protected virtual void Restore(
+		ReadModelState snapshot,
+		bool startListeners = true,
+		bool block = false,
+		bool validateStreams = false,
+		CancellationToken cancelWaitToken = default(CancellationToken)) {
+		if (StartingState != null) {
+			throw new InvalidOperationException("ReadModel has already been restored.");
+		}
+		Ensure.NotNull(snapshot, nameof(snapshot));
+		StartingState = snapshot;
+		ApplyState(StartingState);
+		if (!startListeners || StartingState.Checkpoints == null)
+			return;
 
-        protected abstract void ApplyState(ReadModelState snapshot);
+		foreach (var stream in StartingState.Checkpoints) {
+			Start(stream.Item1, stream.Item2, block, validateStreams, cancelWaitToken);
+		}
+	}
 
-        public abstract ReadModelState GetState();
+	protected abstract void ApplyState(ReadModelState snapshot);
 
-        private bool _disposed;
-        protected override void Dispose(bool disposing) {
-            if (_disposed) return;
-            _disposed = true;
-            if (disposing) {
+	public abstract ReadModelState GetState();
 
-            }
-            base.Dispose(disposing);
-        }
+	private bool _disposed;
+	protected override void Dispose(bool disposing) {
+		if (_disposed)
+			return;
+		_disposed = true;
+		if (disposing) {
 
-    }
+		}
+		base.Dispose(disposing);
+	}
+
 }

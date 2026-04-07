@@ -3,82 +3,72 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ReactiveDomain.Transport.Tests
-{
-    public class MockTcpConnection : ITcpConnection
-    {
-        private static EndPoint _remoteEndPoint;
-        private static Guid _connectionId;
+namespace ReactiveDomain.Transport.Tests;
 
-        public static MockTcpConnection CreateConnectingTcpConnection(Guid connectionId,
-                                                                    IPEndPoint remoteEndPoint,
-                                                                    TcpClientConnector connector,
-                                                                    TimeSpan connectionTimeout,
-                                                                    Action<ITcpConnection> onConnectionEstablished,
-                                                                    Action<ITcpConnection, SocketError> onConnectionFailed,
-                                                                    bool verbose)
-        {
-            _connectionId = connectionId;
-            _remoteEndPoint = remoteEndPoint;
-            return new MockTcpConnection();
-        }
+public class MockTcpConnection : ITcpConnection {
+	private static EndPoint _remoteEndPoint;
+	private static Guid _connectionId;
 
-        public static MockTcpConnection CreateAcceptedTcpConnection(Guid connectionId, EndPoint remoteEndPoint, Socket socket, bool verbose)
-        {
-            throw new NotImplementedException();
-        }
+	public static MockTcpConnection CreateConnectingTcpConnection(Guid connectionId,
+		IPEndPoint remoteEndPoint,
+		TcpClientConnector connector,
+		TimeSpan connectionTimeout,
+		Action<ITcpConnection> onConnectionEstablished,
+		Action<ITcpConnection, SocketError> onConnectionFailed,
+		bool verbose) {
+		_connectionId = connectionId;
+		_remoteEndPoint = remoteEndPoint;
+		return new MockTcpConnection();
+	}
 
-        public event Action<ITcpConnection, SocketError> ConnectionClosed;
+	public static MockTcpConnection CreateAcceptedTcpConnection(Guid connectionId, EndPoint remoteEndPoint, Socket socket, bool verbose) {
+		throw new NotImplementedException();
+	}
 
-        public Guid ConnectionId => _connectionId;
+	public event Action<ITcpConnection, SocketError> ConnectionClosed;
 
-        public EndPoint RemoteEndPoint => _remoteEndPoint;
+	public Guid ConnectionId => _connectionId;
 
-        public EndPoint LocalEndPoint => null;
+	public EndPoint RemoteEndPoint => _remoteEndPoint;
 
-        public int SendQueueSize
-        {
-            get { throw new NotImplementedException(); }
-        }
+	public EndPoint LocalEndPoint => null;
 
-        public bool IsInitialized => false;
+	public int SendQueueSize {
+		get { throw new NotImplementedException(); }
+	}
 
-        public bool IsClosed => false;
+	public bool IsInitialized => false;
 
-        public bool IsReadyForSend => true;
-        public bool IsReadyForReceive => true;
-        public bool IsFaulted => false;
+	public bool IsClosed => false;
 
-        public void EnqueueSend(IEnumerable<ArraySegment<byte>> data)
-        {
-            SentData = data;
-            if (_callback != null)
-            {
-                _callback(this, ResponseData);
-                _callback = null;
-            }
+	public bool IsReadyForSend => true;
+	public bool IsReadyForReceive => true;
+	public bool IsFaulted => false;
 
-        }
+	public void EnqueueSend(IEnumerable<ArraySegment<byte>> data) {
+		SentData = data;
+		if (_callback != null) {
+			_callback(this, ResponseData);
+			_callback = null;
+		}
 
-        public IEnumerable<ArraySegment<byte>> SentData { get; set; }
-        public IEnumerable<ArraySegment<byte>> ResponseData { get; set; }
+	}
 
-        private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> _callback;
+	public IEnumerable<ArraySegment<byte>> SentData { get; set; }
+	public IEnumerable<ArraySegment<byte>> ResponseData { get; set; }
 
-        public void ReceiveAsync(Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback)
-        {
-            _callback = callback;
-        }
+	private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> _callback;
 
-        public void Close(string reason)
-        {
-            ConnectionClosed?.Invoke(this, SocketError.Success);
-        }
+	public void ReceiveAsync(Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback) {
+		_callback = callback;
+	}
 
-        public override string ToString()
-        {
-            return RemoteEndPoint.ToString();
-        }
+	public void Close(string reason) {
+		ConnectionClosed?.Invoke(this, SocketError.Success);
+	}
 
-    }
+	public override string ToString() {
+		return RemoteEndPoint.ToString();
+	}
+
 }

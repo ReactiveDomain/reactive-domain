@@ -1,273 +1,267 @@
-﻿using ReactiveDomain.Foundation.Tests.Domain;
-using System;
+﻿using System;
 using Xunit;
 
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Domain.Tests
-{
-    namespace AggregateRootEntityTests
-    {
-        public class AnyInstance {
-            // IEventSource behavior
+namespace ReactiveDomain.Foundation.Tests.Domain;
 
-            [Fact]
-            public void IsEventSource() {
-                Assert.IsAssignableFrom<IEventSource>(new AnyEntity());
-            }
+public class AnyInstance {
+	// IEventSource behavior
 
-            [Fact]
-            public void InitialExpectedVersionReturnsExpectedResult() {
-                var sut = (IEventSource)new AnyEntity();
-                Assert.Equal(ExpectedVersion.NoStream, sut.ExpectedVersion);
-            }
+	[Fact]
+	public void IsEventSource() {
+		Assert.IsAssignableFrom<IEventSource>(new AnyEntity());
+	}
 
-            [Fact]
-            public void ExpectedVersionRetainsValue() {
-                var sut = (IEventSource)new AnyEntity();
-                var value = new Random().Next();
-                sut.ExpectedVersion = value;
-                Assert.Equal(value, sut.ExpectedVersion);
-            }
+	[Fact]
+	public void InitialExpectedVersionReturnsExpectedResult() {
+		var sut = (IEventSource)new AnyEntity();
+		Assert.Equal(ExpectedVersion.NoStream, sut.ExpectedVersion);
+	}
 
-            // Routing behavior
+	[Fact]
+	public void ExpectedVersionRetainsValue() {
+		var sut = (IEventSource)new AnyEntity();
+		var value = new Random().Next();
+		sut.ExpectedVersion = value;
+		Assert.Equal(value, sut.ExpectedVersion);
+	}
 
-            [Fact]
-            public void NullForRouteOfTypedEventRouteNotAcceptable() {
-                Assert.Throws<ArgumentNullException>(() => new RegisterNullTypedRouteEntity());
-            }
+	// Routing behavior
 
-            [Fact]
-            public void NullForTypeOfEventOfUntypedEventRouteNotAcceptable() {
-                Assert.Throws<ArgumentNullException>(() => new RegisterNullForTypeOfEventOfUntypedRouteEntity());
-            }
+	[Fact]
+	public void NullForRouteOfTypedEventRouteNotAcceptable() {
+		Assert.Throws<ArgumentNullException>(() => new RegisterNullTypedRouteEntity());
+	}
 
-            [Fact]
-            public void NullForRouteOfUntypedEventRouteNotAcceptable() {
-                Assert.Throws<ArgumentNullException>(() => new RegisterNullForRouteOfUntypedRouteEntity());
-            }
+	[Fact]
+	public void NullForTypeOfEventOfUntypedEventRouteNotAcceptable() {
+		Assert.Throws<ArgumentNullException>(() => new RegisterNullForTypeOfEventOfUntypedRouteEntity());
+	}
 
-            [Fact]
-            public void RegisteringRepeatedTypedRouteNotAcceptable() {
-                Assert.Throws<InvalidOperationException>(() => new RegisterRepeatedTypedRouteEntity());
-            }
+	[Fact]
+	public void NullForRouteOfUntypedEventRouteNotAcceptable() {
+		Assert.Throws<ArgumentNullException>(() => new RegisterNullForRouteOfUntypedRouteEntity());
+	}
 
-            [Fact]
-            public void RegisteringRepeatedUntypedRouteNotAcceptable() {
-                Assert.Throws<InvalidOperationException>(() => new RegisterRepeatedUntypedRouteEntity());
-            }
+	[Fact]
+	public void RegisteringRepeatedTypedRouteNotAcceptable() {
+		Assert.Throws<InvalidOperationException>(() => new RegisterRepeatedTypedRouteEntity());
+	}
 
-            [Fact]
-            public void RegisteringUntypedRouteAfterTypedRouteNotAcceptable() {
-                Assert.Throws<InvalidOperationException>(() => new RegisterUntypedRouteAfterTypedRouteEntity());
-            }
+	[Fact]
+	public void RegisteringRepeatedUntypedRouteNotAcceptable() {
+		Assert.Throws<InvalidOperationException>(() => new RegisterRepeatedUntypedRouteEntity());
+	}
 
-            [Fact]
-            public void RegisteringTypedRouteAfterUntypedRouteNotAcceptable() {
-                Assert.Throws<InvalidOperationException>(() => new RegisterTypedRouteAfterUntypedRouteEntity());
-            }
+	[Fact]
+	public void RegisteringUntypedRouteAfterTypedRouteNotAcceptable() {
+		Assert.Throws<InvalidOperationException>(() => new RegisterUntypedRouteAfterTypedRouteEntity());
+	}
 
-            class AnyEntity : EventDrivenStateMachine { }
+	[Fact]
+	public void RegisteringTypedRouteAfterUntypedRouteNotAcceptable() {
+		Assert.Throws<InvalidOperationException>(() => new RegisterTypedRouteAfterUntypedRouteEntity());
+	}
 
-            class RegisterNullTypedRouteEntity : EventDrivenStateMachine {
-                public RegisterNullTypedRouteEntity() {
-                    Register<object>(null);
-                }
-            }
+	class AnyEntity : EventDrivenStateMachine { }
 
-            class RegisterNullForTypeOfEventOfUntypedRouteEntity : EventDrivenStateMachine {
-                public RegisterNullForTypeOfEventOfUntypedRouteEntity() {
-                    Register(null, _ => { });
-                }
-            }
+	class RegisterNullTypedRouteEntity : EventDrivenStateMachine {
+		public RegisterNullTypedRouteEntity() {
+			Register<object>(null);
+		}
+	}
 
-            class RegisterNullForRouteOfUntypedRouteEntity : EventDrivenStateMachine {
-                public RegisterNullForRouteOfUntypedRouteEntity() {
-                    Register(typeof(object), null);
-                }
-            }
+	class RegisterNullForTypeOfEventOfUntypedRouteEntity : EventDrivenStateMachine {
+		public RegisterNullForTypeOfEventOfUntypedRouteEntity() {
+			Register(null, _ => { });
+		}
+	}
 
-            class RegisterRepeatedTypedRouteEntity : EventDrivenStateMachine {
-                public RegisterRepeatedTypedRouteEntity() {
-                    Register<object>(_ => { });
-                    Register<object>(_ => { });
-                }
-            }
+	class RegisterNullForRouteOfUntypedRouteEntity : EventDrivenStateMachine {
+		public RegisterNullForRouteOfUntypedRouteEntity() {
+			Register(typeof(object), null);
+		}
+	}
 
-            class RegisterRepeatedUntypedRouteEntity : EventDrivenStateMachine {
-                public RegisterRepeatedUntypedRouteEntity() {
-                    Register(typeof(object), _ => { });
-                    Register(typeof(object), _ => { });
-                }
-            }
+	class RegisterRepeatedTypedRouteEntity : EventDrivenStateMachine {
+		public RegisterRepeatedTypedRouteEntity() {
+			Register<object>(_ => { });
+			Register<object>(_ => { });
+		}
+	}
 
-            class RegisterUntypedRouteAfterTypedRouteEntity : EventDrivenStateMachine {
-                public RegisterUntypedRouteAfterTypedRouteEntity() {
-                    Register<object>(_ => { });
-                    Register(typeof(object), _ => { });
-                }
-            }
+	class RegisterRepeatedUntypedRouteEntity : EventDrivenStateMachine {
+		public RegisterRepeatedUntypedRouteEntity() {
+			Register(typeof(object), _ => { });
+			Register(typeof(object), _ => { });
+		}
+	}
 
-            class RegisterTypedRouteAfterUntypedRouteEntity : EventDrivenStateMachine {
-                public RegisterTypedRouteAfterUntypedRouteEntity() {
-                    Register(typeof(object), _ => { });
-                    Register<object>(_ => { });
-                }
-            }
-        }
+	class RegisterUntypedRouteAfterTypedRouteEntity : EventDrivenStateMachine {
+		public RegisterUntypedRouteAfterTypedRouteEntity() {
+			Register<object>(_ => { });
+			Register(typeof(object), _ => { });
+		}
+	}
 
-        public class ChangedInstance {
-            private readonly EventDrivenStateMachine _sut;
+	class RegisterTypedRouteAfterUntypedRouteEntity : EventDrivenStateMachine {
+		public RegisterTypedRouteAfterUntypedRouteEntity() {
+			Register(typeof(object), _ => { });
+			Register<object>(_ => { });
+		}
+	}
+}
 
-            public ChangedInstance() {
-                _sut = new ChangedEntity();
-            }
+public class ChangedInstance {
+	private readonly EventDrivenStateMachine _sut;
 
-            [Fact]
-            public void RestoreFromEventsDoesNotAcceptNull() {
-                var sut = (IEventSource)_sut;
-                Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
-            }
+	public ChangedInstance() {
+		_sut = new ChangedEntity();
+	}
 
-            [Fact]
-            public void RestoreFromEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                Assert.Throws<InvalidOperationException>(
-                    () => sut.RestoreFromEvents(new object[0]));
-            }
+	[Fact]
+	public void RestoreFromEventsDoesNotAcceptNull() {
+		var sut = (IEventSource)_sut;
+		Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
+	}
 
-            [Fact]
-            public void TakeEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                Assert.Equal(-1, sut.ExpectedVersion);
-                Assert.Equal(new object[] { ChangedEntity.Event }, sut.TakeEvents());
-                Assert.Equal(0, sut.ExpectedVersion);
-            }
+	[Fact]
+	public void RestoreFromEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		Assert.Throws<InvalidOperationException>(
+			() => sut.RestoreFromEvents(new object[0]));
+	}
 
-            class ChangedEntity : EventDrivenStateMachine {
-                public static readonly LocalEvent Event = new LocalEvent();
+	[Fact]
+	public void TakeEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		Assert.Equal(-1, sut.ExpectedVersion);
+		Assert.Equal(new object[] { ChangedEntity.Event }, sut.TakeEvents());
+		Assert.Equal(0, sut.ExpectedVersion);
+	}
 
-                public ChangedEntity() {
-                    Raise(Event);
-                }
-            }
+	class ChangedEntity : EventDrivenStateMachine {
+		public static readonly LocalEvent Event = new LocalEvent();
 
-            private class LocalEvent {
-            }
-        }
+		public ChangedEntity() {
+			Raise(Event);
+		}
+	}
 
-        public class InstanceWithoutRoutes {
-            private readonly EntityWithoutRoute _sut;
+	private class LocalEvent {
+	}
+}
 
-            public InstanceWithoutRoutes() {
-                _sut = new EntityWithoutRoute();
-            }
+public class InstanceWithoutRoutes {
+	private readonly EntityWithoutRoute _sut;
 
-            [Fact]
-            public void RestoreFromEventsDoesNotAcceptNull() {
-                var sut = (IEventSource)_sut;
-                Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
-            }
+	public InstanceWithoutRoutes() {
+		_sut = new EntityWithoutRoute();
+	}
 
-            [Fact]
-            public void RestoreFromEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                sut.RestoreFromEvents(new object[0]);
+	[Fact]
+	public void RestoreFromEventsDoesNotAcceptNull() {
+		var sut = (IEventSource)_sut;
+		Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
+	}
 
-                Assert.Equal(new object[0], sut.TakeEvents());
-            }
+	[Fact]
+	public void RestoreFromEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		sut.RestoreFromEvents(new object[0]);
 
-            [Fact]
-            public void TakeEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                Assert.Equal(-1,sut.ExpectedVersion);
-                Assert.Equal(new object[0], sut.TakeEvents());
-                Assert.Equal(-1,sut.ExpectedVersion);
-            }
+		Assert.Equal(new object[0], sut.TakeEvents());
+	}
 
-            [Fact]
-            public void InvokingRaiseDoesNotAcceptNull() {
-                Assert.Throws<ArgumentNullException>(() => _sut.InvokeRaise(null));
-            }
+	[Fact]
+	public void TakeEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		Assert.Equal(-1, sut.ExpectedVersion);
+		Assert.Equal(new object[0], sut.TakeEvents());
+		Assert.Equal(-1, sut.ExpectedVersion);
+	}
 
-            [Fact]
-            public void InvokingRaiseHasExpectedResult() {
-                var sut = (IEventSource)_sut;
+	[Fact]
+	public void InvokingRaiseDoesNotAcceptNull() {
+		Assert.Throws<ArgumentNullException>(() => _sut.InvokeRaise(null));
+	}
 
-                var @event = new LocalEvent();
-                _sut.InvokeRaise(@event);
+	[Fact]
+	public void InvokingRaiseHasExpectedResult() {
+		var sut = (IEventSource)_sut;
 
-                Assert.Equal(new object[] { @event }, sut.TakeEvents());
-            }
+		var @event = new LocalEvent();
+		_sut.InvokeRaise(@event);
 
-            class EntityWithoutRoute : EventDrivenStateMachine {
-                public void InvokeRaise(object @event) { Raise(@event); }
-            }
+		Assert.Equal(new object[] { @event }, sut.TakeEvents());
+	}
 
-            private class LocalEvent {
-            }
-        }
+	class EntityWithoutRoute : EventDrivenStateMachine {
+		public void InvokeRaise(object @event) { Raise(@event); }
+	}
 
-        public class InstanceWithRoutes {
-            private readonly EntityWithRoute _sut;
+	private class LocalEvent {
+	}
+}
 
-            public InstanceWithRoutes() {
-                _sut = new EntityWithRoute();
-            }
+public class InstanceWithRoutes {
+	private readonly EntityWithRoute _sut;
 
-            [Fact]
-            public void RestoreFromEventsDoesNotAcceptNull() {
-                var sut = (IEventSource)_sut;
-                Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
-            }
+	public InstanceWithRoutes() {
+		_sut = new EntityWithRoute();
+	}
 
-            [Fact]
-            public void RestoreFromEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                var @event = new LocalEvent();
-                sut.RestoreFromEvents(new object[] { @event });
+	[Fact]
+	public void RestoreFromEventsDoesNotAcceptNull() {
+		var sut = (IEventSource)_sut;
+		Assert.Throws<ArgumentNullException>(() => sut.RestoreFromEvents(null));
+	}
 
-                Assert.Equal(new object[0], sut.TakeEvents());
-                Assert.Equal(@event, _sut.Route.Captured);
-            }
+	[Fact]
+	public void RestoreFromEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		var @event = new LocalEvent();
+		sut.RestoreFromEvents(new object[] { @event });
 
-            [Fact]
-            public void TakeEventsHasExpectedResult() {
-                var sut = (IEventSource)_sut;
-                Assert.Equal(-1,sut.ExpectedVersion);
-                Assert.Equal(new object[0], sut.TakeEvents());
-                Assert.Equal(-1,sut.ExpectedVersion);
-            }
+		Assert.Equal(new object[0], sut.TakeEvents());
+		Assert.Equal(@event, _sut.Route.Captured);
+	}
 
-            [Fact]
-            public void InvokingRaiseDoesNotAcceptNull() {
-                Assert.Throws<ArgumentNullException>(() => _sut.InvokeRaise(null));
-            }
+	[Fact]
+	public void TakeEventsHasExpectedResult() {
+		var sut = (IEventSource)_sut;
+		Assert.Equal(-1, sut.ExpectedVersion);
+		Assert.Equal(new object[0], sut.TakeEvents());
+		Assert.Equal(-1, sut.ExpectedVersion);
+	}
 
-            [Fact]
-            public void InvokingRaiseHasExpectedResult() {
-                var sut = (IEventSource)_sut;
+	[Fact]
+	public void InvokingRaiseDoesNotAcceptNull() {
+		Assert.Throws<ArgumentNullException>(() => _sut.InvokeRaise(null));
+	}
 
-                var @event = new LocalEvent();
-                _sut.InvokeRaise(@event);
+	[Fact]
+	public void InvokingRaiseHasExpectedResult() {
+		var sut = (IEventSource)_sut;
 
-                Assert.Equal(new object[] { @event }, sut.TakeEvents());
-                Assert.Equal(@event, _sut.Route.Captured);
-            }
+		var @event = new LocalEvent();
+		_sut.InvokeRaise(@event);
 
-            class EntityWithRoute : EventDrivenStateMachine {
-                public readonly CapturingRoute Route;
+		Assert.Equal(new object[] { @event }, sut.TakeEvents());
+		Assert.Equal(@event, _sut.Route.Captured);
+	}
 
-                public EntityWithRoute() {
-                    Route = new CapturingRoute();
+	class EntityWithRoute : EventDrivenStateMachine {
+		public readonly CapturingRoute Route;
 
-                    Register<LocalEvent>(Route.Capture);
-                }
+		public EntityWithRoute() {
+			Route = new CapturingRoute();
 
-                public void InvokeRaise(object @event) { Raise(@event); }
-            }
+			Register<LocalEvent>(Route.Capture);
+		}
 
-            private class LocalEvent {
-            }
-        }
-    }
+		public void InvokeRaise(object @event) { Raise(@event); }
+	}
+
+	private class LocalEvent {
+	}
 }

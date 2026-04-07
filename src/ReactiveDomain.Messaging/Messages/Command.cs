@@ -9,55 +9,55 @@ namespace ReactiveDomain.Messaging;
 /// </summary>
 /// <inheritdoc cref="Message"/>
 public abstract record Command(CancellationToken? CancellationToken = null) : Message, ICommand {
-    public Guid CorrelationId { get; set; }
-    public Guid CausationId { get; set; }
+	public Guid CorrelationId { get; set; }
+	public Guid CausationId { get; set; }
 
-    public bool TimeoutTcpWait = true;
+	public bool TimeoutTcpWait = true;
 
-    /// <summary>
-    /// The CancellationToken for this command
-    /// </summary>
-    [JsonIgnore]
-    public CancellationToken? CancellationToken { get; } = CancellationToken;
+	/// <summary>
+	/// The CancellationToken for this command
+	/// </summary>
+	[JsonIgnore]
+	public CancellationToken? CancellationToken { get; } = CancellationToken;
 
-    /// <summary>
-    /// Has this command been canceled?
-    /// </summary>
-    public bool IsCanceled => CancellationToken?.IsCancellationRequested ?? false;
+	/// <summary>
+	/// Has this command been canceled?
+	/// </summary>
+	public bool IsCanceled => CancellationToken?.IsCancellationRequested ?? false;
 
-    /// <summary>
-    /// Does this command allow cancellation?
-    /// </summary>
-    public bool IsCancelable => CancellationToken != null;
+	/// <summary>
+	/// Does this command allow cancellation?
+	/// </summary>
+	public bool IsCancelable => CancellationToken != null;
 
 
-    public virtual void RegisterOnCancellation(Action action) {
-        if (!IsCancelable) {
-            throw new InvalidOperationException("Command cannot be canceled");
-        }
-        CancellationToken?.Register(action);
-    }
+	public virtual void RegisterOnCancellation(Action action) {
+		if (!IsCancelable) {
+			throw new InvalidOperationException("Command cannot be canceled");
+		}
+		CancellationToken?.Register(action);
+	}
 
-    /// <summary>
-    /// Create a CommandResponse indicating that this command has succeeded.
-    /// </summary>
-    public CommandResponse Succeed() {
-        return new Success(this);
-    }
+	/// <summary>
+	/// Create a CommandResponse indicating that this command has succeeded.
+	/// </summary>
+	public CommandResponse Succeed() {
+		return new Success(this);
+	}
 
-    /// <summary>
-    /// Create a CommandResponse indicating that this command has failed.
-    /// </summary>
-    public CommandResponse Fail(Exception ex = null) {
-        return new Fail(this, ex);
-    }
+	/// <summary>
+	/// Create a CommandResponse indicating that this command has failed.
+	/// </summary>
+	public CommandResponse Fail(Exception ex = null) {
+		return new Fail(this, ex);
+	}
 
-    /// <summary>
-    /// Create a CommandResponse indicating that this command has been canceled.
-    /// </summary>
-    public CommandResponse Canceled() {
-        return new Canceled(this);
-    }
+	/// <summary>
+	/// Create a CommandResponse indicating that this command has been canceled.
+	/// </summary>
+	public CommandResponse Canceled() {
+		return new Canceled(this);
+	}
 }
 
 /// <summary>
@@ -66,30 +66,30 @@ public abstract record Command(CancellationToken? CancellationToken = null) : Me
 /// </summary>
 /// <inheritdoc cref="Message"/>
 public record AckCommand : Message, ICorrelatedMessage {
-    public Guid CorrelationId { get; set; }
-    public Guid CausationId { get; set; }
-    /// <summary>
-    /// The Command whose receipt is being acknowledged.
-    /// </summary>
-    public ICommand SourceCommand { get; }
-    /// <summary>
-    /// The unique ID of the Command whose receipt is being acknowledged.
-    /// </summary>
-    public Guid CommandId => SourceCommand.MsgId;
-    /// <summary>
-    /// The Type of the Command whose receipt is being acknowledged.
-    /// </summary>
-    public Type CommandType => SourceCommand.GetType();
+	public Guid CorrelationId { get; set; }
+	public Guid CausationId { get; set; }
+	/// <summary>
+	/// The Command whose receipt is being acknowledged.
+	/// </summary>
+	public ICommand SourceCommand { get; }
+	/// <summary>
+	/// The unique ID of the Command whose receipt is being acknowledged.
+	/// </summary>
+	public Guid CommandId => SourceCommand.MsgId;
+	/// <summary>
+	/// The Type of the Command whose receipt is being acknowledged.
+	/// </summary>
+	public Type CommandType => SourceCommand.GetType();
 
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="sourceCommand">The Command whose receipt is being acknowledged.</param>
-    public AckCommand(ICommand sourceCommand) {
+	/// <summary>
+	/// Constructor
+	/// </summary>
+	/// <param name="sourceCommand">The Command whose receipt is being acknowledged.</param>
+	public AckCommand(ICommand sourceCommand) {
 
-        SourceCommand = sourceCommand;
-        CorrelationId = sourceCommand.CorrelationId;
-        CausationId = sourceCommand.MsgId;
-    }
+		SourceCommand = sourceCommand;
+		CorrelationId = sourceCommand.CorrelationId;
+		CausationId = sourceCommand.MsgId;
+	}
 
 }

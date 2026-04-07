@@ -1,25 +1,21 @@
-﻿using ReactiveDomain.Policy.Messages;
-using System;
+﻿using System;
+using ReactiveDomain.Policy.Messages;
 
-namespace ReactiveDomain.Policy.ReadModels
-{
-    public class RoleDTO
-    {
-        public Guid Id { get; }
-        public Guid PolicyId { get; }
-        public string Name { get; }
-        public RoleDTO(Guid id, Guid policyId, string name)
-        {
-            Id = id;
-            PolicyId = policyId;
-            Name = name.Trim().ToLowerInvariant();
-        }
+namespace ReactiveDomain.Policy.ReadModels;
 
-        public RoleDTO(ApplicationMsgs.RoleCreated @event)
-        {
-            Id = @event.RoleId;
-            PolicyId = @event.PolicyId;
-            Name = @event.Name.Trim().ToLowerInvariant();
-        }
-    }
+public class RoleDTO {
+	public Guid Id { get; }
+	public Guid PolicyId { get; }
+	public string Name { get; }
+	public RoleDTO(Guid id, Guid policyId, string name) {
+		Id = id;
+		PolicyId = policyId;
+		Name = name.Trim().ToLowerInvariant();
+	}
+
+	public RoleDTO(ApplicationMsgs.RoleCreated @event) {
+		Id = @event.RoleId;
+		PolicyId = @event.PolicyId;
+		Name = @event.Name.Trim().ToLowerInvariant();
+	}
 }
