@@ -67,8 +67,8 @@ public class when_using_read_model_base_with_reader :
 		AppendEvents(1, _conn, s1, 7);
 		StartAsync<TestAggregate>(aggId);
 		await IsLive;
-		Assert.Equal(1, Count);
-		Assert.Equal(7, Sum);
+		AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 7);
 	}
 
 	[Fact]
@@ -80,8 +80,8 @@ public class when_using_read_model_base_with_reader :
 		StartAsync<ReadModelTestCategoryAggregate>();
 
 		await IsLive;
-		Assert.Equal(2, Count);
-		Assert.Equal(12, Sum);
+		AssertEx.IsOrBecomesTrue(() => Count == 2, 1000, msg: $"Expected 2 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 12);
 	}
 
 	[Fact]
@@ -117,8 +117,8 @@ public class when_using_read_model_base_with_reader :
 	public async Task can_await_one_stream_going_live() {
 		StartAsync(_stream1);
 		await IsLive;
-		Assert.Equal(10, Count);
-		Assert.Equal(20, Sum);
+		AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 20, 1000, msg: $"Expected 20 got {Sum}");
 	}
 
 	[Fact]
@@ -126,8 +126,8 @@ public class when_using_read_model_base_with_reader :
 		StartAsync(_stream1);
 		StartAsync(_stream2);
 		await IsLive;
-		Assert.Equal(20, Count);
-		Assert.Equal(50, Sum);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 50, 1000, msg: $"Expected 50 got {Sum}");
 	}
 
 	[Fact]

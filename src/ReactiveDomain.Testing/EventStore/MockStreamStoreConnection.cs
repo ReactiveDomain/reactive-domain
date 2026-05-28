@@ -37,12 +37,16 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public string ConnectionName { get; }
 
 	public void Connect() {
-		_connected = true;
+		lock (_readerWriterLock) {
+			_connected = true;
+		}
 	}
 
 	public void Close() {
-		_connected = false;
-		_subscriptions.ForEach(s => s?.Dispose());
+		lock (_readerWriterLock) {
+			_connected = false;
+			_subscriptions.ForEach(s => s?.Dispose());
+		}
 	}
 
 	public event EventHandler<ClientConnectionEventArgs> Connected = (_, _) => { };
@@ -358,33 +362,32 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		if (_disposed)
 			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-		var start = (lastCheckpoint ?? -1) + 1;
-		RecordedEvent[] curEvents = [];
-		lock (_store) {
-			if (_store.TryGetValue(stream, out var events)) {
-				curEvents = events.Skip((int)start).ToArray();
-			}
-		}
-		while (curEvents.Length > 0) {
-			for (int i = 0; i < curEvents.Length; i++) {
-				eventAppeared(curEvents[i]);
-			}
-
-			start = start + curEvents.Length;
+		lock (_readerWriterLock) {
+			var start = (lastCheckpoint ?? -1) + 1;
+			RecordedEvent[] curEvents = [];
 			lock (_store) {
-				curEvents = _store[stream].Skip((int)start).ToArray();
+				if (_store.TryGetValue(stream, out var events)) {
+					curEvents = events.Skip((int)start).ToArray();
+				}
 			}
+			while (curEvents.Length > 0) {
+				for (int i = 0; i < curEvents.Length; i++) {
+					eventAppeared(curEvents[i]);
+				}
+
+				start += curEvents.Length;
+				lock (_store) {
+					curEvents = _store[stream].Skip((int)start).ToArray();
+				}
+			}
+			//n.b. this leaves a possible gap in the events at switchover, #mock-life
+
+			var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
+			subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
+			_subscriptions.Add(subscription);
+			liveProcessingStarted?.Invoke(Unit.Default);
+			return subscription;
 		}
-		//n.b. this leaves a possible gap in the events at switchover, #mock-life
-
-
-
-		var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
-		subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
-		_subscriptions.Add(subscription);
-		liveProcessingStarted?.Invoke(Unit.Default);
-		return subscription;
-
 	}
 
 
@@ -398,30 +401,31 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		if (_disposed)
 			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
-		var current = (int)from.CommitPosition;
-		RecordedEvent[] currentEvents = [];
-		lock (_allStream) {
-			if (from == Position.End) {
-				current = _allStream.Count - 1;
+		lock (_readerWriterLock) {
+			var current = (int)from.CommitPosition;
+			RecordedEvent[] currentEvents = [];
+			lock (_allStream) {
+				if (from == Position.End) {
+					current = _allStream.Count - 1;
+				}
+
+				if (current < _allStream.Count - 1) {
+					var events = new RecordedEvent[_allStream.Count - current];
+					_allStream.CopyTo(events, current);
+					currentEvents = events;
+				}
 			}
 
-			if (current < _allStream.Count - 1) {
-				var events = new RecordedEvent[_allStream.Count - current];
-				_allStream.CopyTo(events, current);
-				currentEvents = events;
+			for (int i = 0; i < currentEvents.Length; i++) {
+				eventAppeared(currentEvents[i]);
 			}
+
+			var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
+			subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
+			_subscriptions.Add(subscription);
+			liveProcessingStarted?.Invoke();
+			return subscription;
 		}
-
-		for (int i = 0; i < currentEvents.Length; i++) {
-			eventAppeared(currentEvents[i]);
-		}
-
-		var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
-		subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
-		_subscriptions.Add(subscription);
-		liveProcessingStarted?.Invoke();
-		return subscription;
-
 	}
 
 	public IDisposable SubscribeToAll(
@@ -574,9 +578,11 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public void Dispose() {
 		if (_disposed)
 			return;
-		_disposed = true;
-		Close();
-		_subscriptions?.ForEach(s => s?.Dispose());
+		lock (_readerWriterLock) {
+			_disposed = true;
+			Close();
+			_subscriptions?.Clear();
+		}
 	}
 
 	public class EventWritten : IMessage {
