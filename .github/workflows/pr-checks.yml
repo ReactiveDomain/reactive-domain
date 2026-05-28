@@ -78,4 +78,5 @@ jobs:
 
     # Format
     - name: Check Formatting
+      working-directory: src
       run: dotnet format ReactiveDomain.sln --verify-no-changes --no-restore
