@@ -13,10 +13,10 @@
     <PackageReference Include="DynamicData" Version="9.4.31" />
     <PackageReference Include="IdentityModel" Version="4.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.DirectoryServices" Version="10.0.8" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.8" />
+    <PackageReference Include="System.DirectoryServices" Version="10.0.9" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.9" />
     <PackageReference Include="IdentityServer4.Storage" Version="4.1.2" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.8" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
