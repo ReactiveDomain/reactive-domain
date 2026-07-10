@@ -221,9 +221,11 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 	private void DisplaySslStreamInfo(SslStream stream) {
 		var sb = new StringBuilder();
 		sb.AppendFormat("[S{0}, L{1}]:\n", RemoteEndPoint, LocalEndPoint);
+#pragma warning disable SYSLIB0058
 		sb.AppendFormat("Cipher: {0} strength {1}\n", stream.CipherAlgorithm, stream.CipherStrength);
 		sb.AppendFormat("Hash: {0} strength {1}\n", stream.HashAlgorithm, stream.HashStrength);
 		sb.AppendFormat("Key exchange: {0} strength {1}\n", stream.KeyExchangeAlgorithm, stream.KeyExchangeStrength);
+#pragma warning restore SYSLIB0058
 		sb.AppendFormat("Protocol: {0}\n", stream.SslProtocol);
 		sb.AppendFormat("Is authenticated: {0} as server? {1}\n", stream.IsAuthenticated, stream.IsServer);
 		sb.AppendFormat("IsSigned: {0}\n", stream.IsSigned);
