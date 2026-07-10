@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
 using static ReactiveDomain.Policy.Messages.ApplicationMsgs;
 
@@ -12,14 +8,15 @@ using static ReactiveDomain.Policy.Messages.ApplicationMsgs;
 namespace ReactiveDomain.Policy.Domain;
 
 /// <summary>
-/// Aggregate for a Application.
+/// Aggregate for an Application.
 /// </summary>
 internal class SecuredApplication : AggregateRoot {
-	private readonly Dictionary<Guid, SecurityPolicy> _policies = new Dictionary<Guid, SecurityPolicy>();
-	private readonly HashSet<string> _policyNames = new HashSet<string>();
-	private HashSet<Guid> _clientRegistrations = new HashSet<Guid>();
-	private string _clientPrefix;
+	private readonly Dictionary<Guid, SecurityPolicy> _policies = [];
+	private readonly HashSet<string> _policyNames = [];
+	private readonly HashSet<Guid> _clientRegistrations = [];
+	private string? _clientPrefix;
 	public bool OneRolePerUser;
+
 	// ReSharper disable once UnusedMember.Local
 	// used via reflection in the repository
 	private SecuredApplication() {
@@ -31,9 +28,9 @@ internal class SecuredApplication : AggregateRoot {
 		Register<PolicyCreated>(Apply);
 		Register<ClientRegistrationAdded>(Apply);
 	}
+
 	//Apply State Changes
 	private void Apply(ApplicationCreated @event) {
-
 		Id = @event.ApplicationId;
 		_clientPrefix = @event.Name;
 		OneRolePerUser = @event.OneRolePerUser;
@@ -41,7 +38,7 @@ internal class SecuredApplication : AggregateRoot {
 
 	private void Apply(PolicyCreated @event) {
 		var policy = new SecurityPolicy(@event.PolicyId, @event.ClientId, this);
-		if (DefaultPolicy == null) { DefaultPolicy = policy; }
+		DefaultPolicy ??= policy;
 		_policies.Add(@event.PolicyId, policy);
 		_policyNames.Add(@event.ClientId);
 	}
@@ -91,19 +88,26 @@ internal class SecuredApplication : AggregateRoot {
 		// Event should be idempotent in RMs, so no validation necessary.
 		Raise(new ApplicationUnretired(Id));
 	}
-	public SecurityPolicy DefaultPolicy { get; private set; }
+
+	public SecurityPolicy? DefaultPolicy { get; private set; }
 	public IReadOnlyList<SecurityPolicy> Policies => _policies.Values.ToList().AsReadOnly();
+
 	public SecurityPolicy AddAdditionalPolicy(Guid policyId, string policyName) {
 		Ensure.NotEmptyGuid(policyId, nameof(policyId));
 		Ensure.NotNullOrEmpty(policyName, nameof(policyName));
 		if (_policies.ContainsKey(policyId) || _policyNames.Contains(policyName)) {
 			throw new InvalidOperationException($"Cannot add duplicate Policy: {{ Name:{policyName}, Id:{policyId} }}");
 		}
-		Raise(new ApplicationMsgs.PolicyCreated(policyId, policyName, Id, OneRolePerUser));
+		Raise(new PolicyCreated(policyId, policyName, Id, OneRolePerUser));
 		return _policies[policyId];
 	}
+
 	public void AddClientRegistration(Client client) {
-		Ensure.True(() => client.ClientName.StartsWith(_clientPrefix, StringComparison.OrdinalIgnoreCase), "Client name mismatch");
+		Ensure.True(
+			() => client.ClientName is not null &&
+				  !string.IsNullOrWhiteSpace(_clientPrefix) &&
+				  client.ClientName.StartsWith(_clientPrefix, StringComparison.OrdinalIgnoreCase),
+			"Client name mismatch");
 		if (!_clientRegistrations.Contains(client.Id)) {
 			Raise(new ClientRegistrationAdded(client.Id, Id));
 		}

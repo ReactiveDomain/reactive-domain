@@ -1,11 +1,10 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_serializing_correlated_messages {
+public sealed class when_serializing_correlated_messages {
 	[Fact]
 	public void can_use_json_message_serializer() {
 
@@ -19,8 +18,8 @@ public class when_serializing_correlated_messages {
 		var data = serializer.Serialize(evt);
 		var data2 = serializer.Serialize(evt2);
 
-		var dEvent = (TestEvent)serializer.Deserialize(data);
-		var dEvent2 = (TestEvent)serializer.Deserialize(data2);
+		var dEvent = (TestEvent)serializer.Deserialize(data)!;
+		var dEvent2 = (TestEvent)serializer.Deserialize(data2)!;
 
 		Assert.Equal(evt.MsgId, dEvent.MsgId);
 		Assert.Equal(evt.CausationId, dEvent.CausationId);
@@ -31,10 +30,7 @@ public class when_serializing_correlated_messages {
 		Assert.Equal(evt2.CorrelationId, dEvent2.CorrelationId);
 	}
 	public class TestEvent : ICorrelatedMessage {
-		public Guid MsgId { get; private set; }
-		public TestEvent() {
-			MsgId = Guid.NewGuid();
-		}
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 		public Guid CorrelationId { get; set; }
 		public Guid CausationId { get; set; }
 	}

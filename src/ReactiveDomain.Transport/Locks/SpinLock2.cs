@@ -40,21 +40,18 @@ by Joe Duffy (Author)
 
 */
 
-using System;
-using System.Threading;
-
 namespace ReactiveDomain.Transport.Locks;
 
 public class SpinLock2 {
-	private int state;
-	private readonly EventWaitHandle available = new AutoResetEvent(false);
+	private int _state;
+	private readonly EventWaitHandle _available = new AutoResetEvent(false);
 
 	// This looks at the total number of hardware threads available; if it's
 	// only 1, we will use an optimized code path
-	private static bool isSingleProc = (Environment.ProcessorCount == 1);
+	private static bool _isSingleProc = (Environment.ProcessorCount == 1);
 
-	private const int outerTryCount = 5;
-	private const int cexTryCount = 100;
+	private const int OuterTryCount = 5;
+	private const int CexTryCount = 100;
 
 	public void Enter(out bool taken) {
 		// Taken is an out parameter so that we set it *inside* the critical
@@ -64,22 +61,22 @@ public class SpinLock2 {
 		taken = false;
 
 		while (!taken) {
-			if (isSingleProc) {
+			if (_isSingleProc) {
 				// Don't busy wait on 1-logical processor machines; try
 				// a single swap, and if it fails, drop back to EventWaitHandle.
 				Thread.BeginCriticalRegion();
-				taken = Interlocked.CompareExchange(ref state, 1, 0) == 0;
+				taken = Interlocked.CompareExchange(ref _state, 1, 0) == 0;
 				if (!taken)
 					Thread.EndCriticalRegion();
 			} else {
-				for (int i = 0; !taken && i < outerTryCount; i++) {
+				for (int i = 0; !taken && i < OuterTryCount; i++) {
 					// Tell the CLR we're in a critical region;
 					// interrupting could lead to deadlocks.
 					Thread.BeginCriticalRegion();
 
 					// Try 'cexTryCount' times to CEX the state variable:
 					int tries = 0;
-					while (!(taken = Interlocked.CompareExchange(ref state, 1, 0) == 0) && tries++ < cexTryCount) {
+					while (!(taken = Interlocked.CompareExchange(ref _state, 1, 0) == 0) && tries++ < CexTryCount) {
 						Thread.SpinWait(1);
 					}
 
@@ -95,24 +92,23 @@ public class SpinLock2 {
 
 			// If we didn't acquire the lock, block.
 			if (!taken)
-				available.WaitOne();
+				_available.WaitOne();
 		}
 	}
 
 	public LockReleaserSlim Acquire() {
-		bool taken;
-		Enter(out taken);
+		Enter(out var taken);
 		if (taken)
 			return new LockReleaserSlim(this);
 		throw new Exception("Unable to acquire lock, this shouldn't happen.");
 	}
 
 	public void Exit() {
-		if (Interlocked.CompareExchange(ref state, 0, 1) == 1) {
+		if (Interlocked.CompareExchange(ref _state, 0, 1) == 1) {
 			// We notify the waking threads inside our critical region so
 			// that an abort doesn't cause us to lose a pulse, (which could
 			// lead to deadlocks).
-			available.Set();
+			_available.Set();
 			Thread.EndCriticalRegion();
 		}
 	}

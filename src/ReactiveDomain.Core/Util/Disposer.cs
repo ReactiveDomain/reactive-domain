@@ -1,10 +1,9 @@
-﻿using System;
-using System.Reactive;
+﻿using System.Reactive;
 
 namespace ReactiveDomain.Util;
 
-public class Disposer : IDisposable {
-	private Func<Unit> _disposeFunc;
+public sealed class Disposer : IDisposable {
+	private Func<Unit>? _disposeFunc;
 
 	public Disposer(Func<Unit> disposeFunc) {
 		_disposeFunc = disposeFunc ?? throw new ArgumentNullException(nameof(disposeFunc));
@@ -15,7 +14,7 @@ public class Disposer : IDisposable {
 		if (_disposed)
 			return;
 		try {
-			_disposeFunc();
+			_disposeFunc?.Invoke();
 			_disposeFunc = null;
 		} catch {
 			//ignore

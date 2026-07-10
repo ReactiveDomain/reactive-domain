@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Messaging;
+﻿namespace ReactiveDomain.Messaging;
 
 public class MessageBuilder {
 	private Guid? _correlationId;

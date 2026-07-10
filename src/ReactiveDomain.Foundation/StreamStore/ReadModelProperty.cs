@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reactive.Linq;
-using System.Threading.Tasks;
+﻿using System.Reactive.Linq;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
 /// <summary>
@@ -13,7 +11,7 @@ namespace ReactiveDomain.Foundation;
 /// </summary>
 /// <typeparam name="T">The type of data for the provider.</typeparam>
 public class ReadModelProperty<T> : IObservable<T> {
-	private readonly List<IObserver<T>> _subscribed = new List<IObserver<T>>();
+	private readonly List<IObserver<T>> _subscribed = [];
 	private readonly IObservable<T> _observable;
 
 	/// <summary>
@@ -22,7 +20,7 @@ public class ReadModelProperty<T> : IObservable<T> {
 	/// <param name="startValue">The provider's initial value.</param>
 	/// <param name="publishWrapper">An optional wrapper to use when providing
 	/// new values to subscribers.</param>
-	public ReadModelProperty(T startValue, Action<Action> publishWrapper = null) {
+	public ReadModelProperty(T startValue, Action<Action>? publishWrapper = null) {
 		_lastValue = startValue;
 		_publishWrapper = publishWrapper;
 		_observable = Observable.Create<T>(o => {
@@ -32,7 +30,7 @@ public class ReadModelProperty<T> : IObservable<T> {
 	}
 
 	private T _lastValue;
-	private readonly Action<Action> _publishWrapper;
+	private readonly Action<Action>? _publishWrapper;
 
 	/// <summary>
 	/// Append an item to the provider's stream and notifies all subscribers.

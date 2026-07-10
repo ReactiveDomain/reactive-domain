@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
 
@@ -11,13 +8,13 @@ namespace ReactiveDomain.Policy.Domain;
 /// Aggregate for a User in an application policy.
 /// </summary>
 public class PolicyUser : AggregateRoot {
-	private Guid _userId;
-	private Guid _policyId;
-	private readonly HashSet<(string name, Guid id)> _roles = new HashSet<(string name, Guid id)>();
-	private HashSet<(string name, Guid id)> _rolesAtDeactivation = new HashSet<(string name, Guid id)>();
-	public Guid PolicyId => _policyId;
-	public Guid UserId => _userId;
-	public HashSet<string> Roles => new HashSet<string>(_roles.Select(x => x.name));
+	private readonly HashSet<(string name, Guid id)> _roles = [];
+	private HashSet<(string name, Guid id)> _rolesAtDeactivation = [];
+	public Guid PolicyId { get; private set; }
+
+	public Guid UserId { get; private set; }
+
+	public HashSet<string> Roles => [.. _roles.Select(x => x.name)];
 	private bool _active;
 
 	// ReSharper disable once UnusedMember.Local
@@ -36,8 +33,8 @@ public class PolicyUser : AggregateRoot {
 	//Apply State Changes
 	private void Apply(PolicyUserMsgs.PolicyUserAdded @event) {
 		Id = @event.PolicyUserId;
-		_policyId = @event.PolicyId;
-		_userId = @event.UserId;
+		PolicyId = @event.PolicyId;
+		UserId = @event.UserId;
 		_active = true;
 	}
 
@@ -108,7 +105,7 @@ public class PolicyUser : AggregateRoot {
 	public void Reactivate() {
 		if (_active) { return; }
 		Raise(new PolicyUserMsgs.UserReactivated(Id));
-		if (_rolesAtDeactivation?.Any() ?? false) {
+		if (_rolesAtDeactivation.Count != 0) {
 			foreach (var role in _rolesAtDeactivation) {
 				Raise(new PolicyUserMsgs.RoleAdded(Id, role.id, role.name));
 			}

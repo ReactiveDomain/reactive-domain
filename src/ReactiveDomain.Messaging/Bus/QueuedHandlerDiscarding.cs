@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Collections.Concurrent;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Monitoring.Stats;
 using ReactiveDomain.Util;
@@ -15,9 +13,8 @@ namespace ReactiveDomain.Messaging.Bus;
 /// 
 
 // ReSharper disable RedundantExtendsListEntry
-// ReSharper disable MemberCanBeProtected.Global
 public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPublisher, IMonitoredQueue, IThreadSafePublisher {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
 	public int MessageCount { get { return _queue.Count; } }
 	public string Name { get { return _queueStats.Name; } }
@@ -27,13 +24,13 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 	private readonly bool _watchSlowMsg;
 	private readonly TimeSpan _slowMsgThreshold;
 
-	private readonly ConcurrentQueue<IMessage> _queue = new ConcurrentQueue<IMessage>();
-	private readonly ManualResetEventSlim _msgAddEvent = new ManualResetEventSlim(false);
+	private readonly ConcurrentQueue<IMessage> _queue = new();
+	private readonly ManualResetEventSlim _msgAddEvent = new(false);
 
-	private Thread _thread;
+	private Thread? _thread;
 	private volatile bool _stop;
 	private volatile bool _starving;
-	private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
+	private readonly ManualResetEventSlim _stopped = new(true);
 	private readonly TimeSpan _threadStopWaitTimeout;
 
 	private readonly QueueMonitor _queueMonitor;
@@ -45,7 +42,7 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 		bool watchSlowMsg = true,
 		TimeSpan? slowMsgThreshold = null,
 		TimeSpan? threadStopWaitTimeout = null,
-		string groupName = null) {
+		string? groupName = null) {
 		Ensure.NotNull(consumer, "consumer");
 		Ensure.NotNull(name, "name");
 
@@ -74,19 +71,19 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 	public void Stop() {
 		_stop = true;
 		if (!_stopped.Wait(_threadStopWaitTimeout))
-			throw new TimeoutException(string.Format("Unable to stop thread '{0}'.", Name));
+			throw new TimeoutException($"Unable to stop thread '{Name}'.");
 	}
 
 	public void RequestStop() {
 		_stop = true;
 	}
 
-	private void ReadFromQueue(object o) {
+	private void ReadFromQueue(object? o) {
 		_queueStats.Start();
 		Thread.BeginThreadAffinity(); // ensure we are not switching between OS threads. Required at least for v8.
 
 		while (!_stop) {
-			IMessage msg = null;
+			IMessage? msg = null;
 			try {
 				if (!_queue.TryDequeue(out msg)) {
 					_starving = true;
@@ -97,10 +94,9 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 
 					_starving = false;
 				} else {
-					IMessage deadMessage;
-					while (_queue.TryDequeue(out deadMessage)) {
+					while (_queue.TryDequeue(out var deadMessage)) {
 						msg = deadMessage;
-						Log.Debug("Discarding Messages");
+						_log.Debug("Discarding Messages");
 					}
 
 					_queueStats.EnterBusy();
@@ -115,10 +111,10 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 
 						var elapsed = DateTime.UtcNow - start;
 						if (elapsed > _slowMsgThreshold) {
-							Log.Trace("SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
-								Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
+							_log.Trace("SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
+								Name, _queueStats.InProgressMessage!.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
 							if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(msg is SystemMessage.SystemInit))
-								Log.Error("---!!! VERY SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
+								_log.Error("---!!! VERY SLOW QUEUE MSG [{0}]: {1} - {2}ms. Q: {3}/{4}.",
 									Name, _queueStats.InProgressMessage.Name, (int)elapsed.TotalMilliseconds, cnt, _queue.Count);
 						}
 					} else {
@@ -128,7 +124,7 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 					_queueStats.ProcessingEnded(1);
 				}
 			} catch (Exception ex) {
-				Log.ErrorException(ex, $"Error while processing message {msg} in queued handler '{Name}'.");
+				_log.ErrorException(ex, $"Error while processing message {msg} in queued handler '{Name}'.");
 			}
 		}
 		_queueStats.Stop();

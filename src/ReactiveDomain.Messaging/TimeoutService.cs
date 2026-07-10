@@ -1,12 +1,10 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Logging;
+﻿using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging;
 
-public class TimeoutMessage : ICorrelatedMessage {
+public record TimeoutMessage : ICorrelatedMessage {
 	public Guid MsgId { get; private set; }
 	public Guid CorrelationId { get; set; }
 	public Guid CausationId { get; set; }
@@ -56,24 +54,17 @@ public class TimeoutRequestNode : PriorityQueueNode {
 }
 
 public class TimeoutService {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-	private static int size = 5000;
-	private readonly object _queueLock = new object();
-	private readonly HeapPriorityQueue<TimeoutRequestNode> _queue = new HeapPriorityQueue<TimeoutRequestNode>(size);
-	private readonly ManualResetEventSlim _msgAddEvent = new ManualResetEventSlim(false);
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
+	private const int Size = 5000;
+	private readonly object _queueLock = new();
+	private readonly HeapPriorityQueue<TimeoutRequestNode> _queue = new(Size);
+	private readonly ManualResetEventSlim _msgAddEvent = new(false);
 
-	private Thread _thread;
+	private Thread? _thread;
 	private volatile bool _stop;
 	private volatile bool _starving;
-	private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
-	private readonly TimeSpan _threadStopWaitTimeout;
-
-
-
-	public TimeoutService() {
-
-		_threadStopWaitTimeout = QueuedHandler.DefaultStopWaitTimeout;
-	}
+	private readonly ManualResetEventSlim _stopped = new(true);
+	private readonly TimeSpan _threadStopWaitTimeout = QueuedHandler.DefaultStopWaitTimeout;
 
 	public void Start() {
 		if (_thread != null)
@@ -107,11 +98,11 @@ public class TimeoutService {
 	}
 
 
-	private void ReadFromQueue(object o) {
+	private void ReadFromQueue(object? o) {
 		Thread.BeginThreadAffinity(); // ensure we are not switching between OS threads. Required at least for v8.
 
 		while (!_stop) {
-			TimeoutRequestNode msg = null;
+			TimeoutRequestNode? msg = null;
 			try {
 				var epochMs = EpochMsFromDateTime(DateTime.UtcNow);
 				lock (_queueLock)
@@ -126,19 +117,19 @@ public class TimeoutService {
 					_msgAddEvent.Wait((int)(msg.TimeoutMs - epochMs));
 					_msgAddEvent.Reset();
 					_starving = false;
-				} else       // epochMs >= msg.TimeoutMs
-				{
+				} else { // epochMs >= msg.TimeoutMs
 					lock (_queueLock)
 						_queue.TryDequeue(out msg);
-					var overdueMs = (epochMs - msg.TimeoutMs);
-					if (overdueMs > 100) {
-						if (Log.LogLevel >= LogLevel.Info)
-							Log.Info("Message should have timed out at " + msg.TimeoutMs + ", but it's now " + epochMs + " which is " + overdueMs + " late");
+					if (msg != null) {
+						var overdueMs = epochMs - msg.TimeoutMs;
+						if (overdueMs > 100 && _log.LogLevel >= LogLevel.Info) {
+							_log.Info($"Message should have timed out at {msg.TimeoutMs}, but it's now {epochMs} which is {overdueMs} late");
+						}
+						msg.SendTimeout();
 					}
-					msg.SendTimeout();
 				}
 			} catch (Exception ex) {
-				Log.ErrorException(ex, $"Error while processing message {msg} in queued handler TimeoutService.");
+				_log.ErrorException(ex, $"Error while processing message {msg} in queued handler TimeoutService.");
 			}
 		}
 		_stopped.Set();

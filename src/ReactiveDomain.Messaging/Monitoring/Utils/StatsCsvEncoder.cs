@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 
 namespace ReactiveDomain.Messaging.Monitoring.Utils;
 
@@ -18,7 +15,7 @@ public static class StatsCsvEncoder {
 	}
 
 	private static string Prepend(this string csvLine, string column) {
-		return string.Format("{0}{1}{2}", column, Comma, csvLine);
+		return $"{column}{Comma}{csvLine}";
 	}
 
 	private static string PrependTime(this string csvLine) {
@@ -32,14 +29,13 @@ public static class StatsCsvEncoder {
 		return string.Join(Comma, escapedValues);
 	}
 
-	private static string TryGetInvariantString(object obj) {
+	private static string TryGetInvariantString(object? obj) {
 		if (obj == null)
 			return string.Empty;
 
-		var convertible = obj as IConvertible;
-		if (convertible != null)
+		if (obj is IConvertible convertible)
 			return convertible.ToString(CultureInfo.InvariantCulture);
 
-		return obj.ToString();
+		return obj.ToString() ?? string.Empty;
 	}
 }

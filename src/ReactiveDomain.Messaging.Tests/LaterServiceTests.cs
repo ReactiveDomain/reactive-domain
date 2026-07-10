@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -12,35 +10,31 @@ public class LaterServiceTests {
 		var timeSource = new TestTimeSource();
 		long msgCount = 0;
 
-		using (var delay =
-			   new LaterService(
-				   // ReSharper disable once AccessToModifiedClosure
-				   new TestPublisher(_ => Interlocked.Increment(ref msgCount)), timeSource)) {
+		using var delay =
+			new LaterService(
+				// ReSharper disable once AccessToModifiedClosure
+				new TestPublisher(_ => Interlocked.Increment(ref msgCount)), timeSource);
+		delay.Start();
 
-			delay.Start();
-
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage()));
-			timeSource.AdvanceTime(49);
-			SpinWait.SpinUntil(() => false, TimeSpan.FromMilliseconds(10));
-			Assert.True(Interlocked.Read(ref msgCount) == 0);
-			timeSource.AdvanceTime(1);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
-		}
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage()));
+		timeSource.AdvanceTime(49);
+		SpinWait.SpinUntil(() => false, TimeSpan.FromMilliseconds(10));
+		Assert.Equal(0, Interlocked.Read(ref msgCount));
+		timeSource.AdvanceTime(1);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
 	}
 	[Fact]
 	public void ExpiredEnvelopesPublish() {
 		var timeSource = new TestTimeSource();
 		long msgCount = 0;
-		using (var delay =
-			   new LaterService(
-				   new TestPublisher(_ => Interlocked.Increment(ref msgCount)), timeSource)) {
-
-			delay.Start();
-			var sendTime = timeSource.Now() + TimeSpan.FromMilliseconds(50);
-			timeSource.AdvanceTime(100);
-			delay.Handle(new DelaySendEnvelope(sendTime, new TestMessage()));
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
-		}
+		using var delay =
+			new LaterService(
+				new TestPublisher(_ => Interlocked.Increment(ref msgCount)), timeSource);
+		delay.Start();
+		var sendTime = timeSource.Now() + TimeSpan.FromMilliseconds(50);
+		timeSource.AdvanceTime(100);
+		delay.Handle(new DelaySendEnvelope(sendTime, new TestMessage()));
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
 	}
 
 
@@ -49,39 +43,36 @@ public class LaterServiceTests {
 		var timeSource = new TestTimeSource();
 		long msgCount = 0;
 		long messageNumber = -1;
-		using (var delay =
-			   new LaterService(
-				   new TestPublisher(msg => {
-					   Interlocked.Increment(ref msgCount);
-					   var num = ((TestMessage)msg).MessageNumber;
-					   // ReSharper disable once AccessToModifiedClosure
-					   Interlocked.Exchange(ref messageNumber, num);
-				   }),
-				   timeSource)) {
+		using var delay =
+			new LaterService(
+				new TestPublisher(msg => {
+					Interlocked.Increment(ref msgCount);
+					var num = ((TestMessage)msg).MessageNumber;
+					// ReSharper disable once AccessToModifiedClosure
+					Interlocked.Exchange(ref messageNumber, num);
+				}),
+				timeSource);
+		delay.Start();
 
-			delay.Start();
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(10)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(60), new TestMessage(20)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(70), new TestMessage(30)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(80), new TestMessage(40)));
+		timeSource.AdvanceTime(51);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
+		Assert.Equal(10, Interlocked.Read(ref messageNumber));
 
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(10)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(60), new TestMessage(20)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(70), new TestMessage(30)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(80), new TestMessage(40)));
-			timeSource.AdvanceTime(51);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 1);
-			Assert.True(Interlocked.Read(ref messageNumber) == 10);
+		timeSource.AdvanceTime(10);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 2);
+		Assert.Equal(20, Interlocked.Read(ref messageNumber));
 
-			timeSource.AdvanceTime(10);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 2);
-			Assert.True(Interlocked.Read(ref messageNumber) == 20);
+		timeSource.AdvanceTime(10);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3);
+		Assert.Equal(30, Interlocked.Read(ref messageNumber));
 
-			timeSource.AdvanceTime(10);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 3);
-			Assert.True(Interlocked.Read(ref messageNumber) == 30);
-
-			timeSource.AdvanceTime(10);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 4);
-			Assert.True(Interlocked.Read(ref messageNumber) == 40);
-
-		}
+		timeSource.AdvanceTime(10);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 4);
+		Assert.Equal(40, Interlocked.Read(ref messageNumber));
 	}
 
 
@@ -90,20 +81,18 @@ public class LaterServiceTests {
 		var timeSource = new TestTimeSource();
 		long msgCount = 0;
 
-		using (var delay =
-			   new LaterService(
-				   new TestPublisher(_ => Interlocked.Increment(ref msgCount)),
-				   timeSource)) {
+		using var delay =
+			new LaterService(
+				new TestPublisher(_ => Interlocked.Increment(ref msgCount)),
+				timeSource);
+		delay.Start();
 
-			delay.Start();
-
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(1)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(2)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(3)));
-			delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(4)));
-			timeSource.AdvanceTime(51);
-			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 4);
-		}
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(1)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(2)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(3)));
+		delay.Handle(new DelaySendEnvelope(timeSource, TimeSpan.FromMilliseconds(50), new TestMessage(4)));
+		timeSource.AdvanceTime(51);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref msgCount) == 4);
 	}
 	[Fact]
 	[Trait("Category", "LongRunning")]
@@ -142,16 +131,7 @@ public class LaterServiceTests {
 		Assert.True(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start <= 15000, $"elapsed {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - start}");
 	}
 
-	class TestMessage : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly long MessageNumber;
-
-		public TestMessage(
-			long messageNumber = 0) {
-			MsgId = Guid.NewGuid();
-			MessageNumber = messageNumber;
-		}
+	private record TestMessage(long MessageNumber = 0) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
-
-
 }

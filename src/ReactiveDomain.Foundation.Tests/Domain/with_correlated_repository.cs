@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -7,12 +6,10 @@ namespace ReactiveDomain.Foundation.Tests.Domain;
 
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
 // ReSharper disable once InconsistentNaming
-public sealed class with_correlated_repository {
-	private readonly StreamStoreConnectionFixture _fixture;
-	private readonly ICorrelatedRepository _repo;
-	private readonly IRepository _stdRepo;
+public sealed class with_correlated_repository : IClassFixture<StreamStoreConnectionFixture> {
+	private readonly CorrelatedStreamStoreRepository _repo;
+	private readonly StreamStoreRepository _stdRepo;
 	public with_correlated_repository(StreamStoreConnectionFixture fixture) {
-		_fixture = fixture;
 		fixture.Connection.Connect();
 		_stdRepo = new StreamStoreRepository(new PrefixedCamelCaseStreamNameBuilder(),
 			fixture.Connection,
@@ -62,7 +59,7 @@ public sealed class with_correlated_repository {
 		Assert.Equal(2, recovered.Version);//zero based, includes created
 
 		//no source has been set
-		Assert.Throws<InvalidOperationException>(() => recovered.RaiseCorrelatedEvent());
+		Assert.Throws<InvalidOperationException>(recovered.RaiseCorrelatedEvent);
 		((ICorrelatedEventSource)recovered).Source = command2;
 		recovered.RaiseCorrelatedEvent();
 	}
@@ -78,20 +75,17 @@ public sealed class with_correlated_repository {
 		var raisedEvents = ((IEventSource)agg).TakeEvents();
 		Assert.Collection(raisedEvents,
 			@event => {
-				var created = @event as CorrelatedAggregate.Created;
-				Assert.NotNull(created);
+				var created = Assert.IsType<CorrelatedAggregate.Created>(@event);
 				Assert.Equal(command1.MsgId, created.CausationId);
 				Assert.Equal(command1.CorrelationId, created.CorrelationId);
 			},
 			@event => {
-				var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
-				Assert.NotNull(corrEvent);
+				var corrEvent = Assert.IsType<CorrelatedAggregate.CorrelatedEvent>(@event);
 				Assert.Equal(command1.MsgId, corrEvent.CausationId);
 				Assert.Equal(command1.CorrelationId, corrEvent.CorrelationId);
 			},
 			@event => {
-				var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
-				Assert.NotNull(corrEvent);
+				var corrEvent = Assert.IsType<CorrelatedAggregate.CorrelatedEvent>(@event);
 				Assert.Equal(command1.MsgId, corrEvent.CausationId);
 				Assert.Equal(command1.CorrelationId, corrEvent.CorrelationId);
 			});
@@ -100,12 +94,9 @@ public sealed class with_correlated_repository {
 
 		agg.RaiseCorrelatedEvent();
 		raisedEvents = ((IEventSource)agg).TakeEvents();
-		Assert.Collection(raisedEvents,
-			@event => {
-				var corrEvent = @event as CorrelatedAggregate.CorrelatedEvent;
-				Assert.NotNull(corrEvent);
-				Assert.Equal(command2.MsgId, corrEvent.CausationId);
-				Assert.Equal(command2.CorrelationId, corrEvent.CorrelationId);
-			});
+		var @event = Assert.Single(raisedEvents);
+		var corrEvent = Assert.IsType<CorrelatedAggregate.CorrelatedEvent>(@event);
+		Assert.Equal(command2.MsgId, corrEvent.CausationId);
+		Assert.Equal(command2.CorrelationId, corrEvent.CorrelationId);
 	}
 }

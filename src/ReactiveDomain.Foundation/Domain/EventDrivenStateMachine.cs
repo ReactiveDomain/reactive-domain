@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-
-
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain;
 
@@ -11,15 +7,15 @@ namespace ReactiveDomain;
 public abstract class EventDrivenStateMachine : IEventSource {
 	private readonly EventRecorder _recorder;
 	protected readonly EventRouter Router;
-	private long _version;
 	public bool HasRecordedEvents => _recorder.HasRecordedEvents;
 
 	public Guid Id { get; protected set; }
 
-	public long Version => _version;
+	public long Version { get; private set; }
+
 	long IEventSource.ExpectedVersion {
-		get => _version;
-		set => _version = value;
+		get => Version;
+		set => Version = value;
 	}
 
 	/// <summary>
@@ -28,55 +24,53 @@ public abstract class EventDrivenStateMachine : IEventSource {
 	protected EventDrivenStateMachine() {
 		_recorder = new EventRecorder();
 		Router = new EventRouter();
-		_version = -1;
+		Version = -1;
 	}
 
 	public void RestoreFromEvents(IEnumerable<object> events) {
-		if (events == null)
-			throw new ArgumentNullException(nameof(events));
+		ArgumentNullException.ThrowIfNull(events);
 		if (_recorder.HasRecordedEvents)
 			throw new InvalidOperationException("Restoring from events is not possible when an instance has recorded events.");
 
 		foreach (var @event in events) {
-			if (_version < 0) // new aggregates have a expected version of -1 or -2
-				_version = 0; // got first event (zero based)
+			if (Version < 0) // new aggregates have an expected version of -1 or -2
+				Version = 0; // got first event (zero based)
 			else
-				_version++;
+				Version++;
 			Router.Route(@event);
 		}
 	}
 	public void UpdateWithEvents(IEnumerable<object> events, long expectedVersion) {
-		if (events == null)
-			throw new ArgumentNullException(nameof(events));
-		if (_version < 0)
+		ArgumentNullException.ThrowIfNull(events);
+		if (Version < 0)
 			throw new InvalidOperationException("Updating with events is not possible when an instance has no historical events.");
-		if (_version != expectedVersion) {
+		if (Version != expectedVersion) {
 			throw new InvalidOperationException("Expected version mismatch when updating ");
 		}
 
 		foreach (var @event in events) {
-			_version++;
+			Version++;
 			Router.Route(@event);
 		}
 	}
 
 	/// <summary>
-	/// Returns all events from the EventRecorder since state was loaded or the last time TakeEvents was called
-	/// Clears the EventRecorder
-	/// Increment the Version/ExpectedVersion by the event count
-	/// 
-	/// After this operation additional events can be applied via RestoreFromEvents
-	/// Also Events can continue to be Raised either before or after this call.
-	/// 
-	/// TakeEventStarted will be called before the the Recorder is queried.
-	/// TakeEventCompleted will be called after the the Recorder is queried and cleared.
+	/// Returns all events from the EventRecorder since state was loaded or the last time TakeEvents was called.
+	/// Clears the EventRecorder.
+	/// Increment the Version/ExpectedVersion by the event count.
+	/// <para/>
+	/// After this operation additional events can be applied via RestoreFromEvents.
+	/// Also, Events can continue to be Raised either before or after this call.
+	/// <para/>
+	/// TakeEventStarted will be called before the Recorder is queried.
+	/// TakeEventCompleted will be called after the Recorder is queried and cleared.
 	/// </summary>
 	/// <returns>Array of Object containing the Events Raised by the Aggregate since it was loaded or the last time TakeEvents was called</returns>
 	public object[] TakeEvents() {
 		TakeEventStarted();
 		var records = _recorder.RecordedEvents;
 		_recorder.Reset();
-		_version += records.Length;
+		Version += records.Length;
 		TakeEventsCompleted();
 		return records;
 	}

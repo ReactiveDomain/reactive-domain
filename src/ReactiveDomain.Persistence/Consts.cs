@@ -1,5 +1,4 @@
-﻿using System;
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 internal static class Consts {
 	public static readonly TimeSpan DefaultReconnectionDelay = TimeSpan.FromMilliseconds(100.0);

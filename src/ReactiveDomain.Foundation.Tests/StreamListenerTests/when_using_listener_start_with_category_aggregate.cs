@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
+﻿using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -10,7 +8,7 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class when_using_listener_start_with_category_aggregate {
+public sealed class when_using_listener_start_with_category_aggregate {
 	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
 
 	public when_using_listener_start_with_category_aggregate(StreamStoreConnectionFixture fixture) {
@@ -27,7 +25,7 @@ public class when_using_listener_start_with_category_aggregate {
 			ExpectedVersion.NoStream,
 			null,
 			_eventSerializer.Serialize(new TestEvent()));
-		Assert.True(result.NextExpectedVersion == 0);
+		Assert.Equal(0, result.NextExpectedVersion);
 
 		//wait for the projection to be written.
 		CommonHelpers.WaitForStream(conn, categoryStream);
@@ -55,5 +53,5 @@ public class when_using_listener_start_with_category_aggregate {
 		}
 
 	}
-	public class AggregateCategoryTestAggregate : EventDrivenStateMachine { }
+	public class AggregateCategoryTestAggregate : EventDrivenStateMachine;
 }

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Util;
+﻿using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
 public abstract class SnapshotReadModel : ReadModelBase {
-	protected ReadModelState StartingState { get; private set; }
+	protected ReadModelState? StartingState { get; private set; }
 
 	protected SnapshotReadModel(
 		string name,
@@ -19,7 +17,7 @@ public abstract class SnapshotReadModel : ReadModelBase {
 		bool startListeners = true,
 		bool block = false,
 		bool validateStreams = false,
-		CancellationToken cancelWaitToken = default(CancellationToken)) {
+		CancellationToken cancelWaitToken = default) {
 		if (StartingState != null) {
 			throw new InvalidOperationException("ReadModel has already been restored.");
 		}

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Runtime.CompilerServices;
 
 namespace ReactiveDomain.Messaging;
@@ -38,7 +36,7 @@ public class PriorityQueueNode {
 /// <typeparam name="T">The values in the queue.  Must implement the PriorityQueueNode interface</typeparam>
 public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNode {
 	private int _numNodes;
-	private T[] _nodes;
+	private T?[] _nodes;
 	private long _numNodesEverEnqueued;
 
 	/// <summary>
@@ -72,9 +70,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 	/// Removes every node from the queue.  O(n) (So, don't do this often!)
 	/// </summary>
 
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	public void Clear() {
 		Array.Clear(_nodes, 1, _numNodes);
 		_numNodes = 0;
@@ -84,17 +80,16 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 	/// Returns (in O(1)!) whether the given node is in the queue.  O(1)
 	/// </summary>
 
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	public bool Contains(T node) {
 
 		if (node.QueueIndex < 0 || node.QueueIndex >= _nodes.Length) {
-			throw new InvalidOperationException("node.QueueIndex has been corrupted. Did you change it manually? Or add this node to another queue?");
+			throw new InvalidOperationException(
+				"node.QueueIndex has been corrupted. Did you change it manually? Or add this node to another queue?");
 		}
 
 
-		return (_nodes[node.QueueIndex] == node);
+		return _nodes[node.QueueIndex] == node;
 	}
 
 	/// <summary>
@@ -103,14 +98,13 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 	/// If the node is already enqueued, the result is undefined
 	/// O(log n)
 	/// </summary>
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	public void Enqueue(T node, long priority) {
 
 		if (_numNodes >= _nodes.Length - 1) {
 			throw new InvalidOperationException("Queue is full - node cannot be added: " + node);
 		}
+
 		if (Contains(node)) {
 			throw new InvalidOperationException("Node is already enqueued: " + node);
 		}
@@ -120,22 +114,18 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		_nodes[_numNodes] = node;
 		node.QueueIndex = _numNodes;
 		node.InsertionIndex = _numNodesEverEnqueued++;
-		CascadeUp(_nodes[_numNodes]);
+		CascadeUp(_nodes[_numNodes]!);
 	}
 
 
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	private void Swap(T node1, T node2) {
 		//Swap the nodes
 		_nodes[node1.QueueIndex] = node2;
 		_nodes[node2.QueueIndex] = node1;
 
-		//Swap their indicies
-		int temp = node1.QueueIndex;
-		node1.QueueIndex = node2.QueueIndex;
-		node2.QueueIndex = temp;
+		//Swap their indices
+		(node1.QueueIndex, node2.QueueIndex) = (node2.QueueIndex, node1.QueueIndex);
 	}
 
 	//Performance appears to be slightly better when this is NOT in-lined o_O
@@ -143,21 +133,19 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		//aka Heapify-up
 		int parent = node.QueueIndex / 2;
 		while (parent >= 1) {
-			T parentNode = _nodes[parent];
-			if (HasHigherPriority(parentNode, node))
+			var parentNode = _nodes[parent];
+			if (HasHigherPriority(parentNode!, node))
 				break;
 
 			//Node has lower priority value, so move it up the heap
-			Swap(node, parentNode); //For some reason, this is faster with Swap() rather than (less..?) individual operations, like in CascadeDown()
+			Swap(node, parentNode!); //For some reason, this is faster with Swap() rather than (less..?) individual operations, like in CascadeDown()
 
 			parent = node.QueueIndex / 2;
 		}
 	}
 
 
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	private void CascadeDown(T node) {
 		//aka Heapify-down
 		int finalQueueIndex = node.QueueIndex;
@@ -173,7 +161,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 				break;
 			}
 
-			T childLeft = _nodes[childLeftIndex];
+			var childLeft = _nodes[childLeftIndex]!;
 			if (HasHigherPriority(childLeft, newParent)) {
 				newParent = childLeft;
 			}
@@ -181,7 +169,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 			//Check if the right-child is higher-priority than either the current node or the left child
 			int childRightIndex = childLeftIndex + 1;
 			if (childRightIndex <= _numNodes) {
-				T childRight = _nodes[childRightIndex];
+				var childRight = _nodes[childRightIndex]!;
 				if (HasHigherPriority(childRight, newParent)) {
 					newParent = childRight;
 				}
@@ -193,9 +181,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 				//Doing it this way is one less assignment operation than calling Swap()
 				_nodes[finalQueueIndex] = newParent;
 
-				int temp = newParent.QueueIndex;
-				newParent.QueueIndex = finalQueueIndex;
-				finalQueueIndex = temp;
+				(newParent.QueueIndex, finalQueueIndex) = (finalQueueIndex, newParent.QueueIndex);
 			} else {
 				//See note above
 				node.QueueIndex = finalQueueIndex;
@@ -218,7 +204,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 			   (higher.Priority == lower.Priority && higher.InsertionIndex < lower.InsertionIndex);
 	}
 
-	public bool TryPeek(out T node) {
+	public bool TryPeek(out T? node) {
 		node = null;
 		if (_numNodes <= 0) {
 			return false;
@@ -231,7 +217,8 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		node = _nodes[1];
 		return true;
 	}
-	public bool TryDequeue(out T node) {
+
+	public bool TryDequeue(out T? node) {
 		node = null;
 		if (_numNodes <= 0) {
 			return false;
@@ -242,12 +229,15 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		}
 
 		node = _nodes[1];
+		if (node is null)
+			return false;
 		Remove(node);
 		return true;
 	}
+
 	/// <summary>
-	/// Removes the head of the queue (node with highest priority; ties are broken by order of insertion), and returns it.
-	/// If queue is empty, result is undefined
+	/// Removes the head of the queue (node with the highest priority; ties are broken by order of insertion), and returns it.
+	/// If queue is empty, result is undefined.
 	/// O(log n)
 	/// </summary>
 	public T Dequeue() {
@@ -256,18 +246,19 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		}
 
 		if (!IsValidQueue()) {
-			throw new InvalidOperationException("Queue has been corrupted (Did you update a node priority manually instead of calling UpdatePriority()?" +
-												"Or add the same node to two different queues?)");
+			throw new InvalidOperationException(
+				"Queue has been corrupted (Did you update a node priority manually instead of calling UpdatePriority()? " +
+				"Or add the same node to two different queues?)");
 		}
 
-		T returnMe = _nodes[1];
+		var returnMe = _nodes[1]!;
 		Remove(returnMe);
 		return returnMe;
 	}
 
 	/// <summary>
 	/// Resize the queue so it can accept more nodes.  All currently enqueued nodes are remain.
-	/// Attempting to decrease the queue size to a size too small to hold the existing nodes results in undefined behavior
+	/// Attempting to decrease the queue size to a size too small to hold the existing nodes results in undefined behavior.
 	/// O(n)
 	/// </summary>
 	public void Resize(int maxNodes) {
@@ -276,37 +267,36 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		}
 
 		if (maxNodes < _numNodes) {
-			throw new InvalidOperationException("Called Resize(" + maxNodes + "), but current queue contains " + _numNodes + " nodes");
+			throw new InvalidOperationException($"Called Resize({maxNodes}), but current queue contains {_numNodes} nodes");
 		}
 
 		T[] newArray = new T[maxNodes + 1];
 		int highestIndexToCopy = Math.Min(maxNodes, _numNodes);
 		for (int i = 1; i <= highestIndexToCopy; i++) {
-			newArray[i] = _nodes[i];
+			newArray[i] = _nodes[i]!;
 		}
+
 		_nodes = newArray;
 	}
 
 	/// <summary>
 	/// Returns the head of the queue, without removing it (use Dequeue() for that).
-	/// Returns null if the queue is empty
+	/// Returns null if the queue is empty.
 	/// O(1)
 	/// </summary>
-	public T First => _nodes[1];
+	public T? First => _nodes[1];
 
 	/// <summary>
 	/// This method must be called on a node every time its priority changes while it is in the queue.  
 	/// <b>Forgetting to call this method will result in a corrupted queue!</b>
-	/// Calling this method on a node not in the queue results in undefined behavior
+	/// Calling this method on a node not in the queue results in undefined behavior.
 	/// O(log n)
 	/// </summary>
 
-#if !NET40
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 	public void UpdatePriority(T node, long priority) {
 		if (!Contains(node)) {
-			throw new InvalidOperationException("Cannot call UpdatePriority() on a node which is not enqueued: " + node);
+			throw new InvalidOperationException($"Cannot call UpdatePriority() on a node which is not enqueued: {node}");
 		}
 
 		node.Priority = priority;
@@ -316,7 +306,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 	private void OnNodeUpdated(T node) {
 		//Bubble the updated node up or down as appropriate
 		int parentIndex = node.QueueIndex / 2;
-		T parentNode = _nodes[parentIndex];
+		var parentNode = _nodes[parentIndex]!;
 
 		if (parentIndex > 0 && HasHigherPriority(node, parentNode)) {
 			CascadeUp(node);
@@ -328,12 +318,12 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 
 	/// <summary>
 	/// Removes a node from the queue.  The node does not need to be the head of the queue.  
-	/// If the node is not in the queue, the result is undefined.  If unsure, check Contains() first
+	/// If the node is not in the queue, the result is undefined.  If unsure, check Contains() first.
 	/// O(log n)
 	/// </summary>
 	public void Remove(T node) {
 		if (!Contains(node)) {
-			throw new InvalidOperationException("Cannot call Remove() on a node which is not enqueued: " + node);
+			throw new InvalidOperationException($"Cannot call Remove() on a node which is not enqueued: {node}");
 		}
 
 		if (_numNodes <= 1) {
@@ -344,7 +334,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 
 		//Make sure the node is the last node in the queue
 		bool wasSwapped = false;
-		T formerLastNode = _nodes[_numNodes];
+		var formerLastNode = _nodes[_numNodes]!;
 		if (node.QueueIndex != _numNodes) {
 			//Swap the node with the last node
 			Swap(node, formerLastNode);
@@ -362,7 +352,7 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 
 	public IEnumerator<T> GetEnumerator() {
 		for (int i = 1; i <= _numNodes; i++)
-			yield return _nodes[i];
+			yield return _nodes[i]!;
 	}
 
 	IEnumerator IEnumerable.GetEnumerator() {
@@ -377,14 +367,17 @@ public sealed class HeapPriorityQueue<T> : IEnumerable where T : PriorityQueueNo
 		for (int i = 1; i < _nodes.Length; i++) {
 			if (_nodes[i] != null) {
 				int childLeftIndex = 2 * i;
-				if (childLeftIndex < _nodes.Length && _nodes[childLeftIndex] != null && HasHigherPriority(_nodes[childLeftIndex], _nodes[i]))
+				if (childLeftIndex < _nodes.Length && _nodes[childLeftIndex] != null &&
+					HasHigherPriority(_nodes[childLeftIndex]!, _nodes[i]!))
 					return false;
 
 				int childRightIndex = childLeftIndex + 1;
-				if (childRightIndex < _nodes.Length && _nodes[childRightIndex] != null && HasHigherPriority(_nodes[childRightIndex], _nodes[i]))
+				if (childRightIndex < _nodes.Length && _nodes[childRightIndex] != null &&
+					HasHigherPriority(_nodes[childRightIndex]!, _nodes[i]!))
 					return false;
 			}
 		}
+
 		return true;
 	}
 }

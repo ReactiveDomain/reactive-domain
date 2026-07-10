@@ -1,10 +1,11 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Policy.Domain;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Policy.Tests.Helpers;
 using Xunit;
 
+// ReSharper disable InconsistentNaming
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.PolicyStorage.Tests;
 
 public class with_policy_user {
@@ -24,17 +25,14 @@ public class with_policy_user {
 			_command);
 
 		var events = user.TakeEvents();
-		Assert.Collection(
-			events,
-			e => {
-				if (e is PolicyUserMsgs.PolicyUserAdded added) {
-					Assert.Equal(_id, added.PolicyUserId);
-					Assert.Equal(_policyId, added.PolicyId);
-					Assert.Equal(_userId, added.UserId);
-				} else {
-					throw new Exception("wrong event.");
-				}
-			});
+		var e = Assert.Single(events);
+		if (e is PolicyUserMsgs.PolicyUserAdded added) {
+			Assert.Equal(_id, added.PolicyUserId);
+			Assert.Equal(_policyId, added.PolicyId);
+			Assert.Equal(_userId, added.UserId);
+		} else {
+			throw new Exception("wrong event.");
+		}
 	}
 	[Fact]
 	public void can_add_role() {
@@ -78,14 +76,13 @@ public class with_policy_user {
 	[Fact]
 	public void can_remove_role() {
 		Guid roleId = Guid.NewGuid();
-		string roleName = "test role";
+		const string roleName = "test role";
 		var user = new PolicyUser(
 			_id,
 			_policyId,
 			_userId,
 			false,
 			_command);
-
 
 		//add role           
 		user.AddRole(roleName, roleId);
@@ -119,6 +116,7 @@ public class with_policy_user {
 		events = user.TakeEvents();
 		Assert.Empty(events);
 	}
+
 	[Fact]
 	public void can_deactivate() {
 		Guid role1Id = Guid.NewGuid();
@@ -131,7 +129,7 @@ public class with_policy_user {
 			_policyId,
 			_userId,
 			false,
-			_command) { };
+			_command);
 		//add role           
 		user.AddRole(role1Name, role1Id);
 		user.AddRole(role2Name, role2Id);
@@ -175,6 +173,7 @@ public class with_policy_user {
 		Assert.Empty(events);
 
 	}
+
 	[Fact]
 	public void can_reactivate() {
 		Guid role1Id = Guid.NewGuid();
@@ -194,7 +193,6 @@ public class with_policy_user {
 		//deactivate
 		user.Deactivate();
 		user.TakeEvents();
-
 
 		((ICorrelatedEventSource)user).Source = _command;
 		user.Reactivate();

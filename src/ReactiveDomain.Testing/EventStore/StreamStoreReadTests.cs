@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using Xunit;
 
 namespace ReactiveDomain.Testing.EventStore;
 
 public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> {
-	private readonly List<IStreamStoreConnection> _stores = new List<IStreamStoreConnection>();
-	private readonly IEventSerializer _serializer = new JsonMessageSerializer();
+	private readonly List<IStreamStoreConnection> _stores = [];
+	private readonly JsonMessageSerializer _serializer = new();
 	private readonly string _streamName;
 	private readonly int _lastEvent;
 
 	public StreamStoreReadTests(StreamStoreConnectionFixture fixture) {
-		IStreamNameBuilder streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
+		var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
 		var mockStreamStore = new MockStreamStoreConnection("Test");
 		mockStreamStore.Connect();
 
@@ -21,7 +19,7 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 		_stores.Add(fixture.Connection);
 
 		_streamName = streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
-		var eventCount = 10;
+		const int eventCount = 10;
 		foreach (var store in _stores) {
 			AppendEvents(eventCount, store, _streamName);
 		}
@@ -36,7 +34,7 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 	}
 	[Fact]
 	public void connection_name_is_set() {
-		var name = "FooConnection";
+		const string name = "FooConnection";
 		var conn = new MockStreamStoreConnection(name);
 		Assert.Equal(name, conn.ConnectionName);
 	}
@@ -81,13 +79,10 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 
 	[Fact]
 	public void can_read_stream_forward() {
-
-
 		foreach (var conn in _stores) {
-
 			//before the beginning 
 			var startFrom = -3;
-			var count = 4;
+			const int count = 4;
 			Assert.Throws<ArgumentOutOfRangeException>(() => conn.ReadStreamForward(
 				_streamName,
 				startFrom,
@@ -100,16 +95,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 
+			Assert.NotNull(slice);
 			Assert.True(count == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(startFrom + count, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Forward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			var j = startFrom;
 			for (long i = 0; i < count; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j++;
 			}
@@ -121,16 +118,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 
+			Assert.NotNull(slice);
 			Assert.True(count == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(startFrom + count, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Forward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = startFrom;
 			for (long i = 0; i < count; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j++;
 			}
@@ -141,16 +140,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 
+			Assert.NotNull(slice);
 			Assert.True(count == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(startFrom + count, slice.NextEventNumber);
 			Assert.True(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Forward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = startFrom;
 			for (long i = 0; i < count; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j++;
 			}
@@ -161,16 +162,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 			var expectedCount = 2;
+			Assert.NotNull(slice);
 			Assert.True(expectedCount == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(_lastEvent + 1, slice.NextEventNumber);
 			Assert.True(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Forward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = startFrom;
 			for (long i = 0; i < expectedCount; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j++;
 			}
@@ -182,13 +185,14 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 			expectedCount = 0;
+			Assert.NotNull(slice);
 			Assert.True(expectedCount == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(_lastEvent + 1, slice.NextEventNumber);
 			Assert.True(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Forward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 		}
 	}
 
@@ -197,7 +201,7 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 		foreach (var conn in _stores) {
 			//before the beginning 
 			var startFrom = -3;
-			var count = 4;
+			const int count = 4;
 			Assert.Throws<ArgumentOutOfRangeException>(() => conn.ReadStreamBackward(
 				_streamName,
 				startFrom,
@@ -209,16 +213,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 			var expectedCount = 1;
+			Assert.NotNull(slice);
 			Assert.True(expectedCount == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(StreamPosition.End, slice.NextEventNumber);
 			Assert.True(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Backward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			var j = startFrom;
 			for (long i = 0; i < expectedCount; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j--;
 			}
@@ -231,16 +237,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 
+			Assert.NotNull(slice);
 			Assert.True(count == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(StreamPosition.Start, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Backward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = startFrom;
 			for (long i = 0; i < count; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j--;
 			}
@@ -252,16 +260,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 
+			Assert.NotNull(slice);
 			Assert.True(count == slice.Events.Length, "Failed to read events forward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(startFrom - count, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Backward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = startFrom;
 			for (long i = 0; i < count; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j--;
 			}
@@ -272,16 +282,18 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 			expectedCount = 2;
+			Assert.NotNull(slice);
 			Assert.True(expectedCount == slice.Events.Length, "Failed to read events backward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(startFrom - count, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Backward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 			j = _lastEvent;
 			for (long i = 0; i < expectedCount; i++) {
-				var evt = (ReadTestTestEvent)_serializer.Deserialize(slice.Events[i]);
+				var evt = (ReadTestTestEvent?)_serializer.Deserialize(slice.Events[i]);
+				Assert.NotNull(evt);
 				Assert.True(j == evt.MessageNumber, $"Expected {j} got {evt.MessageNumber}");
 				j--;
 			}
@@ -293,22 +305,17 @@ public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> 
 				startFrom,
 				count);
 			expectedCount = 0;
+			Assert.NotNull(slice);
 			Assert.True(expectedCount == slice.Events.Length, "Failed to read events backward");
 			Assert.Equal(startFrom, slice.FromEventNumber);
 			Assert.Equal(_lastEvent, slice.LastEventNumber);
 			Assert.Equal(_lastEvent, slice.NextEventNumber);
 			Assert.False(slice.IsEndOfStream);
 			Assert.Equal(ReadDirection.Backward, slice.ReadDirection);
-			Assert.True(string.CompareOrdinal(_streamName, slice.Stream) == 0);
+			Assert.Equal(0, string.CompareOrdinal(_streamName, slice.Stream));
 		}
 	}
-	public class ReadTestTestEvent : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly int MessageNumber;
-		public ReadTestTestEvent(
-			int messageNumber) {
-			MsgId = Guid.NewGuid();
-			MessageNumber = messageNumber;
-		}
+	public record ReadTestTestEvent(int MessageNumber) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
 }

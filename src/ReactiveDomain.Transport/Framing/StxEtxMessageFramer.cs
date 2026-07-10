@@ -1,16 +1,11 @@
-
-
-using System;
-using System.Collections.Generic;
-
 namespace ReactiveDomain.Transport.Framing;
 
 public class StxEtxMessageFramer : IMessageFramer {
 	private const int STX = 2;
 	private const int ETX = 3;
 
-	private static readonly ArraySegment<byte> STXBUFFER = new ArraySegment<byte>(new byte[] { STX });
-	private static readonly ArraySegment<byte> ETXBUFFER = new ArraySegment<byte>(new byte[] { ETX });
+	private static readonly ArraySegment<byte> STXBUFFER = new([STX]);
+	private static readonly ArraySegment<byte> ETXBUFFER = new([ETX]);
 
 	private enum ParserState {
 		AwaitingEtx,
@@ -20,7 +15,7 @@ public class StxEtxMessageFramer : IMessageFramer {
 	private byte[] _messageBuffer;
 	private ParserState _currentState = ParserState.AwaitingStx;
 	private int _bufferIndex;
-	private Action<Guid, ArraySegment<byte>> _receivedHandler;
+	private Action<Guid, ArraySegment<byte>>? _receivedHandler;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="StxEtxMessageFramer"/> class.
@@ -30,14 +25,12 @@ public class StxEtxMessageFramer : IMessageFramer {
 		if (initialBufferSize < 1)
 			throw new ArgumentException("Buffer size must be greater than zero.");
 		_messageBuffer = new byte[initialBufferSize];
-		_currentState = ParserState.AwaitingStx;
 	}
 
 	public void UnFrameData(Guid routeId, IEnumerable<ArraySegment<byte>> data) {
-		if (data == null)
-			throw new ArgumentNullException(nameof(data));
+		ArgumentNullException.ThrowIfNull(data);
 
-		foreach (ArraySegment<byte> buffer in data) {
+		foreach (var buffer in data) {
 			Parse(routeId, buffer);
 		}
 	}
@@ -52,6 +45,9 @@ public class StxEtxMessageFramer : IMessageFramer {
 	/// <param name="routeId">The ID of the source from which the data were routed.</param>
 	/// <param name="bytes">A byte array of data to append</param>
 	private void Parse(Guid routeId, ArraySegment<byte> bytes) {
+		if (bytes.Array is null) {
+			throw new ArgumentNullException(nameof(bytes), "byte array to parse is null.");
+		}
 		byte[] data = bytes.Array;
 		for (int i = bytes.Offset; i < bytes.Offset + bytes.Count; i++) {
 			if ((data[i] > 3 || data[i] == 1) && _currentState == ParserState.AwaitingEtx) {
@@ -67,8 +63,7 @@ public class StxEtxMessageFramer : IMessageFramer {
 				_bufferIndex = 0;
 			} else if (data[i] == ETX && _currentState == ParserState.AwaitingEtx) {
 				_currentState = ParserState.AwaitingStx;
-				if (_receivedHandler != null)
-					_receivedHandler(routeId, new ArraySegment<byte>(_messageBuffer, 0, _bufferIndex));
+				_receivedHandler?.Invoke(routeId, new ArraySegment<byte>(_messageBuffer, 0, _bufferIndex));
 				_bufferIndex = 0;
 			}
 		}

@@ -1,14 +1,10 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Locks;
 using ReactiveDomain.Util;
@@ -16,7 +12,7 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.Transport;
 
 public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
 	public static ITcpConnection CreateConnectingConnection(Guid connectionId,
 		EndPoint remoteEndPoint,
@@ -24,20 +20,18 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		bool validateServer,
 		TcpClientConnector connector,
 		TimeSpan connectionTimeout,
-		Action<ITcpConnection> onConnectionEstablished,
-		Action<ITcpConnection, SocketError> onConnectionFailed,
+		Action<ITcpConnection>? onConnectionEstablished,
+		Action<ITcpConnection, SocketError>? onConnectionFailed,
 		bool verbose) {
 		var connection = new TcpConnectionSsl(connectionId, remoteEndPoint, verbose);
 		// ReSharper disable ImplicitlyCapturedClosure
 		connector.InitConnect(remoteEndPoint,
 			(_, socket) => {
 				connection.InitClientSocket(socket, targetHost, validateServer, verbose);
-				if (onConnectionEstablished != null)
-					onConnectionEstablished(connection);
+				onConnectionEstablished?.Invoke(connection);
 			},
 			(_, socketError) => {
-				if (onConnectionFailed != null)
-					onConnectionFailed(connection, socketError);
+				onConnectionFailed?.Invoke(connection, socketError);
 			}, connection, connectionTimeout);
 		// ReSharper restore ImplicitlyCapturedClosure
 		return connection;
@@ -65,34 +59,33 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		return connection;
 	}
 
-	public event Action<ITcpConnection, SocketError> ConnectionClosed;
-	public Guid ConnectionId { get { return _connectionId; } }
-	public int SendQueueSize { get { return _sendQueue.Count; } }
+	public event Action<ITcpConnection, SocketError>? ConnectionClosed;
+	public Guid ConnectionId { get; }
+	public int SendQueueSize => _sendQueue.Count;
 
-	private readonly Guid _connectionId;
 	private readonly bool _verbose;
 
-	private readonly ConcurrentQueue<ArraySegment<byte>> _sendQueue = new ConcurrentQueue<ArraySegment<byte>>();
-	private readonly ConcurrentQueue<ReceivedData> _receiveQueue = new ConcurrentQueue<ReceivedData>();
-	private readonly MemoryStream _memoryStream = new MemoryStream();
+	private readonly ConcurrentQueue<ArraySegment<byte>> _sendQueue = new();
+	private readonly ConcurrentQueue<ReceivedData> _receiveQueue = new();
+	private readonly MemoryStream _memoryStream = new();
 
-	private readonly SpinLock2 _streamLock = new SpinLock2();
+	private readonly SpinLock2 _streamLock = new();
 	private bool _isSending;
 	private int _receiveHandling;
 	private int _isClosed;
 
-	private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> _receiveCallback;
+	private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>>? _receiveCallback;
 
-	private SslStream _sslStream;
+	private SslStream? _sslStream;
 	private bool _isAuthenticated;
 	private int _sendingBytes;
 	private bool _validateServer;
-	private readonly byte[] _receiveBuffer = new byte[TcpConnection.BufferManager.ChunkSize];
+	private readonly byte[] _receiveBuffer = new byte[TcpConnection._bufferManager.ChunkSize];
 
 	private TcpConnectionSsl(Guid connectionId, EndPoint remoteEndPoint, bool verbose) : base(remoteEndPoint) {
-		Ensure.NotEmptyGuid(connectionId, "connectionId");
+		Ensure.NotEmptyGuid(connectionId, nameof(connectionId));
 
-		_connectionId = connectionId;
+		ConnectionId = connectionId;
 		_verbose = verbose;
 	}
 
@@ -117,12 +110,12 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 				_sslStream.BeginAuthenticateAsServer(certificate, false, SslProtocols.Default, true, OnEndAuthenticateAsServer, _sslStream);
 #pragma warning restore CS0618 // Type or member is obsolete
 			} catch (AuthenticationException exc) {
-				Log.InfoException(exc, String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
+				_log.InfoException(exc, "[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint);
 				CloseInternal(SocketError.SocketError, exc.Message);
 			} catch (ObjectDisposedException) {
 				CloseInternal(SocketError.SocketError, "SslStream disposed.");
 			} catch (Exception exc) {
-				Log.InfoException(exc, String.Format("[S{0}, L{1}]: Exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint));
+				_log.InfoException(exc, "[S{0}, L{1}]: Exception on BeginAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint);
 				CloseInternal(SocketError.SocketError, exc.Message);
 			}
 		}
@@ -131,7 +124,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 	private void OnEndAuthenticateAsServer(IAsyncResult ar) {
 		try {
 			using (_streamLock.Acquire()) {
-				var sslStream = (SslStream)ar.AsyncState;
+				var sslStream = (SslStream)ar.AsyncState!;
 				sslStream.EndAuthenticateAsServer(ar);
 				if (_verbose)
 					DisplaySslStreamInfo(sslStream);
@@ -140,13 +133,12 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			StartReceive();
 			TrySend();
 		} catch (AuthenticationException exc) {
-			Log.InfoException(exc,
-				$"[S{RemoteEndPoint}, L{LocalEndPoint}]: Authentication exception on EndAuthenticateAsServer.");
+			_log.InfoException(exc, "[S{0}, L{1}]: Authentication exception on EndAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint);
 			CloseInternal(SocketError.SocketError, exc.Message);
 		} catch (ObjectDisposedException) {
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 		} catch (Exception exc) {
-			Log.InfoException(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsServer.");
+			_log.InfoException(exc, "[S{0}, L{1}]: Exception on EndAuthenticateAsServer.", RemoteEndPoint, LocalEndPoint);
 			CloseInternal(SocketError.SocketError, exc.Message);
 		}
 	}
@@ -172,12 +164,13 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			try {
 				_sslStream.BeginAuthenticateAsClient(targetHost, OnEndAuthenticateAsClient, _sslStream);
 			} catch (AuthenticationException exc) {
-				Log.InfoException(exc, String.Format("[S{0}, L{1}]: Authentication exception on BeginAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint));
+				_log.InfoException(exc,
+					$"[S{RemoteEndPoint}, L{LocalEndPoint}]: Authentication exception on BeginAuthenticateAsClient.");
 				CloseInternal(SocketError.SocketError, exc.Message);
 			} catch (ObjectDisposedException) {
 				CloseInternal(SocketError.SocketError, "SslStream disposed.");
 			} catch (Exception exc) {
-				Log.InfoException(exc, $"[S{RemoteEndPoint}, {LocalEndPoint}]: Exception on BeginAuthenticateAsClient.");
+				_log.InfoException(exc, "[S{0}, {1}]: Exception on BeginAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint);
 				CloseInternal(SocketError.SocketError, exc.Message);
 			}
 		}
@@ -186,7 +179,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 	private void OnEndAuthenticateAsClient(IAsyncResult ar) {
 		try {
 			using (_streamLock.Acquire()) {
-				var sslStream = (SslStream)ar.AsyncState;
+				var sslStream = (SslStream)ar.AsyncState!;
 				sslStream.EndAuthenticateAsClient(ar);
 				if (_verbose)
 					DisplaySslStreamInfo(sslStream);
@@ -195,25 +188,24 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			StartReceive();
 			TrySend();
 		} catch (AuthenticationException exc) {
-			Log.InfoException(exc,
-				$"[S{RemoteEndPoint}, L{LocalEndPoint}]: Authentication exception on EndAuthenticateAsClient.");
+			_log.InfoException(exc, "[S{0}, L{1}]: Authentication exception on EndAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint);
 			CloseInternal(SocketError.SocketError, exc.Message);
 		} catch (ObjectDisposedException) {
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 		} catch (Exception exc) {
-			Log.InfoException(exc, $"[S{RemoteEndPoint}, L{LocalEndPoint}]: Exception on EndAuthenticateAsClient.");
+			_log.InfoException(exc, "[S{0}, L{1}]: Exception on EndAuthenticateAsClient.", RemoteEndPoint, LocalEndPoint);
 			CloseInternal(SocketError.SocketError, exc.Message);
 		}
 	}
 
 	// The following method is invoked by the RemoteCertificateValidationDelegate. 
-	public bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
+	public bool ValidateServerCertificate(object? sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) {
 		if (!_validateServer)
 			return true;
 
 		if (sslPolicyErrors == SslPolicyErrors.None)
 			return true;
-		Log.Error("[S{0}, L{1}]: Certificate error: {2}", RemoteEndPoint, LocalEndPoint, sslPolicyErrors);
+		_log.Error("[S{0}, L{1}]: Certificate error: {2}", RemoteEndPoint, LocalEndPoint, sslPolicyErrors);
 		// Do not allow this client to communicate with unauthenticated servers. 
 		return false;
 	}
@@ -234,7 +226,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		sb.AppendFormat("Can timeout: {0}\n", stream.CanTimeout);
 		sb.AppendFormat("Certificate revocation list checked: {0}\n", stream.CheckCertRevocationStatus);
 
-		X509Certificate localCert = stream.LocalCertificate;
+		var localCert = stream.LocalCertificate;
 		if (localCert != null)
 			sb.AppendFormat("Local certificate was issued to {0} and is valid from {1} until {2}.\n",
 				localCert.Subject, localCert.GetEffectiveDateString(), localCert.GetExpirationDateString());
@@ -242,14 +234,14 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			sb.AppendFormat("Local certificate is null.\n");
 
 		// Display the properties of the client's certificate.
-		X509Certificate remoteCert = stream.RemoteCertificate;
+		var remoteCert = stream.RemoteCertificate;
 		if (remoteCert != null)
 			sb.AppendFormat("Remote certificate was issued to {0} and is valid from {1} until {2}.\n",
 				remoteCert.Subject, remoteCert.GetEffectiveDateString(), remoteCert.GetExpirationDateString());
 		else
 			sb.AppendFormat("Remote certificate is null.\n");
 
-		Log.Info(sb.ToString());
+		_log.Info(sb.ToString());
 	}
 
 	public void EnqueueSend(IEnumerable<ArraySegment<byte>> data) {
@@ -266,7 +258,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 
 	private void TrySend() {
 		using (_streamLock.Acquire()) {
-			if (_isSending || _sendQueue.Count == 0 || _sslStream == null || !_isAuthenticated)
+			if (_isSending || _sendQueue.IsEmpty || _sslStream == null || !_isAuthenticated)
 				return;
 			if (TcpConnectionMonitor.Default.IsSendBlocked())
 				return;
@@ -275,8 +267,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 
 		_memoryStream.SetLength(0);
 
-		ArraySegment<byte> sendPiece;
-		while (_sendQueue.TryDequeue(out sendPiece)) {
+		while (_sendQueue.TryDequeue(out var sendPiece) && sendPiece.Array is not null) {
 			_memoryStream.Write(sendPiece.Array, sendPiece.Offset, sendPiece.Count);
 			if (_memoryStream.Length >= TcpConnection.MaxSendPacketSize)
 				break;
@@ -287,19 +278,19 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			NotifySendStarting(_sendingBytes);
 			_sslStream.BeginWrite(_memoryStream.GetBuffer(), 0, _sendingBytes, OnEndWrite, null);
 		} catch (SocketException exc) {
-			Log.DebugException(exc, String.Format("SocketException '{0}' during BeginWrite.", exc.SocketErrorCode));
+			_log.DebugException(exc, "SocketException '{0}' during BeginWrite.", exc.SocketErrorCode);
 			CloseInternal(exc.SocketErrorCode, "SocketException during BeginWrite.");
 		} catch (ObjectDisposedException) {
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 		} catch (Exception exc) {
-			Log.DebugException(exc, "Exception during BeginWrite.");
+			_log.DebugException(exc, "Exception during BeginWrite.");
 			CloseInternal(SocketError.SocketError, "Exception during BeginWrite");
 		}
 	}
 
 	private void OnEndWrite(IAsyncResult ar) {
 		try {
-			_sslStream.EndWrite(ar);
+			_sslStream!.EndWrite(ar);
 			NotifySendCompleted(_sendingBytes);
 
 			using (_streamLock.Acquire()) {
@@ -307,14 +298,14 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			}
 			TrySend();
 		} catch (SocketException exc) {
-			Log.DebugException(exc, String.Format("SocketException '{0}' during EndWrite.", exc.SocketErrorCode));
+			_log.DebugException(exc, "SocketException '{0}' during EndWrite.", exc.SocketErrorCode);
 			NotifySendCompleted(0);
 			CloseInternal(exc.SocketErrorCode, "SocketException during EndWrite.");
 		} catch (ObjectDisposedException) {
 			NotifySendCompleted(0);
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 		} catch (Exception exc) {
-			Log.DebugException(exc, "Exception during EndWrite.");
+			_log.DebugException(exc, "Exception during EndWrite.");
 			NotifySendCompleted(0);
 			CloseInternal(SocketError.SocketError, "Exception during EndWrite.");
 		}
@@ -324,7 +315,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		Ensure.NotNull(callback, "callback");
 
 		if (Interlocked.Exchange(ref _receiveCallback, callback) != null) {
-			Log.Error("ReceiveAsync called again while previous call wasn't fulfilled");
+			_log.Error("ReceiveAsync called again while previous call wasn't fulfilled");
 			throw new InvalidOperationException("ReceiveAsync called again while previous call wasn't fulfilled");
 		}
 		TryDequeueReceivedData();
@@ -333,14 +324,14 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 	private void StartReceive() {
 		try {
 			NotifyReceiveStarting();
-			_sslStream.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, OnEndRead, null);
+			_sslStream!.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, OnEndRead, null);
 		} catch (SocketException exc) {
-			Log.DebugException(exc, String.Format("SocketException '{0}' during BeginRead.", exc.SocketErrorCode));
+			_log.DebugException(exc, "SocketException '{0}' during BeginRead.", exc.SocketErrorCode);
 			CloseInternal(exc.SocketErrorCode, "SocketException during BeginRead.");
 		} catch (ObjectDisposedException) {
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 		} catch (Exception exc) {
-			Log.DebugException(exc, "Exception during BeginRead.");
+			_log.DebugException(exc, "Exception during BeginRead.");
 			CloseInternal(SocketError.SocketError, "Exception during BeginRead.");
 		}
 	}
@@ -348,9 +339,9 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 	private void OnEndRead(IAsyncResult ar) {
 		int bytesRead;
 		try {
-			bytesRead = _sslStream.EndRead(ar);
+			bytesRead = _sslStream!.EndRead(ar);
 		} catch (SocketException exc) {
-			Log.DebugException(exc, String.Format("SocketException '{0}' during EndRead.", exc.SocketErrorCode));
+			_log.DebugException(exc, "SocketException '{0}' during EndRead.", exc.SocketErrorCode);
 			NotifyReceiveCompleted(0);
 			CloseInternal(exc.SocketErrorCode, "SocketException during EndRead.");
 			return;
@@ -359,13 +350,12 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 			CloseInternal(SocketError.SocketError, "SslStream disposed.");
 			return;
 		} catch (Exception exc) {
-			Log.DebugException(exc, "Exception during EndRead.");
+			_log.DebugException(exc, "Exception during EndRead.");
 			NotifyReceiveCompleted(0);
 			CloseInternal(SocketError.SocketError, "Exception during EndRead.");
 			return;
 		}
-		if (bytesRead <= 0) // socket closed normally
-		{
+		if (bytesRead <= 0) { // socket closed normally
 			NotifyReceiveCompleted(0);
 			CloseInternal(SocketError.Success, "Socket closed.");
 			return;
@@ -373,7 +363,7 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 
 		NotifyReceiveCompleted(bytesRead);
 
-		var buffer = TcpConnection.BufferManager.CheckOut();
+		var buffer = TcpConnection._bufferManager.CheckOut();
 		if (buffer.Array == null || buffer.Count == 0 || buffer.Array.Length < buffer.Offset + buffer.Count)
 			throw new Exception("Invalid buffer allocated.");
 		Buffer.BlockCopy(_receiveBuffer, 0, buffer.Array, buffer.Offset, bytesRead);
@@ -388,10 +378,11 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		if (Interlocked.CompareExchange(ref _receiveHandling, 1, 0) != 0)
 			return;
 		do {
-			if (_receiveQueue.Count > 0 && _receiveCallback != null) {
+			if (!_receiveQueue.IsEmpty && _receiveCallback != null) {
 				var callback = Interlocked.Exchange(ref _receiveCallback, null);
+				// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 				if (callback == null) {
-					Log.Error("Some threading issue in TryDequeueReceivedData! Callback is null!");
+					_log.Error("Some threading issue in TryDequeueReceivedData! Callback is null!");
 					throw new Exception("Some threading issue in TryDequeueReceivedData! Callback is null!");
 				}
 
@@ -406,22 +397,22 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 				for (int i = 0; i < data.Length; ++i) {
 					var d = res[i];
 					bytes += d.DataLen;
-					data[i] = new ArraySegment<byte>(d.Buf.Array, d.Buf.Offset, d.DataLen);
+					data[i] = new ArraySegment<byte>(d.Buf.Array!, d.Buf.Offset, d.DataLen);
 				}
 				callback(this, data);
 
 				for (int i = 0, n = res.Count; i < n; ++i) {
-					TcpConnection.BufferManager.CheckIn(res[i].Buf); // dispose buffers
+					TcpConnection._bufferManager.CheckIn(res[i].Buf); // dispose buffers
 				}
 				NotifyReceiveDispatched(bytes);
 			}
 			Interlocked.Exchange(ref _receiveHandling, 0);
-		} while (_receiveQueue.Count > 0
+		} while (!_receiveQueue.IsEmpty
 				 && _receiveCallback != null
 				 && Interlocked.CompareExchange(ref _receiveHandling, 1, 0) == 0);
 	}
 
-	public void Close(string reason) {
+	public void Close(string? reason = null) {
 		CloseInternal(SocketError.Success, reason ?? "Normal socket close."); // normal socket closing
 	}
 
@@ -432,9 +423,9 @@ public class TcpConnectionSsl : TcpConnectionBase, ITcpConnection {
 		NotifyClosed();
 
 		if (_verbose) {
-			Log.Info("ES {12} closed [{0:HH:mm:ss.fff}: S{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
+			_log.Info("ES {12} closed [{0:HH:mm:ss.fff}: S{1}, L{2}, {3:B}]:\nReceived bytes: {4}, Sent bytes: {5}\n"
 					 + "Send calls: {6}, callbacks: {7}\nReceive calls: {8}, callbacks: {9}\nClose reason: [{10}] {11}\n",
-				DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, _connectionId,
+				DateTime.UtcNow, RemoteEndPoint, LocalEndPoint, ConnectionId,
 				TotalBytesReceived, TotalBytesSent,
 				SendCalls, SendCallbacks,
 				ReceiveCalls, ReceiveCallbacks,

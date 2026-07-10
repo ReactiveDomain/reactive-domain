@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging.Bus;
@@ -12,9 +9,9 @@ public class CommandManager :
 	IHandle<AckCommand>,
 	IHandle<AckTimeout>,
 	IHandle<CompletionTimeout> {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-	private static readonly TimeSpan DefaultAckTimeout = TimeSpan.FromMilliseconds(100);
-	private static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(500);
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly TimeSpan _defaultAckTimeout = TimeSpan.FromMilliseconds(100);
+	private static readonly TimeSpan _defaultResponseTimeout = TimeSpan.FromMilliseconds(500);
 	private readonly IBus _outBus;
 	private readonly IBus _timeoutBus;
 	private readonly ConcurrentDictionary<Guid, CommandTracker> _pendingCommands;
@@ -35,8 +32,8 @@ public class CommandManager :
 			throw new ObjectDisposedException(nameof(CommandManager));
 		}
 
-		if (Log.LogLevel >= LogLevel.Debug)
-			Log.Debug("Registering command tracker for" + command.GetType().Name);
+		if (_log.LogLevel >= LogLevel.Debug)
+			_log.Debug("Registering command tracker for" + command.GetType().Name);
 		if (_pendingCommands.ContainsKey(command.MsgId))
 			throw new CommandException($"Command tracker already registered for this Command {command.GetType().Name} Id {command.MsgId}.", command);
 
@@ -53,8 +50,8 @@ public class CommandManager :
 				if (_pendingCommands.TryRemove(command.MsgId, out var tr))
 					tr.Dispose();
 			},
-			ackTimeout ?? DefaultAckTimeout,
-			responseTimeout ?? DefaultResponseTimeout,
+			ackTimeout ?? _defaultAckTimeout,
+			responseTimeout ?? _defaultResponseTimeout,
 			_timeoutBus);
 		if (_pendingCommands.TryAdd(command.MsgId, tracker)) {
 			return tcs;
@@ -87,7 +84,7 @@ public class CommandManager :
 
 
 	protected override void Dispose(bool disposing) {
-		//n.b. we want to shutdown the queue in the base class before iterating through the trackers
+		//n.b. we want to shut down the queue in the base class before iterating through the trackers
 		base.Dispose(disposing);
 
 		if (_disposed)
@@ -98,7 +95,7 @@ public class CommandManager :
 
 		var trackers = _pendingCommands.Values.ToArray();
 		for (var i = 0; i < trackers.Length; i++) {
-			trackers[i]?.Dispose();
+			trackers[i].Dispose();
 		}
 	}
 }

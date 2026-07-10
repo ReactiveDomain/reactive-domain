@@ -4,14 +4,14 @@
 namespace ReactiveDomain.Messaging.Monitoring.Stats;
 
 public class StatMetadata {
-	public object Value { get; set; }
-	public string Category { get; set; }
-	public string Title { get; set; }
+	public object? Value { get; set; }
+	public string? Category { get; set; }
+	public string? Title { get; set; }
 	public bool DrawChart { get; set; }
 
 	public StatMetadata() { }
 
-	private StatMetadata(object value, string category, string title, bool drawChart) {
+	private StatMetadata(object value, string? category, string title, bool drawChart) {
 		Value = value;
 		Category = category;
 		Title = title;

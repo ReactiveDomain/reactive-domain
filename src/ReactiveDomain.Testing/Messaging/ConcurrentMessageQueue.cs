@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using ReactiveDomain.Messaging;
 using Xunit;
 
@@ -24,28 +22,35 @@ public class ConcurrentMessageQueue<T> : ConcurrentQueue<T> where T : IMessage {
 			throw new Exception($" {_name} queue: Type {typeof(TMsg).Name} not found Queue is Empty");
 		if (!TryDequeue(out var outVal))
 			throw new Exception($" {_name} queue: Unable to dequeue next item.");
-		if (!(outVal is TMsg))
-			throw new Exception($" {_name} queue: Type <{typeof(TMsg).Name}> is not next item, instead <{outVal.GetType().Name}> found.");
-		return (TMsg)outVal;
+		if (outVal is not TMsg tMsg)
+			throw new Exception(
+				$" {_name} queue: Type <{typeof(TMsg).Name}> is not next item, instead <{outVal.GetType().Name}> found.");
+		return tMsg;
 	}
-	public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg) where TMsg : ICorrelatedMessage, T {
+
+	public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId, out TMsg msg)
+		where TMsg : ICorrelatedMessage, T {
 		msg = DequeueNext<TMsg>();
 		if (msg.CorrelationId != correlationId) {
-			throw new Exception($" {_name} queue: Message type <{typeof(TMsg).Name}> found with incorrect correlationId. Expected [{correlationId}] found [{msg.CorrelationId}] instead.");
+			throw new Exception(
+				$" {_name} queue: Message type <{typeof(TMsg).Name}> found with incorrect correlationId. Expected [{correlationId}] found [{msg.CorrelationId}] instead.");
 		}
 		return this;
 	}
+
 	public ConcurrentMessageQueue<T> AssertNext<TMsg>(Guid correlationId) where TMsg : ICorrelatedMessage, T {
 		AssertNext<TMsg>(correlationId, out var _);
 		return this;
 	}
+
 	public ConcurrentMessageQueue<T> AssertNext<TMsg>(
 		Func<TMsg, bool> condition,
-		string userMessage = null) where TMsg : ICorrelatedMessage, T {
-		TMsg msg = DequeueNext<TMsg>();
+		string? userMessage = null) where TMsg : ICorrelatedMessage, T {
+		var msg = DequeueNext<TMsg>();
 		Assert.True(condition(msg), userMessage);
 		return this;
 	}
+
 	public void AssertEmpty() {
 		if (IsEmpty)
 			return;

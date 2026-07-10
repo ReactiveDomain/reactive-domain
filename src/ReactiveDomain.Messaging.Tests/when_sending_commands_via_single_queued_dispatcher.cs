@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -19,8 +17,6 @@ public class when_sending_commands_via_single_queued_dispatcher :
 	private long _gotResponse;
 
 	private readonly Dispatcher _dispatcher;
-
-
 
 	public when_sending_commands_via_single_queued_dispatcher() {
 		_dispatcher = new Dispatcher("test", 1);
@@ -42,6 +38,7 @@ public class when_sending_commands_via_single_queued_dispatcher :
 		Interlocked.Increment(ref _releaseHandler);
 		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotResponse) == 1);
 	}
+
 	[Fact]
 	public void send_async_cmd_msg_sequence_is_correct() {
 		_dispatcher.TrySendAsync(new TestCommands.Command1());
@@ -68,5 +65,4 @@ public class when_sending_commands_via_single_queued_dispatcher :
 	void IHandle<CommandResponse>.Handle(CommandResponse response) {
 		Interlocked.Increment(ref _gotResponse);
 	}
-
 }

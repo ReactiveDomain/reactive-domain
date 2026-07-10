@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reactive.Disposables;
+﻿using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
@@ -266,7 +265,7 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
 
 	private class TransientCommandSubscriber : TransientSubscriber, IHandleCommand<TestCommands.Command2> {
 		public bool FailOnSend { get; init; }
-		public int NumHandled { get; set; }
+		public int NumHandled { get; private set; }
 		public TransientCommandSubscriber(IDispatcher bus) : base(bus) {
 			// ReSharper disable once RedundantTypeArgumentsOfMethod
 			Subscribe<TestCommands.Command2>(this);
@@ -278,7 +277,7 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
 	}
 	private class QueuedCommandSubscriber : QueuedSubscriber, IHandleCommand<TestCommands.Command2> {
 		public bool FailOnSend { get; init; }
-		public int NumHandled { get; set; }
+		public int NumHandled { get; private set; }
 		public QueuedCommandSubscriber(IDispatcher bus) : base(bus) {
 			// ReSharper disable once RedundantTypeArgumentsOfMethod
 			Subscribe<TestCommands.Command2>(this);

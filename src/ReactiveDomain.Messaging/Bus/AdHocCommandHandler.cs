@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
@@ -6,7 +5,6 @@ namespace ReactiveDomain.Messaging.Bus;
 public class AdHocCommandHandler<T> : IHandleCommand<T> where T : Command {
 	private readonly Func<T, bool> _handleCommand;
 	private readonly bool _wrapExceptions;
-	private Guid _currentCommand = Guid.Empty;
 
 
 	public AdHocCommandHandler(
@@ -19,7 +17,6 @@ public class AdHocCommandHandler<T> : IHandleCommand<T> where T : Command {
 
 	public CommandResponse Handle(T command) {
 		bool passed;
-		_currentCommand = command.MsgId;
 		try {
 			if (command.IsCanceled)
 				return command.Canceled();

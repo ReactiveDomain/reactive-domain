@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Foundation;
 
@@ -10,7 +9,7 @@ public interface IConfiguredConnection {
 	IListener GetListener(string name);
 	IListener GetQueuedListener(string name);
 	IStreamReader GetReader(string name, Action<IMessage> handle);
-	IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null);
-	ICorrelatedRepository GetCorrelatedRepository(IRepository baseRepository = null, bool caching = false, Func<Guid> currentPolicyUserId = null);
+	IRepository GetRepository(bool caching = false, Func<Guid>? currentPolicyUserId = null);
+	ICorrelatedRepository GetCorrelatedRepository(IRepository? baseRepository = null, bool caching = false, Func<Guid>? currentPolicyUserId = null);
 
 }

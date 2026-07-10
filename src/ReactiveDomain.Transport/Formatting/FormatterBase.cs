@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using ReactiveDomain.Transport.BufferManagement;
 
 namespace ReactiveDomain.Transport.Formatting;
@@ -27,9 +25,8 @@ public abstract class FormatterBase<T> : IMessageFormatter<T> {
 	/// <param name="message">The message.</param>
 	/// <returns></returns>
 	public virtual byte[] ToArray(T message) {
-		using (BufferPool pool = ToBufferPool(message)) {
-			return pool.ToByteArray();
-		}
+		using var pool = ToBufferPool(message);
+		return pool.ToByteArray();
 	}
 
 	/// <summary>
@@ -38,21 +35,20 @@ public abstract class FormatterBase<T> : IMessageFormatter<T> {
 	/// <param name="bufferPool">The BufferPool to get data from.</param>
 	/// <returns></returns>
 	public virtual T From(BufferPool bufferPool) {
-		if (bufferPool == null)
-			throw new ArgumentNullException("bufferPool");
+		ArgumentNullException.ThrowIfNull(bufferPool);
 		var stream = new BufferPoolStream(bufferPool);
 		return From(stream);
 	}
 
 	/// <summary>
-	/// Gets a message from a <see cref="ArraySegment{Byte}"></see>
+	/// Gets a message from a <see cref="ArraySegment{Byte}"/>
 	/// </summary>
 	/// <param name="segment">The segment containing the raw data.</param>
 	/// <returns></returns>
 	public virtual T From(ArraySegment<byte> segment) {
-		using (var stream = new MemoryStream(segment.Array, segment.Offset, segment.Count, false)) {
-			return From(stream);
-		}
+		ArgumentNullException.ThrowIfNull(segment.Array, nameof(segment));
+		using var stream = new MemoryStream(segment.Array, segment.Offset, segment.Count, false);
+		return From(stream);
 	}
 
 	/// <summary>
@@ -61,11 +57,9 @@ public abstract class FormatterBase<T> : IMessageFormatter<T> {
 	/// <param name="array">The byte array.</param>
 	/// <returns></returns>
 	public virtual T From(byte[] array) {
-		if (array == null)
-			throw new ArgumentNullException("array");
-		using (var stream = new MemoryStream(array, 0, array.Length, false)) {
-			return From(stream);
-		}
+		ArgumentNullException.ThrowIfNull(array);
+		using var stream = new MemoryStream(array, 0, array.Length, false);
+		return From(stream);
 	}
 
 	/// <summary>

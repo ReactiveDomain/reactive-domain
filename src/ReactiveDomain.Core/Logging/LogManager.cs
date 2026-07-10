@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Logging;
@@ -7,14 +6,13 @@ public static class LogManager {
 
 	// ReSharper disable  InconsistentNaming
 	private static readonly ILogger GlobalLogger = GetLogger("GLOBAL-LOGGER");
-	public static Func<string, ILogger> LogFactory { get; private set; }
+	public static Func<string, ILogger>? LogFactory { get; private set; }
 	public static bool Initialized { get; private set; }
 
 	static LogManager() { }
 
 	public static ILogger GetLogger(string logName) {
-		if (LogFactory == null)
-			LogFactory = (name) => new NullLogger();
+		LogFactory ??= _ => new NullLogger();
 		return new LazyLogger(() => LogFactory(logName));
 	}
 
@@ -24,9 +22,8 @@ public static class LogManager {
 			throw new InvalidOperationException("Cannot initialize twice");
 		Initialized = true;
 
-		AppDomain.CurrentDomain.UnhandledException += (s, e) => {
-			var exc = e.ExceptionObject as Exception;
-			if (exc != null)
+		AppDomain.CurrentDomain.UnhandledException += (_, e) => {
+			if (e.ExceptionObject is Exception exc)
 				GlobalLogger.FatalException(exc, "Global Unhandled Exception occurred.");
 			else
 				GlobalLogger.Fatal("Global Unhandled Exception object: {0}.", e.ExceptionObject);

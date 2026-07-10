@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Util;
+﻿using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging;
 

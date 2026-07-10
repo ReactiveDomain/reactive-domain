@@ -1,8 +1,4 @@
-﻿
-
-using System;
-
-namespace ReactiveDomain.Messaging.Messages;
+﻿namespace ReactiveDomain.Messaging;
 
 public class CorrelationSource : ICorrelatedMessage {
 	public Guid MsgId { get; }

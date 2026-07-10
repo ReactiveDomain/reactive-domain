@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using IdentityModel;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
@@ -33,13 +29,13 @@ public class ClientStore :
 		Start<IdentityStorage.Domain.Client>(checkpoint);
 	}
 
-	private readonly Dictionary<string, Client> _clientsByClientName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);
-	private readonly Dictionary<Guid, string> _clientNameById = new Dictionary<Guid, string>();
-	private readonly Dictionary<Guid, Guid> _clientIdByAppId = new Dictionary<Guid, Guid>();
-	private readonly Dictionary<Guid, List<string>> _clientSecretsByClientId = new Dictionary<Guid, List<string>>();
-	public string GetAppConfig(Guid AppId) {
-		_clientIdByAppId.TryGetValue(AppId, out var clientId);
-		if (clientId == Guid.Empty) { return $"Client not found for App:{AppId}"; }
+	private readonly Dictionary<string, Client> _clientsByClientName = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<Guid, string> _clientNameById = [];
+	private readonly Dictionary<Guid, Guid> _clientIdByAppId = [];
+	private readonly Dictionary<Guid, List<string>> _clientSecretsByClientId = [];
+	public string GetAppConfig(Guid appId) {
+		_clientIdByAppId.TryGetValue(appId, out var clientId);
+		if (clientId == Guid.Empty) { return $"Client not found for App:{appId}"; }
 		var sb = new StringBuilder();
 		sb.AppendLine($"\"ClientId\": \"{clientId.ToString("N")}\"");
 		sb.AppendLine($"\"ClientSecret\": \"{_clientSecretsByClientId[clientId].Last()}\"");
@@ -47,16 +43,16 @@ public class ClientStore :
 		sb.AppendLine($"\"PolicyName\": \"{clientName}\"");
 		return sb.ToString();
 	}
-	public async Task<Client> FindClientByIdAsync(string clientId) {
+	public async Task<Client?> FindClientByIdAsync(string clientId) {
 		var clientName = string.Empty;
-		if (Guid.TryParse(clientId, out Guid parsed) && _clientNameById.ContainsKey(parsed)) {
-			clientName = _clientNameById[parsed];
+		if (Guid.TryParse(clientId, out Guid parsed) && _clientNameById.TryGetValue(parsed, out var existingClientName)) {
+			clientName = existingClientName;
 		}
 		_clientsByClientName.TryGetValue(clientName, out var client);
 		return await Task.FromResult(client);
 	}
 
-	public Client FindClientByName(string clientName) {
+	public Client? FindClientByName(string clientName) {
 		_clientsByClientName.TryGetValue(clientName, out var client);
 		return client;
 	}

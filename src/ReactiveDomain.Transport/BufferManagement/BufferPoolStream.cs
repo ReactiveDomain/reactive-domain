@@ -26,28 +26,25 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  
 
-using System;
-using System.IO;
-
 namespace ReactiveDomain.Transport.BufferManagement;
 
 public class BufferPoolStream : Stream {
 	private readonly BufferPool _bufferPool;
 	private long _position;
 
-	public BufferPool BufferPool { get { return _bufferPool; } }
+	public BufferPool BufferPool => _bufferPool;
 
-	public override bool CanRead { get { return true; } }
-	public override bool CanSeek { get { return true; } }
-	public override bool CanWrite { get { return true; } }
-	public override long Length { get { return _bufferPool.Length; } }
-	public int Capacity { get { return _bufferPool.Capacity; } }
+	public override bool CanRead => true;
+	public override bool CanSeek => true;
+	public override bool CanWrite => true;
+	public override long Length => _bufferPool.Length;
+	public int Capacity => _bufferPool.Capacity;
 
 	public override long Position {
 		get { return _position; }
 		set {
 			if (value < 0 || value > _bufferPool.Length)
-				throw new ArgumentOutOfRangeException("value");
+				throw new ArgumentOutOfRangeException(nameof(value));
 			_position = value;
 		}
 	}
@@ -57,9 +54,7 @@ public class BufferPoolStream : Stream {
 	/// </summary>
 	/// <param name="bufferPool">The buffer pool used as underlying storage.</param>
 	public BufferPoolStream(BufferPool bufferPool) {
-		if (bufferPool == null)
-			throw new ArgumentNullException("bufferPool");
-		_bufferPool = bufferPool;
+		_bufferPool = bufferPool ?? throw new ArgumentNullException(nameof(bufferPool));
 	}
 
 	public override void Flush() {
@@ -78,7 +73,7 @@ public class BufferPoolStream : Stream {
 				Position = _position + offset;
 				break;
 			default:
-				throw new Exception("Unknown SeekOrigin: " + origin.ToString());
+				throw new Exception($"Unknown SeekOrigin: {origin}");
 		}
 		return Position;
 	}

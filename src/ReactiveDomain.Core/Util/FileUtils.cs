@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace ReactiveDomain.Util;
+﻿namespace ReactiveDomain.Util;
 
 public static class FileUtils {
 	public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs) {
@@ -10,20 +8,18 @@ public static class FileUtils {
 		if (!dir.Exists)
 			throw new DirectoryNotFoundException("Source directory does not exist or could not be found: " + sourceDirName);
 
-		var subdirs = copySubDirs ? dir.GetDirectories() : null;
-
 		// If the destination directory doesn't exist, create it. 
 		if (!Directory.Exists(destDirName))
 			Directory.CreateDirectory(destDirName);
 
 		// Get the files in the directory and copy them to the new location.
-		foreach (FileInfo file in dir.GetFiles()) {
+		foreach (var file in dir.GetFiles()) {
 			file.CopyTo(Path.Combine(destDirName, file.Name), false);
 		}
 
 		if (copySubDirs) {
-			foreach (DirectoryInfo subdir in subdirs) {
-				DirectoryCopy(subdir.FullName, Path.Combine(destDirName, subdir.Name), true);
+			foreach (var subDir in dir.GetDirectories()) {
+				DirectoryCopy(subDir.FullName, Path.Combine(destDirName, subDir.Name), true);
 			}
 		}
 	}

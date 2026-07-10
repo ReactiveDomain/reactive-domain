@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.DirectoryServices.AccountManagement;
+﻿using System.DirectoryServices.AccountManagement;
 using System.Runtime.Versioning;
 using System.Security.Claims;
 using ReactiveDomain.Foundation;
@@ -20,14 +18,12 @@ public class UserStore {
 	private readonly SubjectsRm _subjectsRm;
 
 	private readonly ICorrelatedRepository _repo;
-	private readonly IConfiguredConnection _conn;
 
 	public UserStore(IConfiguredConnection conn) {
-		_conn = conn;
-		_userSvc = new UserSvc(_conn.GetRepository(), new Dispatcher("bus-to-nowhere"));
-		_usersRm = new UsersRm(_conn);
-		_subjectsRm = new SubjectsRm(_conn);
-		_repo = _conn.GetCorrelatedRepository();
+		_userSvc = new UserSvc(conn.GetRepository(), new Dispatcher("bus-to-nowhere"));
+		_usersRm = new UsersRm(conn);
+		_subjectsRm = new SubjectsRm(conn);
+		_repo = conn.GetCorrelatedRepository();
 	}
 
 	public Guid UpdateUserInfo(UserPrincipal retrievedUser, string domain, string authProvider, Guid? proposedUserId = null) {
@@ -82,12 +78,9 @@ public class UserStore {
 
 	//return the allowed client scopes the user has access to 
 	public List<Claim> GetAdditionalClaims(Guid userId) {
-		var claimList = new List<Claim>();
-		claimList.Add(new Claim("rd-userid", userId.ToString()));
-		if (_usersRm.UsersById.ContainsKey(userId)) {
-			foreach (string scope in _usersRm.UsersById[userId].Scopes) {
-				claimList.Add(new Claim("policy-access", scope));
-			}
+		var claimList = new List<Claim> { new("rd-userid", userId.ToString()) };
+		if (_usersRm.UsersById.TryGetValue(userId, out var user)) {
+			claimList.AddRange(user.Scopes.Select(scope => new Claim("policy-access", scope)));
 		}
 		return claimList;
 	}

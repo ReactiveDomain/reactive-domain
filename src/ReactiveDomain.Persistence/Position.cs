@@ -1,19 +1,16 @@
-﻿using System;
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 /// <summary>
-/// A structure referring to a potential logical record position
-/// in the Store Main transaction file.
+/// A structure referring to a potential logical record position in the Store Main transaction file.
 /// While this is based on the Event Store implementation, keep in mind not all stores use the prepare position.
 /// </summary>
 public struct Position {
 	/// <summary>
 	/// Position representing the start of the transaction file
 	/// </summary>
-	public static readonly Position Start = new Position(0L, 0L);
+	public static readonly Position Start = new(0L, 0L);
 	/// <summary>Position representing the end of the transaction file</summary>
-	public static readonly Position End = new Position(-1L, -1L);
+	public static readonly Position End = new(-1L, -1L);
 	/// <summary>The commit position of the record</summary>
 	public readonly long CommitPosition;
 	/// <summary>The prepare position of the record.</summary>
@@ -36,8 +33,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares whether p1 &lt; p2.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &lt; p2.</returns>
 	public static bool operator <(Position p1, Position p2) {
 		if (p1.CommitPosition < p2.CommitPosition)
@@ -48,8 +45,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares whether p1 &gt; p2.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &gt; p2.</returns>
 	public static bool operator >(Position p1, Position p2) {
 		if (p1.CommitPosition > p2.CommitPosition)
@@ -60,8 +57,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares whether p1 &gt;= p2.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &gt;= p2.</returns>
 	public static bool operator >=(Position p1, Position p2) {
 		if (!(p1 > p2))
@@ -70,8 +67,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares whether p1 &lt;= p2.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &lt;= p2.</returns>
 	public static bool operator <=(Position p1, Position p2) {
 		if (!(p1 < p2))
@@ -80,8 +77,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares p1 and p2 for equality.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 is equal to p2.</returns>
 	public static bool operator ==(Position p1, Position p2) {
 		if (p1.CommitPosition == p2.CommitPosition)
@@ -90,8 +87,8 @@ public struct Position {
 	}
 
 	/// <summary>Compares p1 and p2 for equality.</summary>
-	/// <param name="p1">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
-	/// <param name="p2">A <see cref="T:EventStore.ClientAPI.Position" />.</param>
+	/// <param name="p1">A <see cref="Position" />.</param>
+	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 is not equal to p2.</returns>
 	public static bool operator !=(Position p1, Position p2) {
 		return !(p1 == p2);
@@ -105,17 +102,17 @@ public struct Position {
 	/// </returns>
 	/// <param name="obj">Another object to compare to. </param>
 	/// <filterpriority>2</filterpriority>
-	public override bool Equals(object obj) {
+	public override bool Equals(object? obj) {
 		if (obj is Position position)
 			return Equals(position);
 		return false;
 	}
 
 	/// <summary>
-	/// Compares this instance of <see cref="T:EventStore.ClientAPI.Position" /> for equality
+	/// Compares this instance of <see cref="Position" /> for equality
 	/// with another instance.
 	/// </summary>
-	/// <param name="other">A <see cref="T:EventStore.ClientAPI.Position" /></param>
+	/// <param name="other">A <see cref="Position" /></param>
 	/// <returns>True if this instance is equal to the other instance.</returns>
 	public bool Equals(Position other) {
 		return this == other;

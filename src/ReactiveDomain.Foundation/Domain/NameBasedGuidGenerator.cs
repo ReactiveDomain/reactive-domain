@@ -1,21 +1,21 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain;
 
 public class NameBasedGuidGenerator {
-	private static readonly Tuple<int, int>[] ByteOrderPairsToSwap = {
+	private static readonly Tuple<int, int>[] _byteOrderPairsToSwap = [
 		Tuple.Create(0, 3),
 		Tuple.Create(1, 2),
 		Tuple.Create(4, 5),
 		Tuple.Create(6, 7)
-	};
+	];
 
 	private readonly byte[] _namespace;
 
 	public NameBasedGuidGenerator(Guid @namespace) {
 		_namespace = @namespace.ToByteArray();
-		SwapPairs(_namespace, ByteOrderPairsToSwap);
+		SwapPairs(_namespace, _byteOrderPairsToSwap);
 	}
 
 	public Guid Create(byte[] input) {
@@ -23,7 +23,7 @@ public class NameBasedGuidGenerator {
 		using (var algorithm = SHA1.Create()) {
 			algorithm.TransformBlock(_namespace, 0, _namespace.Length, null, 0);
 			algorithm.TransformFinalBlock(input, 0, input.Length);
-			hash = algorithm.Hash;
+			hash = algorithm.Hash!;
 		}
 
 		var buffer = new byte[16];
@@ -32,18 +32,15 @@ public class NameBasedGuidGenerator {
 		buffer[6] = (byte)((buffer[6] & 0x0F) | (5 << 4));
 		buffer[8] = (byte)((buffer[8] & 0x3F) | 0x80);
 
-		SwapPairs(buffer, ByteOrderPairsToSwap);
+		SwapPairs(buffer, _byteOrderPairsToSwap);
 		return new Guid(buffer);
 	}
 
 	private static void SwapPairs(byte[] buffer, Tuple<int, int>[] pairs) {
-		if (pairs == null)
-			throw new ArgumentNullException(nameof(pairs));
+		ArgumentNullException.ThrowIfNull(pairs);
 
 		foreach (var pair in pairs) {
-			var _ = buffer[pair.Item1];
-			buffer[pair.Item1] = buffer[pair.Item2];
-			buffer[pair.Item2] = _;
+			(buffer[pair.Item1], buffer[pair.Item2]) = (buffer[pair.Item2], buffer[pair.Item1]);
 		}
 	}
 }

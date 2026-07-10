@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Transport.BufferManagement;
 
 namespace ReactiveDomain.Transport.Formatting;

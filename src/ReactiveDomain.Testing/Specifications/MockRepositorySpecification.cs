@@ -34,7 +34,9 @@ public class MockRepositorySpecification : DispatcherSpecification {
 		var connectorBus = new InMemoryBus("connector");
 		StreamStoreConnection.SubscribeToAll(evt => {
 			if (evt is ProjectedEvent) { return; }
-			connectorBus.Publish((IMessage)EventSerializer.Deserialize(evt));
+			var msg = (IMessage?)EventSerializer.Deserialize(evt);
+			if (msg is not null)
+				connectorBus.Publish(msg);
 		});
 		RepositoryEvents = new TestQueue(connectorBus, [typeof(Event)]);
 	}

@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.IdentityStorage.Messages;
+﻿using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
@@ -9,7 +8,7 @@ namespace ReactiveDomain.IdentityStorage.Domain;
 /// User authentication and login.
 /// </summary>
 public class Subject : AggregateRoot {
-	private Subject() {
+	public Subject() {
 		RegisterEvents();
 	}
 
@@ -68,6 +67,7 @@ public class Subject : AggregateRoot {
 			hostIpAddress,
 			clientId));
 	}
+
 	/// <summary>
 	/// Log the fact that a user has not been successfully authenticated because account is disabled.
 	/// </summary>
@@ -78,6 +78,7 @@ public class Subject : AggregateRoot {
 			hostIpAddress,
 			clientId));
 	}
+
 	/// <summary>
 	/// Log the fact that a user has not been successfully authenticated because invalid credentials were supplied.
 	/// </summary>

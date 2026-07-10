@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reactive;
+﻿using System.Reactive;
 using EventStore.ClientAPI;
 
 namespace ReactiveDomain;
@@ -7,7 +6,7 @@ namespace ReactiveDomain;
 public interface IStreamStoreConnection : IDisposable {
 
 	/// <summary>
-	/// Gets the name of this connection. A connection name is useful for dT:ReactiveDomain.IStreamStoreConnectionisambiguation
+	/// Gets the name of this connection. A connection name is useful for dT:ReactiveDomain.IStreamStoreConnection Disambiguation
 	/// in log files.
 	/// </summary>
 	string ConnectionName { get; }
@@ -38,7 +37,7 @@ public interface IStreamStoreConnection : IDisposable {
 	/// /// <param name="credentials">The user credentials</param>
 	/// <param name="events">The events to append to the stream.</param>
 	/// <returns>A WriteResult containing the results of the write operation.</returns>
-	WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null, params EventData[] events);
+	WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials? credentials = null, params EventData[] events);
 
 	/// <summary>
 	/// Reads count events from an event stream forwards (e.g. oldest to newest) starting from position start.
@@ -48,7 +47,7 @@ public interface IStreamStoreConnection : IDisposable {
 	/// <param name="count">The count of items to read.</param>
 	/// <param name="credentials">The user credentials</param>
 	/// <returns>A StreamEventsSlice containing the results of the read operation.</returns>
-	StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null);
+	StreamEventsSlice? ReadStreamForward(string stream, long start, long count, UserCredentials? credentials = null);
 
 	/// <summary>
 	/// Reads count events from an event stream forwards (e.g. oldest to newest) starting from position start.
@@ -58,7 +57,7 @@ public interface IStreamStoreConnection : IDisposable {
 	/// <param name="count">The count of items to read.</param>
 	/// <param name="credentials">The user credentials</param>
 	/// <returns>A StreamEventsSlice containing the results of the read operation.</returns>
-	StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null);
+	StreamEventsSlice? ReadStreamBackward(string stream, long start, long count, UserCredentials? credentials = null);
 
 	/// <summary>
 	/// Asynchronously subscribes to a single event stream. New events
@@ -73,32 +72,36 @@ public interface IStreamStoreConnection : IDisposable {
 	IDisposable SubscribeToStream(
 		string stream,
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null);
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null);
 
 	/// <summary>
+	/// <para>
 	/// Subscribes to a single event stream. Existing events from
 	/// lastCheckpoint onwards are read from the stream
 	/// and presented to the user of <see cref="T:EventStoreCatchUpSubscription" />
 	/// as if they had been pushed.
-	/// 
+	/// </para>
+	/// <para>
 	/// Once the end of the stream is read the subscription is
 	/// transparently (to the user) switched to push new events as
 	/// they are written.
-	/// 
+	/// </para>
+	/// <para>
 	/// The action liveProcessingStarted is called when the
 	/// <see cref="T:EventStoreCatchUpSubscription" /> switches from the reading
 	/// phase to the live subscription phase.
+	/// </para>
 	/// </summary>
 	/// <param name="stream">The stream to subscribe to.</param>
 	/// <param name="lastCheckpoint">The event number from which to start.
-	/// 
+	/// <para>
 	/// To receive all events in the stream, use <see cref="F:StreamCheckpoint.StreamStart" />.
 	/// If events have already been received and resubscription from the same point
 	/// is desired, use the event number of the last event processed which
 	/// appeared on the subscription.
-	/// 
-	/// Using <see cref="F:EventStore.ClientAPI.StreamPosition.Start" /> here will result in missing
+	/// </para>
+	/// Using <see cref="StreamPosition.Start" /> here will result in missing
 	/// the first event in the stream.</param>
 	/// <param name="eventAppeared">A Task invoked and awaited when a new event is received over the subscription.</param>
 	/// <param name="liveProcessingStarted">An action invoked when the subscription switches to newly-pushed events.</param>
@@ -109,11 +112,11 @@ public interface IStreamStoreConnection : IDisposable {
 	IDisposable SubscribeToStreamFrom(
 		string stream,
 		long? lastCheckpoint,
-		CatchUpSubscriptionSettings settings,
+		CatchUpSubscriptionSettings? settings,
 		Action<RecordedEvent> eventAppeared,
-		Action<Unit> liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null);
+		Action<Unit>? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null);
 
 	/// <summary>
 	/// Asynchronously subscribes to all events. New
@@ -127,20 +130,20 @@ public interface IStreamStoreConnection : IDisposable {
 	/// <returns>An IDisposable that can be used to close the subscription.</returns>
 	IDisposable SubscribeToAll(
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
 		bool resolveLinkTos = true);
 
 	IDisposable SubscribeToAllFrom(
 		Position from,
 		Action<RecordedEvent> eventAppeared,
-		CatchUpSubscriptionSettings settings = null,
-		Action liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null,
+		CatchUpSubscriptionSettings? settings = null,
+		Action? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
 		bool resolveLinkTos = true);
 
-	void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null);
+	void DeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null);
 
-	void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null);
+	void HardDeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null);
 }

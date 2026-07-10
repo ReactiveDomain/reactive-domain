@@ -8,7 +8,7 @@ public interface IMetadataSource {
 	/// Gets the object's metadata.
 	/// </summary>
 	/// <returns>The object's <see cref="Metadata"/>.</returns>
-	Metadata ReadMetadata();
+	Metadata? ReadMetadata();
 	/// <summary>
 	/// Initializes an object's metadata using default values.
 	/// </summary>

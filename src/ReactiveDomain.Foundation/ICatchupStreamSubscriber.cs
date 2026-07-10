@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Foundation;
 
@@ -41,9 +40,9 @@ public interface ICatchupStreamSubscriber {
 		int? lastCheckpoint,
 		bool resolveLinkTos,
 		Action<IMessage> eventAppeared,
-		Action liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials userCredentials = null,
+		Action? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception>? subscriptionDropped = null,
+		UserCredentials? userCredentials = null,
 		int readBatchSize = 500);
 
 	/// <summary>

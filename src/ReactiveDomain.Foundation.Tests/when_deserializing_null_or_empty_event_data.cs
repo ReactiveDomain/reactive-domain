@@ -1,4 +1,3 @@
-using System;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests;
@@ -11,8 +10,8 @@ public class when_deserializing_null_or_empty_event_data {
 	public void deserialize_returns_null_for_null_metadata() {
 		var evt = new RecordedEvent(
 			"test-stream", Guid.NewGuid(), 0, "TestEvent",
-			data: new byte[] { 0x7B, 0x7D },
-			metadata: null,
+			data: [0x7B, 0x7D],
+			metadata: null!,
 			isJson: true, DateTime.UtcNow, 0);
 
 		var result = _serializer.Deserialize(evt);
@@ -24,8 +23,8 @@ public class when_deserializing_null_or_empty_event_data {
 	public void deserialize_returns_null_for_empty_metadata() {
 		var evt = new RecordedEvent(
 			"test-stream", Guid.NewGuid(), 0, "TestEvent",
-			data: new byte[] { 0x7B, 0x7D },
-			metadata: Array.Empty<byte>(),
+			data: [0x7B, 0x7D],
+			metadata: [],
 			isJson: true, DateTime.UtcNow, 0);
 
 		var result = _serializer.Deserialize(evt);
@@ -37,8 +36,8 @@ public class when_deserializing_null_or_empty_event_data {
 	public void deserialize_returns_null_for_null_data() {
 		var evt = new RecordedEvent(
 			"test-stream", Guid.NewGuid(), 0, "TestEvent",
-			data: null,
-			metadata: new byte[] { 0x7B, 0x7D },
+			data: null!,
+			metadata: [0x7B, 0x7D],
 			isJson: true, DateTime.UtcNow, 0);
 
 		var result = _serializer.Deserialize(evt);
@@ -50,8 +49,8 @@ public class when_deserializing_null_or_empty_event_data {
 	public void deserialize_returns_null_for_empty_data() {
 		var evt = new RecordedEvent(
 			"test-stream", Guid.NewGuid(), 0, "TestEvent",
-			data: Array.Empty<byte>(),
-			metadata: new byte[] { 0x7B, 0x7D },
+			data: [],
+			metadata: [0x7B, 0x7D],
 			isJson: true, DateTime.UtcNow, 0);
 
 		var result = _serializer.Deserialize(evt);
@@ -63,8 +62,8 @@ public class when_deserializing_null_or_empty_event_data {
 	public void deserialize_returns_null_when_both_null() {
 		var evt = new RecordedEvent(
 			"test-stream", Guid.NewGuid(), 0, "TestEvent",
-			data: null,
-			metadata: null,
+			data: null!,
+			metadata: null!,
 			isJson: true, DateTime.UtcNow, 0);
 
 		var result = _serializer.Deserialize(evt);

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 public class StreamEventsSlice {
 
@@ -13,7 +11,7 @@ public class StreamEventsSlice {
 	/// <summary>The direction of read request.</summary>
 	public readonly ReadDirection ReadDirection;
 	/// <summary>
-	/// The events read represented as <see cref="T:EventStore.ClientAPI.ResolvedEvent" />.
+	/// The events read represented as <see cref="RecordedEvent" />.
 	/// </summary>
 	public readonly RecordedEvent[] Events;
 	/// <summary>The next event number that can be read.</summary>
@@ -21,7 +19,7 @@ public class StreamEventsSlice {
 	/// <summary>The last event number in the stream.</summary>
 	public readonly long LastEventNumber;
 	/// <summary>
-	/// A boolean representing whether or not this is the end of the stream.
+	/// A boolean representing whether this is the end of the stream.
 	/// </summary>
 	public readonly bool IsEndOfStream;
 
@@ -29,7 +27,7 @@ public class StreamEventsSlice {
 		string stream,
 		long fromEventNumber,
 		ReadDirection readDirection,
-		RecordedEvent[] events,
+		RecordedEvent[]? events,
 		long nextEventNumber,
 		long lastEventNumber,
 		bool isEndOfStream) {
@@ -40,20 +38,12 @@ public class StreamEventsSlice {
 		Stream = stream;
 		FromEventNumber = fromEventNumber;
 		ReadDirection = readDirection;
-		Events = events ?? new RecordedEvent[0];
+		Events = events ?? [];
 		NextEventNumber = nextEventNumber;
 		LastEventNumber = lastEventNumber;
 		IsEndOfStream = isEndOfStream;
 	}
 }
 
-public class StreamNotFoundSlice : StreamEventsSlice {
-	public StreamNotFoundSlice(string stream)
-		: base(stream, 0, 0, null, 0, 0, true) {
-	}
-}
-public class StreamDeletedSlice : StreamEventsSlice {
-	public StreamDeletedSlice(string stream)
-		: base(stream, 0, 0, null, 0, 0, true) {
-	}
-}
+public class StreamNotFoundSlice(string stream) : StreamEventsSlice(stream, 0, 0, null, 0, 0, true);
+public class StreamDeletedSlice(string stream) : StreamEventsSlice(stream, 0, 0, null, 0, 0, true);

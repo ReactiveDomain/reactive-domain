@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Messaging.Tests;
 
@@ -30,9 +28,9 @@ public class RemoteBusFixture : IDisposable {
 	}
 	protected virtual void Dispose(bool disposing) {
 		if (disposing) {
-			LocalBus?.Dispose();
-			RemoteBus?.Dispose();
-			_connector?.Dispose();
+			LocalBus.Dispose();
+			RemoteBus.Dispose();
+			_connector.Dispose();
 		}
 	}
 	public void Dispose() {

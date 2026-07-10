@@ -3,7 +3,7 @@
 namespace ReactiveDomain.Util;
 
 public static class ShellExecutor {
-	public static string GetOutput(string command, string args = null) {
+	public static string GetOutput(string command, string? args = null) {
 		var info = new ProcessStartInfo {
 			RedirectStandardOutput = true,
 			UseShellExecute = false,
@@ -12,10 +12,8 @@ public static class ShellExecutor {
 			Arguments = args ?? string.Empty
 		};
 
-		using (var process = Process.Start(info)) {
-			// ReSharper disable once PossibleNullReferenceException
-			var res = process.StandardOutput.ReadToEnd();
-			return res;
-		}
+		using var process = Process.Start(info);
+		var res = process?.StandardOutput.ReadToEnd() ?? string.Empty;
+		return res;
 	}
 }

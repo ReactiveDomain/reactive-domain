@@ -1,18 +1,16 @@
-using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Transport;
 
 public class TcpConnectionMonitor {
-	public static readonly TcpConnectionMonitor Default = new TcpConnectionMonitor();
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	public static readonly TcpConnectionMonitor Default = new();
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
-	private readonly object _statsLock = new object();
+	private readonly object _statsLock = new();
 
-	private readonly ConcurrentDictionary<IMonitoredTcpConnection, ConnectionData> _connections = new ConcurrentDictionary<IMonitoredTcpConnection, ConnectionData>();
+	private readonly ConcurrentDictionary<IMonitoredTcpConnection, ConnectionData> _connections = new();
 
 	private long _sentTotal;
 	private long _receivedTotal;
@@ -33,11 +31,11 @@ public class TcpConnectionMonitor {
 	}
 
 	public void Unregister(IMonitoredTcpConnection connection) {
-		_connections.TryRemove(connection, out ConnectionData _);
+		_connections.TryRemove(connection, out _);
 	}
 
 	public TcpStats GetTcpStats() {
-		ConnectionData[] connections = _connections.Values.ToArray();
+		var connections = _connections.Values.ToArray();
 		lock (_statsLock) {
 			var stats = AnalyzeConnections(connections, DateTime.UtcNow - _lastUpdateTime);
 			_lastUpdateTime = DateTime.UtcNow;
@@ -69,7 +67,7 @@ public class TcpConnectionMonitor {
 
 
 		if (Application.IsDefined(Application.DumpStatistics)) {
-			Log.Info("\n# Total connections: {0,3}. Out: {1:0.00}b/s  In: {2:0.00}b/s  Pending Send: {3}  " +
+			_log.Info("\n# Total connections: {0,3}. Out: {1:0.00}b/s  In: {2:0.00}b/s  Pending Send: {3}  " +
 					 "In Send: {4}  Pending Received: {5} Measure Time: {6}",
 				stats.Connections,
 				stats.SendingSpeed,
@@ -88,7 +86,7 @@ public class TcpConnectionMonitor {
 			return;
 
 		if (connection.IsFaulted) {
-			Log.Info("# {0} is faulted", connection);
+			_log.Info("# {0} is faulted", connection);
 			return;
 		}
 
@@ -125,13 +123,13 @@ public class TcpConnectionMonitor {
 	private static void CheckMissingReceiveCallback(ConnectionData connectionData, IMonitoredTcpConnection connection) {
 		bool inReceive = connection.InReceive;
 		bool isReadyForReceive = connection.IsReadyForReceive;
-		DateTime? lastReceiveStarted = connection.LastReceiveStarted;
+		var lastReceiveStarted = connection.LastReceiveStarted;
 
 		int sinceLastReceive = (int)(DateTime.UtcNow - lastReceiveStarted.GetValueOrDefault()).TotalMilliseconds;
 		bool missingReceiveCallback = inReceive && isReadyForReceive && sinceLastReceive > 500;
 
 		if (missingReceiveCallback && connectionData.LastMissingReceiveCallBack) {
-			Log.Error("# {0} {1}ms since last Receive started. No completion callback received, but socket status is READY_FOR_RECEIVE",
+			_log.Error("# {0} {1}ms since last Receive started. No completion callback received, but socket status is READY_FOR_RECEIVE",
 				connection, sinceLastReceive);
 		}
 		connectionData.LastMissingReceiveCallBack = missingReceiveCallback;
@@ -141,7 +139,7 @@ public class TcpConnectionMonitor {
 		// snapshot all data?
 		bool inSend = connection.InSend;
 		bool isReadyForSend = connection.IsReadyForSend;
-		DateTime? lastSendStarted = connection.LastSendStarted;
+		var lastSendStarted = connection.LastSendStarted;
 		int inSendBytes = connection.InSendBytes;
 
 		int sinceLastSend = (int)(DateTime.UtcNow - lastSendStarted.GetValueOrDefault()).TotalMilliseconds;
@@ -149,7 +147,7 @@ public class TcpConnectionMonitor {
 
 		if (missingSendCallback && connectionData.LastMissingSendCallBack) {
 			// _anySendBlockedOnLastRun = true;
-			Log.Error(
+			_log.Error(
 				"# {0} {1}ms since last send started. No completion callback received, but socket status is READY_FOR_SEND. In send: {2}",
 				connection, sinceLastSend, inSendBytes);
 		}
@@ -159,14 +157,14 @@ public class TcpConnectionMonitor {
 	private static void CheckPendingSend(IMonitoredTcpConnection connection) {
 		int pendingSendBytes = connection.PendingSendBytes;
 		if (pendingSendBytes > 128 * 1024) {
-			Log.Info("# {0} {1}kb pending send", connection, pendingSendBytes / 1024);
+			_log.Info("# {0} {1}kb pending send", connection, pendingSendBytes / 1024);
 		}
 	}
 
 	private static void CheckPendingReceived(IMonitoredTcpConnection connection) {
 		int pendingReceivedBytes = connection.PendingReceivedBytes;
 		if (pendingReceivedBytes > 128 * 1024) {
-			Log.Info("# {0} {1}kb are not dispatched", connection, pendingReceivedBytes / 1024);
+			_log.Info("# {0} {1}kb are not dispatched", connection, pendingReceivedBytes / 1024);
 		}
 	}
 

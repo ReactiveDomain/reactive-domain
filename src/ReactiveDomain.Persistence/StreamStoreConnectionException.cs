@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace ReactiveDomain;
 
@@ -8,24 +7,19 @@ namespace ReactiveDomain;
 /// thrown in circumstances which do not have a specific derived exception.
 /// </summary>
 public class StreamStoreConnectionException : Exception {
-	public StreamStoreConnectionException(
-		string message = null, Exception innerException = null)
+	public StreamStoreConnectionException(string? message = null, Exception? innerException = null)
 		: base(message, innerException) { }
-#if NET8_0_OR_GREATER
+
 	[Obsolete(DiagnosticId = "SYSLIB0051")]
-#endif
 	protected StreamStoreConnectionException(SerializationInfo info, StreamingContext context)
 		: base(info, context) { }
 }
 public class StreamStoreNotAvailableException : Exception {
 
-	public StreamStoreNotAvailableException(
-		string message = null,
-		Exception innerException = null)
+	public StreamStoreNotAvailableException(string? message = null, Exception? innerException = null)
 		: base(message, innerException) { }
-#if NET8_0_OR_GREATER
+
 	[Obsolete(DiagnosticId = "SYSLIB0051")]
-#endif
 	protected StreamStoreNotAvailableException(SerializationInfo info, StreamingContext context)
 		: base(info, context) { }
 }
@@ -34,34 +28,26 @@ public class StreamStoreNotAvailableException : Exception {
 /// does not match the version of the stream when the operation was attempted.
 /// </summary>
 public class WrongExpectedVersionException : StreamStoreConnectionException {
-	public WrongExpectedVersionException(string message, Exception innerException = null)
+	public WrongExpectedVersionException(string message, Exception? innerException = null)
 		: base(message, innerException) { }
-	public WrongExpectedVersionException(string stream, int position, int expected, Exception innerException = null)
+	public WrongExpectedVersionException(string stream, int position, int expected, Exception? innerException = null)
 		: base($"The stream {stream} was found at {position}, expected position was {expected}.", innerException) { }
-#if NET8_0_OR_GREATER
+
 	[Obsolete(DiagnosticId = "SYSLIB0051")]
-#endif
 	protected WrongExpectedVersionException(SerializationInfo info, StreamingContext context)
 		: base(info, context) { }
 }
 /// <summary>
 /// Exception thrown if the specified stream was not found.
 /// </summary>
-public class StreamNotFoundException : StreamStoreConnectionException {
-	public StreamNotFoundException(string stream, Exception innerException = null)
-		: base($"The stream {stream} was not found.", innerException) {
-		Stream = new StreamName(stream);
-	}
-
-	public StreamName Stream { get; }
+public class StreamNotFoundException(string stream, Exception? innerException = null)
+	: StreamStoreConnectionException($"The stream {stream} was not found.", innerException) {
+	public StreamName Stream { get; } = new(stream);
 }
 /// <summary>
 /// Exception thrown if the specified stream has been deleted.
 /// </summary>
-public class StreamDeletedException : Exception {
-	public StreamDeletedException(StreamName stream, Exception innerException = null)
-		: base($"The stream {stream} was deleted.", innerException) {
-		Stream = stream;
-	}
-	public StreamName Stream { get; }
+public class StreamDeletedException(StreamName stream, Exception? innerException = null)
+	: Exception($"The stream {stream} was deleted.", innerException) {
+	public StreamName Stream { get; } = stream;
 }

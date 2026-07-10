@@ -1,4 +1,3 @@
-using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using ReactiveDomain.EventStore;
@@ -8,7 +7,7 @@ using ES = EventStore.ClientAPI;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_handling_null_link_to_events {
+public sealed class when_handling_null_link_to_events {
 	[Fact]
 	public void to_recorded_events_skips_null_events() {
 		var valid = CreateResolvedEvent("stream-1", Guid.NewGuid(), 0, "TestEvent");

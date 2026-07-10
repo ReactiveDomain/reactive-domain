@@ -1,7 +1,4 @@
-﻿using System;
+﻿namespace ReactiveDomain;
 
-namespace ReactiveDomain;
-
-public class UnknownTypeException : Exception {
-	public UnknownTypeException(string typeName) : base($"TypeName'{typeName}' was not found in the currently loaded appdomains.") { }
-}
+public class UnknownTypeException(string typeName)
+	: Exception($"TypeName'{typeName}' was not found in the currently loaded appdomains.");

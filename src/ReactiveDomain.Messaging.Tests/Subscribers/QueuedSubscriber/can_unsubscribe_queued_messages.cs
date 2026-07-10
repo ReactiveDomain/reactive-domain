@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -9,20 +7,18 @@ namespace ReactiveDomain.Messaging.Tests.Subscribers.QueuedSubscriber;
 // ReSharper disable once InconsistentNaming
 public sealed class can_unsubscribe_queued_messages {
 
-	private readonly IDispatcher _bus = new Dispatcher("test", 3);
-	private int _msgCount = 20;
-	private readonly List<IMessage> _messages = new List<IMessage>();
+	private readonly Dispatcher _bus = new("test", 3);
+	private const int MsgCount = 20;
+	private readonly List<IMessage> _messages = [];
 	private int _messageCount;
 	private int _eventCount;
 	private long _cmdCount;
 
-	private class TestSubscriber : Bus.QueuedSubscriber {
-		public TestSubscriber(IBus bus) : base(bus) { }
-	}
+	private class TestSubscriber(IBus bus) : Bus.QueuedSubscriber(bus);
 
 	public can_unsubscribe_queued_messages() {
 
-		for (var i = 0; i < _msgCount; i++) {
+		for (var i = 0; i < MsgCount; i++) {
 			_messages.Add(new CountedTestMessage(i));
 			var evt = new CountedEvent(i);
 			_messages.Add(evt);
@@ -48,10 +44,9 @@ public sealed class can_unsubscribe_queued_messages {
 					_bus.Publish(msg);
 				}
 			}
-			AssertEx.IsOrBecomesTrue(() => _messageCount == _msgCount);
-			AssertEx.IsOrBecomesTrue(() => _eventCount == _msgCount);
-			AssertEx.IsOrBecomesTrue(() => _cmdCount == _msgCount);
-
+			AssertEx.IsOrBecomesTrue(() => _messageCount == MsgCount);
+			AssertEx.IsOrBecomesTrue(() => _eventCount == MsgCount);
+			AssertEx.IsOrBecomesTrue(() => _cmdCount == MsgCount);
 		}
 
 		for (int i = 0; i < 3; i++) {
@@ -63,8 +58,8 @@ public sealed class can_unsubscribe_queued_messages {
 			}
 		}
 
-		Assert.True(_messageCount == _msgCount);
-		Assert.True(_eventCount == _msgCount);
-		Assert.True(_cmdCount == _msgCount);
+		Assert.True(_messageCount == MsgCount);
+		Assert.True(_eventCount == MsgCount);
+		Assert.True(_cmdCount == MsgCount);
 	}
 }

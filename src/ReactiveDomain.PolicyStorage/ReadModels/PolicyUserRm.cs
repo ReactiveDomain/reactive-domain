@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
-
 
 namespace ReactiveDomain.Policy.ReadModels;
 
@@ -35,17 +32,19 @@ public class PolicyUserRm :
 			reader.Read<Domain.PolicyUser>(() => Idle);
 			checkpoint = reader.Position;
 		}
+
 		//subscribe
 		Start<Domain.PolicyUser>(checkpoint);
 	}
-	//todo: consider complex types to model this
-	public readonly Dictionary<Guid, Guid> UserByPolicyUser = new Dictionary<Guid, Guid>();
-	private readonly Dictionary<Guid, Guid> _policyByPolicyUser = new Dictionary<Guid, Guid>();
 
-	public readonly Dictionary<Guid, HashSet<string>> RolesByPolicyUser = new Dictionary<Guid, HashSet<string>>();
-	public readonly Dictionary<Guid, HashSet<Guid>> UsersByPolicy = new Dictionary<Guid, HashSet<Guid>>();
-	public readonly Dictionary<Guid, HashSet<Guid>> PoliciesByUser = new Dictionary<Guid, HashSet<Guid>>();
-	public readonly Dictionary<Guid, HashSet<Guid>> PolicyUsersByUserId = new Dictionary<Guid, HashSet<Guid>>();
+	//todo: consider complex types to model this
+	public readonly Dictionary<Guid, Guid> UserByPolicyUser = [];
+	private readonly Dictionary<Guid, Guid> _policyByPolicyUser = [];
+
+	public readonly Dictionary<Guid, HashSet<string>> RolesByPolicyUser = [];
+	public readonly Dictionary<Guid, HashSet<Guid>> UsersByPolicy = [];
+	public readonly Dictionary<Guid, HashSet<Guid>> PoliciesByUser = [];
+	public readonly Dictionary<Guid, HashSet<Guid>> PolicyUsersByUserId = [];
 
 	/// <summary>
 	/// Get the policy user ID for a given combination of user ID and policy ID
@@ -69,39 +68,29 @@ public class PolicyUserRm :
 
 	public void Handle(PolicyUserMsgs.PolicyUserAdded @event) {
 		if (!PolicyUsersByUserId.TryGetValue(@event.UserId, out var policyUsers)) {
-			policyUsers = new HashSet<Guid>();
+			policyUsers = [];
 			PolicyUsersByUserId.Add(@event.UserId, policyUsers);
 		}
 		policyUsers.Add(@event.PolicyUserId);
 
 		if (!UsersByPolicy.TryGetValue(@event.PolicyId, out var users)) {
-			users = new HashSet<Guid>();
+			users = [];
 			UsersByPolicy.Add(@event.PolicyId, users);
 		}
 		users.Add(@event.UserId);
 
 		if (!PoliciesByUser.TryGetValue(@event.UserId, out var policies)) {
-			policies = new HashSet<Guid>();
+			policies = [];
 			PoliciesByUser.Add(@event.UserId, policies);
 		}
 		policies.Add(@event.PolicyId);
 
-		if (!UserByPolicyUser.ContainsKey(@event.PolicyUserId)) {
-			UserByPolicyUser.Add(@event.PolicyUserId, @event.UserId);
-		} else //this shouldn't happen, but let's cover the bases
-		{
-			UserByPolicyUser[@event.PolicyUserId] = @event.UserId;
-		}
+		UserByPolicyUser[@event.PolicyUserId] = @event.UserId;
 
-		if (!_policyByPolicyUser.ContainsKey(@event.PolicyUserId)) {
-			_policyByPolicyUser.Add(@event.PolicyUserId, @event.PolicyId);
-		} else //this shouldn't happen, but let's cover the bases
-		{
-			_policyByPolicyUser[@event.PolicyUserId] = @event.PolicyId;
-		}
+		_policyByPolicyUser[@event.PolicyUserId] = @event.PolicyId;
 
 		if (!RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out _)) {
-			RolesByPolicyUser.Add(@event.PolicyUserId, new HashSet<string>());
+			RolesByPolicyUser.Add(@event.PolicyUserId, []);
 		}
 	}
 
@@ -131,6 +120,7 @@ public class PolicyUserRm :
 			policies.Remove(policyId);
 		}
 	}
+
 	public void Handle(PolicyUserMsgs.UserReactivated @event) {
 		var userId = UserByPolicyUser[@event.PolicyUserId];
 		var policyId = _policyByPolicyUser[@event.PolicyUserId];

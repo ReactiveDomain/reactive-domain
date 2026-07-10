@@ -1,8 +1,6 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Global
 
-using System;
-using System.IO;
 using System.Security.Cryptography;
 
 namespace ReactiveDomain.Util;
@@ -10,23 +8,22 @@ namespace ReactiveDomain.Util;
 public class MD5Hash {
 	public static byte[] GetHashFor(Stream s) {
 		//when using this, it will calculate from this point to the END of the stream!
-		using (MD5 md5 = MD5.Create())
-			return md5.ComputeHash(s);
+		using MD5 md5 = MD5.Create();
+		return md5.ComputeHash(s);
 	}
 
-	public static byte[] GetHashFor(Stream s, int startPosition, long count) {
-		Ensure.Nonnegative(count, "count");
+	public static byte[]? GetHashFor(Stream s, int startPosition, long count) {
+		Ensure.Nonnegative(count, nameof(count));
 
-		using (MD5 md5 = MD5.Create()) {
-			ContinuousHashFor(md5, s, startPosition, count);
-			md5.TransformFinalBlock(Empty.ByteArray, 0, 0);
-			return md5.Hash;
-		}
+		using MD5 md5 = MD5.Create();
+		ContinuousHashFor(md5, s, startPosition, count);
+		md5.TransformFinalBlock(Empty.ByteArray, 0, 0);
+		return md5.Hash;
 	}
 
 	public static void ContinuousHashFor(MD5 md5, Stream s, int startPosition, long count) {
-		Ensure.NotNull(md5, "md5");
-		Ensure.Nonnegative(count, "count");
+		Ensure.NotNull(md5, nameof(md5));
+		Ensure.Nonnegative(count, nameof(count));
 
 		// ReSharper disable once RedundantCheckBeforeAssignment
 		if (s.Position != startPosition)

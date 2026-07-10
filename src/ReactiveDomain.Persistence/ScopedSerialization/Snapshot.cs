@@ -1,12 +1,10 @@
-﻿using System;
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 public abstract class Snapshot : IMetadataSource {
 	[NonSerialized]
-	private Metadata _metadata;
+	private Metadata? _metadata;
 
-	Metadata IMetadataSource.ReadMetadata() {
+	Metadata? IMetadataSource.ReadMetadata() {
 		return _metadata;
 	}
 

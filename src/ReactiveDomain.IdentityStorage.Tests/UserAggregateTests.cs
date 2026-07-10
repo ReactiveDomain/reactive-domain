@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
@@ -97,6 +96,7 @@ public sealed class UserAggregateTests {
 				}
 			});
 	}
+
 	[Fact]
 	public void can_create_new_user_with_empty_given_name() {
 		string emptyGivenName = string.Empty;
@@ -173,35 +173,34 @@ public sealed class UserAggregateTests {
 
 	[Fact]
 	public void cannot_create_user_with_empty_ids() {
-		Assert.Throws<ArgumentException>(
-			() => new User(
-				Guid.Empty,
-				FullName,
-				GivenName,
-				Surname,
-				Email,
-				_command));
-		Assert.Throws<ArgumentNullException>(
-			() => new User(
-				_id,
-				FullName,
-				GivenName,
-				Surname,
-				Email,
-				null));
+		Assert.Throws<ArgumentException>(() => new User(
+			Guid.Empty,
+			FullName,
+			GivenName,
+			Surname,
+			Email,
+			_command));
+		Assert.Throws<ArgumentNullException>(() => new User(
+			_id,
+			FullName,
+			GivenName,
+			Surname,
+			Email,
+			null!));
 
 	}
+
 	[Fact]
 	public void cannot_create_user_with_malformed_email() {
-		Assert.Throws<FormatException>(
-			() => new User(
-				_id,
-				FullName,
-				GivenName,
-				Surname,
-				"joe",
-				_command));
+		Assert.Throws<FormatException>(() => new User(
+			_id,
+			FullName,
+			GivenName,
+			Surname,
+			"joe",
+			_command));
 	}
+
 	[Fact]
 	public void can_map_authdomain() {
 		var user = new User(
@@ -323,6 +322,7 @@ public sealed class UserAggregateTests {
 			});
 
 	}
+
 	[Fact]
 	public void cannot_remap_same_authdomain() {
 		var user = new User(
@@ -338,21 +338,20 @@ public sealed class UserAggregateTests {
 			AuthDomain,
 			UserName);
 
-		Assert.Throws<ArgumentException>(
-			() => user.MapToAuthDomain(
-				_userSidFromAuthProvider,
-				AuthProvider,
-				AuthDomain,
-				UserName));
+		Assert.Throws<ArgumentException>(() => user.MapToAuthDomain(
+			_userSidFromAuthProvider,
+			AuthProvider,
+			AuthDomain,
+			UserName));
 
 	}
 
 	[Fact]
 	public void can_update_name_details() {
-		var newFullName = "newFullName";
-		var newGivenName = "newGivenName";
-		var newSurname = "newSurname";
-		var newEmail = "joe@bob.com";
+		const string newFullName = "newFullName";
+		const string newGivenName = "newGivenName";
+		const string newSurname = "newSurname";
+		const string newEmail = "joe@bob.com";
 
 		var user = new User(
 			_id,
@@ -409,14 +408,10 @@ public sealed class UserAggregateTests {
 			Surname,
 			Email,
 			_command);
-		Assert.Throws<ArgumentNullException>(
-			() => user.UpdateNameDetails(fullName: string.Empty));
-		Assert.Throws<ArgumentNullException>(
-			() => user.UpdateNameDetails(givenName: string.Empty));
-		Assert.Throws<ArgumentNullException>(
-			() => user.UpdateNameDetails(surName: string.Empty));
-		Assert.Throws<ArgumentNullException>(
-			() => user.UpdateNameDetails(email: string.Empty));
+		Assert.Throws<ArgumentException>(() => user.UpdateNameDetails(fullName: string.Empty));
+		Assert.Throws<ArgumentException>(() => user.UpdateNameDetails(givenName: string.Empty));
+		Assert.Throws<ArgumentException>(() => user.UpdateNameDetails(surName: string.Empty));
+		Assert.Throws<ArgumentException>(() => user.UpdateNameDetails(email: string.Empty));
 
 	}
 
@@ -429,9 +424,9 @@ public sealed class UserAggregateTests {
 			Surname,
 			Email,
 			_command);
-		Assert.Throws<FormatException>(
-			() => user.UpdateNameDetails(email: "Joe"));
+		Assert.Throws<FormatException>(() => user.UpdateNameDetails(email: "Joe"));
 	}
+
 	[Fact]
 	public void can_add_client_scope() {
 		var user = new User(
@@ -470,6 +465,7 @@ public sealed class UserAggregateTests {
 		// idempotent add produces no second added event
 		);
 	}
+
 	[Fact]
 	public void can_remove_client_scope() {
 		var user = new User(
@@ -526,8 +522,12 @@ public sealed class UserAggregateTests {
 			}
 		);
 	}
-	[Fact]
-	public void cannot_add_empty_client_scope() {
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	[InlineData("\t")]
+	public void cannot_add_empty_client_scope(string? scope) {
 		var user = new User(
 			_id,
 			FullName,
@@ -535,12 +535,14 @@ public sealed class UserAggregateTests {
 			Surname,
 			Email,
 			_command);
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope(null));
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope(string.Empty));
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope("\t"));
+		Assert.Throws<ArgumentOutOfRangeException>(() => user.AddClientScope(scope!));
 	}
-	[Fact]
-	public void cannot_remove_empty_client_scope() {
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	[InlineData("\t")]
+	public void cannot_remove_empty_client_scope(string? scope) {
 		var user = new User(
 			_id,
 			FullName,
@@ -548,9 +550,7 @@ public sealed class UserAggregateTests {
 			Surname,
 			Email,
 			_command);
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope(null));
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope(string.Empty));
-		Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope("\t"));
+		Assert.Throws<ArgumentOutOfRangeException>(() => user.RemoveClientScope(scope!));
 	}
 
 	[Fact]
@@ -563,7 +563,7 @@ public sealed class UserAggregateTests {
 			Email,
 			_command);
 		user.Deactivate();
-		user.Deactivate();  //idempotent deactivation
+		user.Deactivate(); //idempotent deactivation
 
 		var events = user.TakeEvents();
 		Assert.Collection(
@@ -584,6 +584,7 @@ public sealed class UserAggregateTests {
 		//idempotent deactivation
 		);
 	}
+
 	[Fact]
 	public void can_reactivate_user() {
 		var user = new User(

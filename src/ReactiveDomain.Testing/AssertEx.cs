@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using Xunit;
 
@@ -14,7 +10,7 @@ public class AssertEx {
 	/// Verifies that an action that sends a command throws a <see cref="CommandException"/> and the InnerException is of the correct type.
 	/// </summary>
 	/// <typeparam name="T">The expected type of the InnerException</typeparam>
-	/// <param name="sendAction">An <see cref="Action"/> that sends a <see cref="Messaging.Command"/>.</param>
+	/// <param name="sendAction">An <see cref="Action"/> that sends a <see cref="ReactiveDomain.Messaging.Command"/>.</param>
 	public static void CommandThrows<T>(Action sendAction) where T : Exception {
 		var exp = Assert.Throws<CommandException>(sendAction);
 		Assert.IsType<T>(exp.InnerException);
@@ -32,7 +28,8 @@ public class AssertEx {
 		for (int i = 0; i < expectedSequence.Length; i++) {
 			int b = i + offset;
 
-			Assert.True(buffer[b].Equals(expectedSequence[i]),
+			Assert.NotNull(buffer[b]);
+			Assert.True(buffer[b]!.Equals(expectedSequence[i]),
 				$"Byte #{b} differs: {buffer[b]} != {expectedSequence[i]}");
 		}
 	}
@@ -47,9 +44,8 @@ public class AssertEx {
 	/// <param name="func">The function to evaluate.</param>
 	/// <param name="timeout">The timeout.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
-	public static void IsOrBecomesFalse(Func<bool> func, TimeSpan timeout, string msg = null) {
-		if (timeout <= TimeSpan.Zero)
-			throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+	public static void IsOrBecomesFalse(Func<bool> func, TimeSpan timeout, string? msg = null) {
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
 		IsOrBecomesFalse(func, (int)timeout.TotalMilliseconds, msg);
 	}
 
@@ -64,7 +60,8 @@ public class AssertEx {
 	/// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
 	/// <param name="yieldThread">Ignored, will be removed in a future release.</param>
-	public static void IsOrBecomesFalse(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false) {
+	public static void IsOrBecomesFalse(Func<bool> func, int? timeout = null, string? msg = null,
+		bool yieldThread = false) {
 		IsOrBecomesTrue(() => !func(), timeout, msg);
 	}
 
@@ -78,9 +75,8 @@ public class AssertEx {
 	/// <param name="func">The function to evaluate.</param>
 	/// <param name="timeout">The timeout.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
-	public static void IsOrBecomesTrue(Func<bool> func, TimeSpan timeout, string msg = null) {
-		if (timeout <= TimeSpan.Zero)
-			throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+	public static void IsOrBecomesTrue(Func<bool> func, TimeSpan timeout, string? msg = null) {
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
 		IsOrBecomesTrue(func, (int)timeout.TotalMilliseconds, msg);
 	}
 
@@ -95,9 +91,10 @@ public class AssertEx {
 	/// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
 	/// <param name="yieldThread">Ignored, will be removed in a future release.</param>
-	public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string msg = null, bool yieldThread = false) {
+	public static void IsOrBecomesTrue(Func<bool> func, int? timeout = null, string? msg = null,
+		bool yieldThread = false) {
 		if (func()) {
-			Assert.True(true, msg ?? "");
+			Assert.True(true, msg);
 			return;
 		}
 
@@ -133,9 +130,9 @@ public class AssertEx {
 	/// <param name="expectedVersion">The read model's expected minimum version.</param>
 	/// <param name="timeout">The timeout.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
-	public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, TimeSpan timeout, string msg = null) {
-		if (timeout <= TimeSpan.Zero)
-			throw new ArgumentException("Timeout must be greater than zero", nameof(timeout));
+	public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, TimeSpan timeout,
+		string? msg = null) {
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
 		AtLeastModelVersion(readModel, expectedVersion, (int)timeout.TotalMilliseconds, msg);
 	}
 
@@ -148,7 +145,8 @@ public class AssertEx {
 	/// <param name="expectedVersion">The read model's expected minimum version.</param>
 	/// <param name="timeout">A timeout in milliseconds. If not specified, defaults to 1000.</param>
 	/// <param name="msg">A message to display if the condition is not satisfied.</param>
-	public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, int? timeout = null, string msg = null) {
+	public static void AtLeastModelVersion(ReadModelBase readModel, int expectedVersion, int? timeout = null,
+		string? msg = null) {
 		IsOrBecomesTrue(() => readModel.Version >= expectedVersion, timeout, msg);
 	}
 
@@ -162,6 +160,7 @@ public class AssertEx {
 		Thread.Sleep(delay);
 		return func();
 	}
+
 	/// <summary>
 	/// Allow the test to ensure the listed tasks have begun 
 	/// running in tests.
@@ -176,6 +175,7 @@ public class AssertEx {
 			Thread.Sleep(0);
 		}
 	}
+
 	/// <summary>
 	/// Allow the test to ensure the listed tasks have completed 
 	/// or failed in tests.

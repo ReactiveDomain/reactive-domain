@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ReactiveDomain.IdentityStorage.ReadModels;
+﻿using ReactiveDomain.IdentityStorage.ReadModels;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Policy;
@@ -10,17 +7,19 @@ public class UserPolicy {
 	public static UserPolicy EmptyPolicy() {
 		return new UserPolicy();
 	}
+
 	private UserPolicy() {
 		UserId = Guid.Empty;
 	}
-	public UserDTO User { get; }
+
+	public UserDTO? User { get; }
 	public Guid UserId { get; }
 	public IReadOnlyList<Role> Roles => _roles.ToList().AsReadOnly();
-	private readonly HashSet<Role> _roles = new HashSet<Role>();
-	private readonly HashSet<string> _roleNames = new HashSet<string>();
-	private readonly HashSet<Permission> _permissions = new HashSet<Permission>();
-	private readonly HashSet<Type> _permissionTypes = new HashSet<Type>();
-	private readonly HashSet<string> _permissionNames = new HashSet<string>();
+	private readonly HashSet<Role> _roles = [];
+	private readonly HashSet<string> _roleNames = [];
+	private readonly HashSet<Permission> _permissions = [];
+	private readonly HashSet<Type> _permissionTypes = [];
+	private readonly HashSet<string> _permissionNames = [];
 
 	public UserPolicy(UserDTO user, HashSet<Role> grantedRoles) {
 		Ensure.NotEmptyGuid(user.UserId, nameof(user));
@@ -39,30 +38,22 @@ public class UserPolicy {
 		foreach (var permission in role.Permissions) {
 			_permissions.Add(permission);
 			_permissionNames.Add(permission.PermissionName);
-			if (permission.TryResovleType()) {
-				_permissionTypes.Add(permission.PermissionType);
+			if (permission.TryResolveType()) {
+				_permissionTypes.Add(permission.PermissionType!);
 			}
 		}
 	}
 
-	public bool HasRole(string roleName) {
-		if (string.IsNullOrWhiteSpace(roleName)) { return false; }
-		return _roleNames.Contains(roleName.Trim().ToLowerInvariant());
-	}
-	public bool HasRole(Role role) {
-		if (role == null) { return false; }
-		return _roles.Contains(role);
-	}
-	public bool HasPermission(string permissionName) {
-		if (string.IsNullOrWhiteSpace(permissionName)) { return false; }
-		return _permissionNames.Contains(permissionName);
-	}
-	public bool HasPermission(Permission permission) {
-		if (permission == null) { return false; }
-		return _permissions.Contains(permission);
-	}
-	public bool HasPermission(Type permissionType) {
-		if (permissionType == null) { return false; }
-		return _permissionTypes.Contains(permissionType);
-	}
+	public bool HasRole(string? roleName) => !string.IsNullOrWhiteSpace(roleName) &&
+											 _roleNames.Contains(roleName.Trim().ToLowerInvariant());
+
+	public bool HasRole(Role? role) => role != null && _roles.Contains(role);
+
+	public bool HasPermission(string? permissionName) =>
+		!string.IsNullOrWhiteSpace(permissionName) && _permissionNames.Contains(permissionName);
+
+	public bool HasPermission(Permission? permission) => permission != null && _permissions.Contains(permission);
+
+	public bool HasPermission(Type? permissionType) =>
+		permissionType != null && _permissionTypes.Contains(permissionType);
 }

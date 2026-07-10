@@ -1,9 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -58,6 +54,7 @@ public class TcpBusServerSideTests {
 		using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
 		// wait for tcp connection to be established
+		// ReSharper disable once AccessToDisposedClosure
 		AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
 
 		// put message into client
@@ -94,6 +91,7 @@ public class TcpBusServerSideTests {
 		using var tcpBusClientSide = new TcpBusClientSide(_hostAddress, port);
 
 		// wait for tcp connection to be established
+		// ReSharper disable once AccessToDisposedClosure
 		AssertEx.IsOrBecomesTrue(() => tcpBusClientSide.IsConnected, 200);
 
 		// put disallowed message into client

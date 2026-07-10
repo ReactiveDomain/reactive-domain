@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Reactive;
-using System.Threading.Tasks;
+﻿using System.Reactive;
 using EventStore.ClientAPI.Exceptions;
 using ReactiveDomain.Util;
 using ES = EventStore.ClientAPI;
@@ -16,7 +13,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	/// The connection to the ESDB instance.
 	/// </summary>
 	public readonly ES.IEventStoreConnection EsConnection;
-	private readonly UserCredentials _credentials;
+	private readonly UserCredentials? _credentials;
 	private bool _disposed;
 	private const int WriteBatchSize = 500;
 
@@ -25,7 +22,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	/// </summary>
 	/// <param name="eventStoreConnection">A connection to an EventStoreDB instance.</param>
 	/// <param name="credentials">The optional credentials to use when connecting.</param>
-	public EventStoreConnectionWrapper(ES.IEventStoreConnection eventStoreConnection, UserCredentials credentials = null) {
+	public EventStoreConnectionWrapper(ES.IEventStoreConnection eventStoreConnection, UserCredentials? credentials = null) {
 		Ensure.NotNull(eventStoreConnection, nameof(eventStoreConnection));
 		EsConnection = eventStoreConnection;
 		_credentials = credentials;
@@ -59,7 +56,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	public WriteResult AppendToStream(
 		string stream,
 		long expectedVersion,
-		UserCredentials credentials = null,
+		UserCredentials? credentials = null,
 		params EventData[] events) {
 		try {
 			if (events.Length < WriteBatchSize) {
@@ -89,7 +86,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 		string stream,
 		long start,
 		long count,
-		UserCredentials credentials = null) {
+		UserCredentials? credentials = null) {
 		var slice = EsConnection.ReadStreamEventsForwardAsync(stream, start, (int)count, true, (credentials ?? _credentials)?.ToESCredentials()).Result;
 		switch (slice.Status) {
 			case ES.SliceReadStatus.Success:
@@ -108,7 +105,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 		string stream,
 		long start,
 		long count,
-		UserCredentials credentials = null) {
+		UserCredentials? credentials = null) {
 		var slice = EsConnection.ReadStreamEventsBackwardAsync(stream, start, (int)count, true, (credentials ?? _credentials)?.ToESCredentials()).Result;
 		switch (slice.Status) {
 			case ES.SliceReadStatus.Success:
@@ -126,8 +123,8 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	public IDisposable SubscribeToStream(
 		string stream,
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null) {
+		Action<SubscriptionDropReason, Exception>? subscriptionDropped = null,
+		UserCredentials? credentials = null) {
 		var sub = EsConnection.SubscribeToStreamAsync(
 			stream,
 			true,
@@ -145,11 +142,11 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	public IDisposable SubscribeToStreamFrom(
 		string stream,
 		long? lastCheckpoint,
-		CatchUpSubscriptionSettings settings,
+		CatchUpSubscriptionSettings? settings,
 		Action<RecordedEvent> eventAppeared,
-		Action<Unit> liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null) {
+		Action<Unit>? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception>? subscriptionDropped = null,
+		UserCredentials? credentials = null) {
 		var sub = EsConnection.SubscribeToStreamFrom(
 			stream,
 			(int?)lastCheckpoint,
@@ -168,8 +165,8 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	/// <inheritdoc cref="IStreamStoreConnection"/>
 	public IDisposable SubscribeToAll(
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null,
+		Action<SubscriptionDropReason, Exception>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
 		bool resolveLinkTos = true) {
 		var sub = EsConnection.SubscribeToAllAsync(
 			resolveLinkTos,
@@ -191,10 +188,10 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 	public IDisposable SubscribeToAllFrom(
 		Position from,
 		Action<RecordedEvent> eventAppeared,
-		CatchUpSubscriptionSettings settings = null,
-		Action liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null,
+		CatchUpSubscriptionSettings? settings = null,
+		Action? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
 		bool resolveLinkTos = true) {
 		var sub = EsConnection.SubscribeToAllFrom(
 			new ES.Position(from.CommitPosition, from.PreparePosition),
@@ -204,7 +201,7 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 					eventAppeared(evt.Event.ToRecordedEvent());
 				await Task.FromResult(Unit.Default);
 			},
-			__ => { liveProcessingStarted?.Invoke(); },
+			_ => { liveProcessingStarted?.Invoke(); },
 			(_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
 			(credentials ?? _credentials)?.ToESCredentials());
 		return new Disposer(() => {
@@ -215,37 +212,30 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 
 
 	/// <inheritdoc cref="IStreamStoreConnection"/>
-	public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-		=> EsConnection.DeleteStreamAsync(stream, expectedVersion, (credentials ?? _credentials).ToESCredentials()).Wait();
+	public void DeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null)
+		=> EsConnection.DeleteStreamAsync(stream, expectedVersion, (credentials ?? _credentials)?.ToESCredentials()).Wait();
 
 	/// <inheritdoc cref="IStreamStoreConnection"/>
-	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null)
-		=> EsConnection.DeleteStreamAsync(stream, expectedVersion, true, (credentials ?? _credentials).ToESCredentials()).Wait();
+	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null)
+		=> EsConnection.DeleteStreamAsync(stream, expectedVersion, true, (credentials ?? _credentials)?.ToESCredentials()).Wait();
 
 	public void Dispose() {
 		if (!_disposed) {
-			if (EsConnection != null) {
-				EsConnection.Close();
-				EsConnection.Dispose();
-			}
+			EsConnection.Close();
+			EsConnection.Dispose();
 		}
 		_disposed = true;
 	}
 }
 
 public static class ConnectionHelpers {
-	public static WriteResult ToWriteResult(this ES.WriteResult result) {
-		return new WriteResult(result.NextExpectedVersion);
-	}
-	public static ES.SystemData.UserCredentials ToESCredentials(this UserCredentials credentials) {
-		return credentials == null ?
-			null :
-			new ES.SystemData.UserCredentials(credentials.Username, credentials.Password);
-	}
+	public static WriteResult ToWriteResult(this ES.WriteResult result) => new(result.NextExpectedVersion);
 
-	public static ClientConnectionEventArgs ToRdEventArgs(this ES.ClientConnectionEventArgs args, IStreamStoreConnection conn) {
-		return new ClientConnectionEventArgs(conn, args.RemoteEndPoint);
-	}
+	public static ES.SystemData.UserCredentials ToESCredentials(this UserCredentials credentials) =>
+		new(credentials.Username, credentials.Password);
+
+	public static ClientConnectionEventArgs ToRdEventArgs(this ES.ClientConnectionEventArgs args,
+		IStreamStoreConnection conn) => new(conn, args.RemoteEndPoint);
 
 	public static StreamEventsSlice ToStreamEventsSlice(this ES.StreamEventsSlice slice) {
 		return new StreamEventsSlice(
@@ -268,7 +258,7 @@ public static class ConnectionHelpers {
 	/// </summary>
 	public static RecordedEvent[] ToRecordedEvents(this ES.ResolvedEvent[] resolvedEvents) {
 		Ensure.NotNull(resolvedEvents, nameof(resolvedEvents));
-		var events = new System.Collections.Generic.List<RecordedEvent>(resolvedEvents.Length);
+		var events = new List<RecordedEvent>(resolvedEvents.Length);
 		for (int i = 0; i < resolvedEvents.Length; i++) {
 			var evt = resolvedEvents[i].Event;
 			if (evt == null)
@@ -322,9 +312,6 @@ public static class ConnectionHelpers {
 	}
 
 	public static ES.CatchUpSubscriptionSettings ToCatchUpSubscriptionSettings(this CatchUpSubscriptionSettings settings) {
-		if (null == settings)
-			return null;
-
 		return new ES.CatchUpSubscriptionSettings(
 			settings.MaxLiveQueueSize,
 			settings.ReadBatchSize,

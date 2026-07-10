@@ -1,6 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation.Domain;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -9,7 +7,7 @@ namespace ReactiveDomain;
 public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventSource {
 	protected AggregateRoot() { }
 
-	protected AggregateRoot(ICorrelatedMessage source = null) {
+	protected AggregateRoot(ICorrelatedMessage? source = null) {
 		if (source == null) { return; }
 		Source = source;
 	}
@@ -32,13 +30,9 @@ public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventS
 					"Cannot change source unless there are no recorded events, or current source is null");
 			}
 			_causationId = value.MsgId;
-			if (value.CorrelationId != Guid.Empty) {
-				_correlationId = value.CorrelationId;
-			} else //root msg 
-			{
-				_correlationId = value.MsgId;
-			}
-
+			_correlationId = value.CorrelationId != Guid.Empty
+				? value.CorrelationId
+				: value.MsgId; //root msg
 		}
 	}
 
@@ -57,8 +51,7 @@ public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventS
 	protected override void OnEventRaised(object @event) {
 		if (@event is ICorrelatedMessage correlatedEvent) {
 			if (_correlationId == Guid.Empty) {
-				throw new InvalidOperationException(
-					"Cannot raise events without valid source.");
+				throw new InvalidOperationException("Cannot raise events without valid source.");
 			}
 			if (correlatedEvent.CorrelationId != Guid.Empty || correlatedEvent.CausationId != Guid.Empty) {
 				throw new InvalidOperationException("Cannot raise events with a different source.");
@@ -66,7 +59,7 @@ public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventS
 			correlatedEvent.CorrelationId = _correlationId;
 			correlatedEvent.CausationId = _causationId;
 		} else {
-			throw new InvalidOperationException("Cannot raise uncorrelated events from correlated Aggrgate.");
+			throw new InvalidOperationException("Cannot raise uncorrelated events from correlated Aggregate.");
 		}
 		base.OnEventRaised(@event);
 	}

@@ -17,7 +17,7 @@ public static class Forwarder {
 		return new Balancing<T>(to);
 	}
 
-	class F<T> : IHandle<T> where T : IMessage {
+	private class F<T> : IHandle<T> where T : IMessage {
 		private readonly IPublisher _to;
 
 		public F(IPublisher to) {
@@ -29,7 +29,7 @@ public static class Forwarder {
 		}
 	}
 
-	class Balancing<T> : IHandle<T> where T : IMessage {
+	private class Balancing<T> : IHandle<T> where T : IMessage {
 		private readonly IPublisher[] _to;
 		private int _last;
 

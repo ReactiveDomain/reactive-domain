@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Foundation.StreamStore;
+﻿namespace ReactiveDomain.Foundation.StreamStore;
 
 /// <summary>
 /// While it might seem more natural to save and restore the event set behind the aggregate,

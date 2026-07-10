@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.IdentityStorage.Messages;
+﻿using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.IdentityStorage.ReadModels;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing;
@@ -52,7 +51,6 @@ public sealed class UsersRMTests : ReadModelTestSpecification, IDisposable {
 		Assert.Equal(_id2, id2);
 	}
 
-
 	[Fact]
 	public void cannot_get_nonexistent_user() {
 		Assert.False(_rm.HasUser(_subjectId, "bogus", out _));
@@ -103,7 +101,8 @@ public sealed class UsersRMTests : ReadModelTestSpecification, IDisposable {
 		_rm.DirectApply(evt5);
 		_rm.DirectApply(evt6);
 	}
+
 	public void Dispose() {
-		_rm?.Dispose();
+		_rm.Dispose();
 	}
 }

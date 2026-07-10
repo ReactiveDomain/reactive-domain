@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 namespace ReactiveDomain;
 
 /// <summary>
@@ -14,7 +11,7 @@ public class EventRecorder {
 	/// Initializes a new event recorder.
 	/// </summary>
 	public EventRecorder() {
-		_recorded = new List<object>();
+		_recorded = [];
 	}
 
 	/// <summary>

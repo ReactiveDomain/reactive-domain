@@ -1,5 +1,3 @@
-using System;
-
 namespace ReactiveDomain.Messaging.Bus;
 
 public interface IMessageHandler {
@@ -10,23 +8,20 @@ public interface IMessageHandler {
 }
 
 public class MessageHandler<T> : IMessageHandler where T : class, IMessage {
-	public string HandlerName { get; private set; }
+	public string HandlerName { get; }
 
-	public Type MessageType { get; private set; }
+	public Type MessageType { get; }
 
 	private readonly IHandle<T> _handler;
 
-	public MessageHandler(IHandle<T> handler, string handlerName) {
-		if (handler == null)
-			throw new ArgumentNullException(nameof(handler));
-		_handler = handler;
+	public MessageHandler(IHandle<T> handler, string? handlerName) {
+		_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 		HandlerName = handlerName ?? string.Empty;
 		MessageType = typeof(T);
 	}
 
 	public bool TryHandle(IMessage message) {
-		var msg = message as T;
-		if (msg == null)
+		if (message is not T msg)
 			return false;
 
 		_handler.Handle(msg); //if this throws let it bubble up.
@@ -38,6 +33,6 @@ public class MessageHandler<T> : IMessageHandler where T : class, IMessage {
 	}
 
 	public override string ToString() {
-		return string.IsNullOrEmpty(HandlerName) ? _handler.ToString() : HandlerName;
+		return string.IsNullOrEmpty(HandlerName) ? _handler.ToString() ?? "anonymous handler" : HandlerName;
 	}
 }

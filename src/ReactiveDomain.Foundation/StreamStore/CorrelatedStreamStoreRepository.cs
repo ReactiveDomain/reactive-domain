@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Foundation.StreamStore;
 using ReactiveDomain.Messaging;
 
@@ -7,10 +7,10 @@ namespace ReactiveDomain.Foundation;
 
 public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposable {
 	private readonly IRepository _repository;
-	private readonly IAggregateCache _cache;
+	private readonly IAggregateCache? _cache;
 	public CorrelatedStreamStoreRepository(
 		IRepository repository,
-		Func<IRepository, IAggregateCache> cacheFactory = null) {
+		Func<IRepository, IAggregateCache>? cacheFactory = null) {
 		_repository = repository;
 		if (cacheFactory != null) {
 			_cache = cacheFactory(_repository);
@@ -21,14 +21,14 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 		IStreamNameBuilder streamNameBuilder,
 		IStreamStoreConnection streamStoreConnection,
 		IEventSerializer eventSerializer,
-		Func<IRepository, IAggregateCache> cacheFactory = null) {
+		Func<IRepository, IAggregateCache>? cacheFactory = null) {
 		_repository = new StreamStoreRepository(streamNameBuilder, streamStoreConnection, eventSerializer);
 		if (cacheFactory != null) {
 			_cache = cacheFactory(_repository);
 		}
 	}
 
-	public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
 		return TryGetById(id, int.MaxValue, out aggregate, source);
 	}
 
@@ -36,7 +36,7 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 		return GetById<TAggregate>(id, int.MaxValue, source);
 	}
 
-	public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, int version, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
 		try {
 			aggregate = GetById<TAggregate>(id, version, source);
 			return true;
@@ -47,18 +47,14 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 	}
 
 	public TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
-		TAggregate agg = _cache?.GetById<TAggregate>(id, version);
+		var agg = _cache?.GetById<TAggregate>(id, version);
 
 		if (agg == null || agg.Version > version) {
 			agg = _repository.GetById<TAggregate>(id, version);
-			if (agg != null) {
-				_cache?.Save(agg);
-			}
+			_cache?.Save(agg);
 		}
 
-		if (agg != null) {
-			((ICorrelatedEventSource)agg).Source = source;
-		}
+		((ICorrelatedEventSource)agg).Source = source;
 		return agg;
 	}
 

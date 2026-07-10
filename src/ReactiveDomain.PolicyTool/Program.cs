@@ -1,11 +1,7 @@
 ﻿//#define Attach
-using System;
 using System.CommandLine;
-using System.DirectoryServices.AccountManagement;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading;
 using Microsoft.Extensions.Configuration;
 using ReactiveDomain.EventStore;
 using ReactiveDomain.Foundation;
@@ -19,12 +15,13 @@ using ReactiveDomain.Policy.Messages;
 using ES = EventStore.ClientAPI;
 using RDMsg = ReactiveDomain.Messaging;
 
+// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace PolicyTool;
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 public static class Program {
-	public static IConfiguredConnection EsConnection;
-	public static IConfigurationRoot AppConfig;
-
+	private static ConfiguredConnection? _esConnection;
+	private static IConfigurationRoot? _appConfig;
 
 	/// <summary>
 	/// Policy Setup Tool
@@ -43,6 +40,10 @@ public static class Program {
 #endif
 
 		ConnectToEs();
+		if (_esConnection is null || _appConfig is null) {
+			Console.WriteLine("Failed to connect to DB.");
+			return -1;
+		}
 
 		//Root CMD w/ global required AppName
 		var appName = new Option<string>("app-name") {
@@ -111,23 +112,25 @@ public static class Program {
 		addUser.Options.Add(domain);
 
 
+		// ReSharper disable UnusedVariable
 		var mainBus = new Dispatcher("Main Bus");
-		var appSvc = new ReactiveDomain.Policy.ApplicationSvc(EsConnection, mainBus);
-		var appRm = new ReactiveDomain.Policy.ReadModels.ApplicationRm(EsConnection);
-		var polSvc = new PolicySvc(EsConnection, mainBus);
-		var userStore = new UserStore(EsConnection);
+		var appSvc = new ApplicationSvc(_esConnection, mainBus);
+		var appRm = new ReactiveDomain.Policy.ReadModels.ApplicationRm(_esConnection);
+		var polSvc = new PolicySvc(_esConnection, mainBus);
+		var userStore = new UserStore(_esConnection);
 		var validation = new UserValidation(userStore);
-		var userRm = new UsersRm(EsConnection);
-		var subjectsRm = new SubjectsRm(EsConnection);
-		var userSvc = new UserSvc(EsConnection.GetRepository(), mainBus);
-		var clientSvc = new ClientSvc(EsConnection.GetRepository(), mainBus);
-		var clientStore = new ClientStore(EsConnection);
+		var userRm = new UsersRm(_esConnection);
+		var subjectsRm = new SubjectsRm(_esConnection);
+		var userSvc = new UserSvc(_esConnection.GetRepository(), mainBus);
+		var clientSvc = new ClientSvc(_esConnection.GetRepository(), mainBus);
+		var clientStore = new ClientStore(_esConnection);
+		// ReSharper restore UnusedVariable
 		addApp.SetAction(parseResult => {
-			var name = parseResult.GetValue(appName);
-			var secret = parseResult.GetValue(clientSecret);
+			var name = parseResult.GetValue(appName)!;
+			var secret = parseResult.GetValue(clientSecret)!;
 			var id = parseResult.GetValue(appId);
-			var uri = parseResult.GetValue(appUri);
-			var version = "1.0";
+			var uri = parseResult.GetValue(appUri)!;
+			const string version = "1.0";
 			var cmd = RDMsg.MessageBuilder.New(() => new ApplicationMsgs.CreateApplication(
 				id,
 				Guid.NewGuid(),
@@ -150,7 +153,7 @@ public static class Program {
 			}
 		});
 		showApp.SetAction(parseResult => {
-			var name = parseResult.GetValue(appName);
+			var name = parseResult.GetValue(appName)!;
 			try {
 				var app = appRm.GetApplication(name);
 				Console.WriteLine(app);
@@ -168,8 +171,8 @@ public static class Program {
 		});
 
 		addRoles.SetAction(parseResult => {
-			var name = parseResult.GetValue(appName);
-			var listOfRoles = parseResult.GetValue(roles);
+			var name = parseResult.GetValue(appName)!;
+			var listOfRoles = parseResult.GetValue(roles) ?? [];
 			var policy = appRm.GetPolicies(name)[0]; //There should only be one as multiple policies is not currently supported
 			foreach (var role in listOfRoles) {
 				mainBus.TrySend(
@@ -179,13 +182,13 @@ public static class Program {
 
 		});
 		addUser.SetAction(parseResult => {
-			var app = parseResult.GetValue(appName);
-			var user = parseResult.GetValue(userName);
-			var accountDomain = parseResult.GetValue(domain);
-			var appRoles = parseResult.GetValue(roles);
+			var app = parseResult.GetValue(appName)!;
+			var user = parseResult.GetValue(userName)!;
+			var accountDomain = parseResult.GetValue(domain)!;
+			var appRoles = parseResult.GetValue(roles) ?? [];
 			Guid userId;
 
-			if (validation.TryFindUserPrincipal(accountDomain, user, out UserPrincipal principal)) {
+			if (validation.TryFindUserPrincipal(accountDomain, user, out var principal)) {
 				Guid subjectId;
 				if (!userRm.HasUser(principal.Sid.Value, principal.Context.Name, out userId)) {
 					userId = Guid.NewGuid();
@@ -213,7 +216,7 @@ public static class Program {
 				//todo: fix the read model race condition
 				if (n % 10 == 0) {
 					userRm.Dispose();
-					userRm = new UsersRm(EsConnection);
+					userRm = new UsersRm(_esConnection);
 				}
 
 			}
@@ -253,18 +256,18 @@ public static class Program {
 					}
 				}
 
-				var repo = EsConnection.GetRepository();
+				var repo = _esConnection.GetRepository();
 				repo.Save(policyUser);
 			}
 		});
 		getConfig.SetAction(parseResult => {
-			var name = parseResult.GetValue(appName);
+			var name = parseResult.GetValue(appName)!;
 			var app = appRm.GetApplication(name);
 			var config = new StringBuilder();
 			config.AppendLine("\"RdPolicyConfig\": {");
 			config.AppendLine("\"TokenServer\": \"[Token Server URL]\",");
 			config.AppendLine("\"ESConnection\": \"[ES Connection String]\",");
-			config.AppendLine($"\"PolicySchema\":\"{AppConfig.GetValue<string>("PolicySchema")}\"");
+			config.AppendLine($"\"PolicySchema\":\"{_appConfig.GetValue<string>("PolicySchema")}\"");
 			config.Append(clientStore.GetAppConfig(app.ApplicationId));
 
 			Console.WriteLine(config);
@@ -280,21 +283,23 @@ public static class Program {
 	}
 
 	private static void ConnectToEs() {
-		AppConfig = new ConfigurationBuilder()
+		_appConfig = new ConfigurationBuilder()
 			.SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
 			.AddJsonFile("es_settings.json")
 			.Build();
-		Console.WriteLine($"{AppConfig["EventStoreUserName"]}");
-		EsConnection = BuildConnection();
+		Console.WriteLine($"{_appConfig["EventStoreUserName"]}");
+		_esConnection = BuildConnection();
 		Console.WriteLine("Connected");
 	}
 
-	private static IConfiguredConnection BuildConnection() {
-		string esUser = AppConfig.GetValue<string>("EventStoreUserName");
-		string esPwd = AppConfig.GetValue<string>("EventStorePassword");
-		string esIpAddress = AppConfig.GetValue<string>("EventStoreIPAddress");
-		int esPort = AppConfig.GetValue<int>("EventStorePort");
-		string schema = AppConfig.GetValue<string>("PolicySchema");
+	private static ConfiguredConnection? BuildConnection() {
+		if (_appConfig is null)
+			return null;
+		var esUser = _appConfig.GetValue<string>("EventStoreUserName");
+		var esPwd = _appConfig.GetValue<string>("EventStorePassword");
+		var esIpAddress = _appConfig.GetValue<string>("EventStoreIPAddress") ?? IPAddress.Loopback.ToString();
+		int esPort = _appConfig.GetValue<int>("EventStorePort");
+		var schema = _appConfig.GetValue<string>("PolicySchema") ?? string.Empty;
 		var tcpEndpoint = new IPEndPoint(IPAddress.Parse(esIpAddress), esPort);
 
 		var settings = ES.ConnectionSettings.Create()

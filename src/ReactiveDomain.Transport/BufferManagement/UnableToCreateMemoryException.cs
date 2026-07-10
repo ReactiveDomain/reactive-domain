@@ -26,12 +26,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-using System;
-
 namespace ReactiveDomain.Transport.BufferManagement;
 
-public class UnableToCreateMemoryException : Exception {
-	public UnableToCreateMemoryException()
-		: base("All buffers were in use and acquiring more memory has been disabled.") {
-	}
-}
+public class UnableToCreateMemoryException()
+	: Exception("All buffers were in use and acquiring more memory has been disabled.");

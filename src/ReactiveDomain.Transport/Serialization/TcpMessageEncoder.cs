@@ -1,12 +1,11 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Transport.Serialization;
 
 public class TcpMessageEncoder {
-	private static readonly Encoding Encoding = Helper.UTF8NoBom;
+	private static readonly Encoding _encoding = Helper.UTF8NoBom;
 
 	public Tuple<string, Type> FromBytes(ArraySegment<byte> data) {
 		if (data.Array == null || data.Count < sizeof(int))
@@ -30,8 +29,8 @@ public class TcpMessageEncoder {
 		if (typeName is null)
 			throw new Exception("Expected non-null type name.");
 
-		var typeNameByteCount = Encoding.GetByteCount(typeName);
-		var jsonByteCount = Encoding.GetByteCount(jsonMessage);
+		var typeNameByteCount = _encoding.GetByteCount(typeName);
+		var jsonByteCount = _encoding.GetByteCount(jsonMessage);
 		var totalByteCount = sizeof(int) + typeNameByteCount + sizeof(int) + jsonByteCount;
 
 		var array = new byte[totalByteCount];
@@ -60,11 +59,11 @@ public class TcpMessageEncoder {
 	}
 
 	private static int ReadBytes(byte[] source, int offset, int count, out string destination) {
-		destination = Encoding.GetString(source, offset, count);
+		destination = _encoding.GetString(source, offset, count);
 		return count;
 	}
 
 	private static int WriteBytes(string source, byte[] destination, int offset) {
-		return Encoding.GetBytes(source, 0, source.Length, destination, offset);
+		return _encoding.GetBytes(source, 0, source.Length, destination, offset);
 	}
 }

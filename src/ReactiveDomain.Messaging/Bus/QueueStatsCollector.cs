@@ -1,8 +1,4 @@
-﻿//using EventStore.Core.Services.Monitoring.Stats;
-
-using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Diagnostics;
 using ReactiveDomain.Messaging.Monitoring.Stats;
 using ReactiveDomain.Util;
 
@@ -11,21 +7,21 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.Messaging.Bus;
 
 public class QueueStatsCollector {
-	private static readonly TimeSpan MinRefreshPeriod = TimeSpan.FromMilliseconds(100);
+	private static readonly TimeSpan _minRefreshPeriod = TimeSpan.FromMilliseconds(100);
 
 	public readonly string Name;
 
-	public readonly string GroupName;
+	public readonly string? GroupName;
 
-	public Type InProgressMessage { get { return _inProgressMsgType; } }
+	public Type? InProgressMessage { get; private set; }
 
-	private readonly object _statisticsLock = new object(); // this lock is mostly acquired from a single thread (+ rarely to get statistics), so performance penalty is not too high
+	private readonly object _statisticsLock = new(); // this lock is mostly acquired from a single thread (+ rarely to get statistics), so performance penalty is not too high
 
-	private readonly Stopwatch _busyWatch = new Stopwatch();
-	private readonly Stopwatch _idleWatch = new Stopwatch();
-	private readonly Stopwatch _totalIdleWatch = new Stopwatch();
-	private readonly Stopwatch _totalBusyWatch = new Stopwatch();
-	private readonly Stopwatch _totalTimeWatch = new Stopwatch();
+	private readonly Stopwatch _busyWatch = new();
+	private readonly Stopwatch _idleWatch = new();
+	private readonly Stopwatch _totalIdleWatch = new();
+	private readonly Stopwatch _totalBusyWatch = new();
+	private readonly Stopwatch _totalTimeWatch = new();
 	private TimeSpan _lastTotalIdleTime;
 	private TimeSpan _lastTotalBusyTime;
 	private TimeSpan _lastTotalTime;
@@ -34,12 +30,11 @@ public class QueueStatsCollector {
 	private long _lastTotalItems;
 	private int _lifetimeQueueLengthPeak;
 	private int _currentQueueLengthPeak;
-	private Type _lastProcessedMsgType;
-	private Type _inProgressMsgType;
+	private Type? _lastProcessedMsgType;
 
 	private bool _wasIdle;
 
-	public QueueStatsCollector(string name, string groupName = null) {
+	public QueueStatsCollector(string name, string? groupName = null) {
 		Ensure.NotNull(name, "name");
 
 		Name = name;
@@ -64,13 +59,13 @@ public class QueueStatsCollector {
 		_lifetimeQueueLengthPeak = _lifetimeQueueLengthPeak > queueLength ? _lifetimeQueueLengthPeak : queueLength;
 		_currentQueueLengthPeak = _currentQueueLengthPeak > queueLength ? _currentQueueLengthPeak : queueLength;
 
-		_inProgressMsgType = msgType;
+		InProgressMessage = msgType;
 	}
 
 	public void ProcessingEnded(int itemsProcessed) {
 		Interlocked.Add(ref _totalItems, itemsProcessed);
-		_lastProcessedMsgType = _inProgressMsgType;
-		_inProgressMsgType = null;
+		_lastProcessedMsgType = InProgressMessage;
+		InProgressMessage = null;
 	}
 
 	public void EnterIdle() {
@@ -123,15 +118,15 @@ public class QueueStatsCollector {
 				avgItemsPerSecond,
 				avgProcessingTime,
 				idleTimePercent,
-				_busyWatch.IsRunning ? _busyWatch.Elapsed : (TimeSpan?)null,
-				_idleWatch.IsRunning ? _idleWatch.Elapsed : (TimeSpan?)null,
+				_busyWatch.IsRunning ? _busyWatch.Elapsed : null,
+				_idleWatch.IsRunning ? _idleWatch.Elapsed : null,
 				totalItems,
 				_currentQueueLengthPeak,
 				_lifetimeQueueLengthPeak,
 				_lastProcessedMsgType,
-				_inProgressMsgType);
+				InProgressMessage);
 
-			if (totalTime - _lastTotalTime >= MinRefreshPeriod) {
+			if (totalTime - _lastTotalTime >= _minRefreshPeriod) {
 				_lastTotalTime = totalTime;
 				_lastTotalIdleTime = totalIdleTime;
 				_lastTotalBusyTime = totalBusyTime;

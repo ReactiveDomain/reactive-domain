@@ -1,8 +1,6 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AssignNullToNotNullAttribute
 
-using System;
-using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -12,9 +10,8 @@ using ReactiveDomain.Logging;
 namespace ReactiveDomain.Util;
 
 public static class FileStreamExtensions {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-	private static readonly Action<FileStream> FlushSafe;
-	private static readonly Func<FileStream, SafeFileHandle> GetFileHandle;
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly Action<FileStream> _flushSafe;
 
 	[DllImport("kernel32.dll", SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
@@ -25,24 +22,22 @@ public static class FileStreamExtensions {
 	//static extern bool FlushViewOfFile(IntPtr lpBaseAddress, UIntPtr dwNumberOfBytesToFlush);
 
 	static FileStreamExtensions() {
-
 		try {
-			ParameterExpression arg = Expression.Parameter(typeof(FileStream), "f");
-			Expression expr = Expression.Field(arg, typeof(FileStream).GetField("_handle", BindingFlags.Instance | BindingFlags.NonPublic));
-			GetFileHandle = Expression.Lambda<Func<FileStream, SafeFileHandle>>(expr, arg).Compile();
-			FlushSafe = f => {
+			var arg = Expression.Parameter(typeof(FileStream), "f");
+			Expression expr = Expression.Field(arg, typeof(FileStream).GetField("_handle", BindingFlags.Instance | BindingFlags.NonPublic)!);
+			var getFileHandle = Expression.Lambda<Func<FileStream, SafeFileHandle>>(expr, arg).Compile();
+			_flushSafe = f => {
 				f.Flush(flushToDisk: false);
-				if (!FlushFileBuffers(GetFileHandle(f)))
-					throw new Exception(string.Format("FlushFileBuffers failed with err: {0}", Marshal.GetLastWin32Error()));
+				if (!FlushFileBuffers(getFileHandle(f)))
+					throw new Exception($"FlushFileBuffers failed with err: {Marshal.GetLastWin32Error()}");
 			};
 		} catch (Exception exc) {
-			Log.ErrorException(exc, "Error while compiling sneaky SafeFileHandle getter.");
-			FlushSafe = f => f.Flush(flushToDisk: true);
+			_log.ErrorException(exc, "Error while compiling sneaky SafeFileHandle getter.");
+			_flushSafe = f => f.Flush(flushToDisk: true);
 		}
-
 	}
 
 	public static void FlushToDisk(this FileStream fs) {
-		FlushSafe(fs);
+		_flushSafe(fs);
 	}
 }

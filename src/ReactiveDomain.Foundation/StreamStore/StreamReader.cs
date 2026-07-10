@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -18,9 +16,9 @@ public class StreamReader : IStreamReader {
 	private readonly IStreamStoreConnection _streamStoreConnection;
 	protected long StreamPosition;
 	protected bool FirstEventRead;
-	public long? Position => FirstEventRead ? StreamPosition : (long?)null;
+	public long? Position => FirstEventRead ? StreamPosition : null;
 	public Action<IMessage> Handle { get; set; }
-	public string StreamName { get; private set; }
+	public string StreamName { get; private set; } = string.Empty;
 	private const int ReadPageSize = 500;
 
 	private bool _cancelled;
@@ -34,7 +32,7 @@ public class StreamReader : IStreamReader {
 	/// <param name="serializer">the serializer to apply to the events in the stream</param>
 	/// <param name="handle">The target handle that read events are passed to</param>
 	public StreamReader(
-		string name,
+		string? name,
 		IStreamStoreConnection streamStoreConnection,
 		IStreamNameBuilder streamNameBuilder,
 		IEventSerializer serializer,
@@ -129,7 +127,7 @@ public class StreamReader : IStreamReader {
 	/// i.e. [StreamName]
 	/// </summary>
 	/// <param name="streamName">An exact stream name.</param>
-	/// <param name="completionCheck">Read will block until true to ensure processing has completed, use '()=> true' to continue without blocking. If cancellation or timeout is required it should be implemented in the completion method</param>
+	/// <param name="completionCheck">Read will block until true to ensure processing has completed, use '<c>() => true</c>' to continue without blocking. If cancellation or timeout is required it should be implemented in the completion method</param>
 	/// <param name="checkpoint">The event number of the last received event. Reading will start with the next event.</param>
 	/// <param name="count">The count of items to read</param>
 	/// <param name="readBackwards">Read the stream backwards</param>
@@ -156,7 +154,7 @@ public class StreamReader : IStreamReader {
 		else
 			sliceStart = checkpoint.Value + (readBackwards ? -1 : 1);
 		long remaining = count ?? long.MaxValue;
-		StreamEventsSlice currentSlice;
+		StreamEventsSlice? currentSlice;
 
 		do {
 			var page = remaining < ReadPageSize ? remaining : ReadPageSize;
@@ -165,15 +163,16 @@ public class StreamReader : IStreamReader {
 				? _streamStoreConnection.ReadStreamForward(streamName, sliceStart, page)
 				: _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
 
-			if (!(currentSlice is StreamEventsSlice)) { break; }
-			if (currentSlice.Events.Length > 0) { FirstEventRead = true; }
-			remaining -= currentSlice.Events.Length;
-			sliceStart = currentSlice.NextEventNumber;
+			if (currentSlice?.Events.Length > 0) { FirstEventRead = true; }
+			if (currentSlice is not null) {
+				remaining -= currentSlice.Events.Length;
+				sliceStart = currentSlice.NextEventNumber;
+			}
 
-			Array.ForEach(currentSlice.Events, EventRead);
+			Array.ForEach(currentSlice?.Events ?? [], EventRead);
 
-		} while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
-		if (FirstEventRead && completionCheck != null) { SpinWait.SpinUntil(() => { try { return completionCheck(); } catch { return true; } }); }
+		} while (currentSlice?.IsEndOfStream == false && !_cancelled && remaining != 0);
+		if (FirstEventRead) { SpinWait.SpinUntil(() => { try { return completionCheck(); } catch { return true; } }); }
 		return FirstEventRead;
 	}
 
@@ -185,7 +184,7 @@ public class StreamReader : IStreamReader {
 		try {
 			var result = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
 
-			return result.GetType() == typeof(StreamEventsSlice);
+			return result?.GetType() == typeof(StreamEventsSlice);
 		} catch (Exception) {
 			return false;
 		}

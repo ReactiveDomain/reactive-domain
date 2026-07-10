@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using ReactiveDomain.Logging;
@@ -13,24 +12,24 @@ internal class PerfCounterHelper : IDisposable {
 
 	private readonly ILogger _log;
 
-	private readonly PerformanceCounter _totalCpuCounter;
-	private readonly PerformanceCounter _totalMemCounter; //doesn't work on mono
-	private readonly PerformanceCounter _procCpuCounter;
-	private readonly PerformanceCounter _procThreadsCounter;
+	private readonly PerformanceCounter? _totalCpuCounter;
+	private readonly PerformanceCounter? _totalMemCounter; //doesn't work on mono
+	private readonly PerformanceCounter? _procCpuCounter;
+	private readonly PerformanceCounter? _procThreadsCounter;
 
-	private readonly PerformanceCounter _thrownExceptionsRateCounter;
-	private readonly PerformanceCounter _contentionsRateCounter;
+	private readonly PerformanceCounter? _thrownExceptionsRateCounter;
+	private readonly PerformanceCounter? _contentionsRateCounter;
 
-	private readonly PerformanceCounter _gcGen0ItemsCounter;
-	private readonly PerformanceCounter _gcGen1ItemsCounter;
-	private readonly PerformanceCounter _gcGen2ItemsCounter;
-	private readonly PerformanceCounter _gcGen0SizeCounter;
-	private readonly PerformanceCounter _gcGen1SizeCounter;
-	private readonly PerformanceCounter _gcGen2SizeCounter;
-	private readonly PerformanceCounter _gcLargeHeapSizeCounter;
-	private readonly PerformanceCounter _gcAllocationSpeedCounter;
-	private readonly PerformanceCounter _gcTimeInGcCounter;
-	private readonly PerformanceCounter _gcTotalBytesInHeapsCounter;
+	private readonly PerformanceCounter? _gcGen0ItemsCounter;
+	private readonly PerformanceCounter? _gcGen1ItemsCounter;
+	private readonly PerformanceCounter? _gcGen2ItemsCounter;
+	private readonly PerformanceCounter? _gcGen0SizeCounter;
+	private readonly PerformanceCounter? _gcGen1SizeCounter;
+	private readonly PerformanceCounter? _gcGen2SizeCounter;
+	private readonly PerformanceCounter? _gcLargeHeapSizeCounter;
+	private readonly PerformanceCounter? _gcAllocationSpeedCounter;
+	private readonly PerformanceCounter? _gcTimeInGcCounter;
+	private readonly PerformanceCounter? _gcTotalBytesInHeapsCounter;
 
 	public PerfCounterHelper(ILogger log) {
 		_log = log;
@@ -53,8 +52,8 @@ internal class PerfCounterHelper : IDisposable {
 		_gcTotalBytesInHeapsCounter = CreatePerfCounterForProcess(".NET CLR Memory", "# Bytes in all Heaps");
 	}
 
-	private PerformanceCounter CreatePerfCounterForProcess(string category, string counter) {
-		string processName = null;
+	private PerformanceCounter? CreatePerfCounterForProcess(string category, string counter) {
+		string? processName = null;
 		try {
 			processName = Process.GetCurrentProcess().ProcessName;
 			return CreatePerfCounter(category, counter, processName);
@@ -65,7 +64,7 @@ internal class PerfCounterHelper : IDisposable {
 		}
 	}
 
-	private PerformanceCounter CreatePerfCounter(string category, string counter, string instance = null) {
+	private PerformanceCounter? CreatePerfCounter(string category, string counter, string? instance = null) {
 		try {
 			return string.IsNullOrEmpty(instance)
 				? new PerformanceCounter(category, counter)
@@ -78,7 +77,7 @@ internal class PerfCounterHelper : IDisposable {
 	}
 
 	public float GetTotalCpuUsage() {
-		return _totalCpuCounter != null ? _totalCpuCounter.NextValue() : InvalidCounterResult;
+		return _totalCpuCounter?.NextValue() ?? InvalidCounterResult;
 	}
 
 	public long GetFreeMemory() {
@@ -86,7 +85,7 @@ internal class PerfCounterHelper : IDisposable {
 	}
 
 	public float GetProcCpuUsage() {
-		return _procCpuCounter != null ? _procCpuCounter.NextValue() : InvalidCounterResult;
+		return _procCpuCounter?.NextValue() ?? InvalidCounterResult;
 	}
 
 	public int GetProcThreadsCount() {
@@ -94,11 +93,11 @@ internal class PerfCounterHelper : IDisposable {
 	}
 
 	public float GetThrownExceptionsRate() {
-		return _thrownExceptionsRateCounter != null ? _thrownExceptionsRateCounter.NextValue() : InvalidCounterResult;
+		return _thrownExceptionsRateCounter?.NextValue() ?? InvalidCounterResult;
 	}
 
 	public float GetContentionsRateCount() {
-		return _contentionsRateCounter != null ? _contentionsRateCounter.NextValue() : InvalidCounterResult;
+		return _contentionsRateCounter?.NextValue() ?? InvalidCounterResult;
 	}
 
 	public GcStats GetGcStats() {
@@ -111,46 +110,30 @@ internal class PerfCounterHelper : IDisposable {
 			gcGen1Size: _gcGen1SizeCounter != null ? _gcGen1SizeCounter.NextSample().RawValue : InvalidCounterResult,
 			gcGen2Size: _gcGen2SizeCounter != null ? _gcGen2SizeCounter.NextSample().RawValue : InvalidCounterResult,
 			gcLargeHeapSize: _gcLargeHeapSizeCounter != null ? _gcLargeHeapSizeCounter.NextSample().RawValue : InvalidCounterResult,
-			gcAllocationSpeed: _gcAllocationSpeedCounter != null ? _gcAllocationSpeedCounter.NextValue() : InvalidCounterResult,
-			gcTimeInGc: _gcTimeInGcCounter != null ? _gcTimeInGcCounter.NextValue() : InvalidCounterResult,
+			gcAllocationSpeed: _gcAllocationSpeedCounter?.NextValue() ?? InvalidCounterResult,
+			gcTimeInGc: _gcTimeInGcCounter?.NextValue() ?? InvalidCounterResult,
 			gcTotalBytesInHeaps: _gcTotalBytesInHeapsCounter != null ? _gcTotalBytesInHeapsCounter.NextSample().RawValue : InvalidCounterResult);
 		// ReSharper restore RedundantArgumentName
 	}
 
 	public void Dispose() {
-		if (_totalCpuCounter != null)
-			_totalCpuCounter.Dispose();
-		if (_totalMemCounter != null)
-			_totalMemCounter.Dispose();
-		if (_procCpuCounter != null)
-			_procCpuCounter.Dispose();
-		if (_procThreadsCounter != null)
-			_procThreadsCounter.Dispose();
+		_totalCpuCounter?.Dispose();
+		_totalMemCounter?.Dispose();
+		_procCpuCounter?.Dispose();
+		_procThreadsCounter?.Dispose();
 
-		if (_thrownExceptionsRateCounter != null)
-			_thrownExceptionsRateCounter.Dispose();
-		if (_contentionsRateCounter != null)
-			_contentionsRateCounter.Dispose();
+		_thrownExceptionsRateCounter?.Dispose();
+		_contentionsRateCounter?.Dispose();
 
-		if (_gcGen0ItemsCounter != null)
-			_gcGen0ItemsCounter.Dispose();
-		if (_gcGen1ItemsCounter != null)
-			_gcGen1ItemsCounter.Dispose();
-		if (_gcGen2ItemsCounter != null)
-			_gcGen2ItemsCounter.Dispose();
-		if (_gcGen0SizeCounter != null)
-			_gcGen0SizeCounter.Dispose();
-		if (_gcGen1SizeCounter != null)
-			_gcGen1SizeCounter.Dispose();
-		if (_gcGen2SizeCounter != null)
-			_gcGen2SizeCounter.Dispose();
-		if (_gcLargeHeapSizeCounter != null)
-			_gcLargeHeapSizeCounter.Dispose();
-		if (_gcAllocationSpeedCounter != null)
-			_gcAllocationSpeedCounter.Dispose();
-		if (_gcTimeInGcCounter != null)
-			_gcTimeInGcCounter.Dispose();
-		if (_gcTotalBytesInHeapsCounter != null)
-			_gcTotalBytesInHeapsCounter.Dispose();
+		_gcGen0ItemsCounter?.Dispose();
+		_gcGen1ItemsCounter?.Dispose();
+		_gcGen2ItemsCounter?.Dispose();
+		_gcGen0SizeCounter?.Dispose();
+		_gcGen1SizeCounter?.Dispose();
+		_gcGen2SizeCounter?.Dispose();
+		_gcLargeHeapSizeCounter?.Dispose();
+		_gcAllocationSpeedCounter?.Dispose();
+		_gcTimeInGcCounter?.Dispose();
+		_gcTotalBytesInHeapsCounter?.Dispose();
 	}
 }

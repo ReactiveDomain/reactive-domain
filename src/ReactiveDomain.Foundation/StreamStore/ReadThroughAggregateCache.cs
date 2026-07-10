@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace ReactiveDomain.Foundation.StreamStore;
 
@@ -15,14 +14,17 @@ namespace ReactiveDomain.Foundation.StreamStore;
 ///
 /// Save failures will clear the aggregate from the cache and return false
 /// </summary>
-public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
+public class ReadThroughAggregateCache : IAggregateCache {
 
 	private readonly IRepository _baseRepository;
-	private readonly Dictionary<(Type type, Guid id), IEventSource> _knownAggregates = new Dictionary<(Type type, Guid id), IEventSource>();
+	private readonly Dictionary<(Type type, Guid id), IEventSource> _knownAggregates = new();
+
 	public ReadThroughAggregateCache(IRepository baseRepository) {
 		_baseRepository = baseRepository;
 	}
-	public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
+
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate,
+		int version = int.MaxValue) where TAggregate : class, IEventSource {
 		try {
 			aggregate = GetById<TAggregate>(id, version);
 			return true;
@@ -45,7 +47,8 @@ public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
 		return aggregate;
 	}
 
-	public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
+	public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue)
+		where TAggregate : class, IEventSource {
 		if (aggregate == null)
 			throw new ArgumentNullException(nameof(aggregate));
 		if (aggregate.ExpectedVersion == version)
@@ -70,6 +73,7 @@ public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
 			//don't regress the cache, just return
 			return;
 		}
+
 		//cache is ahead of item, but behind requested version
 		aggregate = (TAggregate)cached;
 		_baseRepository.Update(ref aggregate, version);
@@ -100,8 +104,6 @@ public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
 		} catch {
 			_knownAggregates.Remove((type, aggregate.Id));
 		}
-
-
 	}
 
 	/// <summary>
@@ -125,6 +127,7 @@ public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
 	public bool Remove<TAggregate>(Guid id) {
 		return _knownAggregates.Remove((typeof(TAggregate), id));
 	}
+
 	public void Clear() {
 		_knownAggregates.Clear();
 	}
@@ -134,6 +137,7 @@ public class ReadThroughAggregateCache : IAggregateCache, IDisposable {
 			_knownAggregates.Clear();
 		}
 	}
+
 	public void Dispose() {
 		Dispose(true);
 		GC.SuppressFinalize(this);

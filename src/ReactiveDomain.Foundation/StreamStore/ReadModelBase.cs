@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
@@ -114,11 +109,9 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false,
 		bool validateStream = false, CancellationToken cancelWaitToken = default) {
-		if (_getReader != null) {
-			using var reader = _getReader();
-			reader.Read(stream, () => Idle, checkpoint);
-			checkpoint = reader.Position ?? checkpoint;
-		}
+		using var reader = _getReader();
+		reader.Read(stream, () => Idle, checkpoint);
+		checkpoint = reader.Position ?? checkpoint;
 
 		AddNewListener().Start(stream, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
 	}
@@ -134,11 +127,9 @@ public abstract class ReadModelBase :
 	public void StartAsync(string stream, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) {
 		_readTasks.Add(Task.Run(() => {
-			if (_getReader != null) {
-				using var reader = _getReader();
-				reader.Read(stream, () => Idle, checkpoint);
-				checkpoint = reader.Position ?? checkpoint;
-			}
+			using var reader = _getReader();
+			reader.Read(stream, () => Idle, checkpoint);
+			checkpoint = reader.Position ?? checkpoint;
 
 			AddNewListener().Start(stream, checkpoint, false, validateStream, cancelWaitToken);
 		}, cancelWaitToken));
@@ -160,11 +151,9 @@ public abstract class ReadModelBase :
 	public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false,
 		bool validateStream = false, CancellationToken cancelWaitToken = default)
 		where TAggregate : class, IEventSource {
-		if (_getReader != null) {
-			using var reader = _getReader();
-			reader.Read<TAggregate>(id, () => Idle, checkpoint);
-			checkpoint = reader.Position;
-		}
+		using var reader = _getReader();
+		reader.Read<TAggregate>(id, () => Idle, checkpoint);
+		checkpoint = reader.Position;
 
 		AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
 	}
@@ -181,11 +170,9 @@ public abstract class ReadModelBase :
 	public void StartAsync<TAggregate>(Guid id, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
 		_readTasks.Add(Task.Run(() => {
-			if (_getReader != null) {
-				using var reader = _getReader();
-				reader.Read<TAggregate>(id, () => Idle, checkpoint);
-				checkpoint = reader.Position;
-			}
+			using var reader = _getReader();
+			reader.Read<TAggregate>(id, () => Idle, checkpoint);
+			checkpoint = reader.Position;
 
 			AddNewListener().Start<TAggregate>(id, checkpoint, false, validateStream, cancelWaitToken);
 		}, cancelWaitToken));
@@ -205,11 +192,9 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
-		if (_getReader != null) {
-			using var reader = _getReader();
-			reader.Read<TAggregate>(() => Idle, checkpoint);
-			checkpoint = reader.Position;
-		}
+		using var reader = _getReader();
+		reader.Read<TAggregate>(() => Idle, checkpoint);
+		checkpoint = reader.Position;
 
 		AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, validateStream, cancelWaitToken);
 	}
@@ -226,11 +211,9 @@ public abstract class ReadModelBase :
 	public void StartAsync<TAggregate>(long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
 		_readTasks.Add(Task.Run(() => {
-			if (_getReader != null) {
-				using var reader = _getReader();
-				reader.Read<TAggregate>(() => Idle, checkpoint);
-				checkpoint = reader.Position;
-			}
+			using var reader = _getReader();
+			reader.Read<TAggregate>(() => Idle, checkpoint);
+			checkpoint = reader.Position;
 
 			AddNewListener().Start<TAggregate>(checkpoint, false, validateStream, cancelWaitToken);
 		}, cancelWaitToken));
@@ -251,11 +234,11 @@ public abstract class ReadModelBase :
 			return;
 		if (disposing) {
 			lock (_listeners) {
-				_listeners?.ForEach(l => l?.Dispose());
+				_listeners.ForEach(l => l.Dispose());
 			}
 
-			_queue?.RequestStop();
-			_bus?.Dispose();
+			_queue.RequestStop();
+			_bus.Dispose();
 		}
 
 		_disposed = true;

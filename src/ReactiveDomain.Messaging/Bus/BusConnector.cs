@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace ReactiveDomain.Messaging.Bus;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
 /// <summary>
 /// This class allows connecting two buses to share message traffic without echoing
@@ -9,9 +6,9 @@ namespace ReactiveDomain.Messaging.Bus;
 public class BusConnector : IDisposable {
 	private readonly IDispatcher _left;
 	private readonly IDispatcher _right;
-	private readonly HashSet<Guid> _fromLeft = new HashSet<Guid>();
-	private readonly HashSet<Guid> _fromRight = new HashSet<Guid>();
-	private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
+	private readonly HashSet<Guid> _fromLeft = [];
+	private readonly HashSet<Guid> _fromRight = [];
+	private readonly List<IDisposable> _subscriptions = [];
 	public BusConnector(IDispatcher left, IDispatcher right) {
 		_left = left;
 		_right = right;
@@ -54,7 +51,7 @@ public class BusConnector : IDisposable {
 	}
 	public void Dispose() {
 		foreach (var subscription in _subscriptions) {
-			subscription?.Dispose();
+			subscription.Dispose();
 		}
 	}
 }

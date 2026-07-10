@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+﻿using System.Collections.Concurrent;
 
 namespace ReactiveDomain.Messaging.Bus;
 
@@ -17,7 +13,7 @@ public sealed class LaterService : IHandle<DelaySendEnvelope>, IDisposable {
 	private long _stop = False;
 	private long _stopped = False;
 
-	private Thread _thread;
+	private Thread? _thread;
 
 	public LaterService(IPublisher outbound, ITimeSource timeSource) {
 		_outbound = outbound;
@@ -112,20 +108,6 @@ public sealed class LaterService : IHandle<DelaySendEnvelope>, IDisposable {
 		try { Stop(100); } catch {/*don't throw exceptions here, but don't wait forever either */}
 		_pending.Clear();
 		while (_inbound.TryDequeue(out _)) { /* empty the queue */ }
-		_processNext?.Dispose();
-#if NETFRAMEWORK
-            if (_thread?.IsAlive ?? false) { _thread?.Abort(); }
-#endif
+		_processNext.Dispose();
 	}
 }
-#if NET452 || NET40
-    //copied from from .net framework 472 ToUnixTimeMilliseconds implementation
-    //added here to support 452
-    public static class TimeHelper {
-        /// <summary>Returns the number of milliseconds that have elapsed since 1970-01-01T00:00:00.000Z. </summary>
-        /// <returns>The number of milliseconds that have elapsed since 1970-01-01T00:00:00.000Z. </returns>
-        public static long ToUnixTimeMilliseconds(this DateTimeOffset dt) {
-            return dt.UtcDateTime.Ticks / 10000L - 62135596800000L;
-        }
-    }
-#endif

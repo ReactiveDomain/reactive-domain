@@ -1,24 +1,18 @@
-﻿using System;
+﻿namespace ReactiveDomain;
 
-namespace ReactiveDomain;
-
-public class ProjectedEvent : RecordedEvent {
-	public string ProjectedStream;
-	public long OriginalEventNumber;
-
-	public ProjectedEvent(
-		string projectedStream,
-		long originalEventNumber,
-		string eventStreamId,
-		Guid eventId,
-		long eventNumber,
-		string eventType,
-		byte[] data,
-		byte[] metadata,
-		bool isJson,
-		DateTime created,
-		long createdEpoch) : base(
-		eventStreamId,
+public class ProjectedEvent(
+	string projectedStream,
+	long originalEventNumber,
+	string eventStreamId,
+	Guid eventId,
+	long eventNumber,
+	string eventType,
+	byte[] data,
+	byte[] metadata,
+	bool isJson,
+	DateTime created,
+	long createdEpoch)
+	: RecordedEvent(eventStreamId,
 		eventId,
 		eventNumber,
 		eventType,
@@ -27,7 +21,6 @@ public class ProjectedEvent : RecordedEvent {
 		isJson,
 		created,
 		createdEpoch) {
-		ProjectedStream = projectedStream;
-		OriginalEventNumber = originalEventNumber;
-	}
+	public string ProjectedStream = projectedStream;
+	public long OriginalEventNumber = originalEventNumber;
 }

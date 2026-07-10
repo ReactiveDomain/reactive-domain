@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 public class Serialization {
 	public Serialization(SerializationPair<IMessageSerializer, IMessageDeserializer> messages, SerializationPair<ISnapshotSerializer, ISnapshotDeserializer> snapshots, Func<SerializedMessage, IMetadata> metadata) {

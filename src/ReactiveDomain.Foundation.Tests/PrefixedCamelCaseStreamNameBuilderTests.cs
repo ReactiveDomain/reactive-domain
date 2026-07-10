@@ -1,32 +1,31 @@
-﻿
-using System;
-using ReactiveDomain.Testing;
+﻿using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests;
 
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class PrefixedCamelCaseStreamNameBuilderTests {
-	[Fact]
-	public void ThrowsOnNonExplicitNullOrEmptyPrefix() {
-		Assert.Throws<ArgumentException>(() => new PrefixedCamelCaseStreamNameBuilder(string.Empty));
-		Assert.Throws<ArgumentException>(() => new PrefixedCamelCaseStreamNameBuilder("  "));
-		Assert.Throws<ArgumentException>(() => new PrefixedCamelCaseStreamNameBuilder(null));
+public sealed class PrefixedCamelCaseStreamNameBuilderTests {
+	[Theory]
+	[InlineData("")]
+	[InlineData("  ")]
+	[InlineData(null)]
+	public void ThrowsOnNonExplicitNullOrEmptyPrefix(string? prefix) {
+		Assert.Throws<ArgumentException>(() => new PrefixedCamelCaseStreamNameBuilder(prefix!));
 	}
 
 	[Fact]
 	public void CanGeneratePrefixedCamelCaseStreamNameForAggregate() {
-		var aggregareId = Guid.Parse("96370d8277ae4ccab626091775ed01bb");
+		var aggregateId = Guid.Parse("96370d8277ae4ccab626091775ed01bb");
 
 		Assert.Equal(
 			"testAggregate-96370d8277ae4ccab626091775ed01bb",
 			new PrefixedCamelCaseStreamNameBuilder()
-				.GenerateForAggregate(typeof(TestAggregate), aggregareId));
+				.GenerateForAggregate(typeof(TestAggregate), aggregateId));
 
 		Assert.Equal(
 			"unittest.testAggregate-96370d8277ae4ccab626091775ed01bb",
 			new PrefixedCamelCaseStreamNameBuilder("UnitTest")
-				.GenerateForAggregate(typeof(TestAggregate), aggregareId));
+				.GenerateForAggregate(typeof(TestAggregate), aggregateId));
 	}
 
 	[Fact]

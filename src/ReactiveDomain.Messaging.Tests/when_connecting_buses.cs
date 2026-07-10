@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using ReactiveDomain.Testing;
+﻿using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests;
@@ -9,10 +8,10 @@ namespace ReactiveDomain.Messaging.Tests;
 public class when_connecting_buses : IClassFixture<RemoteBusFixture> {
 	private readonly RemoteBusFixture _fixture;
 
-
 	public when_connecting_buses(RemoteBusFixture fixture) {
 		_fixture = fixture;
 	}
+
 	[Fact]
 	public void messages_will_be_published_on_both_buses_without_echo() {
 		_fixture.Reset();

@@ -13,5 +13,4 @@ public interface IPublisher {
 /// Marks <see cref="IPublisher"/> as being OK for
 /// cross-thread publishing (e.g. in replying to envelopes).
 /// </summary>
-public interface IThreadSafePublisher {
-}
+public interface IThreadSafePublisher;

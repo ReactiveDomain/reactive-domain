@@ -1,4 +1,3 @@
-using System;
 using Newtonsoft.Json;
 
 namespace ReactiveDomain.Messaging;
@@ -14,13 +13,13 @@ public abstract record Message : IMessage, IMetadataSource {
 	public Guid MsgId { get; private set; } = Guid.NewGuid();
 
 	[NonSerialized]
-	private Metadata _metadata;
+	private Metadata? _metadata;
 
 	/// <summary>
 	/// Gets the object's metadata.
 	/// </summary>
 	/// <returns>The message's <see cref="Metadata"/>.</returns>
-	public Metadata ReadMetadata() => _metadata;
+	public Metadata? ReadMetadata() => _metadata;
 
 	/// <summary>
 	/// Initializes an object's metadata using a default <see cref="Metadata"/> object.

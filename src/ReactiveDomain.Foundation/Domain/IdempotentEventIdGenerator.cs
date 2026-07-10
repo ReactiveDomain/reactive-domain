@@ -1,17 +1,13 @@
-using System;
 using System.Text;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain;
 
 public class IdempotentEventIdGenerator {
 	//DON'T CHANGE THIS!
-	public static readonly Guid Namespace = new Guid("DB726A34-B4C6-4BBD-927E-FBC2E5781867");
+	public static readonly Guid Namespace = new("DB726A34-B4C6-4BBD-927E-FBC2E5781867");
 
-	private readonly NameBasedGuidGenerator _generator;
-
-	public IdempotentEventIdGenerator() {
-		_generator = new NameBasedGuidGenerator(Namespace);
-	}
+	private readonly NameBasedGuidGenerator _generator = new(Namespace);
 
 	/// <summary>
 	/// Generates an idempotent event identifier based on the command identifier, the expected version, the event name and its index in the set of produced events.

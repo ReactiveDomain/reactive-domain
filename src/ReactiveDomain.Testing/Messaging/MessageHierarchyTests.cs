@@ -1,11 +1,10 @@
-﻿using System.Linq;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing;
 
-public class MessageHierarchyTest {
+public class MessageHierarchyTests {
 	[Fact]
 	public void TestNameLookup() {
 		var messageType = MessageHierarchy.GetTypeByName("Message");
@@ -15,6 +14,7 @@ public class MessageHierarchyTest {
 		Assert.Equal(typeof(Event), childMessageType[0]);
 		Assert.True(childMessageType.Count == 1);
 	}
+
 	[Fact]
 	public void TestFullNameLookup() {
 		var messageType = MessageHierarchy.GetTypeByFullName("ReactiveDomain.Messaging.Message");
@@ -22,6 +22,7 @@ public class MessageHierarchyTest {
 		var childMessageType = MessageHierarchy.GetTypeByFullName("ReactiveDomain.Messaging.Event");
 		Assert.Equal(typeof(Event), childMessageType);
 	}
+
 	[Fact]
 	public void TestMessageAncestors() {
 		var sut = typeof(Message);
@@ -33,16 +34,17 @@ public class MessageHierarchyTest {
 
 		sut = typeof(ParentTestEvent);
 		ancestors = MessageHierarchy.AncestorsAndSelf(sut).ToList();
-		Assert.Equal(3, ancestors.Count());
+		Assert.Equal(3, ancestors.Count);
 		Assert.Contains(typeof(ParentTestEvent), ancestors);
 		Assert.Contains(typeof(Message), ancestors);
 		Assert.Contains(typeof(object), ancestors);
 	}
+
 	[Fact]
-	public void TestMessageDescendents() {
+	public void TestMessageDescendants() {
 		var sut = typeof(ParentTestEvent);
 		var descendants = MessageHierarchy.DescendantsAndSelf(sut).ToList();
-		Assert.Equal(3, descendants.Count());
+		Assert.Equal(3, descendants.Count);
 		Assert.Contains(typeof(ParentTestEvent), descendants);
 		Assert.Contains(typeof(ChildTestEvent), descendants);
 		Assert.Contains(typeof(GrandChildTestEvent), descendants);
@@ -52,6 +54,7 @@ public class MessageHierarchyTest {
 		Assert.Single(descendants);
 		Assert.Contains(typeof(GrandChildTestEvent), descendants);
 	}
+
 	// TODO: Unit Test for loaded assembly scenario.
 	//[Fact]
 	//public void TestAssemblyLoad()

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Mail;
+﻿using System.Net.Mail;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
@@ -11,15 +9,16 @@ namespace ReactiveDomain.IdentityStorage.Domain;
 /// Aggregate for a User.
 /// </summary>
 public class User : AggregateRoot {
-	private string _fullName;
-	private string _givenName;
-	private string _surname;
-	private string _email;
-	private readonly HashSet<string> _clientScopes = new HashSet<string>();
+	private string? _fullName;
+	private string? _givenName;
+	private string? _surname;
+	private string? _email;
+	private readonly HashSet<string> _clientScopes = [];
 	//SubjectId-Username
-	private Dictionary<string, string> _mappedAuthDomains = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, string> _mappedAuthDomains = new(StringComparer.OrdinalIgnoreCase);
 	private bool _isActive;
-	private User() {
+
+	public User() {
 		RegisterEvents();
 	}
 
@@ -29,9 +28,8 @@ public class User : AggregateRoot {
 		Register<UserMsgs.ClientScopeAdded>(Apply);
 		Register<UserMsgs.ClientScopeRemoved>(Apply);
 		Register<UserMsgs.AuthDomainMapped>(Apply);
-		Register<UserMsgs.Activated>(e => _isActive = true);
-		;
-		Register<UserMsgs.Deactivated>(e => _isActive = false);
+		Register<UserMsgs.Activated>(_ => _isActive = true);
+		Register<UserMsgs.Deactivated>(_ => _isActive = false);
 	}
 
 	private void Apply(UserMsgs.UserCreated evt) {
@@ -115,7 +113,7 @@ public class User : AggregateRoot {
 	/// Deactivate the user.
 	/// </summary>
 	public void Deactivate() {
-		if (_isActive == false) { return; }
+		if (!_isActive) { return; }
 		Raise(new UserMsgs.Deactivated(Id));
 	}
 
@@ -123,33 +121,35 @@ public class User : AggregateRoot {
 	/// Reactivate the user.
 	/// </summary>
 	public void Reactivate() {
-		if (_isActive == true) { return; }
+		if (_isActive) { return; }
 		Raise(new UserMsgs.Activated(Id));
 	}
 	/// <summary>
 	/// Update Name Details
 	/// </summary>
 	public void UpdateNameDetails(
-		string givenName = null,
-		string surName = null,
-		string fullName = null,
-		string email = null) {
+		string? givenName = null,
+		string? surName = null,
+		string? fullName = null,
+		string? email = null) {
 
 		if (IsChange(givenName, _givenName) ||
 			IsChange(surName, _surname) ||
 			IsChange(fullName, _fullName) ||
 			IsChange(email, _email)) {
-			if (!string.IsNullOrEmpty(email))
-				new MailAddress(email);  // performs validation on the provided address.
+			if (!string.IsNullOrEmpty(email)) {
+				_ = new MailAddress(email);
+			}
+
 			Raise(new UserMsgs.UserDetailsUpdated(
 				Id,
-				givenName ?? _givenName,
-				surName ?? _surname,
-				fullName ?? _fullName,
-				email ?? _email));
+				(givenName ?? _givenName) ?? "",
+				(surName ?? _surname) ?? "",
+				(fullName ?? _fullName) ?? "",
+				(email ?? _email) ?? ""));
 		}
 	}
-	private bool IsChange(string input, string existing) {
+	private static bool IsChange(string? input, string? existing) {
 		if (input == null) { return false; }
 		Ensure.NotNullOrEmpty(input, nameof(input));
 		return !string.Equals(input, existing, StringComparison.Ordinal);

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
@@ -19,7 +17,7 @@ public class IdempotentHandler<T> : IHandle<T> where T : class, IMessage {
 		_handler = handle;
 		_bufferSize = bufferSize;
 		_guidQueue = new Queue<Guid>(bufferSize);
-		_guids = new HashSet<Guid>();
+		_guids = [];
 		_last = Guid.Empty;
 	}
 

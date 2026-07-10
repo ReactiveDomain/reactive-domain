@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -22,7 +21,7 @@ public abstract class ReadModelTestSpecification : IPublisher {
 	/// <summary>
 	/// The list of messages recorded from the test class's Publish method.
 	/// </summary>
-	protected List<IMessage> PublishedMessages = new List<IMessage>();
+	protected List<IMessage> PublishedMessages = [];
 	/// <summary>
 	/// A <see cref="NullConfiguredConnection"/> for use in creating read models under test without needing additional infrastructure.
 	/// </summary>

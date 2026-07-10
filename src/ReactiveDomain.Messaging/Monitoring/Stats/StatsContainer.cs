@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ReactiveDomain.Util;
+﻿using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Monitoring.Stats;
 
 public class StatsContainer {
-	private readonly Dictionary<string, object> _stats = new Dictionary<string, object>();
+	private readonly Dictionary<string, object> _stats = [];
 
 	private const string Separator = "-";
-	private static readonly string[] SplitSeparator = { Separator };
+	private static readonly string[] _splitSeparator = [Separator];
 
 	public void Add(IDictionary<string, object> statGroup) {
 		Ensure.NotNull(statGroup, "statGroup");
@@ -57,10 +54,7 @@ public class StatsContainer {
 	private static Dictionary<string, object> GetStatsValues(Dictionary<string, object> dictionary) {
 		return dictionary.ToDictionary(
 			kvp => kvp.Key,
-			kvp => {
-				var statInfo = kvp.Value as StatMetadata;
-				return statInfo == null ? kvp.Value : statInfo.Value;
-			});
+			kvp => kvp.Value is StatMetadata statInfo ? statInfo.Value : kvp.Value)!;
 	}
 
 	private static Dictionary<string, object> Group(Dictionary<string, object> input) {
@@ -73,7 +67,7 @@ public class StatsContainer {
 		var hasSubGroups = false;
 
 		foreach (var entry in input) {
-			var groups = entry.Key.Split(SplitSeparator, StringSplitOptions.RemoveEmptyEntries);
+			var groups = entry.Key.Split(_splitSeparator, StringSplitOptions.RemoveEmptyEntries);
 			if (groups.Length < 2) {
 				groupContainer.Add(entry.Key, entry.Value);
 				continue;
@@ -97,8 +91,7 @@ public class StatsContainer {
 		var result = NewDictionary();
 
 		foreach (var entry in groupContainer) {
-			var subgroup = entry.Value as Dictionary<string, object>;
-			if (subgroup != null)
+			if (entry.Value is Dictionary<string, object> subgroup)
 				result[entry.Key] = Group(subgroup);
 			else
 				result[entry.Key] = entry.Value;
@@ -112,11 +105,11 @@ public class StatsContainer {
 	}
 
 	private class CaseInsensitiveStringComparer : IEqualityComparer<string> {
-		public bool Equals(string x, string y) {
+		public bool Equals(string? x, string? y) {
 			return string.Equals(x, y, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		public int GetHashCode(string obj) {
+		public int GetHashCode(string? obj) {
 			return obj != null ? obj.ToUpperInvariant().GetHashCode() : -1;
 		}
 	}

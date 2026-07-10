@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Collections.Concurrent;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using Xunit;
@@ -9,9 +6,9 @@ using Xunit;
 namespace ReactiveDomain.Testing.EventStore;
 
 public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionFixture> {
-	private readonly List<IStreamStoreConnection> _stores = new List<IStreamStoreConnection>();
-	private readonly IStreamNameBuilder _streamNameBuilder;
-	private readonly IEventSerializer _serializer = new JsonMessageSerializer();
+	private readonly List<IStreamStoreConnection> _stores = [];
+	private readonly PrefixedCamelCaseStreamNameBuilder _streamNameBuilder = new("UnitTest");
+	private readonly JsonMessageSerializer _serializer = new();
 	private readonly string _streamName;
 	private readonly UserCredentials _admin;
 	private const long True = 1;
@@ -20,7 +17,6 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 
 	public StreamStoreSubscriptionTests(StreamStoreConnectionFixture fixture) {
 		_admin = fixture.AdminCredentials;
-		_streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
 		var mockStreamStore = new MockStreamStoreConnection(nameof(MockStreamStoreConnection));
 		mockStreamStore.Connect();
 		_stores.Add(mockStreamStore);
@@ -59,11 +55,12 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 			var sub = conn.SubscribeToStream(
 				_streamName,
 				evt => {
-					var subEvent = (SubscriptionTestEvent)_serializer.Deserialize(evt);
+					var subEvent = (SubscriptionTestEvent?)_serializer.Deserialize(evt);
+					Assert.NotNull(subEvent);
 					Interlocked.Increment(ref evtCount);
 					Interlocked.Exchange(ref evtNumber, subEvent.MessageNumber);
 				},
-				(reason, ex) => Interlocked.Exchange(ref dropped, True));
+				(_, _) => Interlocked.Exchange(ref dropped, True));
 
 			Assert.Equal(0, evtCount);
 			Assert.Equal(0, evtNumber);
@@ -99,9 +96,9 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 				2,//after the third event of 5
 				CatchUpSubscriptionSettings.Default,
 				// ReSharper disable once AccessToModifiedClosure
-				evt => Interlocked.Increment(ref evtCount),
+				_ => Interlocked.Increment(ref evtCount),
 				_ => liveProcessingStarted = true,
-				(reason, ex) => dropped = true);
+				(_, _) => dropped = true);
 
 
 			AssertEx.IsOrBecomesTrue(() => liveProcessingStarted, TimeSpan.FromSeconds(2), msg: "Failed handle live processing start");
@@ -125,7 +122,6 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 		};
 
 		foreach (var conn in _stores) {
-			//TODO: The Mock event store all stream implementation is fundamentally broken see issue #42
 			if (conn is MockStreamStoreConnection)
 				continue;
 
@@ -149,10 +145,11 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 						events.TryAdd(evt.EventType, 1);
 
 					if (string.Compare(evt.EventType, nameof(AllSubscriptionTestEvent), StringComparison.OrdinalIgnoreCase) == 0) {
+						// ReSharper disable once AccessToModifiedClosure
 						Interlocked.Increment(ref evtCount);
 					}
 				},
-				(reason, ex) => dropped = true,
+				(_, _) => dropped = true,
 				_admin);
 
 			foreach (var stream in streams) {
@@ -173,7 +170,7 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 	[Fact]
 	public void can_subscribe_to_event_type_stream() {
 
-		var streamTypeName = _streamNameBuilder.GenerateForEventType(typeof(SubscriptionTestEvent).Name);
+		var streamTypeName = _streamNameBuilder.GenerateForEventType(nameof(SubscriptionTestEvent));
 		var streams = new List<string>
 		{
 			_streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid()),
@@ -187,8 +184,8 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 			var sub = conn.SubscribeToStream(
 				streamTypeName,
 				// ReSharper disable once AccessToModifiedClosure
-				evt => Interlocked.Increment(ref evtCount),
-				(reason, ex) => dropped = true,
+				_ => Interlocked.Increment(ref evtCount),
+				(_, _) => dropped = true,
 				_admin);
 
 			foreach (var stream in streams) {
@@ -203,7 +200,8 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 			AssertEx.IsOrBecomesTrue(() => dropped, msg: "Failed to handle drop");
 		}
 	}
-	public class STestCategoryAggregate : EventDrivenStateMachine { }
+	public class STestCategoryAggregate : EventDrivenStateMachine;
+
 	[Fact]
 	public void can_subscribe_to_category_stream() {
 		var streamTypeName = _streamNameBuilder.GenerateForCategory(typeof(STestCategoryAggregate));
@@ -225,8 +223,8 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 			var sub = conn.SubscribeToStream(
 				streamTypeName,
 				// ReSharper disable once AccessToModifiedClosure
-				evt => Interlocked.Increment(ref evtCount),
-				(reason, ex) => dropped = true,
+				_ => Interlocked.Increment(ref evtCount),
+				(_, _) => dropped = true,
 				_admin);
 			AppendEvents(5, conn, streams[0]);
 			AppendEvents(5, conn, streams[1]);
@@ -239,28 +237,15 @@ public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionF
 	}
 
 
-	public class StreamCreatedTestEvent : IMessage {
-		public Guid MsgId { get; private set; }
-		public StreamCreatedTestEvent() {
-			MsgId = Guid.NewGuid();
-		}
+	public record StreamCreatedTestEvent : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
-	public class SubscriptionTestEvent : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly int MessageNumber;
-		public SubscriptionTestEvent(
-			int messageNumber) {
-			MsgId = Guid.NewGuid();
-			MessageNumber = messageNumber;
-		}
+
+	public record SubscriptionTestEvent(int MessageNumber) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
-	public class AllSubscriptionTestEvent : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly int MessageNumber;
-		public AllSubscriptionTestEvent(
-			int messageNumber) {
-			MsgId = Guid.NewGuid();
-			MessageNumber = messageNumber;
-		}
+
+	public record AllSubscriptionTestEvent(int MessageNumber) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
 }

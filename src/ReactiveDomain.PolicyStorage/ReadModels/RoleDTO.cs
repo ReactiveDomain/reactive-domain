@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Policy.Messages;
+﻿using ReactiveDomain.Policy.Messages;
 
 namespace ReactiveDomain.Policy.ReadModels;
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using DynamicData;
+﻿using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
@@ -19,17 +16,15 @@ public class FilteredPoliciesRM :
 	IHandle<PolicyUserMsgs.UserDeactivated>,
 	IHandle<PolicyUserMsgs.UserReactivated> {
 	public IConnectableCache<PolicyDTO, Guid> Policies => _policies;
-	private readonly SourceCache<PolicyDTO, Guid> _policies = new SourceCache<PolicyDTO, Guid>(x => x.PolicyId);
+	private readonly SourceCache<PolicyDTO, Guid> _policies = new(x => x.PolicyId);
 	private HashSet<string> AllowedApplications { get; }
-	private readonly Dictionary<Guid, ApplicationDTO> _applications = new Dictionary<Guid, ApplicationDTO>();
-	private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
-	private readonly Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
+	private readonly Dictionary<Guid, ApplicationDTO> _applications = [];
+	private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = [];
+	private readonly Dictionary<Guid, RoleDTO> _roles = [];
 
-	public FilteredPoliciesRM(IConfiguredConnection conn, List<string> policyFilter = null)
+	public FilteredPoliciesRM(IConfiguredConnection conn, List<string>? policyFilter = null)
 		: base(nameof(FilteredPoliciesRM), conn) {
-		if (policyFilter != null) {
-			AllowedApplications = new HashSet<string>(policyFilter);
-		}
+		AllowedApplications = policyFilter != null ? [.. policyFilter] : [];
 
 		//set handlers
 		EventStream.Subscribe<ApplicationMsgs.ApplicationCreated>(this);
@@ -80,17 +75,15 @@ public class FilteredPoliciesRM :
 
 	public void Handle(ApplicationMsgs.ApplicationCreated @event) {
 		if (_applications.ContainsKey(@event.ApplicationId)) { return; }
-		if (AllowedApplications == null || //no filter
-			AllowedApplications.Contains(@event.Name, StringComparer.OrdinalIgnoreCase)) //in filtered list
-		{
+		if (AllowedApplications.Count == 0 || //no filter
+			AllowedApplications.Contains(@event.Name, StringComparer.OrdinalIgnoreCase)) { //in filtered list
 			_applications.Add(@event.ApplicationId, new ApplicationDTO(@event));
 		}
 		//not in filtered list, ignore it
 	}
 
 	public void Handle(ApplicationMsgs.PolicyCreated @event) {
-		if (_applications.ContainsKey(@event.ApplicationId)) //in filtered list
-		{
+		if (_applications.ContainsKey(@event.ApplicationId)) { //in filtered list
 			if (_policies.Keys.Contains(@event.PolicyId)) { return; }
 			_policies.AddOrUpdate(new PolicyDTO(@event));
 		}
@@ -128,7 +121,6 @@ public class FilteredPoliciesRM :
 		}
 	}
 	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
-
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {

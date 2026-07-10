@@ -16,7 +16,7 @@ public interface IMetadata {
 	/// <typeparam name="T">The type of metadata to retrieve.</typeparam>
 	/// <param name="value">The metadata object that was read.</param>
 	/// <returns><c>True</c> if a metadata object of the type was found, otherwise <c>false</c>.</returns>
-	bool TryRead<T>(out T value);
+	bool TryRead<T>(out T? value);
 	/// <summary>
 	/// Adds or replaces a metadata object of a type.
 	/// </summary>

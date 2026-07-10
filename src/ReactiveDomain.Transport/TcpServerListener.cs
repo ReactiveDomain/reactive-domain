@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
@@ -7,12 +6,12 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.Transport;
 
 public class TcpServerListener {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
 	private readonly EndPoint _serverEndPoint;
 	private readonly Socket _listeningSocket;
 	private readonly SocketArgsPool _acceptSocketArgsPool;
-	private Action<IPEndPoint, Socket> _onSocketAccepted;
+	private Action<IPEndPoint, Socket>? _onSocketAccepted;
 
 	public TcpServerListener(EndPoint serverEndPoint) {
 		Ensure.NotNull(serverEndPoint, "serverEndPoint");
@@ -33,16 +32,16 @@ public class TcpServerListener {
 	}
 
 	public void StartListening(Action<IPEndPoint, Socket> callback, string securityType) {
-		Ensure.NotNull(callback, "callback");
+		Ensure.NotNull(callback, nameof(callback));
 
 		_onSocketAccepted = callback;
 
-		Log.Info("Starting {0} TCP listening on TCP endpoint: {1}.", securityType, _serverEndPoint);
+		_log.Info("Starting {0} TCP listening on TCP endpoint: {1}.", securityType, _serverEndPoint);
 		try {
 			_listeningSocket.Bind(_serverEndPoint);
 			_listeningSocket.Listen(TcpConfiguration.AcceptBacklogCount);
 		} catch (Exception ex) {
-			Log.InfoException(ex, "Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
+			_log.InfoException(ex, "Failed to listen on TCP endpoint: {0}.", _serverEndPoint);
 			Helper.EatException(() => _listeningSocket.Close(TcpConfiguration.SocketCloseTimeoutMs));
 			throw;
 		}
@@ -64,7 +63,7 @@ public class TcpServerListener {
 		}
 	}
 
-	private void AcceptCompleted(object sender, SocketAsyncEventArgs e) {
+	private void AcceptCompleted(object? sender, SocketAsyncEventArgs e) {
 		ProcessAccept(e);
 	}
 
@@ -76,18 +75,15 @@ public class TcpServerListener {
 			e.AcceptSocket = null;
 			_acceptSocketArgsPool.Return(e);
 
-			OnSocketAccepted(acceptSocket);
+			if (acceptSocket is not null)
+				OnSocketAccepted(acceptSocket);
 		}
 
 		StartAccepting();
 	}
 
 	private void HandleBadAccept(SocketAsyncEventArgs socketArgs) {
-		Helper.EatException(
-			() => {
-				if (socketArgs.AcceptSocket != null) // avoid annoying exceptions
-					socketArgs.AcceptSocket.Close(TcpConfiguration.SocketCloseTimeoutMs);
-			});
+		Helper.EatException(() => socketArgs.AcceptSocket?.Close(TcpConfiguration.SocketCloseTimeoutMs));
 		socketArgs.AcceptSocket = null;
 		_acceptSocketArgsPool.Return(socketArgs);
 	}
@@ -95,12 +91,12 @@ public class TcpServerListener {
 	private void OnSocketAccepted(Socket socket) {
 		IPEndPoint socketEndPoint;
 		try {
-			socketEndPoint = (IPEndPoint)socket.RemoteEndPoint;
+			socketEndPoint = (IPEndPoint)socket.RemoteEndPoint!;
 		} catch (Exception) {
 			return;
 		}
 
-		_onSocketAccepted(socketEndPoint, socket);
+		_onSocketAccepted?.Invoke(socketEndPoint, socket);
 	}
 
 	public void Stop() {

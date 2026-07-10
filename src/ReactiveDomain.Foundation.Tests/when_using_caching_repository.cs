@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation.StreamStore;
+﻿using ReactiveDomain.Foundation.StreamStore;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
 using ReactiveDomain.Util;
@@ -8,7 +7,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_using_caching_repository {
+public sealed class when_using_caching_repository {
 	private readonly CachingRepository _cachingRepo;
 	private readonly StreamStoreRepository _repo;
 

@@ -1,24 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using IdentityServer4.Models;
+﻿using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.IdentityStorage.Services;
 
 public class ResourcesStore : IResourceStore {
-	private readonly Resources _resources = new Resources();
+	private readonly Resources _resources = new();
 
 	public ResourcesStore() {
 		_resources.IdentityResources.Add(new IdentityResource(
 			name: "openid",
-			userClaims: new[] { "sub" },
+			userClaims: ["sub"],
 			displayName: "Your user identifier"));
 		_resources.IdentityResources.Add(new IdentityResource(
 			name: "rd-policy",
-			userClaims: new[] { "policy-access", "rd-userid" },
+			userClaims: ["policy-access", "rd-userid"],
 			displayName: "Reactive Domain Access Policy"));
 	}
 
@@ -27,7 +23,7 @@ public class ResourcesStore : IResourceStore {
 		var names = new HashSet<string>(scopeNames);
 		var resources = new List<IdentityResource>();
 		if (!names.IsEmpty()) {
-			resources.AddRange(_resources.IdentityResources.Where(r => names.Contains(r.Name, StringComparer.Ordinal)));
+			resources = [.. _resources.IdentityResources.Where(r => names.Contains(r.Name, StringComparer.Ordinal))];
 		}
 		return await Task.FromResult(resources);
 	}
@@ -36,7 +32,7 @@ public class ResourcesStore : IResourceStore {
 		var names = new HashSet<string>(scopeNames);
 		var apiScopes = new List<ApiScope>();
 		if (!names.IsEmpty()) {
-			apiScopes.AddRange(_resources.ApiScopes.Where(r => names.Contains(r.Name, StringComparer.Ordinal)));
+			apiScopes = [.. _resources.ApiScopes.Where(r => names.Contains(r.Name, StringComparer.Ordinal))];
 		}
 		return await Task.FromResult(apiScopes);
 	}
@@ -59,7 +55,7 @@ public class ResourcesStore : IResourceStore {
 		var names = new HashSet<string>(apiResourceNames);
 		var apiResources = new List<ApiResource>();
 		if (!names.IsEmpty()) {
-			apiResources.AddRange(_resources.ApiResources.Where(r => names.Contains(r.Name, StringComparer.Ordinal)));
+			apiResources = [.. _resources.ApiResources.Where(r => names.Contains(r.Name, StringComparer.Ordinal))];
 		}
 		return await Task.FromResult(apiResources);
 	}

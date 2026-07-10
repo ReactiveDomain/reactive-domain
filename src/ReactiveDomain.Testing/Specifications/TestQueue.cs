@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Testing;
@@ -14,8 +10,8 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// <summary>
 	/// The types of messages to subscribe to. Child types are included.
 	/// </summary>
-	public Type[] MessageTypeFilter => (Type[])_msgTypeFilter.Clone();
-	private readonly Type[] _msgTypeFilter;
+	public Type[] MessageTypeFilter => (Type[])field.Clone();
+
 	private readonly bool _isFiltered;
 	/// <summary>
 	/// Contains the list of the Types of messages processed since last time TestQueue was cleared.
@@ -30,9 +26,9 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// </summary>
 	public ConcurrentMessageQueue<IMessage> Messages { get; }
 
-	private long _cleaning = 0;
-	private long _queueVersion = 0; //queue version is incremented on each clean
-	private readonly IDisposable _subscription;
+	private long _cleaning;
+	private long _queueVersion; //queue version is incremented on each clean
+	private readonly IDisposable? _subscription;
 
 	/// <summary>
 	/// Create a test queue on the specified ISubscriber.
@@ -41,11 +37,11 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// <param name="messageTypeFilter">List of message types to accumulate in the queue.</param>
 	/// <param name="trackTypes">Whether to enable message-type-based functions such as WaitFor.</param>
 	public TestQueue(
-		ISubscriber subscriber = null,
-		Type[] messageTypeFilter = null,
+		ISubscriber? subscriber = null,
+		Type[]? messageTypeFilter = null,
 		bool trackTypes = true) {
 		_isFiltered = messageTypeFilter != null;
-		_msgTypeFilter = messageTypeFilter ?? [];
+		MessageTypeFilter = messageTypeFilter ?? [];
 
 		_trackTypes = trackTypes;
 
@@ -130,10 +126,10 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		//calling ToList allows the concurrent queue to handle grabbing a snapshot of the collection
 		// ReSharper disable once RemoveToList.2
 		while (Messages.ToList().Count(x => x is T) < num) {
-			if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+			ObjectDisposedException.ThrowIf(_disposed, this);
 			if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
 			var now = Environment.TickCount;
-			if ((endTime - now) <= 0) { throw new TimeoutException(); }
+			if (endTime - now <= 0) { throw new TimeoutException(); }
 
 			if (delay < 250) { delay <<= 1; }
 			delay = Math.Min(delay, endTime - now);
@@ -151,7 +147,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		var deadline = DateTime.Now + timeout;
 
 		//set up a watch
-		ManualResetEventSlim waitHandle;
+		ManualResetEventSlim? waitHandle;
 		lock (_idWatchList) {
 			if (_idWatchList.TryGetValue(id, out waitHandle)) {
 				if (waitHandle.IsSet) { return; }
@@ -170,7 +166,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		//wait here to see if the message handler triggers the wait handle we added
 		while (!waitHandle.Wait(10)) {
 			if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
-			if (_disposed) { throw new ObjectDisposedException(nameof(TestQueue)); }
+			ObjectDisposedException.ThrowIf(_disposed, this);
 			if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
 		}
 
@@ -199,7 +195,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		Guid correlationId,
 		out TMsg msg) where TMsg : ICorrelatedMessage {
 		EnsureReady();
-		return Messages.AssertNext<TMsg>(correlationId, out msg);
+		return Messages.AssertNext(correlationId, out msg);
 	}
 
 	/// <summary>
@@ -222,9 +218,9 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// <returns>The Messages queue after dequeueing the next message.</returns>
 	public ConcurrentMessageQueue<IMessage> AssertNext<TMsg>(
 		Func<TMsg, bool> condition,
-		string userMessage = null) where TMsg : ICorrelatedMessage {
+		string? userMessage = null) where TMsg : ICorrelatedMessage {
 		EnsureReady();
-		return Messages.AssertNext<TMsg>(condition, userMessage);
+		return Messages.AssertNext(condition, userMessage);
 	}
 
 	/// <summary>

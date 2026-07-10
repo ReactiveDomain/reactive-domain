@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics.Contracts;
 
 namespace ReactiveDomain;
@@ -33,7 +32,7 @@ public struct StreamName : IEquatable<StreamName> {
 	[Pure]
 	public StreamName WithoutPrefix(string prefix) {
 		if (StartsWith(prefix)) {
-			return new StreamName(_value.Substring(prefix.Length));
+			return new StreamName(_value[prefix.Length..]);
 		}
 		return this;
 	}
@@ -41,7 +40,7 @@ public struct StreamName : IEquatable<StreamName> {
 	[Pure]
 	public StreamName WithoutSuffix(string suffix) {
 		if (EndsWith(suffix)) {
-			return new StreamName(_value.Substring(0, _value.Length - suffix.Length));
+			return new StreamName(_value[..^suffix.Length]);
 		}
 		return this;
 	}
@@ -50,10 +49,10 @@ public struct StreamName : IEquatable<StreamName> {
 		return string.Equals(_value, other._value, StringComparison.Ordinal);
 	}
 
-	public override bool Equals(object obj) {
+	public override bool Equals(object? obj) {
 		if (ReferenceEquals(null, obj))
 			return false;
-		return obj is StreamName && Equals((StreamName)obj);
+		return obj is StreamName streamName && Equals(streamName);
 	}
 
 	public override int GetHashCode() {

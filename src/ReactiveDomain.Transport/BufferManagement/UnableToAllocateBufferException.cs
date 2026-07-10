@@ -26,12 +26,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-using System;
-
 namespace ReactiveDomain.Transport.BufferManagement;
 
-public class UnableToAllocateBufferException : Exception {
-	public UnableToAllocateBufferException()
-		: base("Couldn't allocate buffer after few trials.") {
-	}
-}
+public class UnableToAllocateBufferException() : Exception("Couldn't allocate buffer after few trials.");

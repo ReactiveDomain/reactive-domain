@@ -1,5 +1,3 @@
-#nullable enable
-using System;
 using System.Reactive.Disposables;
 
 namespace ReactiveDomain.Messaging.Bus;
