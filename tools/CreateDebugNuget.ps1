@@ -113,7 +113,7 @@ class PackagRef
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
 #         ConditionOperator - (the equality operator for a framework, == or !=)
-#         Framework - The framework this Packageref applies to: (net452, net472, netstandard2.0)
+#         Framework - The framework this Packageref applies to: (net8.0, net10.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
 {
@@ -161,6 +161,11 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     if ($currentCondition -match "net8.0")
     {
         $currentFramework = "net8.0"
+    }
+    
+    if ($currentCondition -match "net10.0")
+    {
+        $currentFramework = "net10.0"
     }
 
 
