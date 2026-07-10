@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace ReactiveDomain.Foundation.StreamStore;
 
@@ -18,14 +17,17 @@ namespace ReactiveDomain.Foundation.StreamStore;
 /// </summary>
 public class OptimisticCacheRepo {
 	private readonly IRepository _repo;
-	private readonly Dictionary<Guid, IEventSource> _knownAggregates = new Dictionary<Guid, IEventSource>();
+	private readonly Dictionary<Guid, IEventSource> _knownAggregates = new();
 	public OptimisticCacheRepo(IRepository target) {
 		_repo = target;
 	}
 
-	public bool TryGetById<TAggregate>(Guid id, out IEventSource aggregate) {
-		return _knownAggregates.TryGetValue(id, out aggregate) ||
-			   _repo.TryGetById(id, out aggregate);
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate) where TAggregate : class, IEventSource {
+		if (_knownAggregates.TryGetValue(id, out var agg) && agg is TAggregate tAgg) {
+			aggregate = tAgg;
+			return true;
+		}
+		return _repo.TryGetById(id, out aggregate);
 	}
 
 	public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
@@ -33,12 +35,10 @@ public class OptimisticCacheRepo {
 		return aggregate as TAggregate ?? _repo.GetById<TAggregate>(id);
 	}
 
-	public bool TrySave(IEventSource aggregate, out Exception exception) {
+	public bool TrySave(IEventSource aggregate, [NotNullWhen(false)] out Exception? exception) {
 		try {
 			_repo.Save(aggregate);
-			if (!_knownAggregates.ContainsKey(aggregate.Id)) {
-				_knownAggregates.Add(aggregate.Id, aggregate);
-			}
+			_knownAggregates.TryAdd(aggregate.Id, aggregate);
 			exception = null;
 			return true;
 		} catch (Exception ex) {

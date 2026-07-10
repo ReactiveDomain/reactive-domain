@@ -1,14 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace ReactiveDomain.Messaging.Bus;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
 public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	private readonly CommandManager _manager;
 	private readonly IBus _bus;
 	private readonly TimeSpan? _slowMsgThreshold;
 	private readonly TimeSpan? _slowCmdThreshold;
-	private readonly MultiQueuedHandler _publishQueue;
+	private readonly MultiQueuedHandler? _publishQueue;
 	private readonly LaterService _laterService;
 	private readonly InMemoryBus _timeoutBus;
 	public bool Idle => _publishQueue?.Idle ?? true;
@@ -17,11 +14,12 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 		uint queueCount,
 		TimeSpan? slowMsgThreshold,
 		TimeSpan? slowCmdThreshold) {
-		this._bus = bus;
+		_bus = bus;
 		_slowMsgThreshold = slowMsgThreshold;
 		_slowCmdThreshold = slowCmdThreshold;
 		_timeoutBus = new InMemoryBus(nameof(_timeoutBus), false);
 		_laterService = new LaterService(_timeoutBus, TimeSource.System);
+		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		_timeoutBus.Subscribe<DelaySendEnvelope>(_laterService);
 		_laterService.Start();
 
@@ -31,8 +29,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 		if (queueCount > 0) {
 			_publishQueue = new MultiQueuedHandler(
 				(int)queueCount,
-				i => new QueuedHandler(new AdHocHandler<IMessage>(bus.Publish)
-					, nameof(MultiQueuedPublisher)));
+				_ => new QueuedHandler(new AdHocHandler<IMessage>(bus.Publish), nameof(MultiQueuedPublisher)));
 			_publishQueue.Start();
 		}
 	}
@@ -43,21 +40,20 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			_publishQueue.Publish(message);
 		}
 	}
-	public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+	public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (command.IsCanceled) {
 			Publish(command.Canceled());
 			throw new CommandCanceledException(command);
 		}
 
-		Execute(command, out var rslt, true, responseTimeout, ackTimeout);
-		if (rslt is Success)
+		Execute(command, out var result, true, responseTimeout, ackTimeout);
+		if (result is Success)
 			return;
 
-		var fail = rslt as Fail;
+		var fail = result as Fail;
 		if (fail?.Exception != null)
 			throw new CommandException(exceptionMsg ?? fail.Exception.Message, fail.Exception, command);
-		else
-			throw new CommandException(exceptionMsg ?? $"{command.GetType().Name}: Failed", command);
+		throw new CommandException(exceptionMsg ?? $"{command.GetType().Name}: Failed", command);
 	}
 	public bool TrySend(ICommand command,
 		out CommandResponse response,
@@ -69,7 +65,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 				Publish(response);
 				return false;
 			}
-			Execute(command, out response, true, responseTimeout, ackTimeout);
+			Execute(command, out response!, true, responseTimeout, ackTimeout);
 		} catch (Exception ex) {
 			response = command.Fail(ex);
 		}
@@ -83,7 +79,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 				Publish(response);
 				return false;
 			}
-			Execute(command, out var _, false, responseTimeout, ackTimeout);
+			Execute(command, out _, false, responseTimeout, ackTimeout);
 		} catch (Exception) {
 			return false;
 		}
@@ -93,12 +89,12 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 
 	private void Execute(
 		ICommand command,
-		out CommandResponse response,
+		out CommandResponse? response,
 		bool blocking = true,
 		TimeSpan? responseTimeout = null,
 		TimeSpan? ackTimeout = null) {
 
-		TaskCompletionSource<CommandResponse> tcs = null;
+		TaskCompletionSource<CommandResponse>? tcs = null;
 		try {
 			tcs = _manager.RegisterCommandAsync(
 				command,
@@ -138,8 +134,8 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 
 	protected virtual void Dispose(bool disposing) {
 		if (disposing) {
-			_laterService?.Dispose();
-			_manager?.Dispose();
+			_laterService.Dispose();
+			_manager.Dispose();
 			_timeoutBus.Dispose();
 			_publishQueue?.Stop();//TODO: do we need to flush/empty the queue here?
 		}

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -8,35 +6,33 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_using_read_model_base_with_reader :
+public sealed class when_using_read_model_base_with_reader :
 	ReadModelBase,
 	IHandle<when_using_read_model_base_with_reader.ReadModelTestEvent>,
 	IClassFixture<StreamStoreConnectionFixture> {
-	private static IStreamStoreConnection _conn;
-	private static readonly JsonMessageSerializer Serializer = new();
-	private static readonly PrefixedCamelCaseStreamNameBuilder Namer = new(nameof(when_using_read_model_base));
+	private readonly IStreamStoreConnection _conn;
+	private static readonly JsonMessageSerializer _serializer = new();
+	private static readonly PrefixedCamelCaseStreamNameBuilder _namer = new(nameof(when_using_read_model_base));
 
 	private readonly string _stream1;
 	private readonly string _stream2;
-
-
 	public when_using_read_model_base_with_reader(StreamStoreConnectionFixture fixture)
 		: base(nameof(when_using_read_model_base),
-			new ConfiguredConnection(fixture.Connection, Namer, Serializer)) {
+			new ConfiguredConnection(fixture.Connection, _namer, _serializer)) {
 		_conn = fixture.Connection;
 		_conn.Connect();
 
 		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		EventStream.Subscribe<ReadModelTestEvent>(this);
 
-		_stream1 = Namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
-		_stream2 = Namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		_stream1 = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		_stream2 = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
 
 		AppendEvents(10, _conn, _stream1, 2);
 		AppendEvents(10, _conn, _stream2, 3);
 		_conn.TryConfirmStream(_stream1, 10);
 		_conn.TryConfirmStream(_stream2, 10);
-		_conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
+		_conn.TryConfirmStream(_namer.GenerateForCategory(typeof(TestAggregate)), 20);
 	}
 
 	private static void AppendEvents(
@@ -46,14 +42,14 @@ public class when_using_read_model_base_with_reader :
 		int value) {
 		for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++) {
 			var evt = new ReadModelTestEvent(evtNumber, value);
-			conn.AppendToStream(streamName, ExpectedVersion.Any, null, Serializer.Serialize(evt));
+			conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
 		}
 	}
 
 	[Fact]
 	public void can_start_streams_by_aggregate() {
 		var aggId = Guid.NewGuid();
-		var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
+		var s1 = _namer.GenerateForAggregate(typeof(TestAggregate), aggId);
 		AppendEvents(1, _conn, s1, 7);
 		Start<TestAggregate>(aggId);
 		AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
@@ -63,7 +59,7 @@ public class when_using_read_model_base_with_reader :
 	[Fact]
 	public async Task can_start_streams_async_by_aggregate() {
 		var aggId = Guid.NewGuid();
-		var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
+		var s1 = _namer.GenerateForAggregate(typeof(TestAggregate), aggId);
 		AppendEvents(1, _conn, s1, 7);
 		StartAsync<TestAggregate>(aggId);
 		await IsLive;
@@ -73,9 +69,9 @@ public class when_using_read_model_base_with_reader :
 
 	[Fact]
 	public async Task can_start_streams_async_by_aggregate_category() {
-		var s1 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
+		var s1 = _namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
 		AppendEvents(1, _conn, s1, 7);
-		var s2 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
+		var s2 = _namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
 		AppendEvents(1, _conn, s2, 5);
 		StartAsync<ReadModelTestCategoryAggregate>();
 

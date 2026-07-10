@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Util;
+﻿namespace ReactiveDomain.Util;
 
 public static class FluentExtensions {
 

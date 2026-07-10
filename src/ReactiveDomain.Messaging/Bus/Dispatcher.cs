@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reactive;
-using ReactiveDomain.Logging;
+﻿using System.Reactive;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
 
 /// <inheritdoc cref="IDispatcher"/>
 public class Dispatcher : IDispatcher {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-
 	private readonly Dictionary<Type, object> _handleWrappers;
 	private readonly MultiQueuedPublisher _queuedPublisher;
 	private readonly InMemoryBus _bus;
@@ -39,7 +34,7 @@ public class Dispatcher : IDispatcher {
 	/// <returns></returns>
 	public void Send(
 		ICommand command,
-		string exceptionMsg = null,
+		string? exceptionMsg = null,
 		TimeSpan? responseTimeout = null,
 		TimeSpan? ackTimeout = null)
 		=> _queuedPublisher.Send(command, exceptionMsg, responseTimeout, ackTimeout);
@@ -114,7 +109,7 @@ public class Dispatcher : IDispatcher {
 			return;
 		_disposed = true;
 		if (disposing) {
-			_queuedPublisher?.Dispose();
+			_queuedPublisher.Dispose();
 		}
 	}
 }

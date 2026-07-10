@@ -9,9 +9,6 @@
 // ReSharper disable RedundantExtendsListEntry
 // ReSharper disable ForCanBeConvertedToForeach
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reactive;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
@@ -29,7 +26,7 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 	}
 
 	public static readonly TimeSpan DefaultSlowMessageThreshold = TimeSpan.FromMilliseconds(48);
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
 
 	public string Name { get; }
@@ -40,6 +37,7 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 	private readonly TimeSpan _slowMsgThreshold;
 
 	private InMemoryBus() : this("Test") { }
+
 	public InMemoryBus(
 		string name,
 		bool watchSlowMsg = true,
@@ -49,32 +47,27 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 			_watchSlowMsg = watchSlowMsg;
 			_slowMsgThreshold = slowMsgThreshold ?? DefaultSlowMessageThreshold;
 		} catch (Exception ex) {
-			if (Log.LogLevel >= LogLevel.Error)
-				Log.ErrorException(ex, "Error building InMemoryBus");
+			if (_log.LogLevel >= LogLevel.Error)
+				_log.ErrorException(ex, "Error building InMemoryBus");
 			throw;
 		}
-
 	}
 
 	public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage {
 		Ensure.NotNull(handler, "handler");
 		Subscribe(new MessageHandler<T>(handler, handler.GetType().Name), includeDerived);
-		// ReSharper disable once ConstantConditionalAccessQualifier
-		return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+		return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
 	}
 
-
 	private void Subscribe(IMessageHandler handler, bool includeDerived) {
-		Type[] messageTypes;
-		if (includeDerived) {
-			messageTypes = MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray();
-		} else {
-			messageTypes = new[] { handler.MessageType };
-		}
+		var messageTypes = includeDerived
+			? MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray()
+			: [handler.MessageType];
 		for (var i = 0; i < messageTypes.Length; i++) {
 			Subscribe(handler, messageTypes[i]);
 		}
 	}
+
 	public IDisposable SubscribeToAll(IHandle<IMessage> handler) {
 		Ensure.NotNull(handler, "handler");
 		var allHandler = new MessageHandler<IMessage>(handler, handler.GetType().Name);
@@ -84,7 +77,7 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 		for (var i = 0; i < messageTypes.Length; i++) {
 			Subscribe(allHandler, messageTypes[i]);
 		}
-		return new Disposer(() => { this?.Unsubscribe(handler); return Unit.Default; });
+		return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
 	}
 	private void Subscribe(IMessageHandler handler, Type messageType) {
 		var handlers = GetHandlesFor(messageType);
@@ -120,7 +113,7 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 	}
 
 	public bool HasSubscriberFor(Type type, bool includeDerived = false) {
-		Type[] derivedTypes = { type };
+		Type[] derivedTypes = [type];
 		if (includeDerived) {
 			derivedTypes = MessageHierarchy.DescendantsAndSelf(type).ToArray();
 		}
@@ -142,8 +135,9 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 		Publish(message);
 	}
 	public void Publish(IMessage message) {
+		// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 		if (message == null) {
-			Log.Error("Message was null, publishing aborted");
+			_log.Error("Message was null, publishing aborted");
 			return;
 		}
 		// Call each handler registered to the message type.
@@ -159,10 +153,10 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 				if (elapsed <= _slowMsgThreshold)
 					continue;
 
-				Log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+				_log.Trace("SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
 					Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
 				if (elapsed > QueuedHandler.VerySlowMsgThreshold)// && !(message is SystemMessage.SystemInit))
-					Log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
+					_log.Error("---!!! VERY SLOW BUS MSG [{0}]: {1} - {2}ms. Handler: {3}.",
 						Name, message.GetType().Name, (int)elapsed.TotalMilliseconds, handler.HandlerName);
 			} else {
 				handler.TryHandle(message);
@@ -172,20 +166,17 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 
 	private IMessageHandler[] GetHandlesFor(Type type) {
 		lock (_handlers) {
-			if (_handlers.TryGetValue(type, out var handlers)) {
-				return handlers.ToArray();
-			}
-			return [];
+			return _handlers.TryGetValue(type, out var handlers) ? handlers.ToArray() : [];
 		}
 	}
 
 	//tracing 
 	public virtual void NoMessageHandler(dynamic msg, Type type) {
-		Log.Info(type.Name + " message not handled (no handler)");
+		_log.Info(type.Name + " message not handled (no handler)");
 	}
 
 	public virtual void PreHandleMessage(dynamic msg, Type type, IMessageHandler handler) {
-		Log.Debug("{0} message handled by {1}", type.Name, handler.HandlerName);
+		_log.Debug("{0} message handled by {1}", type.Name, handler.HandlerName);
 	}
 
 	public virtual void PostHandleMessage(dynamic msg, Type type, IMessageHandler handler, TimeSpan handleTimeSpan) {
@@ -193,7 +184,7 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 	}
 
 	public virtual void MessageReceived(dynamic msg, Type type, string publishedBy) {
-		Log.Trace("Publishing Message {0} details \n{1}\n{2}", type.FullName, type.Name, Json.ToLogJson(msg));
+		_log.Trace("Publishing Message {0} details \n{1}\n{2}", type.FullName, type.Name, Json.ToLogJson(msg));
 	}
 
 	//Implementation of IDisposable

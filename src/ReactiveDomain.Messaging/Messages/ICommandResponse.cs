@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Messaging;
+﻿namespace ReactiveDomain.Messaging;
 
 public interface ICommandResponse : IMessage {
 	Guid CommandId { get; }

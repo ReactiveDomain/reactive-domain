@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Messaging.Bus;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
 public interface ICommandPublisher {
 	/// <summary>
@@ -11,7 +9,7 @@ public interface ICommandPublisher {
 	///                 useful for displaying error information in UI applications</param>
 	/// <param name="responseTimeout">How long to wait for completion before throwing a timeout exception and sending a cancel</param>
 	/// <param name="ackTimeout">How long to wait for processing to start before throwing a timeout exception and sending a cancel</param>
-	void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null);
+	void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null);
 	/// <summary>
 	/// TrySend will block the calling thread and returns the command response via the out parameter.
 	/// Will not throw, check the command response exception property on failed responses for the exception
@@ -25,7 +23,7 @@ public interface ICommandPublisher {
 	/// <summary>
 	/// TrySendAsync will not block the calling thread. 
 	/// 
-	/// Useful for very long running commands, but also consider using a pair of matched messages instead. 
+	/// Useful for very long-running commands, but also consider using a pair of matched messages instead. 
 	/// 
 	/// If handling the response is required, the caller must subscribe directly to the Command Response messages 
 	/// and correlate on the message id, this can be expensive.

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Messaging;
@@ -9,7 +6,6 @@ using ReactiveDomain.Messaging;
 namespace ReactiveDomain;
 
 public class SerializationRegistry {
-	private readonly JsonSerializerSettings _serializerSettings;
 	private readonly Dictionary<Type, Func<Message, StorableMessage>> _messageSerializers;
 
 	private readonly Dictionary<Type, Dictionary<string, Func<SerializedMessage, IEnumerable<Message>>>>
@@ -17,14 +13,13 @@ public class SerializationRegistry {
 
 	private readonly Dictionary<Type, Func<Snapshot, StorableMessage>> _snapshotSerializers;
 	private readonly Dictionary<string, Func<SerializedMessage, Snapshot>> _snapshotDeserializers;
-	private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
-	private readonly Func<Message, byte[]> _metadataSerializer;
+	private static readonly Encoding _utf8NoBom = new UTF8Encoding(false);
+	private readonly Func<Message, byte[]?> _metadataSerializer;
 
 	private readonly Func<SerializedMessage, Metadata> _metadataDeserializer;
-	private readonly Func<Snapshot, byte[]> _snapshotMetadataSerializer;
+	private readonly Func<Snapshot, byte[]?> _snapshotMetadataSerializer;
 
-	public SerializationRegistry(JsonSerializerSettings serializerSettings = null) {
-		_serializerSettings = serializerSettings;
+	public SerializationRegistry(JsonSerializerSettings? serializerSettings = null) {
 		_metadataSerializer = SerializeMetadata(serializerSettings);
 		_metadataDeserializer = DeserializeMetadata(serializerSettings);
 		_snapshotMetadataSerializer = SerializeSnapshotMetadata(serializerSettings);
@@ -35,27 +30,27 @@ public class SerializationRegistry {
 		_snapshotDeserializers = new Dictionary<string, Func<SerializedMessage, Snapshot>>();
 	}
 
-	static Func<Message, byte[]> SerializeMetadata(JsonSerializerSettings settings) {
+	private static Func<Message, byte[]?> SerializeMetadata(JsonSerializerSettings? settings) {
 		var serializer = JsonSerializer.Create(settings);
 
-		byte[] Serialize(Message m) {
+		return Serialize;
+
+		byte[]? Serialize(Message m) {
 			return SerializeMetadata(m, serializer);
 		}
-
-		return Serialize;
 	}
 
-	static Func<Snapshot, byte[]> SerializeSnapshotMetadata(JsonSerializerSettings settings) {
+	private static Func<Snapshot, byte[]?> SerializeSnapshotMetadata(JsonSerializerSettings? settings) {
 		var serializer = JsonSerializer.Create(settings);
 
-		byte[] Serialize(Snapshot m) {
+		return Serialize;
+
+		byte[]? Serialize(Snapshot m) {
 			return SerializeMetadata(m, serializer);
 		}
-
-		return Serialize;
 	}
 
-	private static byte[] SerializeMetadata<T>(T mds, JsonSerializer serializer) where T : IMetadataSource {
+	private static byte[]? SerializeMetadata<T>(T mds, JsonSerializer serializer) where T : IMetadataSource {
 		var metadata = mds.ReadMetadata();
 		if (metadata == null)
 			return null;
@@ -63,59 +58,47 @@ public class SerializationRegistry {
 		var data = metadata.GetData();
 		var json = JObject.FromObject(data, serializer);
 		if (metadata.Root != null && data.Count > 0) {
-			metadata.Root.Merge(json, new JsonMergeSettings() {
+			metadata.Root.Merge(json, new JsonMergeSettings {
 				MergeArrayHandling = MergeArrayHandling.Replace
 			});
 			json = metadata.Root;
 		}
 
-		return Utf8NoBom.GetBytes(json.ToString());
+		return _utf8NoBom.GetBytes(json.ToString());
 	}
 
-	static Func<SerializedMessage, Metadata> DeserializeMetadata(JsonSerializerSettings settings) {
+	private static Func<SerializedMessage, Metadata> DeserializeMetadata(JsonSerializerSettings? settings) {
 		var serializer = JsonSerializer.Create(settings);
+
+		return Deserialize;
 
 		Metadata Deserialize(SerializedMessage msg) {
 			if (msg.Metadata == null)
-				return null;
-			var root = JObject.Parse(Utf8NoBom.GetString(msg.Metadata));
+				return new Metadata();
+			var root = JObject.Parse(_utf8NoBom.GetString(msg.Metadata));
 			return new Metadata(root, serializer);
 		}
-
-		return Deserialize;
 	}
 
 	public void RegisterMessageSerializer(Type type, string name, int version, Func<Message, JObject> serializer) {
-		StorableMessage Serialize(Message msg) {
-			var id = Guid.NewGuid();
-			string formattedName = $"{name}.{version}";
-			return new StorableMessage(id, formattedName,
-				Utf8NoBom.GetBytes(serializer(msg).ToString()),
-				_metadataSerializer(msg));
-		}
-
 		if (_messageSerializers.ContainsKey(type)) {
 			throw new InvalidOperationException($"MessageSerializer already registered for {type.FullName}");
 		}
 
 		_messageSerializers[type] = Serialize;
+		return;
+
+		StorableMessage Serialize(Message msg) {
+			var id = Guid.NewGuid();
+			string formattedName = $"{name}.{version}";
+			return new StorableMessage(id, formattedName,
+				_utf8NoBom.GetBytes(serializer(msg).ToString()),
+				_metadataSerializer(msg) ?? []);
+		}
 	}
 
 	public void RegisterMessageDeserializer(Type scope, string name, int version,
 		Func<JObject, IEnumerable<Message>> deserializer) {
-		IReadOnlyList<Message> Deserialize(SerializedMessage serialized) {
-
-			var msgs = deserializer(JObject.Parse(Utf8NoBom.GetString(serialized.Data))).ToArray();
-			var md = _metadataDeserializer(serialized);
-
-			for (var i = 0; i < msgs.Length; i++) {
-				InitializeMetadata(msgs[i], md);
-			}
-
-
-			return msgs;
-		}
-
 		if (!_messageDeserializers.TryGetValue(scope, out var deserializers)) {
 			_messageDeserializers[scope] =
 				deserializers = new Dictionary<string, Func<SerializedMessage, IEnumerable<Message>>>();
@@ -127,32 +110,46 @@ public class SerializationRegistry {
 		}
 
 		deserializers[typeAndVersion] = Deserialize;
+		return;
+
+		IReadOnlyList<Message> Deserialize(SerializedMessage serialized) {
+			var msgs = deserializer(JObject.Parse(_utf8NoBom.GetString(serialized.Data))).ToArray();
+			var md = _metadataDeserializer(serialized);
+
+			for (var i = 0; i < msgs.Length; i++) {
+				InitializeMetadata(msgs[i], md);
+			}
+
+			return msgs;
+		}
 	}
 
 	public void RegisterSnapshotSerializer(Type type, string name, int version, Func<Snapshot, JObject> serializer) {
+		_snapshotSerializers.Add(type, Serialize);
+		return;
+
 		StorableMessage Serialize(Snapshot snapshot) {
 			var serialized = serializer(snapshot);
-			var data = Utf8NoBom.GetBytes(serialized.ToString());
+			var data = _utf8NoBom.GetBytes(serialized.ToString());
 			return new StorableMessage(Guid.NewGuid(), $"{name}.{version}",
-				data, _snapshotMetadataSerializer(snapshot));
+				data, _snapshotMetadataSerializer(snapshot) ?? []);
 		}
-
-		_snapshotSerializers.Add(type, Serialize);
 	}
 
 	public void RegisterSnapshotDeserializer(string name, int version, Func<JObject, Snapshot> deserializer) {
+		_snapshotDeserializers.Add($"{name}.{version}", Deserialize);
+		return;
+
 		Snapshot Deserialize(SerializedMessage serialized) {
-			var json = JObject.Parse(Utf8NoBom.GetString(serialized.Data));
+			var json = JObject.Parse(_utf8NoBom.GetString(serialized.Data));
 			var snapshot = deserializer(json);
 			var md = _metadataDeserializer(serialized);
 			InitializeMetadata(snapshot, md);
 			return snapshot;
 		}
-
-		_snapshotDeserializers.Add($"{name}.{version}", Deserialize);
 	}
 
-	static void InitializeMetadata<T>(T instance, Metadata md) where T : IMetadataSource {
+	private static void InitializeMetadata<T>(T instance, Metadata? md) where T : IMetadataSource {
 		if (md == null)
 			return;
 		instance.Initialize(md);
@@ -174,7 +171,7 @@ public class SerializationRegistry {
 			new MessageSerializer(_messageSerializers), new MessageDeserializer(_messageDeserializers));
 	}
 
-	class MessageSerializer : IMessageSerializer {
+	private class MessageSerializer : IMessageSerializer {
 		private readonly IReadOnlyDictionary<Type, Func<Message, StorableMessage>> _serializers;
 
 		public MessageSerializer(IReadOnlyDictionary<Type, Func<Message, StorableMessage>> serializers) {
@@ -188,7 +185,7 @@ public class SerializationRegistry {
 		}
 	}
 
-	class MessageDeserializer : IMessageDeserializer {
+	private class MessageDeserializer : IMessageDeserializer {
 		private readonly
 			IReadOnlyDictionary<Type, Dictionary<string, Func<SerializedMessage, IEnumerable<Message>>>>
 			_deserializers;
@@ -214,7 +211,7 @@ public class SerializationRegistry {
 		}
 	}
 
-	class SnapshotSerializer : ISnapshotSerializer {
+	private class SnapshotSerializer : ISnapshotSerializer {
 		private readonly IReadOnlyDictionary<Type, Func<Snapshot, StorableMessage>> _serializers;
 
 		public SnapshotSerializer(IReadOnlyDictionary<Type, Func<Snapshot, StorableMessage>> serializers) {
@@ -228,7 +225,7 @@ public class SerializationRegistry {
 		}
 	}
 
-	class SnapshotDeserializer : ISnapshotDeserializer {
+	private class SnapshotDeserializer : ISnapshotDeserializer {
 		private readonly IReadOnlyDictionary<string, Func<SerializedMessage, Snapshot>> _deserializers;
 
 		public SnapshotDeserializer(IReadOnlyDictionary<string, Func<SerializedMessage, Snapshot>> deserializers) {

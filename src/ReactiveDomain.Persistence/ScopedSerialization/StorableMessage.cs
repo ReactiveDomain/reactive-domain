@@ -1,17 +1,8 @@
-﻿using System;
+﻿namespace ReactiveDomain;
 
-namespace ReactiveDomain;
-
-public readonly struct StorableMessage {
-	public readonly Guid Id;
-	public readonly string Name;
-	public readonly byte[] Data;
-	public readonly byte[] Metadata;
-
-	public StorableMessage(Guid id, string name, byte[] data, byte[] metadata) {
-		Id = id;
-		Name = name;
-		Data = data;
-		Metadata = metadata;
-	}
+public readonly struct StorableMessage(Guid id, string name, byte[] data, byte[] metadata) {
+	public readonly Guid Id = id;
+	public readonly string Name = name;
+	public readonly byte[] Data = data;
+	public readonly byte[] Metadata = metadata;
 }

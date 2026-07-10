@@ -1,15 +1,13 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 
 namespace ReactiveDomain.Util;
 
 public static class BytesFormatter {
-	private static readonly string[] SizeOrders = { "B", "KiB", "MiB", "GiB", "TiB" };
-	private static readonly string[] SpeedOrders = { "B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s" };
-	private static readonly string[] NumberOrders = { "", "K", "M", "G", "T" };
+	private static readonly string[] _sizeOrders = { "B", "KiB", "MiB", "GiB", "TiB" };
+	private static readonly string[] _speedOrders = { "B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s" };
+	private static readonly string[] _numberOrders = { "", "K", "M", "G", "T" };
 
 	public static string ToFriendlySpeedString(this double bytes) {
 		return FormatSpeed((float)bytes);
@@ -19,14 +17,14 @@ public static class BytesFormatter {
 		return bytes > long.MaxValue ? "more then long.MaxValue" : ToFriendlySizeString((long)bytes);
 	}
 	public static string ToFriendlySizeString(this long bytes) {
-		return FormatLong(bytes, SizeOrders);
+		return FormatLong(bytes, _sizeOrders);
 	}
 
 	public static string ToFriendlyNumberString(this ulong number) {
 		return number > long.MaxValue ? "more then long.MaxValue" : ToFriendlyNumberString((long)number);
 	}
 	public static string ToFriendlyNumberString(this long number) {
-		return FormatLong(number, NumberOrders);
+		return FormatLong(number, _numberOrders);
 	}
 
 	private static string FormatLong(long bytes, IEnumerable<string> orders) {
@@ -48,7 +46,7 @@ public static class BytesFormatter {
 		var friendlyStr = string.Format(CultureInfo.InvariantCulture,
 			"{0}{1:##0.##}{2}",
 			isNegative ? "-" : string.Empty,
-			bytes * 1.0 / (double)max,
+			bytes * 1.0 / max,
 			finalOrder);
 		return friendlyStr;
 	}
@@ -62,7 +60,7 @@ public static class BytesFormatter {
 		long max = 1;
 		string finalOrder = string.Empty;
 
-		foreach (var speedOrder in SpeedOrders) {
+		foreach (var speedOrder in _speedOrders) {
 			max *= scale;
 			finalOrder = speedOrder;
 			if (bytesPerSec < max)
@@ -73,7 +71,7 @@ public static class BytesFormatter {
 		var friendlyStr = string.Format(CultureInfo.InvariantCulture,
 			"{0}{1:##0.##}{2}",
 			isNegative ? "-" : string.Empty,
-			bytesPerSec / (double)max,
+			bytesPerSec / max,
 			finalOrder);
 		return friendlyStr;
 	}

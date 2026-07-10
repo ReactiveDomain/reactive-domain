@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using EventStore.ClientAPI;
+﻿using EventStore.ClientAPI;
 using Newtonsoft.Json;
 using ReactiveDomain.Logging;
 using ILogger = ReactiveDomain.Logging.ILogger;
@@ -11,7 +9,7 @@ namespace ReactiveDomain.EventStore;
 public class EventStoreConnectionManager {
 
 	private readonly ILogger _log = LogManager.GetLogger(nameof(EventStoreConnectionManager));
-	private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
+	private static readonly JsonSerializerSettings _serializerSettings = new() { TypeNameHandling = TypeNameHandling.None };
 
 	/// <summary>
 	/// Gets the connection to ESDB as an <see cref="IStreamStoreConnection"/>.
@@ -27,7 +25,7 @@ public class EventStoreConnectionManager {
 	/// </summary>
 	/// <param name="config"><see cref="EsdbConfig"/> defined by the caller.</param>
 	/// <param name="credentials">User credentials to use for the connection.</param>
-	public EventStoreConnectionManager(EsdbConfig config, UserCredentials credentials = null) {
+	public EventStoreConnectionManager(EsdbConfig config, UserCredentials? credentials = null) {
 		ESConnection = new EventStoreConnectionWrapper(EventStoreConnection.Create(config.ConnectionString), credentials);
 
 		//TODO: The connection settings to keep retrying in the EventStore code circumvents this loop of 8 tries never returning from the Connect call.
@@ -38,6 +36,7 @@ public class EventStoreConnectionManager {
 			try {
 				Connection.ReadStreamForward("by_event_type", 0, 1);
 				return;
+				// ReSharper disable once EmptyGeneralCatchClause
 			} catch { } //ignore
 			Thread.Sleep(100);
 			count++;

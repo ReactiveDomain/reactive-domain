@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.IdentityStorage.Domain;
+﻿using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging;
 using Xunit;
@@ -22,31 +21,27 @@ public class SubjectAggTests {
 	public void can_create_subject() {
 		Assert.Throws<ArgumentException>(() => new Subject(Guid.Empty, _userId, SubClaim, AuthProvider, AuthDomain, _command));
 		Assert.Throws<ArgumentException>(() => new Subject(_subjectId, Guid.Empty, SubClaim, AuthProvider, AuthDomain, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, null, AuthProvider, AuthDomain, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, string.Empty, AuthProvider, AuthDomain, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, null, AuthDomain, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, string.Empty, AuthDomain, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, null, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, string.Empty, _command));
-		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, AuthDomain, null));
+		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, null!, AuthProvider, AuthDomain, _command));
+		Assert.Throws<ArgumentException>(() => new Subject(_subjectId, _userId, string.Empty, AuthProvider, AuthDomain, _command));
+		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, null!, AuthDomain, _command));
+		Assert.Throws<ArgumentException>(() => new Subject(_subjectId, _userId, SubClaim, string.Empty, AuthDomain, _command));
+		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, null!, _command));
+		Assert.Throws<ArgumentException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, string.Empty, _command));
+		Assert.Throws<ArgumentNullException>(() => new Subject(_subjectId, _userId, SubClaim, AuthProvider, AuthDomain, null!));
 
 		var sub = new Subject(_subjectId, _userId, SubClaim, AuthProvider, AuthDomain, _command);
 		var events = ((IEventSource)sub).TakeEvents();
-		Assert.Collection(
-			events,
-			e => {
-				var created = Assert.IsType<SubjectMsgs.SubjectCreated>(e);
-				Assert.Equal(_subjectId, created.SubjectId);
-				Assert.Equal(_userId, created.UserId);
-				Assert.Equal(SubClaim, created.SubClaim);
-				Assert.Equal(AuthProvider, created.AuthProvider);
-				Assert.Equal(AuthDomain.ToLowerInvariant(), created.AuthDomain);
-				Assert.Equal(_command.CorrelationId, created.CorrelationId);
-				Assert.Equal(_command.MsgId, created.CausationId);
-			});
-
-
+		var e = Assert.Single(events);
+		var created = Assert.IsType<SubjectMsgs.SubjectCreated>(e);
+		Assert.Equal(_subjectId, created.SubjectId);
+		Assert.Equal(_userId, created.UserId);
+		Assert.Equal(SubClaim, created.SubClaim);
+		Assert.Equal(AuthProvider, created.AuthProvider);
+		Assert.Equal(AuthDomain.ToLowerInvariant(), created.AuthDomain);
+		Assert.Equal(_command.CorrelationId, created.CorrelationId);
+		Assert.Equal(_command.MsgId, created.CausationId);
 	}
+
 	[Fact]
 	public void can_log_authenticated_subject() {
 
@@ -82,6 +77,7 @@ public class SubjectAggTests {
 				Assert.Equal(ClientId, authenticated.ClientId);
 			});
 	}
+
 	[Fact]
 	public void can_log_authenticated_failed_account_disabled() {
 
@@ -99,6 +95,7 @@ public class SubjectAggTests {
 				Assert.Equal(ClientId, authenticated.ClientId);
 			});
 	}
+
 	[Fact]
 	public void can_log_authenticated_failed_invalid_credentials() {
 

@@ -1,12 +1,10 @@
-﻿using System;
-
-namespace ReactiveDomain.Foundation;
+﻿namespace ReactiveDomain.Foundation;
 
 /// <summary>
 /// Class responsible for generating standard stream names which follow a specific formating: [lowercaseprefix].[camelCaseName]-[id]
 /// </summary>
 public class PrefixedCamelCaseStreamNameBuilder : IStreamNameBuilder {
-	private readonly string _prefix;
+	private readonly string? _prefix;
 
 	/// <summary>
 	/// StreamNameBuilder constructor. Throw if prefix is null or empty.
@@ -63,6 +61,6 @@ public class PrefixedCamelCaseStreamNameBuilder : IStreamNameBuilder {
 		if (1 == name.Length)
 			return name.ToLowerInvariant();
 
-		return Char.ToLowerInvariant(name[0]) + name.Substring(1);
+		return char.ToLowerInvariant(name[0]) + name[1..];
 	}
 }

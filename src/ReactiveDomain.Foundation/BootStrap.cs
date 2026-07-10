@@ -4,15 +4,14 @@ using ReactiveDomain.Logging;
 namespace ReactiveDomain.Foundation;
 
 public static class BootStrap {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-	private static readonly string AssemblyName;
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly string _assemblyName;
 	static BootStrap() {
-		var fullName = Assembly.GetExecutingAssembly().FullName;
-		Log.Info(fullName + " Loaded.");
-		AssemblyName = fullName.Split(new[] { ',' })[0];
+		_assemblyName = Assembly.GetExecutingAssembly().GetName().FullName;
+		_log.Info($"{_assemblyName} Loaded.");
 
 	}
 	public static void Load() {
-		Log.Info(AssemblyName + " Loaded.");
+		_log.Info($"{_assemblyName} Loaded.");
 	}
 }

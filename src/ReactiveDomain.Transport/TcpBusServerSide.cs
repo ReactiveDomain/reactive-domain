@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -14,16 +11,16 @@ namespace ReactiveDomain.Transport;
 public sealed class TcpBusServerSide : TcpBus {
 	private readonly TcpServerListener _commandPortListener;
 	/// <summary>Routing ID, keyed by MsgId. Assumes that the only outgoing messages are CommandResponses.</summary>
-	private readonly ConcurrentDictionary<Guid, Guid> _messageRouting = new ConcurrentDictionary<Guid, Guid>();
+	private readonly ConcurrentDictionary<Guid, Guid> _messageRouting = new();
 
 	public TcpBusServerSide(
 		IPAddress hostIp,
 		int commandPort,
-		IEnumerable<Type> inboundDiscardingMessageTypes = null,
-		QueuedHandlerDiscarding inboundDiscardingMessageQueuedHandler = null,
-		IEnumerable<Type> inboundNondiscardingMessageTypes = null,
-		QueuedHandler inboundNondiscardingMessageQueuedHandler = null,
-		Dictionary<Type, IMessageSerializer> messageSerializers = null)
+		IEnumerable<Type>? inboundDiscardingMessageTypes = null,
+		QueuedHandlerDiscarding? inboundDiscardingMessageQueuedHandler = null,
+		IEnumerable<Type>? inboundNondiscardingMessageTypes = null,
+		QueuedHandler? inboundNondiscardingMessageQueuedHandler = null,
+		Dictionary<Type, IMessageSerializer>? messageSerializers = null)
 		: base(
 			hostIp,
 			commandPort,
@@ -44,7 +41,7 @@ public sealed class TcpBusServerSide : TcpBus {
 				var framer = new LengthPrefixMessageFramer();
 				framer.RegisterMessageArrivedCallback(TcpMessageArrived);
 
-				Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
+				Action<ITcpConnection, IEnumerable<ArraySegment<byte>>>? callback = null;
 				callback = (x, data) => {
 					try {
 						framer.UnFrameData(x.ConnectionId, data);
@@ -52,7 +49,7 @@ public sealed class TcpBusServerSide : TcpBus {
 						Log.ErrorException(exc, "LengthPrefixMessageFramer.UnFrameData() threw an exception:");
 						return;
 					}
-					x.ReceiveAsync(callback);
+					x.ReceiveAsync(callback!);
 				};
 				conn.ReceiveAsync(callback);
 				AddConnection(conn);
@@ -76,7 +73,7 @@ public sealed class TcpBusServerSide : TcpBus {
 		// The server side does not initiate communication. The only messages it will ever send are
 		// CommandResponses back to a client who sent a Command.
 		var type = message.GetType();
-		if (!(message is CommandResponse cmdResponse)) {
+		if (message is not CommandResponse cmdResponse) {
 			Log.Debug($"Cannot send a message of type {type.Name} from a server-side TCP bus.");
 			return;
 		}

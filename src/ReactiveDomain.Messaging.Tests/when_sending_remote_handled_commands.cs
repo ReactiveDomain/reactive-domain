@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
@@ -33,6 +31,7 @@ public class when_sending_remote_handled_commands : IClassFixture<RemoteBusFixtu
 			Assert.IsType<Fail>(response);
 		}
 	}
+
 	[Fact]
 	public void can_cancel_commands_from_either_bus() {
 		using (_fixture.RemoteBus.Subscribe(new AdHocCommandHandler<TestCommands.RemoteCancel>(
@@ -42,12 +41,12 @@ public class when_sending_remote_handled_commands : IClassFixture<RemoteBusFixtu
 				   }))
 			  ) {
 			var ts1 = new CancellationTokenSource();
-			CommandResponse response1 = null;
+			CommandResponse? response1 = null;
 			var t1 = Task.Run(() => Assert.False(_fixture.LocalBus.TrySend(new TestCommands.RemoteCancel(ts1.Token), out response1)));
 			ts1.Cancel();
 
 			var ts2 = new CancellationTokenSource();
-			CommandResponse response2 = null;
+			CommandResponse? response2 = null;
 			var t2 = Task.Run(() => Assert.False(_fixture.RemoteBus.TrySend(new TestCommands.RemoteCancel(ts2.Token), out response2)));
 			ts2.Cancel();
 
@@ -58,5 +57,4 @@ public class when_sending_remote_handled_commands : IClassFixture<RemoteBusFixtu
 			Assert.IsType<Canceled>(response2);
 		}
 	}
-
 }

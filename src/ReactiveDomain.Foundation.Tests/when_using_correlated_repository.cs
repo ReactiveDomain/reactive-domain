@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
 using ReactiveDomain.Util;
 using Xunit;
@@ -8,7 +6,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_using_correlated_repository {
+public sealed class when_using_correlated_repository {
 	private readonly CorrelatedStreamStoreRepository _correlatedRepo;
 	private readonly Guid _accountId = Guid.NewGuid();
 
@@ -17,7 +15,7 @@ public class when_using_correlated_repository {
 		mockStore.Connect();
 		var repo = new StreamStoreRepository(new PrefixedCamelCaseStreamNameBuilder(), mockStore, new JsonMessageSerializer());
 		_correlatedRepo = new CorrelatedStreamStoreRepository(repo);
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(_accountId));
+		var source = MessageBuilder.New(() => new CreateAccount(_accountId));
 		var account = new Account(_accountId, source);
 		account.Credit(7);
 		account.Credit(13);
@@ -27,7 +25,7 @@ public class when_using_correlated_repository {
 
 	[Fact]
 	public void can_get_by_id() {
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		var retrievedAccount = _correlatedRepo.GetById<Account>(_accountId, source);
 		Assert.NotNull(retrievedAccount);
 		Assert.Equal(51, retrievedAccount.Balance);
@@ -37,7 +35,7 @@ public class when_using_correlated_repository {
 
 	[Fact]
 	public void can_get_by_id_at_version() {
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		var retrievedAccount = _correlatedRepo.GetById<Account>(_accountId, 1, source);
 		Assert.NotNull(retrievedAccount);
 		Assert.Equal(0, retrievedAccount.Balance);
@@ -51,7 +49,7 @@ public class when_using_correlated_repository {
 	}
 	[Fact]
 	public void can_try_get_by_id() {
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		Assert.True(_correlatedRepo.TryGetById<Account>(_accountId, out var retrievedAccount, source));
 		Assert.NotNull(retrievedAccount);
 		Assert.Equal(51, retrievedAccount.Balance);
@@ -61,7 +59,7 @@ public class when_using_correlated_repository {
 
 	[Fact]
 	public void can_try_get_by_id_at_version() {
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		Assert.True(_correlatedRepo.TryGetById<Account>(_accountId, 1, out var retrievedAccount, source));
 		Assert.NotNull(retrievedAccount);
 		Assert.Equal(0, retrievedAccount.Balance);
@@ -76,7 +74,7 @@ public class when_using_correlated_repository {
 	[Fact]
 	public void try_get_does_not_throw() {
 		var badId = Guid.NewGuid();
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		Assert.False(_correlatedRepo.TryGetById<Account>(badId, out var retrievedAccount, source));
 		Assert.Null(retrievedAccount);
 
@@ -84,22 +82,23 @@ public class when_using_correlated_repository {
 	[Fact]
 	public void invalid_get_rethrows() {
 		var badId = Guid.NewGuid();
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		Assert.Throws<AggregateNotFoundException>(() => _correlatedRepo.GetById<Account>(badId, source));
 	}
 
 	[Fact]
 	public void new_correlated_aggregates_inject_source_information() {
 		var newAccountId = Guid.NewGuid();
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(newAccountId));
+		var source = MessageBuilder.New(() => new CreateAccount(newAccountId));
 		var newAccount = new Account(newAccountId, source);
 		newAccount.Credit(7);
 		newAccount.Credit(13);
 		newAccount.Credit(31);
 
-		var eventSource = (IEventSource)newAccount;
+		IEventSource eventSource = newAccount;
 		var correlatedEvents = eventSource.TakeEvents().Select(evt => evt as ICorrelatedMessage).ToArray();
 		foreach (var evt in correlatedEvents) {
+			Assert.NotNull(evt);
 			Assert.Equal(source.MsgId, evt.CausationId);
 			Assert.Equal(source.CorrelationId, evt.CorrelationId);
 		}
@@ -107,15 +106,16 @@ public class when_using_correlated_repository {
 	[Fact]
 	public void updated_correlated_aggregates_inject_source_information() {
 
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		var retrievedAccount = _correlatedRepo.GetById<Account>(_accountId, source);
 		retrievedAccount.Credit(7);
 		retrievedAccount.Credit(13);
 		retrievedAccount.Credit(31);
 
-		var eventSource = (IEventSource)retrievedAccount;
+		IEventSource eventSource = retrievedAccount;
 		var correlatedEvents = eventSource.TakeEvents().Select(evt => evt as ICorrelatedMessage).ToArray();
 		foreach (var evt in correlatedEvents) {
+			Assert.NotNull(evt);
 			Assert.Equal(source.MsgId, evt.CausationId);
 			Assert.Equal(source.CorrelationId, evt.CorrelationId);
 		}
@@ -125,7 +125,7 @@ public class when_using_correlated_repository {
 	[Fact]
 	public void can_save_new_correlated_aggregates() {
 		var newAccountId = Guid.NewGuid();
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(newAccountId));
+		var source = MessageBuilder.New(() => new CreateAccount(newAccountId));
 		var newAccount = new Account(newAccountId, source);
 		newAccount.Credit(7);
 		newAccount.Credit(13);
@@ -140,7 +140,7 @@ public class when_using_correlated_repository {
 
 	[Fact]
 	public void can_save_updated_correlated_aggregates() {
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 
 		var retrievedAccount = _correlatedRepo.GetById<Account>(_accountId, source);
 		Assert.NotNull(retrievedAccount);
@@ -158,7 +158,7 @@ public class when_using_correlated_repository {
 	[Fact]
 	public void can_delete_aggregate() {
 		var newAccountId = Guid.NewGuid();
-		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(newAccountId));
+		var source = MessageBuilder.New(() => new CreateAccount(newAccountId));
 		var newAccount = new Account(newAccountId, source);
 		_correlatedRepo.Save(newAccount);
 

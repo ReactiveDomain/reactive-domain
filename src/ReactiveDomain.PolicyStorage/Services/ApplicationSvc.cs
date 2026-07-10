@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
@@ -10,7 +9,6 @@ namespace ReactiveDomain.Policy;
 public class ApplicationSvc :
 	TransientSubscriber,
 	IHandleCommand<ApplicationMsgs.CreateApplication> {
-	private readonly IConfiguredConnection _conn;
 	private readonly ICorrelatedRepository _repo;
 	private readonly FilteredPoliciesRM _rm;
 
@@ -18,9 +16,9 @@ public class ApplicationSvc :
 		IConfiguredConnection conn,
 		ICommandSubscriber subscriber)
 		: base(subscriber) {
-		_conn = conn;
 		_repo = conn.GetCorrelatedRepository();
 		_rm = new FilteredPoliciesRM(conn);
+		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		Subscribe<ApplicationMsgs.CreateApplication>(this);
 	}
 

@@ -1,17 +1,16 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 using static ReactiveDomain.IdentityStorage.Messages.ClientMsgs;
 
 namespace ReactiveDomain.IdentityStorage.Domain;
 
 public class Client : AggregateRoot {
-	public string ClientName { get; private set; }
-	public string[] RedirectUris { get; private set; }
-	public string[] LogoutRedirectUris { get; private set; }
-	public string FrontChannelLogoutUri { get; private set; }
+	public string? ClientName { get; private set; }
+	public string[] RedirectUris { get; private set; } = [];
+	public string[] LogoutRedirectUris { get; private set; } = [];
+	public string? FrontChannelLogoutUri { get; private set; }
 
-	private Client() {
+	public Client() {
 		RegisterEvents();
 	}
 
@@ -23,8 +22,6 @@ public class Client : AggregateRoot {
 			LogoutRedirectUris = @event.PostLogoutRedirectUris;
 			FrontChannelLogoutUri = @event.FrontChannelLogoutUri;
 		});
-		Register<ClientSecretAdded>(@event => { });
-		Register<ClientSecretRemoved>(@event => { });
 	}
 
 	/// <summary>
@@ -51,8 +48,8 @@ public class Client : AggregateRoot {
 			id,
 			applicationId,
 			clientName,
-			new[] { "client_credentials", "password", "authorization_code" },
-			new[] { "openid", "profile", "rd-policy", "enabled-policies" },
+			["client_credentials", "password", "authorization_code"],
+			["openid", "profile", "rd-policy", "enabled-policies"],
 			redirectUris,
 			postLogoutRedirectUris,
 			frontChannelLogoutUri));

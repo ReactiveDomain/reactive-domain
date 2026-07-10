@@ -1,7 +1,4 @@
-﻿using System;
-
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 /// <summary>
 /// A username/password pair used for authentication and
@@ -14,7 +11,7 @@ public class UserCredentials {
 	public readonly string Password;
 
 	/// <summary>
-	/// Constructs a new <see cref="T:EventStore.ClientAPI.SystemData.UserCredentials" />.
+	/// Constructs a new <see cref="UserCredentials" />.
 	/// </summary>
 	/// <param name="username">
 	/// </param>

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Domain;
@@ -44,37 +42,37 @@ public class PolicySvc :
 	}
 
 	public CommandResponse Handle(PolicyUserMsgs.AddPolicyUser cmd) {
-		var policy = _repo.GetById<Domain.SecuredApplication>(cmd.ApplicationId, cmd).DefaultPolicy;
-		if (policy.Id != cmd.PolicyId) { throw new NotSupportedException("Multiple Policies per Application is not supported. (or bad policy id)"); }
+		var policy = _repo.GetById<SecuredApplication>(cmd.ApplicationId, cmd).DefaultPolicy;
+		if (policy?.Id != cmd.PolicyId) { throw new NotSupportedException("Multiple Policies per Application is not supported. (or bad policy id)"); }
 
-		var policyUser = new Domain.PolicyUser(cmd.PolicyUserId, policy.Id, cmd.UserId, policy.OneRolePerUser, cmd);
+		var policyUser = new PolicyUser(cmd.PolicyUserId, policy.Id, cmd.UserId, policy.OneRolePerUser, cmd);
 		_repo.Save(policyUser);
 		return cmd.Succeed();
 	}
 
 	public CommandResponse Handle(PolicyUserMsgs.AddRole cmd) {
-		var user = _repo.GetById<Domain.PolicyUser>(cmd.PolicyUserId, cmd);
+		var user = _repo.GetById<PolicyUser>(cmd.PolicyUserId, cmd);
 		user.AddRole(cmd.RoleName, cmd.RoleId);
 		_repo.Save(user);
 		return cmd.Succeed();
 	}
 
 	public CommandResponse Handle(PolicyUserMsgs.RemoveRole cmd) {
-		var user = _repo.GetById<Domain.PolicyUser>(cmd.PolicyUserId, cmd);
+		var user = _repo.GetById<PolicyUser>(cmd.PolicyUserId, cmd);
 		user.RemoveRole(cmd.RoleName, cmd.RoleId);
 		_repo.Save(user);
 		return cmd.Succeed();
 	}
 
 	public CommandResponse Handle(PolicyUserMsgs.DeactivateUser cmd) {
-		var user = _repo.GetById<Domain.PolicyUser>(cmd.PolicyUserId, cmd);
+		var user = _repo.GetById<PolicyUser>(cmd.PolicyUserId, cmd);
 		user.Deactivate();
 		_repo.Save(user);
 		return cmd.Succeed();
 	}
 
 	public CommandResponse Handle(PolicyUserMsgs.ReactivateUser cmd) {
-		var user = _repo.GetById<Domain.PolicyUser>(cmd.PolicyUserId, cmd);
+		var user = _repo.GetById<PolicyUser>(cmd.PolicyUserId, cmd);
 		user.Reactivate();
 		_repo.Save(user);
 		return cmd.Succeed();

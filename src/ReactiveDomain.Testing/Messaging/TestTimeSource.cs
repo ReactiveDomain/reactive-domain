@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 
+// ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing;
 
 public class TestTimeSource : ITimeSource {
 	private long _virtualTime;
+	private readonly List<ManualResetEventSlim> _waiting = [];
+
 	public void AdvanceTime(long msDistance) {
-		if (msDistance < 0) { throw new ArgumentOutOfRangeException(); }
+		ArgumentOutOfRangeException.ThrowIfNegative(msDistance);
 		_virtualTime += msDistance;
 
 		lock (_waiting) {
@@ -17,11 +17,11 @@ public class TestTimeSource : ITimeSource {
 			}
 		}
 	}
-	private readonly List<ManualResetEventSlim> _waiting = new List<ManualResetEventSlim>();
 
 	public TimePosition Now() {
 		return new TimePosition(_virtualTime);
 	}
+
 	public void WaitFor(TimePosition position, ManualResetEventSlim waitEvent) {
 		var waitTime = Now().DistanceUntil(position);
 		if (waitTime == TimeSpan.Zero) { return; }

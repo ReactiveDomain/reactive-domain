@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using DynamicData;
+﻿using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
-
 
 namespace ReactiveDomain.Policy.ReadModels;
 
@@ -20,12 +16,11 @@ public class ApplicationRm :
 	IHandle<PolicyUserMsgs.UserDeactivated>,
 	IHandle<PolicyUserMsgs.UserReactivated> {
 	public IConnectableCache<PolicyDTO, Guid> Policies => _policies;
-	private readonly SourceCache<PolicyDTO, Guid> _policies = new SourceCache<PolicyDTO, Guid>(x => x.PolicyId);
-	private readonly Dictionary<Guid, ApplicationDTO> _appById = new Dictionary<Guid, ApplicationDTO>();
-	private readonly Dictionary<string, ApplicationDTO> _appByName = new Dictionary<string, ApplicationDTO>();
-	private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = new Dictionary<Guid, PolicyUserDTO>();
-	private readonly Dictionary<Guid, RoleDTO> _roles = new Dictionary<Guid, RoleDTO>();
-
+	private readonly SourceCache<PolicyDTO, Guid> _policies = new(x => x.PolicyId);
+	private readonly Dictionary<Guid, ApplicationDTO> _appById = [];
+	private readonly Dictionary<string, ApplicationDTO> _appByName = [];
+	private readonly Dictionary<Guid, PolicyUserDTO> _policyUsers = [];
+	private readonly Dictionary<Guid, RoleDTO> _roles = [];
 
 	public ApplicationRm(IConfiguredConnection conn)
 		: base(nameof(ApplicationRm), conn) {
@@ -47,12 +42,11 @@ public class ApplicationRm :
 			reader.Read<Domain.PolicyUser>(() => Idle);
 			userCheckpoint = reader.Position;
 		}
+
 		//subscribe
 		Start<Domain.SecuredApplication>(appCheckpoint);
 		Start<Domain.PolicyUser>(userCheckpoint);
 	}
-
-
 
 	/// <summary>
 	/// Gets the application with the specified ID.
@@ -67,6 +61,7 @@ public class ApplicationRm :
 	/// <param name="appName">The application name.</param>
 	/// <exception cref="KeyNotFoundException">Thrown if no application with that Name is found.</exception>
 	public ApplicationDTO GetApplication(string appName) => _appByName[appName];
+
 	/// <summary>
 	/// Gets the policies for the application with the specified Name.
 	/// </summary>
@@ -76,32 +71,37 @@ public class ApplicationRm :
 		var app = _appByName[appName];
 		return _policies.Items.Where(p => p.ApplicationId == app.ApplicationId).ToList();
 	}
-	public PolicyUserDTO GetPolicyUserByuserId(Guid userId) {
+
+	public PolicyUserDTO? GetPolicyUserByUserId(Guid userId) {
 		return _policyUsers.Values.FirstOrDefault(u => u.UserId == userId);
 	}
+
 	/// <summary>
 	/// Gets whether there is already a secured application with the given name and version.
 	/// </summary>
 	/// <param name="appName">The name of the application.</param>
 	/// <param name="securityModelVersion">The version of the application's security model.</param>
 	/// <returns>True if an application exists that matches both name and version, otherwise false.</returns>
-	public bool ApplicationExists(string appName, Version securityModelVersion) => _appByName.Values.Any(x => x.Name == appName && x.SecurityModelVersion == securityModelVersion);
+	public bool ApplicationExists(string appName, Version securityModelVersion) =>
+		_appByName.Values.Any(x => x.Name == appName && x.SecurityModelVersion == securityModelVersion);
 
 	public void Handle(ApplicationMsgs.ApplicationCreated @event) {
 		if (_appById.ContainsKey(@event.ApplicationId)) { return; }
+
 		var app = new ApplicationDTO(@event);
 		_appById.Add(@event.ApplicationId, app);
-		if (_appByName.ContainsKey(app.Name)) { _appByName[app.Name] = app; } //only keep most recent
-		else { _appByName.Add(app.Name, app); }
+		_appByName[app.Name] = app; //only keep most recent
 	}
 
 	public void Handle(ApplicationMsgs.PolicyCreated @event) {
-		if (_appById.ContainsKey(@event.ApplicationId)) //in filtered list
-		{
+		if (_appById.ContainsKey(@event.ApplicationId)) {
+			//in filtered list
 			if (_policies.Keys.Contains(@event.PolicyId)) { return; }
+
 			_policies.AddOrUpdate(new PolicyDTO(@event));
 		}
 	}
+
 	public void Handle(ApplicationMsgs.RoleCreated @event) {
 		var policy = _policies.Lookup(@event.PolicyId);
 		if (policy.HasValue && !_roles.ContainsKey(@event.RoleId)) {
@@ -124,6 +124,7 @@ public class ApplicationRm :
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
 			_roles.TryGetValue(@event.RoleId, out var role)) {
 			if (user.RolesCache.Keys.Contains(@event.RoleId)) { return; }
+
 			user.AddRole(role);
 		}
 	}
@@ -133,8 +134,8 @@ public class ApplicationRm :
 			user.RemoveRole(@event.RoleId);
 		}
 	}
-	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
 
+	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {
@@ -151,5 +152,4 @@ public class ApplicationRm :
 			}
 		}
 	}
-
 }

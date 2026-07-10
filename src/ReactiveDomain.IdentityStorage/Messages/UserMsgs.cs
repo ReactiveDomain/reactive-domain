@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.IdentityStorage.Messages;
 
@@ -10,7 +9,7 @@ public class UserMsgs {
 	/// <summary>
 	/// Create a new user.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	/// <param name="GivenName">The user's given name. This is the first name in most cultures.</param>
 	/// <param name="Surname">The user's surname or family name. This is the last name in most cultures.</param>
 	/// <param name="Email">The user's email address.</param>
@@ -22,58 +21,58 @@ public class UserMsgs {
 		string FullName,
 		string Email) : Command;
 
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public abstract record UserEvent(Guid UserId) : Event;
 
 	/// <summary>
 	/// A new user was created.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public record UserCreated(Guid UserId) : UserEvent(UserId);
 
 	/// <summary>
 	/// Deactivate a user.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public record Deactivate(Guid UserId) : Command;
 
 	/// <summary>
 	/// User is deactivated.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public record Deactivated(Guid UserId) : UserEvent(UserId);
 
 	/// <summary>
 	/// Activate a user.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public record Activate(Guid UserId) : Command;
 
 	/// <summary>
 	/// User is Activated.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	public record Activated(Guid UserId) : UserEvent(UserId);
 
 	/// <summary>
 	/// Update a user's optional details
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	/// <param name="GivenName">The user's given name</param>
 	/// <param name="Surname">The user's surname or family name</param>
 	/// <param name="FullName">The user's full name</param>
 	/// <param name="Email">The user's email address</param>
 	public record UpdateUserDetails(
 		Guid UserId,
-		string GivenName = null,
-		string Surname = null,
-		string FullName = null,
-		string Email = null) : Command;
+		string? GivenName = null,
+		string? Surname = null,
+		string? FullName = null,
+		string? Email = null) : Command;
 
 	/// <summary>
 	/// A user's Updated optional details
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
 	/// <param name="GivenName">The user's given name</param>
 	/// <param name="Surname">The user's surname or family name</param>
 	/// <param name="FullName">The user's full name</param>
@@ -88,11 +87,11 @@ public class UserMsgs {
 	/// <summary>
 	/// Update a user's AuthDomain information.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
-	///  <param name="SubjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
-	///  <param name="AuthProvider">The identity provider.</param>
-	///  <param name="AuthDomain">The user's domain.</param>
-	///  <param name="UserName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="SubjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
+	/// <param name="AuthProvider">The identity provider.</param>
+	/// <param name="AuthDomain">The user's domain.</param>
+	/// <param name="UserName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
 	public record MapToAuthDomain(
 		Guid UserId,
 		string SubjectId,
@@ -103,11 +102,11 @@ public class UserMsgs {
 	/// <summary>
 	/// AuthDomain of a user was updated.
 	/// </summary>
-	///  <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
-	///  <param name="SubjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
-	///  <param name="AuthProvider">The identity provider.</param>
-	///  <param name="AuthDomain">The user's domain.</param>
-	///  <param name="UserName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
+	/// <param name="UserId">The unique ID of the user in ReactiveDomain.</param>
+	/// <param name="SubjectId">The unique ID from the auth provider (e.g. Sub Claim) of the authenticated user.</param>
+	/// <param name="AuthProvider">The identity provider.</param>
+	/// <param name="AuthDomain">The user's domain.</param>
+	/// <param name="UserName">The username, which should be unique within the <see cref="AuthDomain"/>.</param>     
 	public record AuthDomainMapped(
 		Guid UserId,
 		string SubjectId,

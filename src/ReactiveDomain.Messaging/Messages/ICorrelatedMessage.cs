@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Messaging;
+﻿namespace ReactiveDomain.Messaging;
 
 public interface ICorrelatedMessage : IMessage {
 	Guid CorrelationId { get; set; }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using DynamicData;
+﻿using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
@@ -34,6 +32,7 @@ public class UsersRm :
 			return [.. _userIds];
 		}
 	}
+
 	public bool HasUser(string subjectId, string authDomain, out Guid userId) {
 		var subject = $"{subjectId}@{authDomain.ToLowerInvariant()}";
 		return UserIdsBySubjectAtDomain.TryGetValue(subject, out userId);

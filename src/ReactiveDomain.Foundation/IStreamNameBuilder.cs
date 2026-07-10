@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Foundation;
+﻿namespace ReactiveDomain.Foundation;
 
 public interface IStreamNameBuilder {
 	/// <summary>

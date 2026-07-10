@@ -1,14 +1,12 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 
-using System;
-using System.IO;
 using System.Reflection;
 using System.Text;
 
 namespace ReactiveDomain.Util;
 
 public static class Helper {
-	public static readonly UTF8Encoding UTF8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+	public static readonly UTF8Encoding UTF8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
 	public static void EatException(Action action) {
 		try {
@@ -19,7 +17,7 @@ public static class Helper {
 		}
 	}
 
-	public static T EatException<T>(Func<T> action, T defaultValue = default(T)) {
+	public static T? EatException<T>(Func<T> action, T? defaultValue = default) {
 		try {
 			return action();
 		} catch (Exception) {
@@ -28,16 +26,17 @@ public static class Helper {
 	}
 
 	public static string GetDefaultLogsDir() {
-		// ReSharper disable once AssignNullToNotNullAttribute
-		return Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "es-logs");
+#pragma warning disable CS8604 // Possible null reference argument.
+		return Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location), "es-logs");
+#pragma warning restore CS8604 // Possible null reference argument.
 	}
 
-	public static string FormatBinaryDump(byte[] logBulk) {
+	public static string FormatBinaryDump(byte[]? logBulk) {
 		return FormatBinaryDump(new ArraySegment<byte>(logBulk ?? Empty.ByteArray));
 	}
 
 	public static string FormatBinaryDump(ArraySegment<byte> logBulk) {
-		if (logBulk.Count == 0)
+		if (logBulk.Count == 0 || logBulk.Array is null)
 			return "--- NO DATA ---";
 
 		var sb = new StringBuilder();

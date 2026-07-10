@@ -14,9 +14,15 @@ public class MessageExtensionsTests {
 	}
 
 	[Fact]
+	public void cannot_write_null_metadatum() {
+		var message = new TestEvent();
+		Assert.Throws<ArgumentNullException>(() => message.WriteMetadatum<CustomMetadata>(null!));
+	}
+
+	[Fact]
 	public void read_metadatum_throws_if_not_found() {
 		var message = new TestEvent();
-		Assert.Throws<MetadatumNotFoundException>(() => message.ReadMetadatum<CustomMetadata>());
+		Assert.Throws<MetadatumNotFoundException>(message.ReadMetadatum<CustomMetadata>);
 	}
 
 	[Fact]
@@ -39,6 +45,6 @@ public class MessageExtensionsTests {
 	public record TestEvent : Event;
 
 	public class CustomMetadata {
-		public string Data;
+		public string? Data;
 	}
 }

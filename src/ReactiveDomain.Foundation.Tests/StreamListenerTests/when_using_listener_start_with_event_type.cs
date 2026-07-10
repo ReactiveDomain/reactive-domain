@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
+﻿using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -10,8 +8,8 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class when_using_listener_start_with_event_type {
-	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
+public sealed class when_using_listener_start_with_event_type {
+	private readonly JsonMessageSerializer _eventSerializer = new();
 
 	public when_using_listener_start_with_event_type(StreamStoreConnectionFixture fixture) {
 		var streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
@@ -29,7 +27,7 @@ public class when_using_listener_start_with_event_type {
 			ExpectedVersion.NoStream,
 			null,
 			_eventSerializer.Serialize(evt));
-		Assert.True(result.NextExpectedVersion == 0);
+		Assert.Equal(0, result.NextExpectedVersion);
 
 		//wait for the projection to be written
 		CommonHelpers.WaitForStream(conn, streamNameBuilder.GenerateForEventType(nameof(EventProjectionTestEvent)));

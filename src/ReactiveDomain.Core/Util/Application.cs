@@ -1,8 +1,5 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Util;
@@ -22,15 +19,15 @@ public class Application {
 
 	protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
-	private static Action<int> OnExit;
-	private static int Exited;
+	private static Action<int>? _onExit;
+	private static int _exited;
 
-	private static readonly HashSet<string> Defines = new HashSet<string>();
+	private static readonly HashSet<string> _defines = [];
 
 	public static void RegisterExitAction(Action<int> exitAction) {
-		Ensure.NotNull(exitAction, "exitAction");
+		Ensure.NotNull(exitAction, nameof(exitAction));
 
-		OnExit = exitAction;
+		_onExit = exitAction;
 	}
 
 	public static void ExitSilent(int exitCode, string reason) {
@@ -46,13 +43,13 @@ public class Application {
 	}
 
 	private static void Exit(int exitCode, string reason, bool silent) {
-		if (Interlocked.CompareExchange(ref Exited, 1, 0) != 0)
+		if (Interlocked.CompareExchange(ref _exited, 1, 0) != 0)
 			return;
 
-		Ensure.NotNullOrEmpty(reason, "reason");
+		Ensure.NotNullOrEmpty(reason, nameof(reason));
 
 		if (!silent) {
-			var message = string.Format("Exiting with exit code: {0}.\nExit reason: {1}", exitCode, reason);
+			var message = $"Exiting with exit code: {exitCode}.\nExit reason: {reason}";
 			Console.WriteLine(message);
 			if (exitCode != 0)
 				Log.Error(message);
@@ -60,19 +57,17 @@ public class Application {
 				Log.Info(message);
 		}
 
-		var exit = OnExit;
-		if (exit != null)
-			exit(exitCode);
+		_onExit?.Invoke(exitCode);
 	}
 
 	public static void AddDefines(IEnumerable<string> defines) {
 		foreach (var define in defines.Safe()) {
-			Defines.Add(define.ToUpper());
+			_defines.Add(define.ToUpper());
 		}
 	}
 
 	public static bool IsDefined(string define) {
-		Ensure.NotNull(define, "define");
-		return Defines.Contains(define.ToUpper());
+		Ensure.NotNull(define, nameof(define));
+		return _defines.Contains(define.ToUpper());
 	}
 }

@@ -1,5 +1,3 @@
-using System;
-
 namespace ReactiveDomain.Testing;
 
 public class TestWoftamAggregate : EventDrivenStateMachine {

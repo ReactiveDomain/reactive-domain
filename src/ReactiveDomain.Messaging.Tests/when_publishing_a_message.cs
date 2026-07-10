@@ -1,13 +1,11 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests;
 
 // ReSharper disable once InconsistentNaming
-public sealed class when_publishing_a_message : TestWrapper,
+public sealed class when_publishing_a_message :
 	IHandle<TestEvent>,
 	IHandle<ParentTestEvent>,
 	IHandle<ChildTestEvent>,
@@ -16,16 +14,7 @@ public sealed class when_publishing_a_message : TestWrapper,
 	private int _parentTestEventCount;
 	private int _childTestEventCount;
 	private int _grandChildTestEventCount;
-	private IBus _bus;
-
-	// Called before every test (see TestWrapper)
-	protected override void Reset() {
-		_bus = new InMemoryBus("testBus");
-		_testEventCount = 0;
-		_parentTestEventCount = 0;
-		_childTestEventCount = 0;
-		_grandChildTestEventCount = 0;
-	}
+	private readonly InMemoryBus _bus = new("testBus");
 
 	[Fact]
 	public void TestPublishSimpleMessage() {
@@ -71,7 +60,6 @@ public sealed class when_publishing_a_message : TestWrapper,
 		_bus.Publish(new ParentTestEvent());
 		_bus.Publish(new ChildTestEvent());
 		_bus.Publish(new GrandChildTestEvent());
-		;
 
 		AssertEx.IsOrBecomesTrue(() => _testEventCount == 0, msg: $"Expected 1 got {_testEventCount}");
 		AssertEx.IsOrBecomesTrue(() => _parentTestEventCount == 0, msg: $"Expected 0 got {_parentTestEventCount}");
@@ -127,6 +115,7 @@ public sealed class when_publishing_a_message : TestWrapper,
 		sub.Dispose();
 		Assert.False(_bus.HasSubscriberFor<ParentTestEvent>());
 
+		sub.Dispose();
 		sub = _bus.Subscribe<TestEvent>(this);
 		Assert.True(_bus.HasSubscriberFor<TestEvent>());
 		_bus.Unsubscribe<TestEvent>(this);
@@ -136,10 +125,11 @@ public sealed class when_publishing_a_message : TestWrapper,
 		var sub2 = _bus.Subscribe(new AdHocHandler<TestEvent>(_ => Interlocked.Increment(ref gotAdHoc)));
 		_bus.Publish(new TestEvent());
 		Assert.True(_bus.HasSubscriberFor<TestEvent>());
-		Assert.False(_bus.HasSubscriberFor<Message>()); //is anyone subscibed to message
-		Assert.True(_bus.HasSubscriberFor<Message>(true)); //is anyone subscried to a derived class of mesage
+		Assert.False(_bus.HasSubscriberFor<Message>()); //is anyone subscribed to message
+		Assert.True(_bus.HasSubscriberFor<Message>(true)); //is anyone subscribed to a derived class of message
 		AssertEx.IsOrBecomesTrue(() => gotAdHoc == 1);
 
+		sub.Dispose();
 		sub = _bus.Subscribe<TestEvent>(this);
 		_bus.Publish(new TestEvent());
 		Assert.True(_bus.HasSubscriberFor<TestEvent>());
@@ -176,17 +166,4 @@ public sealed class when_publishing_a_message : TestWrapper,
 	void IHandle<ParentTestEvent>.Handle(ParentTestEvent message) => Interlocked.Increment(ref _parentTestEventCount);
 	void IHandle<ChildTestEvent>.Handle(ChildTestEvent message) => Interlocked.Increment(ref _childTestEventCount);
 	void IHandle<GrandChildTestEvent>.Handle(GrandChildTestEvent message) => Interlocked.Increment(ref _grandChildTestEventCount);
-}
-
-public abstract class TestWrapper : IDisposable {
-	// Simple wrapper to assure call to Reset before every test.
-	protected TestWrapper() {
-		this.Reset();
-	}
-
-	protected abstract void Reset();
-
-	void IDisposable.Dispose() {
-		// No-op
-	}
 }

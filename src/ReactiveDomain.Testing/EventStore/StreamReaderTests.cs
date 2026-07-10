@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using Xunit;
 using Xunit.Abstractions;
+using StreamReader = ReactiveDomain.Foundation.StreamReader;
 
 // ReSharper disable UnusedParameter.Local
 
@@ -15,13 +11,13 @@ namespace ReactiveDomain.Testing.EventStore;
 
 public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IHandle<Event> {
 	private readonly List<IStreamStoreConnection> _stores = [];
-	private readonly IEventSerializer _serializer = new JsonMessageSerializer();
+	private readonly JsonMessageSerializer _serializer = new();
 	private readonly string _streamName;
 	private readonly IStreamNameBuilder _streamNameBuilder;
 	private long _count;
-	private readonly int NUM_OF_EVENTS = 10;
+	private const int NumOfEvents = 10;
 	private readonly ITestOutputHelper _toh;
-	private Action<IMessage> _gotEvent;
+	private Action<IMessage>? _gotEvent;
 
 	public StreamReaderTests(ITestOutputHelper toh, StreamStoreConnectionFixture fixture) {
 		_toh = toh;
@@ -36,7 +32,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 
 
 		foreach (var store in _stores) {
-			AppendEvents(NUM_OF_EVENTS, store, _streamName);
+			AppendEvents(NumOfEvents, store, _streamName);
 		}
 	}
 
@@ -66,7 +62,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 	public void can_read_stream_forward() {
 		foreach (var conn in _stores) {
 			_count = 0;
-			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { this.Handle(@event); } });
+			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { Handle(@event); } });
 
 			// forward 1 from beginning
 			_count = 0;
@@ -78,7 +74,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			// forward all
 			_count = 0;
 			reader.Read(_streamName, () => true);
-			Assert.Equal(NUM_OF_EVENTS, _count);
+			Assert.Equal(NumOfEvents, _count);
 		}
 	}
 
@@ -87,11 +83,11 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 		foreach (var conn in _stores) {
 			_count = 0;
 			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { Handle(@event); } });
-			var position = NUM_OF_EVENTS / 2; // zero-based position is the number of the last received event
+			var position = NumOfEvents / 2; // zero-based position is the number of the last received event
 
 			reader.Read(_streamName, () => true, position);
 
-			Assert.Equal(NUM_OF_EVENTS - (position + 1), _count); // events skipped: 0...P; events read: P+1...N
+			Assert.Equal(NumOfEvents - (position + 1), _count); // events skipped: 0...P; events read: P+1...N
 		}
 	}
 
@@ -102,7 +98,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { Handle(@event); } });
 
 
-			reader.Read(_streamName, () => true, NUM_OF_EVENTS);
+			reader.Read(_streamName, () => true, NumOfEvents);
 
 			Assert.Equal(0, _count);
 			Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(_streamName, () => true, checkpoint: -10, readBackwards: true));
@@ -125,7 +121,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			conn.DeleteStream(deleteStream, ExpectedVersion.Any);
 			Assert.False(reader.Read(deleteStream, () => true));
 
-			Assert.False(reader.Read(_streamName, () => true, NUM_OF_EVENTS + 1, 1));
+			Assert.False(reader.Read(_streamName, () => true, NumOfEvents + 1, 1));
 
 		}
 	}
@@ -139,7 +135,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			Parallel.Invoke(
 				() => {
 					for (int chunkNum = 0; chunkNum < 10; chunkNum++)
-						AppendEventArray(NUM_OF_EVENTS, conn, _streamName);
+						AppendEventArray(NumOfEvents, conn, _streamName);
 				},
 				() => {
 					Thread.Sleep(10); // to make that sure appends are started
@@ -147,7 +143,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 				});
 
 			_toh.WriteLine($"Read events: {_count}");
-			Assert.Equal(0, _count % NUM_OF_EVENTS);
+			Assert.Equal(0, _count % NumOfEvents);
 		}
 	}
 
@@ -160,7 +156,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 
 			reader.Read(_streamName, () => true, readBackwards: true);
 
-			Assert.Equal(NUM_OF_EVENTS, _count);
+			Assert.Equal(NumOfEvents, _count);
 		}
 	}
 
@@ -170,7 +166,7 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			_count = 0;
 			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { Handle(@event); } });
 
-			var position = NUM_OF_EVENTS / 2;
+			var position = NumOfEvents / 2;
 
 			reader.Read(_streamName, () => true, position, readBackwards: true);
 
@@ -191,13 +187,14 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => { if (evt is Event @event) { Handle(@event); } });
 
 
-			var events = new List<ReadTestEvent>(totalEvents);
+			var events = new List<ReadTestEvent?>(totalEvents);
 			_gotEvent = evt => { events.Add(evt as ReadTestEvent); };
 			reader.Read(longStreamName, () => true, readBackwards: true);
 
 			Assert.Equal(totalEvents, _count);
 			var expectedNum = totalEvents - 1;
 			foreach (var evt in events) {
+				Assert.NotNull(evt);
 				Assert.Equal(expectedNum, evt.MessageNumber);
 				expectedNum--;
 			}
@@ -297,10 +294,10 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			var categoryStream = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
 			var typeStream = _streamNameBuilder.GenerateForEventType(nameof(ReadTestEvent));
 
-			AppendEventArray(NUM_OF_EVENTS, conn, streamName2);
+			AppendEventArray(NumOfEvents, conn, streamName2);
 			Thread.Sleep(100);
 
-
+			// -- Category stream --
 			// forward 1 from beginning
 			_count = 0;
 			Assert.Null(reader.Position);
@@ -313,7 +310,6 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			reader.Read(categoryStream, () => true, count: 2);
 			Assert.Equal(2, _count);
 			Assert.Equal(1, reader.Position);
-
 
 			// forward 2 from 12
 			_count = 0;
@@ -336,15 +332,56 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 			Assert.Equal(5, _count);
 			Assert.Equal(lastReceived - 5, reader.Position);
 
-
 			// backward 10 from 5
 			_count = 0;
 			lastReceived = 5;
 			reader.Read(categoryStream, () => true, checkpoint: lastReceived, count: 10, readBackwards: true);
 			Assert.Equal(5, _count);
 			Assert.Equal(0, reader.Position);
+
+			// -- Event type stream --
+			// forward 1 from beginning
+			_count = 0;
+			reader.Read(typeStream, () => true, count: 1);
+			Assert.Equal(1, _count);
+			Assert.Equal(0, reader.Position);
+
+			// forward 2 from beginning
+			_count = 0;
+			reader.Read(typeStream, () => true, count: 2);
+			Assert.Equal(2, _count);
+			Assert.Equal(1, reader.Position);
+
+			// forward 2 from 12
+			_count = 0;
+			lastReceived = 12; // zero-based number of the last received event
+			reader.Read(typeStream, () => true, checkpoint: lastReceived, count: 2);
+			Assert.Equal(2, _count);
+			Assert.Equal(lastReceived + 2, reader.Position);
+
+			// forward 10 from 5
+			_count = 0;
+			lastReceived = 5;
+			reader.Read(typeStream, () => true, checkpoint: lastReceived, count: 10);
+			Assert.Equal(10, _count);
+			Assert.Equal(lastReceived + 10, reader.Position);
+
+			// backward 5 from 10
+			_count = 0;
+			lastReceived = 10;
+			reader.Read(typeStream, () => true, checkpoint: 10, count: 5, readBackwards: true);
+			Assert.Equal(5, _count);
+			Assert.Equal(lastReceived - 5, reader.Position);
+
+			// backward 10 from 5
+			_count = 0;
+			lastReceived = 5;
+			reader.Read(typeStream, () => true, checkpoint: lastReceived, count: 10, readBackwards: true);
+			Assert.Equal(5, _count);
+			Assert.Equal(0, reader.Position);
 		}
 	}
+
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Interface required for fixture.")]
 	public void Handle(Event message) {
 		_gotEvent?.Invoke(message);

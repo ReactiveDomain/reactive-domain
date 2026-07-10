@@ -1,5 +1,3 @@
-using System;
-
 namespace ReactiveDomain.Transport;
 
 public interface IMonitoredTcpConnection {

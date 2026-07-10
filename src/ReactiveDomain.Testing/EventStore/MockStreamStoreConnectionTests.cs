@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
 using Xunit;
@@ -12,19 +10,16 @@ namespace ReactiveDomain.Testing;
 // ReSharper disable InconsistentNaming
 public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectionFixture> {
 	// ReSharper disable once CollectionNeverQueried.Local
-	private readonly List<IStreamStoreConnection> _streamStoreConnections = new List<IStreamStoreConnection>();
+	private readonly List<IStreamStoreConnection> _streamStoreConnections = [];
 
-	private readonly List<IRepository> _repos = new List<IRepository>();
-	private readonly IStreamNameBuilder _streamNameBuilder;
+	private readonly List<IRepository> _repos = [];
+	private readonly PrefixedCamelCaseStreamNameBuilder _streamNameBuilder = new("UnitTest");
 	private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _mockPair;
 	// ReSharper disable once NotAccessedField.Local
 	private readonly Tuple<IStreamStoreConnection, StreamStoreRepository> _fixturePair;
 
 
 	public MockStreamStoreConnectionTests(StreamStoreConnectionFixture fixture) {
-
-		_streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder("UnitTest");
-
 		var mockStreamStore = new MockStreamStoreConnection("MockStore");
 		_streamStoreConnections.Add(mockStreamStore);
 		mockStreamStore.Connect();
@@ -57,12 +52,12 @@ public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectio
 	public void can_try_get_new_aggregate() {
 		foreach (var repo in _repos) {
 			var id = Guid.NewGuid();
-			Assert.False(repo.TryGetById(id, out TestAggregate tAgg));
+			Assert.False(repo.TryGetById(id, out TestAggregate? tAgg));
 			Assert.Null(tAgg);
 			tAgg = new TestAggregate(id);
 			repo.Save(tAgg);
 
-			Assert.True(repo.TryGetById(id, out TestAggregate rAgg));
+			Assert.True(repo.TryGetById(id, out TestAggregate? rAgg));
 			Assert.NotNull(rAgg);
 			Assert.Equal(tAgg.Id, rAgg.Id);
 		}
@@ -72,12 +67,12 @@ public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectio
 
 		foreach (var repo in _repos) {
 			var id = Guid.NewGuid();
-			Assert.False(repo.TryGetById(id, out TestAggregate tAgg, 1));
+			Assert.False(repo.TryGetById(id, out TestAggregate? tAgg, 1));
 			Assert.Null(tAgg);
 			tAgg = new TestAggregate(id);
 			repo.Save(tAgg);
 
-			Assert.True(repo.TryGetById(id, out TestAggregate rAgg, 1));
+			Assert.True(repo.TryGetById(id, out TestAggregate? rAgg, 1));
 			Assert.NotNull(rAgg);
 			Assert.Equal(tAgg.Id, rAgg.Id);
 		}
@@ -157,7 +152,7 @@ public class MockStreamStoreConnectionTests : IClassFixture<StreamStoreConnectio
 
 			//Update & save original copy
 			tAgg.RaiseBy(6);
-			var r = repo; //copy iteration varible for closure
+			var r = repo; //copy iteration variable for closure
 			Assert.Throws<WrongExpectedVersionException>(() => r.Save(tAgg));
 		}
 	}

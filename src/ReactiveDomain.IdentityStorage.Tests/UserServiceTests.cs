@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.IdentityStorage.Services;
@@ -12,8 +11,6 @@ namespace ReactiveDomain.IdentityStorage.Tests;
 [Collection("UserDomainTests")]
 public sealed class UserServiceTests :
 	IDisposable {
-	private readonly ICorrelatedMessage _command = MessageBuilder.New(() => new TestMessages.RootCommand());
-
 	private readonly MockRepositorySpecification _fixture;
 	private readonly UserSvc _userSvc;
 
@@ -32,8 +29,6 @@ public sealed class UserServiceTests :
 		_fixture = new MockRepositorySpecification();
 		_userSvc = new UserSvc(_fixture.Repository, _fixture.Dispatcher);
 	}
-
-
 
 	[Fact]
 	public void can_create_new_user() {
@@ -92,7 +87,7 @@ public sealed class UserServiceTests :
 			.AssertEmpty();
 		_fixture
 			.RepositoryEvents
-			.AssertNext<UserMsgs.ClientScopeAdded>(cmd.CorrelationId, out UserMsgs.ClientScopeAdded evt)
+			.AssertNext<UserMsgs.ClientScopeAdded>(cmd.CorrelationId, out var evt)
 			.AssertEmpty();
 		Assert.Equal(ClientScope, evt.ClientScope);
 	}
@@ -110,15 +105,15 @@ public sealed class UserServiceTests :
 			stream,
 			ExpectedVersion.Any,
 			null,
-			new[] { givenEvt });
+			givenEvt);
 		_fixture.RepositoryEvents.WaitFor<UserMsgs.ClientScopeAdded>(TimeSpan.FromMilliseconds(100));
 		_fixture.ClearQueues();
-
 
 		//when
 		var cmd = MessageBuilder.New(
 			() => new UserMsgs.RemoveClientScope(_userId, ClientScope));
 		_fixture.Dispatcher.Send(cmd);
+
 		//then
 		_fixture.RepositoryEvents.WaitFor<UserMsgs.ClientScopeRemoved>(TimeSpan.FromMilliseconds(100));
 		_fixture
@@ -127,13 +122,10 @@ public sealed class UserServiceTests :
 			.AssertEmpty();
 		_fixture
 			.RepositoryEvents
-			.AssertNext<UserMsgs.ClientScopeRemoved>(cmd.CorrelationId, out UserMsgs.ClientScopeRemoved evt)
+			.AssertNext<UserMsgs.ClientScopeRemoved>(cmd.CorrelationId, out var evt)
 			.AssertEmpty();
 		Assert.Equal(ClientScope, evt.ClientScope);
 	}
-
-
-
 
 	[Fact]
 	public void can_deactivate_user() {
@@ -152,7 +144,6 @@ public sealed class UserServiceTests :
 			.RepositoryEvents
 			.AssertNext<UserMsgs.Deactivated>(cmd.CorrelationId)
 			.AssertEmpty();
-
 	}
 
 	[Fact]
@@ -168,7 +159,7 @@ public sealed class UserServiceTests :
 			stream,
 			ExpectedVersion.Any,
 			null,
-			new[] { evt });
+			evt);
 		_fixture.RepositoryEvents.WaitFor<UserMsgs.Deactivated>(TimeSpan.FromMilliseconds(100));
 		_fixture.ClearQueues();
 
@@ -187,8 +178,8 @@ public sealed class UserServiceTests :
 			.RepositoryEvents
 			.AssertNext<UserMsgs.Activated>(cmd.CorrelationId)
 			.AssertEmpty();
-
 	}
+
 	[Fact]
 	public void can_update_user_details() {
 		AddUser();
@@ -207,8 +198,8 @@ public sealed class UserServiceTests :
 			.RepositoryEvents
 			.AssertNext<UserMsgs.UserDetailsUpdated>(cmd.CorrelationId)
 			.AssertEmpty();
-
 	}
+
 	[Fact]
 	public void cannot_update_user_details_without_user() {
 		var cmd = MessageBuilder.New(
@@ -216,10 +207,6 @@ public sealed class UserServiceTests :
 		AssertEx.CommandThrows<AggregateNotFoundException>(
 			() => _fixture.Dispatcher.Send(cmd));
 	}
-
-
-
-
 
 	private void AddUser() {
 		var evt = _fixture.EventSerializer.Serialize(MessageBuilder.New(
@@ -234,7 +221,8 @@ public sealed class UserServiceTests :
 			stream,
 			ExpectedVersion.Any,
 			null,
-			new[] { evt, evt2 });
+			evt,
+			evt2);
 		_fixture.RepositoryEvents.WaitFor<UserMsgs.Activated>(TimeSpan.FromMilliseconds(200));
 		_fixture.ClearQueues();
 	}
@@ -251,9 +239,7 @@ public sealed class UserServiceTests :
 		_fixture.ClearQueues();
 	}
 
-
-
 	public void Dispose() {
-		_userSvc?.Dispose();
+		_userSvc.Dispose();
 	}
 }

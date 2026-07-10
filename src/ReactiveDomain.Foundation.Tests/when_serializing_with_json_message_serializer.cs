@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Audit;
@@ -11,12 +9,12 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 public class TestObject {
-	public string Data1;
-	public string Data2 { get; set; }
-	public override bool Equals(object obj) {
+	public string? Data1;
+	public string? Data2 { get; set; }
+	public override bool Equals(object? obj) {
 		return Equals(obj as TestObject);
 	}
-	public bool Equals(TestObject other) {
+	public bool Equals(TestObject? other) {
 		if (other == null)
 			return false;
 		return string.CompareOrdinal(Data1, other.Data1) == 0 &&
@@ -24,12 +22,12 @@ public class TestObject {
 	}
 }
 public class TestObject2 {
-	public string Data2 { get; set; }
-	public string Data3;
-	public override bool Equals(object obj) {
+	public string? Data2 { get; set; }
+	public string? Data3;
+	public override bool Equals(object? obj) {
 		return Equals(obj as TestObject2);
 	}
-	public bool Equals(TestObject2 other) {
+	public bool Equals(TestObject2? other) {
 		if (other == null)
 			return false;
 		return string.CompareOrdinal(Data3, other.Data3) == 0 &&
@@ -39,12 +37,12 @@ public class TestObject2 {
 
 public record MetadataTestObject(string Data) : Event;
 public class CustomMetadata {
-	public string Metadatum { get; set; }
+	public string? Metadatum { get; set; }
 }
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 
 // ReSharper disable once InconsistentNaming
-public class when_serializing_with_json_message_serializer {
+public sealed class when_serializing_with_json_message_serializer {
 	private readonly TestObject _testObject = new() { Data1 = "blaa", Data2 = "more blaa" };
 	[Fact]
 	public void can_serialize_objects() {
@@ -70,7 +68,7 @@ public class when_serializing_with_json_message_serializer {
 		var serializer = new JsonMessageSerializer();
 
 		var eventData = serializer.Serialize(_testObject);
-		var clrQualifiedName = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		var clrQualifiedName = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(serializer.EventClrQualifiedTypeHeader)
 			?.Value;
 		var partialName = $"{_testObject.GetType().FullName},{_testObject.GetType().Assembly.GetName()}";
@@ -78,7 +76,7 @@ public class when_serializing_with_json_message_serializer {
 
 		serializer.FullyQualify = true;
 		eventData = serializer.Serialize(_testObject);
-		clrQualifiedName = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		clrQualifiedName = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(serializer.EventClrQualifiedTypeHeader)
 			?.Value;
 		Assert.Equal(0, string.CompareOrdinal(clrQualifiedName, _testObject.GetType().AssemblyQualifiedName));
@@ -89,7 +87,7 @@ public class when_serializing_with_json_message_serializer {
 		var serializer = new JsonMessageSerializer();
 
 		var eventData = serializer.Serialize(_testObject);
-		var typeName = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		var typeName = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(serializer.EventClrTypeHeader)
 			?.Value;
 		Assert.Equal(0, string.CompareOrdinal(typeName, _testObject.GetType().Name));
@@ -101,7 +99,7 @@ public class when_serializing_with_json_message_serializer {
 		var headerData = "my header data";
 		var headers = new Dictionary<string, object> { { headerName, headerData } };
 		var eventData = serializer.Serialize(_testObject, headers);
-		var customHeaderData = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		var customHeaderData = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(headerName)
 			?.Value;
 		Assert.Equal(0, string.CompareOrdinal(headerData, customHeaderData));
@@ -114,16 +112,16 @@ public class when_serializing_with_json_message_serializer {
 		var headerData = "my clr type header";
 		var headers = new Dictionary<string, object> { { headerName, headerData } };
 		var eventData = serializer.Serialize(_testObject, headers);
-		var headerValue = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		var headerValue = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(headerName)
 			?.Value;
 		Assert.Equal(0, string.CompareOrdinal(headerData, headerValue));
 
 		headerName = serializer.EventClrQualifiedTypeHeader;
 		headerData = typeof(TestObject2).AssemblyQualifiedName;
-		headers = new Dictionary<string, object> { { headerName, headerData } };
+		headers = new Dictionary<string, object> { { headerName, headerData! } };
 		eventData = serializer.Serialize(_testObject, headers);
-		headerValue = (string)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
+		headerValue = (string?)JObject.Parse(Encoding.UTF8.GetString(eventData.Metadata))
 			.Property(headerName)
 			?.Value;
 		Assert.Equal(0, string.CompareOrdinal(headerData, headerValue));
@@ -154,6 +152,7 @@ public class when_serializing_with_json_message_serializer {
 		Assert.Equal(0, string.CompareOrdinal(_testObject.Data2, testObject2.Data2));
 
 		var newTestObject2 = serializer.Deserialize<TestObject2>(eventData);
+		Assert.NotNull(newTestObject2);
 		Assert.Equal(0, string.CompareOrdinal(_testObject.Data2, newTestObject2.Data2));
 	}
 	[Fact]
@@ -179,6 +178,7 @@ public class when_serializing_with_json_message_serializer {
 		Assert.Equal(customMetadata.Metadatum, customMD.Metadatum);
 
 		var newObject2 = serializer.Deserialize<MetadataTestObject>(eventData);
+		Assert.NotNull(newObject2);
 		Assert.Equal(0, string.CompareOrdinal(sourceObject.Data, newObject2.Data));
 		commonMd = newObject.ReadMetadatum<CommonMetadata>();
 		Assert.Equal(typeof(MetadataTestObject).FullName, commonMd.EventName);
@@ -220,7 +220,8 @@ public class when_serializing_with_json_message_serializer {
 		//override assembly
 		serializer.AssemblyOverride = Assembly.GetExecutingAssembly();
 		deserialized = serializer.Deserialize(eventData);
-		var testObject2 = (TestObject2)deserialized;
+		var testObject2 = (TestObject2?)deserialized;
+		Assert.NotNull(testObject2);
 		Assert.Equal(0, string.CompareOrdinal(_testObject.Data2, testObject2.Data2));
 	}
 

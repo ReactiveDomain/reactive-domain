@@ -26,9 +26,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  
 
-using System;
-using System.Collections.Generic;
-
 namespace ReactiveDomain.Transport.BufferManagement;
 
 public class BufferPool : IDisposable {
@@ -76,14 +73,14 @@ public class BufferPool : IDisposable {
 		get {
 			CheckDisposed();
 			if (_length > 0) {
-				Position l = GetPositionFor(_length);
+				var l = GetPositionFor(_length);
 				//send full buffers
 				for (int i = 0; i < l.Index; i++) {
 					yield return _buffers[i];
 				}
 				//send partial buffer
-				ArraySegment<byte> last = _buffers[l.Index];
-				yield return new ArraySegment<byte>(last.Array, last.Offset, l.Offset);
+				var last = _buffers[l.Index];
+				yield return new ArraySegment<byte>(last.Array!, last.Offset, l.Offset);
 			}
 		}
 	}
@@ -95,19 +92,19 @@ public class BufferPool : IDisposable {
 		get {
 			CheckDisposed();
 			if (index < 0 || index > _length)
-				throw new ArgumentOutOfRangeException("index");
-			Position l = GetPositionFor(index);
-			ArraySegment<byte> buffer = _buffers[l.Index];
-			return buffer.Array[buffer.Offset + l.Offset];
+				throw new ArgumentOutOfRangeException(nameof(index));
+			var l = GetPositionFor(index);
+			var buffer = _buffers[l.Index];
+			return buffer.Array![buffer.Offset + l.Offset];
 		}
 		set {
 			CheckDisposed();
 			if (index < 0)
 				throw new ArgumentException("_Index");
-			Position l = GetPositionFor(index);
+			var l = GetPositionFor(index);
 			EnsureCapacity(l);
-			ArraySegment<byte> buffer = _buffers[l.Index];
-			buffer.Array[buffer.Offset + l.Offset] = value;
+			var buffer = _buffers[l.Index];
+			buffer.Array![buffer.Offset + l.Offset] = value;
 			if (_length <= index)
 				_length = index + 1;
 		}
@@ -130,10 +127,8 @@ public class BufferPool : IDisposable {
 	/// <param name="initialBufferCount">The number of initial buffers.</param>
 	/// <param name="bufferManager">The buffer manager.</param>
 	public BufferPool(int initialBufferCount, BufferManager bufferManager) {
-		if (initialBufferCount <= 0)
-			throw new ArgumentException("initialBufferCount");
-		if (bufferManager == null)
-			throw new ArgumentNullException("bufferManager");
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(initialBufferCount, 0);
+		ArgumentNullException.ThrowIfNull(bufferManager);
 		_length = 0;
 		_buffers = new List<ArraySegment<byte>>(bufferManager.CheckOut(initialBufferCount));
 		// must have 1 buffer
@@ -170,12 +165,11 @@ public class BufferPool : IDisposable {
 	/// <param name="offset">The offset.</param>
 	/// <param name="count">The count.</param>
 	public void Write(int position, byte[] data, int offset, int count) {
-		if (data == null)
-			throw new ArgumentNullException("data");
+		ArgumentNullException.ThrowIfNull(data);
 		if (offset < 0 || offset > data.Length)
-			throw new ArgumentOutOfRangeException("offset");
+			throw new ArgumentOutOfRangeException(nameof(offset));
 		if (count < 0 || count + offset > data.Length)
-			throw new ArgumentOutOfRangeException("count");
+			throw new ArgumentOutOfRangeException(nameof(count));
 		Write(position, new ArraySegment<byte>(data, offset, count));
 	}
 
@@ -189,14 +183,14 @@ public class BufferPool : IDisposable {
 		int written = 0;
 		int tmpLength = position;
 		do {
-			Position loc = GetPositionFor(tmpLength);
+			var loc = GetPositionFor(tmpLength);
 			EnsureCapacity(loc);
-			ArraySegment<byte> current = _buffers[loc.Index];
+			var current = _buffers[loc.Index];
 			int canWrite = data.Count - written;
 			int available = current.Count - loc.Offset;
 			canWrite = canWrite > available ? available : canWrite;
 			if (canWrite > 0)
-				Buffer.BlockCopy(data.Array, written + data.Offset, current.Array, current.Offset + loc.Offset, canWrite);
+				Buffer.BlockCopy(data.Array!, written + data.Offset, current.Array!, current.Offset + loc.Offset, canWrite);
 			written += canWrite;
 			tmpLength += canWrite;
 		} while (written < data.Count);
@@ -213,12 +207,11 @@ public class BufferPool : IDisposable {
 	/// <param name="count">The number of bytes to read.</param>
 	/// <returns></returns>
 	public int ReadFrom(int position, byte[] data, int offset, int count) {
-		if (data == null)
-			throw new ArgumentNullException("data");
+		ArgumentNullException.ThrowIfNull(data);
 		if (offset < 0 || offset > data.Length)
-			throw new ArgumentOutOfRangeException("offset");
+			throw new ArgumentOutOfRangeException(nameof(offset));
 		if (count < 0 || count + offset > data.Length)
-			throw new ArgumentOutOfRangeException("count");
+			throw new ArgumentOutOfRangeException(nameof(count));
 		return ReadFrom(position, new ArraySegment<byte>(data, offset, count));
 	}
 
@@ -236,11 +229,11 @@ public class BufferPool : IDisposable {
 		int left = Math.Min(data.Count, _length - position);
 		int currentLocation = position;
 		while (left > 0) {
-			Position l = GetPositionFor(currentLocation);
-			ArraySegment<byte> current = _buffers[l.Index];
+			var l = GetPositionFor(currentLocation);
+			var current = _buffers[l.Index];
 			int bytesToRead = Math.Min(_chunkSize - l.Offset, left);
 			if (bytesToRead > 0) {
-				Buffer.BlockCopy(current.Array, current.Offset + l.Offset, data.Array, data.Offset + copied, bytesToRead);
+				Buffer.BlockCopy(current.Array!, current.Offset + l.Offset, data.Array!, data.Offset + copied, bytesToRead);
 				copied += bytesToRead;
 				left -= bytesToRead;
 				currentLocation += bytesToRead;
@@ -284,7 +277,7 @@ public class BufferPool : IDisposable {
 
 	private void EnsureCapacity(Position position) {
 		if (position.Index >= _buffers.Count) {
-			foreach (ArraySegment<byte> buffer in _bufferManager.CheckOut(position.Index + 1 - _buffers.Count)) {
+			foreach (var buffer in _bufferManager.CheckOut(position.Index + 1 - _buffers.Count)) {
 				if (buffer.Count != _chunkSize)
 					throw new Exception("Received a buffer of the wrong size: this shouldn't happen, ever.");
 				_buffers.Add(buffer);
@@ -298,17 +291,17 @@ public class BufferPool : IDisposable {
 	/// <returns></returns>
 	public byte[] ToByteArray() {
 		CheckDisposed();
-		Position l = GetPositionFor(_length);
+		var l = GetPositionFor(_length);
 		var result = new byte[_length];
 		for (int i = 0; i < l.Index; i++) {
-			ArraySegment<byte> current = _buffers[i];
+			var current = _buffers[i];
 			//copy full buffers
-			Buffer.BlockCopy(current.Array, current.Offset, result, i * _chunkSize, _chunkSize);
+			Buffer.BlockCopy(current.Array!, current.Offset, result, i * _chunkSize, _chunkSize);
 		}
 		//copy last partial buffer
 		if (l.Index < _buffers.Count) {
-			ArraySegment<byte> last = _buffers[l.Index];
-			Buffer.BlockCopy(last.Array, last.Offset, result, l.Index * _chunkSize, l.Offset);
+			var last = _buffers[l.Index];
+			Buffer.BlockCopy(last.Array!, last.Offset, result, l.Index * _chunkSize, l.Offset);
 		}
 		return result;
 	}
@@ -332,14 +325,12 @@ public class BufferPool : IDisposable {
 	}
 
 	protected virtual void DisposeInternal() {
-		if (_buffers != null)
-			_bufferManager.CheckIn(_buffers);
+		_bufferManager.CheckIn(_buffers);
 		_disposed = true;
-		_buffers = null;
+		_buffers.Clear();
 	}
 
 	private void CheckDisposed() {
-		if (_disposed)
-			throw new ObjectDisposedException("Object has been disposed.");
+		ObjectDisposedException.ThrowIf(_disposed, this);
 	}
 }

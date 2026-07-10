@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 
@@ -22,7 +22,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="source">This parameter is ignored.</param>
 	/// <returns><c>null</c></returns>
 	public TAggregate GetById<TAggregate>(Guid id, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
-		return null;
+		return null!;
 	}
 
 	/// <summary>
@@ -34,7 +34,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="source">This parameter is ignored.</param>
 	/// <returns><c>null</c></returns>
 	public TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
-		return null;
+		return null!;
 	}
 
 	/// <summary>
@@ -57,7 +57,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="aggregate">Output parameter for the retrieved aggregate.</param>
 	/// <param name="source">This parameter is ignored.</param>
 	/// <returns><c>false</c></returns>
-	public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
 		aggregate = null;
 		return false;
 	}
@@ -71,7 +71,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="aggregate">Output parameter for the retrieved aggregate.</param>
 	/// <param name="source">This parameter is ignored.</param>
 	/// <returns><c>false</c></returns>
-	public bool TryGetById<TAggregate>(Guid id, int version, out TAggregate aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, int version, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource {
 		aggregate = null;
 		return false;
 
@@ -85,7 +85,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="version">This parameter is ignored.</param>
 	/// <returns><c>null</c></returns>
 	TAggregate IRepository.GetById<TAggregate>(Guid id, int version) {
-		return null;
+		return null!;
 	}
 
 	/// <summary>
@@ -97,7 +97,7 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <param name="version">This parameter is ignored.</param>
 	/// <returns><c>false</c></returns>
 	bool IRepository.TryGetById<TAggregate>(Guid id, out TAggregate aggregate, int version) {
-		aggregate = null;
+		aggregate = null!;
 		return false;
 	}
 

@@ -1,8 +1,4 @@
-﻿
-
-using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Transport.Formatting;
@@ -12,22 +8,20 @@ namespace ReactiveDomain.Transport;
 
 public class TcpTypedConnection<T> {
 	// ReSharper disable once StaticMemberInGenericType
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
-	public event Action<TcpTypedConnection<T>, SocketError> ConnectionClosed;
+	public event Action<TcpTypedConnection<T>, SocketError>? ConnectionClosed;
 
 	private readonly ITcpConnection _connection;
 	private readonly IMessageFormatter<T> _formatter;
 	private readonly IMessageFramer _framer;
 
-	private Action<TcpTypedConnection<T>, T> _receiveCallback;
+	private Action<TcpTypedConnection<T>, T>? _receiveCallback;
 
-	public EndPoint RemoteEndPoint { get { return _connection.RemoteEndPoint; } }
-	public EndPoint LocalEndPoint { get { return _connection.LocalEndPoint; } }
+	public EndPoint? RemoteEndPoint => _connection.RemoteEndPoint;
+	public EndPoint? LocalEndPoint => _connection.LocalEndPoint;
 
-	public int SendQueueSize {
-		get { return _connection.SendQueueSize; }
-	}
+	public int SendQueueSize => _connection.SendQueueSize;
 
 	public TcpTypedConnection(ITcpConnection connection,
 		IMessageFormatter<T> formatter,
@@ -68,7 +62,7 @@ public class TcpTypedConnection<T> {
 		try {
 			_framer.UnFrameData(connection.ConnectionId, data);
 		} catch (PackageFramingException exc) {
-			Log.InfoException(exc, "Invalid TCP frame received.");
+			_log.InfoException(exc, "Invalid TCP frame received.");
 			Close("Invalid TCP frame received.");
 			return;
 		}
@@ -76,10 +70,10 @@ public class TcpTypedConnection<T> {
 	}
 
 	private void IncomingMessageArrived(Guid connectionId, ArraySegment<byte> message) {
-		_receiveCallback(this, _formatter.From(message));
+		_receiveCallback?.Invoke(this, _formatter.From(message));
 	}
 
-	public void Close(string reason = null) {
+	public void Close(string? reason = null) {
 		_connection.Close(reason);
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Transport.Serialization;
 

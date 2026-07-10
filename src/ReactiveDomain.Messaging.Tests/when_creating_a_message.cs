@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Testing;
+﻿using ReactiveDomain.Testing;
 using Xunit;
 
 namespace ReactiveDomain.Messaging.Tests;
@@ -11,6 +10,7 @@ public class when_creating_a_message {
 		var msg1 = new TestMessage();
 		Assert.NotEqual(Guid.Empty, msg1.MsgId);
 	}
+
 	[Fact]
 	public void new_message_with_default_constructor_should_have_empty_metadata() {
 		var msg1 = new TestMessage();
@@ -28,4 +28,3 @@ public class when_creating_a_message {
 		Assert.NotEqual(msg1.MsgId, msg2.MsgId);
 	}
 }
-// ReSharper restore InconsistentNaming

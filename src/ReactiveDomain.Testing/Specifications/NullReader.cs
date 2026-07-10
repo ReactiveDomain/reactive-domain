@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Testing;
@@ -8,14 +7,17 @@ namespace ReactiveDomain.Testing;
 /// An empty reader. Implements <see cref="IStreamReader"/>.
 /// </summary>
 public class NullReader : IStreamReader {
-	private readonly string _name;
+	/// <summary>
+	/// Gets the name of the reader
+	/// </summary>
+	public string Name { get; }
 
 	/// <summary>
 	/// Creates an empty reader.
 	/// </summary>
 	/// <param name="name">The name of the reader.</param>
 	public NullReader(string name) {
-		_name = name;
+		Name = name;
 	}
 
 	/// <summary>
@@ -26,7 +28,8 @@ public class NullReader : IStreamReader {
 	/// <summary>
 	/// Gets the name of the stream.
 	/// </summary>
-	public string StreamName => _name;
+	public string StreamName { get; private set; } = string.Empty;
+
 	private Action<IMessage> _handle = _ => { };
 
 	/// <summary>
@@ -54,6 +57,7 @@ public class NullReader : IStreamReader {
 	/// <param name="readBackwards">This parameter is ignored.</param>
 	/// <returns><c>true</c></returns>
 	public bool Read(string stream, Func<bool> completionCheck, long? checkpoint = null, long? count = null, bool readBackwards = false) {
+		StreamName = stream;
 		return true;
 	}
 

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ReactiveDomain.Messaging;
 
@@ -48,7 +46,7 @@ public abstract record Command(CancellationToken? CancellationToken = null) : Me
 	/// <summary>
 	/// Create a CommandResponse indicating that this command has failed.
 	/// </summary>
-	public CommandResponse Fail(Exception ex = null) {
+	public CommandResponse Fail(Exception? ex = null) {
 		return new Fail(this, ex);
 	}
 

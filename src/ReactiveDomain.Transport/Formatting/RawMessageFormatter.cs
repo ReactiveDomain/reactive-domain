@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Transport.BufferManagement;
 
 namespace ReactiveDomain.Transport.Formatting;
@@ -34,8 +33,7 @@ public class RawMessageFormatter : IMessageFormatter<byte[]> {
 	}
 
 	public BufferPool ToBufferPool(byte[] message) {
-		if (message == null)
-			throw new ArgumentNullException("message");
+		ArgumentNullException.ThrowIfNull(message);
 
 		var bufferPool = new BufferPool(_initialBuffers, _bufferManager);
 		var stream = new BufferPoolStream(bufferPool);
@@ -44,14 +42,12 @@ public class RawMessageFormatter : IMessageFormatter<byte[]> {
 	}
 
 	public ArraySegment<byte> ToArraySegment(byte[] message) {
-		if (message == null)
-			throw new ArgumentNullException("message");
+		ArgumentNullException.ThrowIfNull(message);
 		return new ArraySegment<byte>(message, 0, message.Length);
 	}
 
 	public byte[] ToArray(byte[] message) {
-		if (message == null)
-			throw new ArgumentNullException("message");
+		ArgumentNullException.ThrowIfNull(message);
 		return message;
 	}
 
@@ -60,6 +56,7 @@ public class RawMessageFormatter : IMessageFormatter<byte[]> {
 	}
 
 	public byte[] From(ArraySegment<byte> segment) {
+		ArgumentNullException.ThrowIfNull(segment.Array, nameof(segment));
 		var msg = new byte[segment.Count];
 		Buffer.BlockCopy(segment.Array, segment.Offset, msg, 0, segment.Count);
 		return msg;

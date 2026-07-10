@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
+﻿using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -10,7 +8,7 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class when_using_listener_start_with_aggregate_and_guid {
+public sealed class when_using_listener_start_with_aggregate_and_guid {
 	private readonly IStreamNameBuilder _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
 	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
 
@@ -29,7 +27,7 @@ public class when_using_listener_start_with_aggregate_and_guid {
 			ExpectedVersion.NoStream,
 			null,
 			_eventSerializer.Serialize(new TestEvent()));
-		Assert.True(result.NextExpectedVersion == 0);
+		Assert.Equal(0, result.NextExpectedVersion);
 
 		// Wait for the stream to be written
 		CommonHelpers.WaitForStream(conn, originStreamName);
@@ -58,5 +56,5 @@ public class when_using_listener_start_with_aggregate_and_guid {
 		}
 
 	}
-	public class AggregateIdTestAggregate : EventDrivenStateMachine { }
+	public class AggregateIdTestAggregate : EventDrivenStateMachine;
 }

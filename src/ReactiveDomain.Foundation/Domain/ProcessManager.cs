@@ -2,11 +2,12 @@
 using ReactiveDomain.Messaging.Bus;
 
 
-namespace ReactiveDomain.Foundation.Domain;
+// ReSharper disable once CheckNamespace
+namespace ReactiveDomain;
 
 public abstract class ProcessManager : AggregateRoot, IHandle<IMessage> {
-	public ProcessManager(ICorrelatedMessage source = null) : base(source) {
-		Register<InputMsg>(msg => {/* input messages have no apply action, saved for audit only*/ });
+	protected ProcessManager(ICorrelatedMessage? source = null) : base(source) {
+		Register<InputMsg>(_ => {/* input messages have no apply action, saved for audit only*/ });
 	}
 
 	public abstract void Handle(IMessage message);

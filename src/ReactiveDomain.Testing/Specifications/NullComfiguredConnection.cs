@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Testing;
@@ -32,9 +31,9 @@ public class NullConfiguredConnection : IConfiguredConnection {
 	/// <param name="currentPolicyUserId">This parameter is ignored.</param>
 	/// <returns>A <see cref="NullRepository"/>.</returns>
 	public ICorrelatedRepository GetCorrelatedRepository(
-		IRepository baseRepository = null,
+		IRepository? baseRepository = null,
 		bool caching = false,
-		Func<Guid> currentPolicyUserId = null) {
+		Func<Guid>? currentPolicyUserId = null) {
 		return new NullRepository();
 	}
 
@@ -72,7 +71,7 @@ public class NullConfiguredConnection : IConfiguredConnection {
 	/// <param name="caching">This parameter is ignored.</param>
 	/// <param name="currentPolicyUserId">This parameter is ignored.</param>
 	/// <returns>A <see cref="NullRepository"/>.</returns>
-	public IRepository GetRepository(bool caching = false, Func<Guid> currentPolicyUserId = null) {
+	public IRepository GetRepository(bool caching = false, Func<Guid>? currentPolicyUserId = null) {
 		return new NullRepository();
 	}
 }

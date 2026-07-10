@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reactive;
+﻿using System.Reactive;
 
 namespace ReactiveDomain.Testing;
 
@@ -20,7 +19,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <param name="events">This parameter is ignored.</param>
 	/// <returns>A <see cref="WriteResult"/> at the default version.</returns>
-	public WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials credentials = null, params EventData[] events) {
+	public WriteResult AppendToStream(string stream, long expectedVersion, UserCredentials? credentials = null, params EventData[] events) {
 		return new WriteResult(0);
 	}
 
@@ -40,13 +39,14 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="stream">This parameter is ignored.</param>
 	/// <param name="expectedVersion">This parameter is ignored.</param>
 	/// <param name="credentials">This parameter is ignored.</param>
-	public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+	public void DeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null) {
 	}
 
 	/// <summary>
 	/// Cleans up resources.
 	/// </summary>
 	public void Dispose() {
+		GC.SuppressFinalize(this);
 	}
 
 	/// <summary>
@@ -55,7 +55,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="stream">This parameter is ignored.</param>
 	/// <param name="expectedVersion">This parameter is ignored.</param>
 	/// <param name="credentials">This parameter is ignored.</param>
-	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null) {
 	}
 
 	/// <summary>
@@ -66,8 +66,8 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="count">This parameter is ignored.</param>
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <returns>An empty <see cref="StreamEventsSlice"/>.</returns>
-	public StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials credentials = null) {
-		return new StreamEventsSlice(stream, 0, ReadDirection.Backward, Array.Empty<RecordedEvent>(), 0, 0, true);
+	public StreamEventsSlice ReadStreamBackward(string stream, long start, long count, UserCredentials? credentials = null) {
+		return new StreamEventsSlice(stream, 0, ReadDirection.Backward, [], 0, 0, true);
 	}
 
 	/// <summary>
@@ -78,8 +78,8 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="count">This parameter is ignored.</param>
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <returns>An empty <see cref="StreamEventsSlice"/>.</returns>
-	public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials credentials = null) {
-		return new StreamEventsSlice(stream, 0, ReadDirection.Forward, Array.Empty<RecordedEvent>(), 0, 0, true);
+	public StreamEventsSlice ReadStreamForward(string stream, long start, long count, UserCredentials? credentials = null) {
+		return new StreamEventsSlice(stream, 0, ReadDirection.Forward, [], 0, 0, true);
 	}
 
 	/// <summary>
@@ -90,7 +90,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <param name="resolveLinkTos">This parameter is ignored.</param>
 	/// <returns>This connection.</returns>
-	public IDisposable SubscribeToAll(Action<RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception> subscriptionDropped = null, UserCredentials credentials = null, bool resolveLinkTos = true) {
+	public IDisposable SubscribeToAll(Action<RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception>? subscriptionDropped = null, UserCredentials? credentials = null, bool resolveLinkTos = true) {
 		return this;
 	}
 
@@ -105,7 +105,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <param name="resolveLinkTos">This parameter is ignored.</param>
 	/// <returns>This connection.</returns>
-	public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null, Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null, UserCredentials credentials = null, bool resolveLinkTos = true) {
+	public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings? settings = null, Action? liveProcessingStarted = null, Action<SubscriptionDropReason, Exception>? subscriptionDropped = null, UserCredentials? credentials = null, bool resolveLinkTos = true) {
 		return this;
 	}
 
@@ -117,7 +117,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="subscriptionDropped">This parameter is ignored.</param>
 	/// <param name="credentials">This parameter is ignored.</param>
 	/// <returns>This connection.</returns>
-	public IDisposable SubscribeToStream(string stream, Action<RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception> subscriptionDropped = null, UserCredentials credentials = null) {
+	public IDisposable SubscribeToStream(string stream, Action<RecordedEvent> eventAppeared, Action<SubscriptionDropReason, Exception>? subscriptionDropped = null, UserCredentials? credentials = null) {
 		return this;
 	}
 
@@ -132,7 +132,7 @@ public class NullConnection : IStreamStoreConnection {
 	/// <param name="subscriptionDropped">This parameter is ignored.</param>
 	/// <param name="credentials"></param>
 	/// <returns>This connection.</returns>
-	public IDisposable SubscribeToStreamFrom(string stream, long? lastCheckpoint, CatchUpSubscriptionSettings settings, Action<RecordedEvent> eventAppeared, Action<Unit> liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null, UserCredentials credentials = null) {
+	public IDisposable SubscribeToStreamFrom(string stream, long? lastCheckpoint, CatchUpSubscriptionSettings? settings, Action<RecordedEvent> eventAppeared, Action<Unit>? liveProcessingStarted = null, Action<SubscriptionDropReason, Exception>? subscriptionDropped = null, UserCredentials? credentials = null) {
 		return this;
 	}
 }

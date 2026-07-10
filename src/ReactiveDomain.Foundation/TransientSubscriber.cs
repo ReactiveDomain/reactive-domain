@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable RedundantTypeArgumentsOfMethod
@@ -8,9 +6,9 @@ using ReactiveDomain.Messaging.Bus;
 namespace ReactiveDomain.Foundation;
 
 public abstract class TransientSubscriber : IDisposable {
-	private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
-	private readonly ISubscriber _eventSubscriber;
-	private readonly ICommandSubscriber _commandSubscriber;
+	private readonly List<IDisposable> _subscriptions = [];
+	private readonly ISubscriber? _eventSubscriber;
+	private readonly ICommandSubscriber? _commandSubscriber;
 
 	protected TransientSubscriber(IDispatcher bus) : this((IBus)bus) {
 		_commandSubscriber = bus ?? throw new ArgumentNullException(nameof(bus));
@@ -21,20 +19,20 @@ public abstract class TransientSubscriber : IDisposable {
 	protected TransientSubscriber(ISubscriber subscriber) {
 		_eventSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 	}
+
 	protected TransientSubscriber(ICommandSubscriber subscriber) {
 		_commandSubscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 	}
 
 	protected void Subscribe<T>(IHandle<T> handler) where T : class, IMessage {
 		if (_eventSubscriber == null)
-			throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with EventBus to register on.");
-
+			throw new InvalidOperationException("TransientSubscriber not created with EventBus to register on.");
 		_subscriptions.Add(_eventSubscriber.Subscribe<T>(handler));
 	}
 
 	protected void Subscribe<T>(IHandleCommand<T> handler) where T : Command {
 		if (_commandSubscriber == null)
-			throw new ArgumentOutOfRangeException(nameof(handler), @"TransientSubscriber not created with CommandBus to register on.");
+			throw new InvalidOperationException("TransientSubscriber not created with CommandBus to register on.");
 		_subscriptions.Add(_commandSubscriber.Subscribe<T>(handler));
 	}
 
@@ -42,12 +40,14 @@ public abstract class TransientSubscriber : IDisposable {
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
+
 	private bool _disposed;
+
 	protected virtual void Dispose(bool disposing) {
 		if (_disposed)
 			return;
 		if (disposing) {
-			_subscriptions?.ForEach(s => s.Dispose());
+			_subscriptions.ForEach(s => s.Dispose());
 		}
 		_disposed = true;
 	}

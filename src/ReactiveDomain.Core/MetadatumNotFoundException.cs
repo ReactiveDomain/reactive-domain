@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace ReactiveDomain;
+﻿namespace ReactiveDomain;
 
 /// <summary>
 /// Indicates that a requested metadata type was not found.
 /// </summary>
-public class MetadatumNotFoundException : Exception { }
+public class MetadatumNotFoundException : Exception;

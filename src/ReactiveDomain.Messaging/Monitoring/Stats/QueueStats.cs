@@ -1,4 +1,4 @@
-using System;
+
 
 // ReSharper disable NotAccessedField.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -6,7 +6,7 @@ namespace ReactiveDomain.Messaging.Monitoring.Stats;
 
 public class QueueStats {
 	public readonly string Name;
-	public readonly string GroupName;
+	public readonly string? GroupName;
 	public readonly int Length;
 	public readonly long LengthLifetimePeak;
 	public readonly long LengthCurrentTryPeak;
@@ -16,11 +16,11 @@ public class QueueStats {
 	public readonly int AvgItemsPerSecond;
 	public readonly double AvgProcessingTime;
 	public readonly double IdleTimePercent;
-	public readonly Type LastProcessedMessageType;
-	public readonly Type InProgressMessageType;
+	public readonly Type? LastProcessedMessageType;
+	public readonly Type? InProgressMessageType;
 
 	public QueueStats(string name,
-		string groupName,
+		string? groupName,
 		int length,
 		int avgItemsPerSecond,
 		double avgProcessingTime,
@@ -30,8 +30,8 @@ public class QueueStats {
 		long totalItemsProcessed,
 		long lengthCurrentTryPeak,
 		long lengthLifetimePeak,
-		Type lastProcessedMessageType,
-		Type inProgressMessageType) {
+		Type? lastProcessedMessageType,
+		Type? inProgressMessageType) {
 		Name = name;
 		GroupName = groupName;
 		Length = length;

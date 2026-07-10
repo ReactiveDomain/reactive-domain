@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace ReactiveDomain.Foundation.StreamStore;
 
@@ -16,13 +16,11 @@ namespace ReactiveDomain.Foundation.StreamStore;
 /// </summary>
 public class CachingRepository : IDisposable {
 	private readonly IAggregateCache _cache;
-	public CachingRepository(IRepository baseRepository, Func<IRepository, IAggregateCache> cacheFactory = null) {
-		if (cacheFactory == null) {
-			cacheFactory = repo => new ReadThroughAggregateCache(repo);
-		}
+	public CachingRepository(IRepository baseRepository, Func<IRepository, IAggregateCache>? cacheFactory = null) {
+		cacheFactory ??= repo => new ReadThroughAggregateCache(repo);
 		_cache = cacheFactory(baseRepository);
 	}
-	public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate) where TAggregate : class, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate) where TAggregate : class, IEventSource {
 		return _cache.TryGetById(id, out aggregate);
 	}
 	public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {

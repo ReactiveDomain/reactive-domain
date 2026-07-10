@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace ReactiveDomain.Testing;
+﻿namespace ReactiveDomain.Testing;
 
 public static class ConnectionUtil {
 	public static bool TryConfirmStream(this IStreamStoreConnection conn, string streamTypeName, int expectedEventCount) {
@@ -8,7 +6,7 @@ public static class ConnectionUtil {
 		while (true) {
 			try {
 				var slice = conn.ReadStreamForward(streamTypeName, StreamPosition.Start, 500);
-				if (slice.IsEndOfStream && slice.Events.Length >= expectedEventCount) {
+				if (slice is not null && slice.IsEndOfStream && slice.Events.Length >= expectedEventCount) {
 					return true;
 				}
 				Thread.Sleep(10);

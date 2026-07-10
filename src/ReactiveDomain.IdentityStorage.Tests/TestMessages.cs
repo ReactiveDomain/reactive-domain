@@ -2,6 +2,6 @@
 
 namespace ReactiveDomain.IdentityStorage.Tests;
 
-class TestMessages {
+internal class TestMessages {
 	public record RootCommand : Command;
 }

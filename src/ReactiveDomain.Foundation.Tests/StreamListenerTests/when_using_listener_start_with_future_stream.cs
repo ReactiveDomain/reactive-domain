@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
+﻿using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -10,14 +8,12 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class when_using_listener_start_with_future_stream {
-	private readonly IStreamNameBuilder _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
+public sealed class when_using_listener_start_with_future_stream {
+	private readonly JsonMessageSerializer _eventSerializer = new();
 	private readonly string _originStreamName = $"testStream-{Guid.NewGuid():N}";
 	private readonly IStreamStoreConnection _connection;
 	public when_using_listener_start_with_future_stream(StreamStoreConnectionFixture fixture) {
 		_connection = fixture.Connection;
-
 
 		StreamListener listener = new QueuedStreamListener(
 			_originStreamName,
@@ -64,7 +60,7 @@ public class when_using_listener_start_with_future_stream {
 			ExpectedVersion.NoStream,
 			null,
 			_eventSerializer.Serialize(new TestEvent()));
-		Assert.True(result.NextExpectedVersion == 0);
+		Assert.Equal(0, result.NextExpectedVersion);
 
 		// Wait for the stream to be written
 		CommonHelpers.WaitForStream(_connection, _originStreamName);

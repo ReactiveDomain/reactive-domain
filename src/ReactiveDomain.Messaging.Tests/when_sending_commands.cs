@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -171,12 +170,12 @@ public class TestCommandBusFixture :
 	public void Handle(CommandResponse command) {
 		Interlocked.Increment(ref GotCommandResponse);
 		switch (command) {
-			case Success _:
+			case Success:
 				Interlocked.Increment(ref GotSuccess);
 				if (command is TestCommands.TestResponse response)
 					Interlocked.Exchange(ref ResponseData, response.Data);
 				break;
-			case Fail _:
+			case Fail:
 				Interlocked.Increment(ref GotFail);
 				if (command is Canceled)
 					Interlocked.Increment(ref GotCanceled);
@@ -186,7 +185,7 @@ public class TestCommandBusFixture :
 		}
 	}
 
-	public class TestException : Exception { }
+	public class TestException : Exception;
 
 	public void Handle(TestEvent message) {
 		Interlocked.Increment(ref GotTestEvent);
@@ -194,20 +193,23 @@ public class TestCommandBusFixture :
 }
 
 // ReSharper disable once InconsistentNaming
+[SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
 public class when_sending_commands :
 	IClassFixture<TestCommandBusFixture> {
 	private readonly TestCommandBusFixture _fixture;
 
 	public when_sending_commands(TestCommandBusFixture fixture) {
 		_fixture = fixture;
-		//clear the pipes :-) to make sure we are starting fresh on the fixture
-		//one event for each queuedhandler
-		fixture.Bus.Publish(new TestEvent());
-		fixture.Bus.Publish(new TestEvent());
-		fixture.Bus.Publish(new TestEvent());
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestEvent) >= 3);
-		AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
-		_fixture.ClearCounters();
+		lock (_fixture) {
+			//clear the pipes :-) to make sure we are starting fresh on the fixture
+			//one event for each queued handler
+			fixture.Bus.Publish(new TestEvent());
+			fixture.Bus.Publish(new TestEvent());
+			fixture.Bus.Publish(new TestEvent());
+			AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _fixture.GotTestEvent) >= 3);
+			AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
+			_fixture.ClearCounters();
+		}
 	}
 
 	[Fact]
@@ -517,7 +519,7 @@ public class when_sending_commands :
 			AssertEx.IsOrBecomesTrue(() => _fixture.Bus.Idle);
 			_fixture.ClearCounters();
 			Assert.Throws<ExistingHandlerException>(
-				() => _fixture.Bus.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(cmd => true)));
+				() => _fixture.Bus.Subscribe(new AdHocCommandHandler<TestCommands.Command1>(_ => true)));
 		}
 	}
 
@@ -690,5 +692,4 @@ public class when_sending_commands :
 			Assert.True(_fixture.Bus.HasSubscriberFor<TestCommands.LongRunning>());
 		}
 	}
-
 }

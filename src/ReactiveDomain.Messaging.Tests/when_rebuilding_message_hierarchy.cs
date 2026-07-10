@@ -1,19 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace ReactiveDomain.Messaging.Tests;
 
 // ReSharper disable InconsistentNaming
 public sealed class when_rebuilding_message_hierarchy : IDisposable {
-	private string _filePath;
-	sealed class TestMsg : IMessage {
-		public Guid MsgId { get; private set; }
-		public TestMsg() {
-			MsgId = Guid.NewGuid();
-		}
+	private string? _filePath;
+	sealed record TestMsg : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
 	private void LoadDynamicAssembly() {
 		var needed = new[] {

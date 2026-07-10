@@ -1,6 +1,6 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Xunit;
+// ReSharper disable InconsistentNaming
 
 namespace ReactiveDomain.Messaging.Tests;
 
@@ -28,7 +28,7 @@ public sealed class when_serializing_ids {
 	}
 
 	[Fact]
-	public void can_serialize_and_recover_nullsourceid() {
+	public void can_serialize_and_recover_null_source_id() {
 		var jsonString = JsonConvert.SerializeObject(_testEvent, Json.JsonSettings);
 		var idTesterOut = JsonConvert.DeserializeObject<IdTestEvent>(jsonString, Json.JsonSettings);
 		Assert.IsType<IdTestEvent>(idTesterOut);
@@ -38,14 +38,8 @@ public sealed class when_serializing_ids {
 	}
 }
 
-public class IdTestEvent : ICorrelatedMessage {
-	public Guid MsgId { get; }
+public record IdTestEvent(int Data) : ICorrelatedMessage {
+	public Guid MsgId { get; set; }
 	public Guid CorrelationId { get; set; }
 	public Guid CausationId { get; set; }
-	public int Data;
-	//convenience
-	public IdTestEvent(
-		int data) {
-		Data = data;
-	}
 }

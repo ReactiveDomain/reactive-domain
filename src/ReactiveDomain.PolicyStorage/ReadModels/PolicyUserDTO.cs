@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using DynamicData;
+﻿using DynamicData;
 using ReactiveDomain.Policy.Messages;
 
 namespace ReactiveDomain.Policy.ReadModels;
@@ -12,9 +9,9 @@ public class PolicyUserDTO {
 	public Guid PolicyId { get; }
 	public bool OneRolePerUser { get; }
 	public IObservableCache<RoleDTO, Guid> RolesCache;
-	private ISourceCache<RoleDTO, Guid> _rolesSource = new SourceCache<RoleDTO, Guid>(t => t.Id);
-	public HashSet<RoleDTO> Roles = new HashSet<RoleDTO>();
-	public PolicyUserDTO(Guid policyUserId, Guid userId, Guid policyId, bool oneRolePerUser, List<RoleDTO> roles = null) {
+	private readonly ISourceCache<RoleDTO, Guid> _rolesSource = new SourceCache<RoleDTO, Guid>(t => t.Id);
+	public HashSet<RoleDTO> Roles = [];
+	public PolicyUserDTO(Guid policyUserId, Guid userId, Guid policyId, bool oneRolePerUser, List<RoleDTO>? roles = null) {
 		PolicyUserId = policyUserId;
 		UserId = userId;
 		PolicyId = policyId;
@@ -30,8 +27,8 @@ public class PolicyUserDTO {
 		RolesCache = _rolesSource.AsObservableCache();
 		OneRolePerUser = @event.OneRolePerUser;
 	}
-	public void AddRoles(List<RoleDTO> roles) {
-		if (roles == null || !roles.Any())
+	public void AddRoles(List<RoleDTO>? roles) {
+		if (roles == null || roles.Count == 0)
 			return;
 		if (OneRolePerUser) {
 			AddRole(roles.FirstOrDefault());
@@ -41,7 +38,7 @@ public class PolicyUserDTO {
 			}
 		}
 	}
-	public void AddRole(RoleDTO role) {
+	public void AddRole(RoleDTO? role) {
 		if (role == null) { return; }
 		if (OneRolePerUser) {
 			_rolesSource.Clear();

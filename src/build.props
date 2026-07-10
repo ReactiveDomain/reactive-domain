@@ -1,6 +1,9 @@
 <Project>
   <PropertyGroup>
     <BuildPropsImported>true</BuildPropsImported>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+	  <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>

@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Transport.BufferManagement;
@@ -21,20 +19,20 @@ namespace ReactiveDomain.Transport.BufferManagement;
 /// that were in the normal heap.
 /// </remarks>
 public class BufferManager {
-	private static ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 	private const int TrialsCount = 100;
 
-	private static BufferManager _defaultBufferManager;
+	private static BufferManager? _defaultBufferManager;
 
 	private readonly int _segmentChunks;
 	private readonly int _chunkSize;
 	private readonly int _segmentSize;
 	private readonly bool _allowedToCreateMemory;
 
-	private readonly ConcurrentStack<ArraySegment<byte>> _buffers = new ConcurrentStack<ArraySegment<byte>>();
+	private readonly ConcurrentStack<ArraySegment<byte>> _buffers = new();
 
 	private readonly List<byte[]> _segments;
-	private readonly object _creatingNewSegmentLock = new object();
+	private readonly object _creatingNewSegmentLock = new();
 
 	/// <summary>
 	/// Gets the default buffer manager
@@ -44,8 +42,7 @@ public class BufferManager {
 	public static BufferManager Default {
 		get {
 			//default to 1024 1kb buffers if people don't want to manage it on their own;
-			if (_defaultBufferManager == null)
-				_defaultBufferManager = new BufferManager(1024, 1024, 1);
+			_defaultBufferManager ??= new BufferManager(1024, 1024, 1);
 			return _defaultBufferManager;
 		}
 	}
@@ -55,9 +52,7 @@ public class BufferManager {
 	/// </summary>
 	/// <param name="manager">The new default buffer manager.</param>
 	public static void SetDefaultBufferManager(BufferManager manager) {
-		if (manager == null)
-			throw new ArgumentNullException("manager");
-		_defaultBufferManager = manager;
+		_defaultBufferManager = manager ?? throw new ArgumentNullException(nameof(manager));
 	}
 
 	public int ChunkSize {
@@ -148,7 +143,7 @@ public class BufferManager {
 				_buffers.Push(chunk);
 			}
 
-			Log.Debug("Segments count: {0}, buffers count: {1}, should be when full: {2}",
+			_log.Debug("Segments count: {0}, buffers count: {1}, should be when full: {2}",
 				_segments.Count,
 				_buffers.Count,
 				_segments.Count * _segmentChunks);
@@ -166,8 +161,7 @@ public class BufferManager {
 	public ArraySegment<byte> CheckOut() {
 		int trial = 0;
 		while (trial < TrialsCount) {
-			ArraySegment<byte> result;
-			if (_buffers.TryPop(out result))
+			if (_buffers.TryPop(out var result))
 				return result;
 			CreateNewSegment(false);
 			trial++;
@@ -179,7 +173,7 @@ public class BufferManager {
 	/// Checks out a buffer from the manager
 	/// </summary>
 	/// <remarks>
-	/// It is the client's responsibility to return the buffer to the manger by
+	/// It is the client's responsibility to return the buffer to the manager by
 	/// calling <see cref="CheckIn"></see> on the buffer
 	/// </remarks>
 	/// <returns>A <see cref="ArraySegment{T}"></see> that can be used as a buffer</returns>
@@ -189,9 +183,8 @@ public class BufferManager {
 		var totalReceived = 0;
 
 		while (count < TrialsCount) {
-			ArraySegment<byte> piece;
 			while (totalReceived < toGet) {
-				if (!_buffers.TryPop(out piece))
+				if (!_buffers.TryPop(out var piece))
 					break;
 				result[totalReceived] = piece;
 				++totalReceived;
@@ -208,7 +201,7 @@ public class BufferManager {
 	/// Returns a buffer to the control of the manager
 	/// </summary>
 	/// <remarks>
-	/// It is the client's responsibility to return the buffer to the manger by
+	/// It is the client's responsibility to return the buffer to the manager by
 	/// calling <see cref="CheckIn"></see> on the buffer
 	/// </remarks>
 	/// <param name="buffer">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
@@ -221,13 +214,12 @@ public class BufferManager {
 	/// Returns a set of buffers to the control of the manager
 	/// </summary>
 	/// <remarks>
-	/// It is the client's responsibility to return the buffer to the manger by
+	/// It is the client's responsibility to return the buffer to the manager by
 	/// calling <see cref="CheckIn"></see> on the buffer
 	/// </remarks>
 	/// <param name="buffersToReturn">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
-	public void CheckIn(IEnumerable<ArraySegment<byte>> buffersToReturn) {
-		if (buffersToReturn == null)
-			throw new ArgumentNullException("buffersToReturn");
+	public void CheckIn(IEnumerable<ArraySegment<byte>>? buffersToReturn) {
+		ArgumentNullException.ThrowIfNull(buffersToReturn);
 
 		foreach (var buf in buffersToReturn) {
 			CheckBuffer(buf);
@@ -240,6 +232,6 @@ public class BufferManager {
 		if (buffer.Array == null || buffer.Count == 0 || buffer.Array.Length < buffer.Offset + buffer.Count)
 			throw new Exception("Attempt to checking invalid buffer");
 		if (buffer.Count != _chunkSize)
-			throw new ArgumentException("Buffer was not of the same chunk size as the buffer manager", "buffer");
+			throw new ArgumentException("Buffer was not of the same chunk size as the buffer manager", nameof(buffer));
 	}
 }

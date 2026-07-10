@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ReactiveDomain.Messaging.Bus;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
 /// <inheritdoc cref="ICommandBus"/>
 /// <inheritdoc cref="IBus"/>

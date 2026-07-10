@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Transport.SystemData;
@@ -26,7 +25,9 @@ internal struct TcpPackage {
 
 	public static TcpPackage FromArraySegment(ArraySegment<byte> data) {
 		if (data.Count < MandatorySize)
-			throw new ArgumentException(string.Format("ArraySegment too short, length: {0}", data.Count), "data");
+			throw new ArgumentException($"ArraySegment too short, length: {data.Count}", nameof(data));
+		if (data.Array is null)
+			throw new ArgumentNullException(nameof(data), "Data array is null.");
 
 		var command = (TcpCommand)data.Array[data.Offset + CommandOffset];
 		var flags = (TcpFlags)data.Array[data.Offset + FlagsOffset];
@@ -36,8 +37,8 @@ internal struct TcpPackage {
 		var correlationId = new Guid(guidBytes);
 
 		var headerSize = MandatorySize;
-		string login = null;
-		string pass = null;
+		string login = string.Empty;
+		string pass = string.Empty;
 		if ((flags & TcpFlags.Authenticated) != 0) {
 			var loginLen = data.Array[data.Offset + AuthOffset];
 			if (AuthOffset + 1 + loginLen + 1 >= data.Count)
@@ -68,11 +69,11 @@ internal struct TcpPackage {
 		: this(command, TcpFlags.None, correlationId, null, null, data) {
 	}
 
-	public TcpPackage(TcpCommand command, TcpFlags flags, Guid correlationId, string login, string password, byte[] data)
+	public TcpPackage(TcpCommand command, TcpFlags flags, Guid correlationId, string? login, string? password, byte[] data)
 		: this(command, flags, correlationId, login, password, new ArraySegment<byte>(data ?? Empty.ByteArray)) {
 	}
 
-	public TcpPackage(TcpCommand command, TcpFlags flags, Guid correlationId, string login, string password, ArraySegment<byte> data) {
+	public TcpPackage(TcpCommand command, TcpFlags flags, Guid correlationId, string? login, string? password, ArraySegment<byte> data) {
 		if ((flags & TcpFlags.Authenticated) != 0) {
 			Ensure.NotNull(login, "login");
 			Ensure.NotNull(password, "password");
@@ -86,19 +87,23 @@ internal struct TcpPackage {
 		Command = command;
 		Flags = flags;
 		CorrelationId = correlationId;
-		Login = login;
-		Password = password;
+		Login = login ?? string.Empty;
+		Password = password ?? string.Empty;
 		Data = data;
 	}
 
 	public byte[] AsByteArray() {
+		if (Data.Array is null)
+			return [];
 		if ((Flags & TcpFlags.Authenticated) != 0) {
 			var loginLen = Helper.UTF8NoBom.GetByteCount(Login);
 			var passLen = Helper.UTF8NoBom.GetByteCount(Password);
 			if (loginLen > 255)
-				throw new ArgumentException(string.Format("Login serialized length should be less than 256 bytes (but is {0}).", loginLen));
+				throw new ArgumentException(
+					$"Login serialized length should be less than 256 bytes (but is {loginLen}).");
 			if (passLen > 255)
-				throw new ArgumentException(string.Format("Password serialized length should be less than 256 bytes (but is {0}).", passLen));
+				throw new ArgumentException(
+					$"Password serialized length should be less than 256 bytes (but is {passLen}).");
 
 			var res = new byte[MandatorySize + 2 + loginLen + passLen + Data.Count];
 			res[CommandOffset] = (byte)Command;

@@ -1,14 +1,9 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using ReactiveDomain.Logging;
-using ILogger = ReactiveDomain.Logging.ILogger;
+﻿using System.Diagnostics;
 
 
 namespace ReactiveDomain.EventStore;
 
-public class EventStoreLauncher : IDisposable {
+public sealed class EventStoreLauncher : IDisposable {
 	/// <summary>
 	/// Options when there is a process conflict when the EventStore process starts
 	/// </summary>
@@ -18,12 +13,11 @@ public class EventStoreLauncher : IDisposable {
 		Error
 	}
 
-	private readonly ILogger _log = LogManager.GetLogger("Common");
-	private Process _process;
+	private Process? _process;
 	private bool _disposed;
-	private StartConflictOption _defaultStartOption;
-	private ProcessWindowStyle _defaultWindowStyle;
-	public EventStoreConnectionManager ESConnection { get; private set; }
+	private readonly StartConflictOption _defaultStartOption;
+	private readonly ProcessWindowStyle _defaultWindowStyle;
+	public EventStoreConnectionManager? ESConnection { get; private set; }
 
 	public EventStoreLauncher(
 		StartConflictOption startConflictOption = StartConflictOption.Connect,
@@ -31,6 +25,7 @@ public class EventStoreLauncher : IDisposable {
 		_defaultStartOption = startConflictOption;
 		_defaultWindowStyle = windowStyle;
 	}
+
 	/// <summary>
 	/// Start the EventStore executable explicit single server options, and then connect
 	/// </summary>
@@ -55,7 +50,7 @@ public class EventStoreLauncher : IDisposable {
 		var fullPath = Path.Combine(config.Path, "EventStore.ClusterNode.exe");
 
 		var runningEventStores = Process.GetProcessesByName("EventStore.ClusterNode");
-		if (runningEventStores.Count() != 0) {
+		if (runningEventStores.Length != 0) {
 			switch (opt) {
 				case StartConflictOption.Connect:
 					_process = runningEventStores[0];
@@ -64,6 +59,7 @@ public class EventStoreLauncher : IDisposable {
 					foreach (var es in runningEventStores) {
 						es.Kill();
 					}
+
 					break;
 				case StartConflictOption.Error:
 					throw new Exception("Conflicting EventStore running.");
@@ -79,7 +75,7 @@ public class EventStoreLauncher : IDisposable {
 					WorkingDirectory = config.WorkingDir,
 					FileName = fullPath,
 					Arguments = config.Args,
-					Verb ="runas"
+					Verb = "runas"
 				}
 			};
 			_process.Start();
@@ -90,14 +86,14 @@ public class EventStoreLauncher : IDisposable {
 	}
 
 	/// <summary>
-	///  Terminate an EventStore instance created by SetupEventStore
+	/// Terminate an EventStore instance created by SetupEventStore
 	/// </summary>
 	/// <remarks>
 	/// Yin for the <see cref="SetupEventStore"/> yang.
 	/// </remarks>
 	/// <param name="leaveRunning">bool: true = close the connection, but leave the process running.</param>
 	public void TeardownEventStore(bool leaveRunning = true) {
-		ESConnection?.Connection?.Close();
+		ESConnection?.Connection.Close();
 		if (leaveRunning || _process == null || _process.HasExited)
 			return;
 		_process.Kill();
@@ -108,7 +104,7 @@ public class EventStoreLauncher : IDisposable {
 	/// Ensure the TeardownEventStore method is called
 	/// </summary>
 	/// <remarks>
-	///  <seealso cref="TeardownEventStore"/> is called with the leaveRunnig parameter = false
+	///  <seealso cref="TeardownEventStore"/> is called with the leaveRunning parameter = true
 	/// </remarks>
 	public void Dispose() {
 		if (_disposed)

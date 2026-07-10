@@ -1,5 +1,3 @@
-using System;
-
 namespace ReactiveDomain.Messaging.Bus;
 
 public interface ICommandSubscriber {

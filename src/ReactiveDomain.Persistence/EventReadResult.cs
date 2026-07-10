@@ -3,7 +3,7 @@
 namespace ReactiveDomain;
 
 /// <summary>
-/// A event read result is the result of a single event read operation to The Stream Store.
+/// An event read result is the result of a single event read operation to The Stream Store.
 /// </summary>
 public class EventReadResult {
 	/// <summary>
@@ -11,13 +11,13 @@ public class EventReadResult {
 	/// </summary>
 	public readonly EventReadStatus Status;
 	/// <summary>The name of the stream read.</summary>
-	public readonly string Stream;
+	public readonly string? Stream;
 	/// <summary>The event number of the requested event.</summary>
 	public readonly long EventNumber;
 	/// <summary>
 	/// The event read represented as <see cref="T:EventStore.ClientAPI.ResolvedEvent" />.
 	/// </summary>
-	public readonly RecordedEvent Event;
+	public readonly RecordedEvent? Event;
 
 	public EventReadResult(RecordedEvent @event) {
 		Ensure.NotNull(@event, nameof(@event));
@@ -32,18 +32,9 @@ public class EventReadResult {
 	}
 }
 
-public class EventNotFoundResult : EventReadResult {
-	public EventNotFoundResult() : base(EventReadStatus.NotFound) {
-	}
-}
-public class EventNoStreamResult : EventReadResult {
-	public EventNoStreamResult() : base(EventReadStatus.NoStream) {
-	}
-}
-public class EventStreamDeletedResult : EventReadResult {
-	public EventStreamDeletedResult() : base(EventReadStatus.StreamDeleted) {
-	}
-}
+public class EventNotFoundResult() : EventReadResult(EventReadStatus.NotFound);
+public class EventNoStreamResult() : EventReadResult(EventReadStatus.NoStream);
+public class EventStreamDeletedResult() : EventReadResult(EventReadStatus.StreamDeleted);
 
 
 /// <summary>

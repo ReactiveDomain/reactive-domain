@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Transport.Serialization;
 using Xunit;
 
@@ -9,7 +8,7 @@ namespace ReactiveDomain.Transport.Tests;
 public class when_creating_tcp_messages {
 	private const string Prop1 = "prop1";
 	private const string Prop2 = "prop2";
-	private readonly WoftamEvent _testEvent = new WoftamEvent(Prop1, Prop2);
+	private readonly WoftamEvent _testEvent = new(Prop1, Prop2);
 
 	[Fact]
 	public void can_serialize_from_message() {
@@ -28,16 +27,6 @@ public class when_creating_tcp_messages {
 	}
 }
 
-public class WoftamEvent : IMessage {
-	public Guid MsgId { get; }
-	public WoftamEvent(string property1, string property2) {
-		MsgId = Guid.NewGuid();
-		Property1 = property1;
-		Property2 = property2;
-	}
-
-	public string Property1 { get; }
-	public string Property2 { get; }
-
-
+public record WoftamEvent(string Property1, string Property2) : IMessage {
+	public Guid MsgId { get; } = Guid.NewGuid();
 }

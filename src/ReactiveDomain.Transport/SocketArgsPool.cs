@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 
@@ -11,13 +10,10 @@ internal class SocketArgsPool {
 	private readonly ConcurrentStack<SocketAsyncEventArgs> _socketArgsPool = new ConcurrentStack<SocketAsyncEventArgs>();
 
 	public SocketArgsPool(string name, int initialCount, Func<SocketAsyncEventArgs> socketArgsCreator) {
-		if (socketArgsCreator == null)
-			throw new ArgumentNullException("socketArgsCreator");
-		if (initialCount < 0)
-			throw new ArgumentOutOfRangeException("initialCount");
+		ArgumentOutOfRangeException.ThrowIfNegative(initialCount);
 
 		Name = name;
-		_socketArgsCreator = socketArgsCreator;
+		_socketArgsCreator = socketArgsCreator ?? throw new ArgumentNullException(nameof(socketArgsCreator));
 
 		for (int i = 0; i < initialCount; ++i) {
 			_socketArgsPool.Push(socketArgsCreator());
@@ -25,8 +21,7 @@ internal class SocketArgsPool {
 	}
 
 	public SocketAsyncEventArgs Get() {
-		SocketAsyncEventArgs result;
-		if (_socketArgsPool.TryPop(out result))
+		if (_socketArgsPool.TryPop(out var result))
 			return result;
 		return _socketArgsCreator();
 	}

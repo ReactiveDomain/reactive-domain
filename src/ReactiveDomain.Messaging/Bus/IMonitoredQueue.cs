@@ -1,5 +1,3 @@
-
-
 namespace ReactiveDomain.Messaging.Bus;
 
 public interface IMonitoredQueue {

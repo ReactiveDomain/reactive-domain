@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Reactive;
+using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
 
@@ -7,16 +8,15 @@ namespace ReactiveDomain.Messaging.Bus;
 /// 
 /// Subscriptions and unsubscribe are always redirected to the target.
 /// 
-/// When RedirectToNull == true.
-/// Drops all command and Events published.
-/// Returns success for any TryFire.
+/// When RedirectToNull == true, drops all Commands and Events published and
+/// returns success for any TrySend.
 /// 
 /// </summary>
 public class NullableBus : IDispatcher {
-	private IDispatcher _target;
-	public bool Idle => _target.Idle;
+	private IDispatcher? _target;
+	public bool Idle => _target?.Idle ?? true;
 
-	public NullableBus(IDispatcher target, bool directToNull = true, string name = null) {
+	public NullableBus(IDispatcher target, bool directToNull = true, string? name = null) {
 		_target = target ?? throw new ArgumentNullException(nameof(target));
 		Name = name ?? _target.Name;
 		RedirectToNull = directToNull;
@@ -26,7 +26,7 @@ public class NullableBus : IDispatcher {
 
 	#region Implementation of ICommandPublisher
 
-	public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+	public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (RedirectToNull || _target == null)
 			return;
 		_target.Send(command, exceptionMsg, responseTimeout, ackTimeout);
@@ -52,7 +52,7 @@ public class NullableBus : IDispatcher {
 	#region Implementation of ICommandSubscriber
 
 	public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
-		return _target?.Subscribe(handler);
+		return _target?.Subscribe(handler) ?? new Disposer(() => Unit.Default);
 	}
 
 	public void Unsubscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
@@ -75,10 +75,10 @@ public class NullableBus : IDispatcher {
 
 	public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage {
 
-		return _target?.Subscribe(handler);
+		return _target?.Subscribe(handler) ?? new Disposer(() => Unit.Default);
 	}
 	public IDisposable SubscribeToAll(IHandle<IMessage> handler) {
-		return _target?.SubscribeToAll(handler);
+		return _target?.SubscribeToAll(handler) ?? new Disposer(() => Unit.Default);
 	}
 
 	public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage {
@@ -98,6 +98,7 @@ public class NullableBus : IDispatcher {
 	public string Name { get; }
 
 	#endregion
+
 	public void Dispose() {
 		Dispose(true);
 		GC.SuppressFinalize(this);

@@ -1,30 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices.AccountManagement;
-using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Claims;
 using IdentityModel;
 
 namespace ReactiveDomain.IdentityStorage.Services;
 
-public class ValidationResult {
+public record ValidationResult {
 	public bool IsValidated;
-	public string Sub;
-	public string DisplayName;
-	public ClaimsPrincipal Identity;
-	public string ErrorMessage;
+	public string? Sub;
+	public string? DisplayName;
+	public ClaimsPrincipal? Identity;
+	public string? ErrorMessage;
 }
 #if NETCOREAPP
 [SupportedOSPlatform("windows")]
 #endif
-public class UserValidation {
-	private readonly UserStore _userStore;
-
-	public UserValidation(UserStore userStore) {
-		_userStore = userStore;
-	}
-	public bool TryFindUserPrincipal(string domainName, string userName, out UserPrincipal userPrincipal) {
+public class UserValidation(UserStore userStore) {
+	public bool TryFindUserPrincipal(string? domainName, string userName, [NotNullWhen(true)] out UserPrincipal? userPrincipal) {
 
 		if (string.IsNullOrEmpty(domainName)) {
 			domainName = Environment.MachineName;
@@ -49,7 +42,9 @@ public class UserValidation {
 		userPrincipal = null;
 		return false;
 	}
-	public ValidationResult Validate(string domainName, string userName, string password, string clientId, string remoteHttpAddress) {
+
+	public ValidationResult Validate(string domainName, string userName, string password, string clientId,
+		string remoteHttpAddress) {
 		var result = new ValidationResult();
 
 		//Log.Information(
@@ -72,36 +67,40 @@ public class UserValidation {
 					result.Sub = user.Sid.Value;
 					result.DisplayName = user.DisplayName;
 					//Use the UserStore to record the process as the user is authenticated
-					var userId = _userStore.UpdateUserInfo(user, domainName, contextType.ToString());
+					var userId = userStore.UpdateUserInfo(user, domainName, contextType.ToString());
 					var options = ContextOptions.Negotiate;
 					bool authSucceeded = principalContext.ValidateCredentials(userName, password, options);
 
 					if (authSucceeded) {
 						//build the Claims Principal to return in the token
 						result.IsValidated = true;
-						_userStore.UserAuthenticated(user, domainName, contextType.ToString(), remoteHttpAddress, clientId);
-						var additionalClaims = _userStore.GetAdditionalClaims(userId);
+						userStore.UserAuthenticated(user, domainName, contextType.ToString(), remoteHttpAddress,
+							clientId);
+						var additionalClaims = userStore.GetAdditionalClaims(userId);
 						result.Identity = BuildClaimsPrincipal(user, additionalClaims);
 					} else {
 						if (user.IsAccountLockedOut()) {
 							result.ErrorMessage = "Account Locked";
-							_userStore.UserAccountLocked(user, domainName, contextType.ToString(), remoteHttpAddress, clientId);
+							userStore.UserAccountLocked(user, domainName, contextType.ToString(), remoteHttpAddress,
+								clientId);
 						}
 
 						if (user.Enabled == false) {
 							result.ErrorMessage = "Account Disabled";
-							_userStore.UserAccountDisabled(user, domainName, contextType.ToString(), remoteHttpAddress, clientId);
+							userStore.UserAccountDisabled(user, domainName, contextType.ToString(), remoteHttpAddress,
+								clientId);
 						}
 						//bad password
 						result.ErrorMessage = "Invalid password";
-						_userStore.UserProvidedInvalidCredentials(user, domainName, contextType.ToString(), remoteHttpAddress, clientId);
+						userStore.UserProvidedInvalidCredentials(user, domainName, contextType.ToString(),
+							remoteHttpAddress, clientId);
 
 					}
 				} else {
 					//bad username, no user to log this against
 					result.ErrorMessage = "Invalid username";
-					//todo: log attempts with bad user names, currently only in the local log: needs a bit of design
-					//note this will only trigger if AD can't find the user name
+					//todo: log attempts with bad usernames, currently only in the local log: needs a bit of design
+					//note this will only trigger if AD can't find the username
 					//either have a single stream for all unknown names or add streams for bad names likely option 1
 				}
 			} catch (Exception e) {
@@ -117,8 +116,9 @@ public class UserValidation {
 	}
 
 	private ClaimsPrincipal BuildClaimsPrincipal(UserPrincipal user, List<Claim> additionalClaims) {
-		var claims = new List<Claim> { new Claim(JwtClaimTypes.Subject, user.Sid.Value) };
-		if (additionalClaims?.Any() ?? false) { claims.AddRange(additionalClaims); }
+		var claims = new List<Claim> { new(JwtClaimTypes.Subject, user.Sid.Value) };
+		if (additionalClaims.Count != 0) { claims.AddRange(additionalClaims); }
+
 		var id = new ClaimsIdentity(
 			claims.Distinct(new ClaimComparer()), "IdentityServer4", JwtClaimTypes.Name, JwtClaimTypes.Role);
 		return new ClaimsPrincipal(id);

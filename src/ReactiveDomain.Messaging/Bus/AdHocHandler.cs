@@ -1,4 +1,3 @@
-using System;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;

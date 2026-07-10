@@ -2,9 +2,6 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Global
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
@@ -28,10 +25,10 @@ public class MultiQueuedHandler : IHandle<IMessage>, IPublisher, IThreadSafePubl
 
 	public MultiQueuedHandler(int queueCount,
 		Func<int, IQueuedHandler> queueFactory,
-		Func<IMessage, int> queueHash = null) {
+		Func<IMessage, int>? queueHash = null) {
 		_queueCount = queueCount;
-		Ensure.Positive(queueCount, "queueCount");
-		Ensure.NotNull(queueFactory, "queueFactory");
+		Ensure.Positive(queueCount, nameof(queueCount));
+		Ensure.NotNull(queueFactory, nameof(queueFactory));
 
 		Queues = new IQueuedHandler[queueCount];
 		for (var i = 0; i < Queues.Length; ++i) {
@@ -40,14 +37,10 @@ public class MultiQueuedHandler : IHandle<IMessage>, IPublisher, IThreadSafePubl
 		_queueHash = queueHash ?? NextQueueHash;
 	}
 	// ReSharper disable once CoVariantArrayConversion
-	public MultiQueuedHandler(params QueuedHandler[] queues)
-		: this(queues, null) {
-		Ensure.Positive(queues.Length, "queues.Length");
-	}
+	public MultiQueuedHandler(params QueuedHandler[] queues) : this(queues, null) { }
 
-	public MultiQueuedHandler(IQueuedHandler[] queues, Func<IMessage, int> queueHash) {
-		Ensure.NotNull(queues, "queues");
-		Ensure.Positive(queues.Length, "queues.Length");
+	public MultiQueuedHandler(IQueuedHandler[] queues, Func<IMessage, int>? queueHash) {
+		Ensure.NotNullOrEmpty(queues, nameof(queues));
 
 		Queues = queues;
 		_queueHash = queueHash ?? NextQueueHash;

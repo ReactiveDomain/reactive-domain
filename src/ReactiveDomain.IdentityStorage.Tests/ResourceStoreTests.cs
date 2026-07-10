@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using IdentityServer4.Models;
+﻿using IdentityServer4.Models;
 using ReactiveDomain.IdentityStorage.Services;
 using Xunit;
 

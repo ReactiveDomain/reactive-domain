@@ -1,14 +1,10 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
 public class StreamStoreMsgs {
-	public class CatchupSubscriptionBecameLive : IMessage {
-		public Guid MsgId { get; private set; }
-		public CatchupSubscriptionBecameLive() {
-			MsgId = Guid.NewGuid();
-		}
+	public record CatchupSubscriptionBecameLive : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
 }

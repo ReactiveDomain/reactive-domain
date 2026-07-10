@@ -1,6 +1,5 @@
 // ReSharper disable MemberCanBePrivate.Global
 
-using System;
 using System.Reflection;
 using System.Xml;
 using Newtonsoft.Json;
@@ -38,27 +37,27 @@ public static class Json {
 	/// <summary>
 	/// The default JSON serializer settings.
 	/// </summary>
-	public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings {
+	public static readonly JsonSerializerSettings JsonSettings = new() {
 		ContractResolver = GetContractResolver(),
 		DateFormatHandling = DateFormatHandling.IsoDateFormat,
 		NullValueHandling = NullValueHandling.Ignore,
 		DefaultValueHandling = DefaultValueHandling.Ignore,
 		MissingMemberHandling = MissingMemberHandling.Ignore,
 		TypeNameHandling = TypeNameHandling.Auto,
-		Converters = new JsonConverter[] { new StringEnumConverter() }
+		Converters = [new StringEnumConverter()]
 	};
 
 	/// <summary>
 	/// The default JSON serializer settings for logging.
 	/// </summary>
-	public static readonly JsonSerializerSettings JsonLoggingSettings = new JsonSerializerSettings {
+	public static readonly JsonSerializerSettings JsonLoggingSettings = new() {
 		ContractResolver = GetContractResolver(),
 		DateFormatHandling = DateFormatHandling.IsoDateFormat,
 		NullValueHandling = NullValueHandling.Include,
 		DefaultValueHandling = DefaultValueHandling.Include,
 		MissingMemberHandling = MissingMemberHandling.Ignore,
 		TypeNameHandling = TypeNameHandling.Auto,
-		Converters = new JsonConverter[] { new StringEnumConverter() }
+		Converters = [new StringEnumConverter()]
 	};
 
 	/// <summary>
@@ -107,7 +106,7 @@ public static class Json {
 	/// <typeparam name="T">The type of object in the serialized string</typeparam>
 	/// <param name="json">The serialized string.</param>
 	/// <returns>An object of the specified type.</returns>
-	public static T ParseJson<T>(this string json) {
+	public static T? ParseJson<T>(this string json) {
 		var result = JsonConvert.DeserializeObject<T>(json, JsonSettings);
 		return result;
 	}
@@ -118,7 +117,7 @@ public static class Json {
 	/// <typeparam name="T">The type of object in the serialized string</typeparam>
 	/// <param name="json">The serialized byte array.</param>
 	/// <returns>An object of the specified type.</returns>
-	public static T ParseJson<T>(this byte[] json) {
+	public static T? ParseJson<T>(this byte[] json) {
 		var result = JsonConvert.DeserializeObject<T>(Helper.UTF8NoBom.GetString(json), JsonSettings);
 		return result;
 	}
@@ -130,7 +129,7 @@ public static class Json {
 	/// <param name="type">The type of the deserialized object.</param>
 	/// <param name="settings">The JSON serialization settings to use.</param>
 	/// <returns>An object of the specified type.</returns>
-	public static object DeserializeObject(JObject value, Type type, JsonSerializerSettings settings) {
+	public static object? DeserializeObject(JObject value, Type type, JsonSerializerSettings? settings) {
 		JsonSerializer jsonSerializer = JsonSerializer.Create(settings);
 		return jsonSerializer.Deserialize(new JTokenReader(value), type);
 	}
@@ -142,10 +141,10 @@ public static class Json {
 	/// <param name="type">The type of the deserialized object.</param>
 	/// <param name="converters">An array of JSON converters for the types in the JSON object.</param>
 	/// <returns>An object of the specified type.</returns>
-	public static object DeserializeObject(JObject value, Type type, params JsonConverter[] converters) {
-		var settings = converters == null || converters.Length <= 0
-			? null
-			: new JsonSerializerSettings { Converters = converters };
+	public static object? DeserializeObject(JObject value, Type type, params JsonConverter[]? converters) {
+		var settings = converters is { Length: > 0 }
+			? new JsonSerializerSettings { Converters = converters }
+			: null;
 		return DeserializeObject(value, type, settings);
 	}
 
@@ -157,14 +156,11 @@ public static class Json {
 	/// <param name="writeArrayAttribute">Indicates whether to write the Json.NET array attribute.
 	/// This helps preserve arrays when converting the written XML back to JSON.</param>
 	/// <returns></returns>
-	public static XmlDocument ToXmlDocument(this JObject value, string deserializeRootElementName, bool writeArrayAttribute) {
-		return (XmlDocument)DeserializeObject(value, typeof(XmlDocument), new JsonConverter[]
-		{
-			new XmlNodeConverter
-			{
+	public static XmlDocument? ToXmlDocument(this JObject value, string deserializeRootElementName, bool writeArrayAttribute) {
+		return (XmlDocument?)DeserializeObject(value, typeof(XmlDocument),
+			new XmlNodeConverter {
 				DeserializeRootElementName = deserializeRootElementName,
 				WriteArrayAttribute = writeArrayAttribute
-			}
-		});
+			});
 	}
 }

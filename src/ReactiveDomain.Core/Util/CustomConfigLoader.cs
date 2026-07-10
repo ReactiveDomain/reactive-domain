@@ -1,16 +1,12 @@
-﻿using System;
-using System.Configuration;
-using System.Linq;
+﻿using System.Configuration;
 using System.Xml;
 using System.Xml.Serialization;
 
 namespace ReactiveDomain.Util;
 
 public class CustomConfigLoader : IConfigurationSectionHandler {
-	public object Create(object parent, object configContext, XmlNode section) {
-		if (section == null) {
-			throw new ArgumentNullException($"XMLNode passed in is null.");
-		}
+	public object? Create(object parent, object configContext, XmlNode? section) {
+		ArgumentNullException.ThrowIfNull(section);
 
 		var type = AppDomain.CurrentDomain.GetAssemblies()
 			.SelectMany(a => a.GetTypes())
@@ -22,9 +18,8 @@ public class CustomConfigLoader : IConfigurationSectionHandler {
 
 		XmlSerializer ser = new XmlSerializer(type, new XmlRootAttribute(section.Name));
 
-		using (XmlReader reader = new XmlNodeReader(section)) {
-			return ser.Deserialize(reader);
-		}
+		using XmlReader reader = new XmlNodeReader(section);
+		return ser.Deserialize(reader);
 	}
 
 }

@@ -1,5 +1,4 @@
-﻿
-namespace ReactiveDomain.Messaging.Bus;
+﻿namespace ReactiveDomain.Messaging.Bus;
 
 public class WideningHandler<TInput, TOutput> : IHandle<TInput>
 	where TInput : TOutput
@@ -15,6 +14,6 @@ public class WideningHandler<TInput, TOutput> : IHandle<TInput>
 	}
 
 	public override string ToString() {
-		return string.Format("WideningHandler<{0}, {1}>({2})", typeof(TInput).Name, typeof(TOutput).Name, _handler);
+		return $"WideningHandler<{typeof(TInput).Name}, {typeof(TOutput).Name}>({_handler})";
 	}
 }

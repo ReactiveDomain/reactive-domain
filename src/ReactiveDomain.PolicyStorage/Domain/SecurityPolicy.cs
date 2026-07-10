@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using ReactiveDomain.Foundation.Domain;
+﻿using System.Runtime.CompilerServices;
 using ReactiveDomain.Policy.Messages;
 using ReactiveDomain.Util;
 [assembly: InternalsVisibleTo("ReactiveDomain.IdentityStorage")]
 namespace ReactiveDomain.Policy.Domain;
 
 internal class SecurityPolicy : ChildEntity {
-	private readonly Dictionary<Guid, string> _rolesById = new Dictionary<Guid, string>();
-	private readonly Dictionary<string, Guid> _rolesByName = new Dictionary<string, Guid>();
+	private readonly Dictionary<Guid, string> _rolesById = [];
+	private readonly Dictionary<string, Guid> _rolesByName = [];
 	public IReadOnlyList<Guid> Roles => _rolesById.Keys.ToList();
 
 	public string ClientId { get; }
@@ -47,8 +43,8 @@ internal class SecurityPolicy : ChildEntity {
 		if (roleId == Guid.Empty) {
 			roleId = Guid.NewGuid();
 		}
-		roleName = roleName?.Trim();
-		Ensure.NotNullOrEmpty(roleName, nameof(roleName));
+		Ensure.NotNullOrWhiteSpace(roleName, nameof(roleName));
+		roleName = roleName.Trim();
 
 		if (_rolesById.ContainsValue(roleName.ToLowerInvariant()) || _rolesById.ContainsKey(roleId)) {
 			throw new InvalidOperationException($"Cannot add duplicate role. RoleName: {roleName} RoleId: {roleId}");
@@ -62,18 +58,19 @@ internal class SecurityPolicy : ChildEntity {
 
 	public void GrantRole(PolicyUser user, string roleName) {
 		Ensure.NotNull(user, nameof(user));
-		roleName = roleName?.Trim();
-		Ensure.NotNullOrEmpty(roleName, nameof(roleName));
+		Ensure.NotNullOrWhiteSpace(roleName, nameof(roleName));
+		roleName = roleName.Trim();
 		Ensure.Equal(Id, user.PolicyId, nameof(user));
 		if (!_rolesByName.TryGetValue(roleName.ToLowerInvariant(), out var roleId)) {
 			throw new ArgumentOutOfRangeException($"Policy {ClientId} does not contain Role {roleName}");
 		}
 		user.AddRole(roleName, roleId);
 	}
+
 	public void RevokeRole(PolicyUser user, string roleName) {
 		Ensure.NotNull(user, nameof(user));
-		roleName = roleName?.Trim();
-		Ensure.NotNullOrEmpty(roleName, nameof(roleName));
+		Ensure.NotNullOrWhiteSpace(roleName, nameof(roleName));
+		roleName = roleName.Trim();
 		Ensure.Equal(Id, user.PolicyId, nameof(user));
 		if (!_rolesByName.TryGetValue(roleName.ToLowerInvariant(), out var roleId)) {
 			throw new ArgumentOutOfRangeException($"Policy {ClientId} does not contain Role {roleName}");

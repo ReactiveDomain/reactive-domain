@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
@@ -17,37 +17,32 @@ public class PolicyDispatcher : IDispatcher {
 		_dispatcher = dispatcher;
 		_getPolicy = getPolicy;
 	}
-	public void Send(ICommand command, string exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+	public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (_getPolicy().HasPermission(command.GetType())) {
 			_dispatcher.Send(command, exceptionMsg, responseTimeout, ackTimeout);
 		} else {
 			var fail = (Fail)command.Fail(new AuthorizationException(command.GetType(), exceptionMsg));
-			throw new CommandException(exceptionMsg ?? fail.Exception.Message, fail.Exception, command);
+			throw new CommandException(exceptionMsg ?? fail.Exception?.Message ?? "Command failed", fail.Exception, command);
 		}
 	}
 	public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (_getPolicy().HasPermission(command.GetType())) {
 			return _dispatcher.TrySend(command, out response, responseTimeout, ackTimeout);
-		} else {
-			response = command.Fail(new AuthorizationException(command.GetType(), null));
-			return false;
 		}
+		response = command.Fail(new AuthorizationException(command.GetType(), null));
+		return false;
 	}
 	public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
-		if (_getPolicy().HasPermission(command.GetType())) {
-			return _dispatcher.TrySendAsync(command, responseTimeout, ackTimeout);
-		} else {
-			return false;
-		}
+		return _getPolicy().HasPermission(command.GetType()) &&
+			   _dispatcher.TrySendAsync(command, responseTimeout, ackTimeout);
 	}
-	public bool TrySendAsync(ICommand command, out AuthorizationException exception, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+	public bool TrySendAsync(ICommand command, [NotNullWhen(false)] out AuthorizationException? exception, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (_getPolicy().HasPermission(command.GetType())) {
 			exception = null;
 			return _dispatcher.TrySendAsync(command, responseTimeout, ackTimeout);
-		} else {
-			exception = new AuthorizationException(command.GetType(), null);
-			return false;
 		}
+		exception = new AuthorizationException(command.GetType(), null);
+		return false;
 	}
 	//delegated implementation
 	public void Publish(IMessage message) {

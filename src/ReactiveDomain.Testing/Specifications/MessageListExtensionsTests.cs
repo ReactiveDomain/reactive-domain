@@ -1,6 +1,4 @@
-﻿#nullable enable
-using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using Xunit;
 using Xunit.Sdk;
 

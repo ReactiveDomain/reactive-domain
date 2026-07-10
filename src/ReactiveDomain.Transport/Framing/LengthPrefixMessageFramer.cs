@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
 
@@ -12,13 +10,13 @@ namespace ReactiveDomain.Transport.Framing;
 /// full message arrives.
 /// </summary>
 public class LengthPrefixMessageFramer : IMessageFramer {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
-	public const int HeaderLength = sizeof(Int32);
+	public const int HeaderLength = sizeof(int);
 
-	private byte[] _messageBuffer;
+	private byte[]? _messageBuffer;
 	private int _bufferIndex;
-	private Action<Guid, ArraySegment<byte>> _receivedHandler;
+	private Action<Guid, ArraySegment<byte>>? _receivedHandler;
 	private readonly int _maxPackageSize;
 
 	private int _headerBytes;
@@ -43,7 +41,7 @@ public class LengthPrefixMessageFramer : IMessageFramer {
 		if (data == null)
 			throw new ArgumentNullException(nameof(data));
 
-		foreach (ArraySegment<byte> buffer in data) {
+		foreach (var buffer in data) {
 			Parse(routeId, buffer);
 		}
 	}
@@ -61,7 +59,7 @@ public class LengthPrefixMessageFramer : IMessageFramer {
 	/// <param name="bytes">A byte array of data to append</param>
 	private void Parse(Guid routeId, ArraySegment<byte> bytes) {
 		if (bytes.Array is null) {
-			throw new ArgumentNullException(nameof(bytes.Array), "byte array to parse is null.");
+			throw new ArgumentNullException(nameof(bytes), "byte array to parse is null.");
 		}
 		var data = bytes.Array;
 		for (int i = bytes.Offset, n = bytes.Offset + bytes.Count; i < n; i++) {
@@ -70,7 +68,7 @@ public class LengthPrefixMessageFramer : IMessageFramer {
 				++_headerBytes;
 				if (_headerBytes == HeaderLength) {
 					if (_packageLength <= 0 || _packageLength > _maxPackageSize) {
-						Log.Error("FRAMING ERROR! Data:\n{0}", Helper.FormatBinaryDump(bytes));
+						_log.Error("FRAMING ERROR! Data:\n{0}", Helper.FormatBinaryDump(bytes));
 						throw new PackageFramingException($"Package size is out of bounds: {_packageLength} (max: {_maxPackageSize}).");
 					}
 
@@ -78,13 +76,12 @@ public class LengthPrefixMessageFramer : IMessageFramer {
 				}
 			} else {
 				int copyCnt = Math.Min(bytes.Count + bytes.Offset - i, _packageLength - _bufferIndex);
-				Buffer.BlockCopy(bytes.Array, i, _messageBuffer, _bufferIndex, copyCnt);
+				Buffer.BlockCopy(bytes.Array, i, _messageBuffer!, _bufferIndex, copyCnt);
 				_bufferIndex += copyCnt;
 				i += copyCnt - 1;
 
 				if (_bufferIndex == _packageLength) {
-					if (_receivedHandler != null)
-						_receivedHandler(routeId, new ArraySegment<byte>(_messageBuffer, 0, _bufferIndex));
+					_receivedHandler?.Invoke(routeId, new ArraySegment<byte>(_messageBuffer!, 0, _bufferIndex));
 					_messageBuffer = null;
 					_headerBytes = 0;
 					_packageLength = 0;
@@ -98,7 +95,7 @@ public class LengthPrefixMessageFramer : IMessageFramer {
 		var length = data.Count;
 
 		yield return new ArraySegment<byte>(
-			new[] { (byte)length, (byte)(length >> 8), (byte)(length >> 16), (byte)(length >> 24) });
+			[(byte)length, (byte)(length >> 8), (byte)(length >> 16), (byte)(length >> 24)]);
 		yield return data;
 	}
 

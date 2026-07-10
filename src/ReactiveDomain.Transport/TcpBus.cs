@@ -1,37 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Timers;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Transport.Framing;
 using ReactiveDomain.Transport.Serialization;
+using Timer = System.Timers.Timer;
 
 namespace ReactiveDomain.Transport;
 
 public abstract class TcpBus : IHandle<IMessage>, IDisposable {
 	protected static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 	private readonly IEnumerable<Type> _inboundDiscardingMessageTypes;
-	private readonly QueuedHandlerDiscarding _inboundDiscardingMessageQueuedHandler;
+	private readonly QueuedHandlerDiscarding? _inboundDiscardingMessageQueuedHandler;
 	private readonly IEnumerable<Type> _inboundNondiscardingMessageTypes;
-	private readonly QueuedHandler _inboundNondiscardingMessageQueuedHandler;
+	private readonly QueuedHandler? _inboundNondiscardingMessageQueuedHandler;
 	protected readonly Dictionary<Type, IMessageSerializer> MessageSerializers;
 	protected readonly TcpMessageEncoder Encoder;
 	private readonly Timer _statsTimer;
 	protected IEnumerable<ITcpConnection> TcpConnections => _tcpConnections;
-	private readonly List<ITcpConnection> _tcpConnections = new List<ITcpConnection>();
-	protected readonly LengthPrefixMessageFramer Framer = new LengthPrefixMessageFramer();
+	private readonly List<ITcpConnection> _tcpConnections = [];
+	protected readonly LengthPrefixMessageFramer Framer = new();
 
 	protected TcpBus(
 		IPAddress hostIp,
 		int commandPort,
-		IEnumerable<Type> inboundDiscardingMessageTypes = null,
-		QueuedHandlerDiscarding inboundDiscardingMessageQueuedHandler = null,
-		IEnumerable<Type> inboundNondiscardingMessageTypes = null,
-		QueuedHandler inboundNondiscardingMessageQueuedHandler = null,
-		Dictionary<Type, IMessageSerializer> messageSerializers = null)
+		IEnumerable<Type>? inboundDiscardingMessageTypes = null,
+		QueuedHandlerDiscarding? inboundDiscardingMessageQueuedHandler = null,
+		IEnumerable<Type>? inboundNondiscardingMessageTypes = null,
+		QueuedHandler? inboundNondiscardingMessageQueuedHandler = null,
+		Dictionary<Type, IMessageSerializer>? messageSerializers = null)
 		: this(
 			new IPEndPoint(hostIp, commandPort),
 			inboundDiscardingMessageTypes,
@@ -42,15 +40,15 @@ public abstract class TcpBus : IHandle<IMessage>, IDisposable {
 
 	protected TcpBus(
 		EndPoint endpoint,
-		IEnumerable<Type> inboundDiscardingMessageTypes = null,
-		QueuedHandlerDiscarding inboundDiscardingMessageQueuedHandler = null,
-		IEnumerable<Type> inboundNondiscardingMessageTypes = null,
-		QueuedHandler inboundNondiscardingMessageQueuedHandler = null,
-		Dictionary<Type, IMessageSerializer> messageSerializers = null) {
+		IEnumerable<Type>? inboundDiscardingMessageTypes = null,
+		QueuedHandlerDiscarding? inboundDiscardingMessageQueuedHandler = null,
+		IEnumerable<Type>? inboundNondiscardingMessageTypes = null,
+		QueuedHandler? inboundNondiscardingMessageQueuedHandler = null,
+		Dictionary<Type, IMessageSerializer>? messageSerializers = null) {
 		CommandEndpoint = endpoint;
-		_inboundDiscardingMessageTypes = inboundDiscardingMessageTypes?.ToArray() ?? new Type[0];
+		_inboundDiscardingMessageTypes = inboundDiscardingMessageTypes?.ToArray() ?? [];
 		_inboundDiscardingMessageQueuedHandler = inboundDiscardingMessageQueuedHandler;
-		_inboundNondiscardingMessageTypes = inboundNondiscardingMessageTypes?.ToArray() ?? new Type[0];
+		_inboundNondiscardingMessageTypes = inboundNondiscardingMessageTypes?.ToArray() ?? [];
 		_inboundNondiscardingMessageQueuedHandler = inboundNondiscardingMessageQueuedHandler;
 		MessageSerializers = messageSerializers ?? new Dictionary<Type, IMessageSerializer>();
 		Encoder = new TcpMessageEncoder();
@@ -77,7 +75,7 @@ public abstract class TcpBus : IHandle<IMessage>, IDisposable {
 		}
 	}
 
-	private void StatsTimer_Elapsed(object sender, ElapsedEventArgs e) {
+	private void StatsTimer_Elapsed(object? sender, ElapsedEventArgs e) {
 		if (_inboundDiscardingMessageQueuedHandler != null) {
 			Log.Debug(_inboundDiscardingMessageQueuedHandler.GetStatistics().ToString());
 		}

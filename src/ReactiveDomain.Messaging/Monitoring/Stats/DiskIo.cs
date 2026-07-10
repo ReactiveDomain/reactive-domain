@@ -3,10 +3,7 @@
 // ReSharper disable UnusedField.Compiler
 // ReSharper disable NotAccessedField.Global
 
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
@@ -14,8 +11,7 @@ using ReactiveDomain.Util;
 namespace ReactiveDomain.Messaging.Monitoring.Stats;
 
 public class DiskIo {
-	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
-
+	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 
 	public readonly ulong ReadBytes;
 	public readonly ulong WrittenBytes;
@@ -29,18 +25,18 @@ public class DiskIo {
 		WriteOps = writeOps;
 	}
 
-	public static DiskIo GetDiskIo(int procId, ILogger logger) {
+	public static DiskIo? GetDiskIo(int procId, ILogger logger) {
 		try {
 			return OS.IsUnix ? GetOnUnix(procId, logger) : GetOnWindows(logger);
 		} catch (Exception exc) {
-			Log.Debug("Getting disk IO error: {0}.", exc.Message);
+			_log.Debug("Getting disk IO error: {0}.", exc.Message);
 			return null;
 		}
 	}
 
 	// http://stackoverflow.com/questions/3633286/understanding-the-counters-in-proc-pid-io
-	private static DiskIo GetOnUnix(int procId, ILogger log) {
-		var procIoFile = string.Format("/proc/{0}/io", procId);
+	private static DiskIo? GetOnUnix(int procId, ILogger log) {
+		var procIoFile = $"/proc/{procId}/io";
 		if (!File.Exists(procIoFile)) // if no procfs exists/is mounted -- just don't return stats
 			return null;
 		var procIoStr = File.ReadAllText(procIoFile);
@@ -48,10 +44,10 @@ public class DiskIo {
 
 	}
 
-	internal static DiskIo ParseOnUnix(string procIoStr, ILogger log) {
+	internal static DiskIo? ParseOnUnix(string procIoStr, ILogger log) {
 		ulong readBytes, writtenBytes, readOps, writeOps;
 		try {
-			var dict = procIoStr.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+			var dict = procIoStr.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)
 				.Select(x => x.Split(':'))
 				.ToDictionary(s => s[0].Trim(), s => s[1].Trim());
 			readBytes = ulong.Parse(dict["read_bytes"]);
@@ -66,11 +62,11 @@ public class DiskIo {
 		return new DiskIo(readBytes, writtenBytes, readOps, writeOps);
 	}
 
-	private static DiskIo GetOnWindows(ILogger log) {
+	private static DiskIo? GetOnWindows(ILogger log) {
 		Ensure.NotNull(log, "log");
 
 		IO_COUNTERS counters;
-		Process proc = null;
+		Process? proc = null;
 		try {
 			proc = Process.GetCurrentProcess();
 			GetProcessIoCounters(proc.Handle, out counters);
@@ -78,8 +74,7 @@ public class DiskIo {
 			log.InfoException(ex, "Error while reading disk io on Windows.");
 			return null;
 		} finally {
-			if (proc != null)
-				proc.Dispose();
+			proc?.Dispose();
 		}
 		return new DiskIo(counters.ReadTransferCount, counters.WriteTransferCount,
 			counters.ReadOperationCount, counters.WriteOperationCount);

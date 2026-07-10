@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
 
-// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
@@ -23,14 +20,14 @@ public class StreamStoreRepository : IRepository {
 		IStreamNameBuilder streamNameBuilder,
 		IStreamStoreConnection eventStoreConnection,
 		IEventSerializer eventSerializer,
-		Func<Guid> getPolicyUserId = null) {
+		Func<Guid>? getPolicyUserId = null) {
 		_streamNameBuilder = streamNameBuilder;
 		_streamStoreConnection = eventStoreConnection;
 		_eventSerializer = eventSerializer;
 		_getPolicyUserId = getPolicyUserId ?? (() => Guid.Empty);
 	}
 
-	public bool TryGetById<TAggregate>(Guid id, out TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
+	public bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
 		try {
 			aggregate = GetById<TAggregate>(id, version);
 			return true;
@@ -49,7 +46,7 @@ public class StreamStoreRepository : IRepository {
 
 
 		long sliceStart = 0;
-		StreamEventsSlice currentSlice;
+		StreamEventsSlice? currentSlice;
 		var appliedEventCount = 0;
 		do {
 			long sliceCount = sliceStart + ReadPageSize <= version
@@ -57,6 +54,9 @@ public class StreamStoreRepository : IRepository {
 				: version - sliceStart;
 
 			currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, (int)sliceCount);
+
+			if (currentSlice is null)
+				throw new AggregateNotFoundException(id, typeof(TAggregate));
 
 			if (currentSlice is StreamNotFoundSlice)
 				throw new AggregateNotFoundException(id, typeof(TAggregate));
@@ -67,20 +67,20 @@ public class StreamStoreRepository : IRepository {
 			sliceStart = currentSlice.NextEventNumber;
 
 			appliedEventCount += currentSlice.Events.Length;
-			aggregate.RestoreFromEvents(currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)));
+			aggregate.RestoreFromEvents(currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)).OfType<object>());
 
 		} while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
 
-		if (version != Int32.MaxValue && version != appliedEventCount)
+		if (version != int.MaxValue && version != appliedEventCount)
 			throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
-		if (version != Int32.MaxValue && aggregate.ExpectedVersion != version - 1)
+		if (version != int.MaxValue && aggregate.ExpectedVersion != version - 1)
 			throw new AggregateVersionException(id, typeof(TAggregate), version, aggregate.ExpectedVersion);
 
 		return aggregate;
 	}
 	public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue) where TAggregate : class, IEventSource {
-		if (aggregate == null || aggregate?.Id == Guid.Empty)
+		if (aggregate.Id == Guid.Empty)
 			throw new ArgumentNullException(nameof(aggregate));
 		if (version == aggregate.ExpectedVersion)
 			return;
@@ -92,13 +92,16 @@ public class StreamStoreRepository : IRepository {
 
 		var streamName = _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), aggregate.Id);
 		long sliceStart = aggregate.ExpectedVersion + 1;
-		StreamEventsSlice currentSlice;
+		StreamEventsSlice? currentSlice;
 		do {
 			long sliceCount = sliceStart + ReadPageSize <= version
 				? ReadPageSize
 				: version - sliceStart;
 
 			currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, (int)sliceCount);
+
+			if (currentSlice is null)
+				throw new AggregateNotFoundException(aggregate.Id, typeof(TAggregate));
 
 			if (currentSlice is StreamNotFoundSlice)
 				throw new AggregateNotFoundException(aggregate.Id, typeof(TAggregate));
@@ -108,7 +111,9 @@ public class StreamStoreRepository : IRepository {
 
 			sliceStart = currentSlice.NextEventNumber;
 
-			aggregate.UpdateWithEvents(currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)), aggregate.ExpectedVersion);
+			aggregate.UpdateWithEvents(
+				currentSlice.Events.Select(evt => _eventSerializer.Deserialize(evt)).OfType<object>(),
+				aggregate.ExpectedVersion);
 
 		} while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
 
@@ -117,7 +122,7 @@ public class StreamStoreRepository : IRepository {
 	}
 
 	private static TAggregate ConstructAggregate<TAggregate>() {
-		return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true);
+		return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true)!;
 	}
 
 	public void Save(IEventSource aggregate) {

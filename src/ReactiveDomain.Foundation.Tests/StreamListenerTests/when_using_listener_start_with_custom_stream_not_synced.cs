@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reactive;
-using System.Threading;
-using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
+﻿using ReactiveDomain.Foundation.Tests.StreamListenerTests.Common;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -11,53 +8,42 @@ namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class when_using_listener_start_with_custom_stream_synched_bus {
-	private readonly IStreamNameBuilder _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
-	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
-	IStreamStoreConnection conn;
-	StreamListener listener;
-	IDisposable SubscriptionDisposer;
+public sealed class when_using_listener_start_with_custom_stream_not_synced {
+	private readonly JsonMessageSerializer _eventSerializer = new();
 
-	public when_using_listener_start_with_custom_stream_synched_bus(StreamStoreConnectionFixture fixture) {
-		conn = fixture.Connection;
+	public when_using_listener_start_with_custom_stream_not_synced(StreamStoreConnectionFixture fixture) {
+		var conn = fixture.Connection;
 		conn.Connect();
 
 		// Build an origin stream from strings to which the events are appended
 		var originStreamName = $"testStream-{Guid.NewGuid():N}";
+
+		// Generate event and save it to the custom stream
 
 		var result = fixture.Connection.AppendToStream(
 			originStreamName,
 			ExpectedVersion.NoStream,
 			null,
 			_eventSerializer.Serialize(new TestEvent()));
-		Assert.True(result.NextExpectedVersion == 0);
+		Assert.Equal(0, result.NextExpectedVersion);
 
 		// Wait for the stream to be written
 		CommonHelpers.WaitForStream(conn, originStreamName);
 
-		listener = new QueuedStreamListener(
+		StreamListener listener = new QueuedStreamListener(
 			originStreamName,
 			fixture.Connection,
 			new PrefixedCamelCaseStreamNameBuilder(),
-			_eventSerializer,
-			"BUS_NAME",
-			LiveProcessingStarted);
-		SubscriptionDisposer = listener.EventStream.Subscribe(new AdHocHandler<Event>(Handle));
+			_eventSerializer);
+		listener.EventStream.Subscribe(new AdHocHandler<Event>(Handle));
 		listener.Start(originStreamName);
 	}
 
-
-
 	private long _testEventCount;
-	private long _gotLiveStarted;
 
-	private void LiveProcessingStarted(Unit _) {
-		Interlocked.Increment(ref _gotLiveStarted);
-	}
 	[Fact]
 	public void can_get_events_from_custom_stream() {
 		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotLiveStarted) == 1);
 	}
 
 	private void Handle(IMessage message) {

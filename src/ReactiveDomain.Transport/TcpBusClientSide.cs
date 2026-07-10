@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Transport.Framing;
@@ -21,8 +17,8 @@ public sealed class TcpBusClientSide : TcpBus {
 		QueuedHandlerDiscarding inboundDiscardingMessageHandler,
 		IEnumerable<Type> inboundNondiscardingMessageTypes,
 		QueuedHandler inboundNondiscardingMessageHandler,
-		ITcpConnection tcpConnection = null,
-		Dictionary<Type, IMessageSerializer> messageSerializers = null)
+		ITcpConnection? tcpConnection = null,
+		Dictionary<Type, IMessageSerializer>? messageSerializers = null)
 		: base(
 			endpoint,
 			inboundDiscardingMessageTypes,
@@ -36,12 +32,12 @@ public sealed class TcpBusClientSide : TcpBus {
 	public TcpBusClientSide(
 		IPAddress hostIP,
 		int commandPort,
-		IEnumerable<Type> inboundDiscardingMessageTypes = null,
-		QueuedHandlerDiscarding inboundDiscardingMessageQueuedHandler = null,
-		IEnumerable<Type> inboundNondiscardingMessageTypes = null,
-		QueuedHandler inboundNondiscardingMessageQueuedHandler = null,
-		ITcpConnection tcpConnection = null,
-		Dictionary<Type, IMessageSerializer> messageSerializers = null)
+		IEnumerable<Type>? inboundDiscardingMessageTypes = null,
+		QueuedHandlerDiscarding? inboundDiscardingMessageQueuedHandler = null,
+		IEnumerable<Type>? inboundNondiscardingMessageTypes = null,
+		QueuedHandler? inboundNondiscardingMessageQueuedHandler = null,
+		ITcpConnection? tcpConnection = null,
+		Dictionary<Type, IMessageSerializer>? messageSerializers = null)
 		: base(
 			hostIP,
 			commandPort,
@@ -85,7 +81,7 @@ public sealed class TcpBusClientSide : TcpBus {
 
 	private void ConfigureTcpListener(ITcpConnection conn) {
 		Framer.RegisterMessageArrivedCallback(TcpMessageArrived);
-		Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback = null;
+		Action<ITcpConnection, IEnumerable<ArraySegment<byte>>>? callback = null;
 		callback = (x, data) => {
 			try {
 				Framer.UnFrameData(x.ConnectionId, data);
@@ -94,7 +90,7 @@ public sealed class TcpBusClientSide : TcpBus {
 				// SendBadRequestAndClose(Guid.Empty, string.Format("Invalid TCP frame received. Error: {0}.", exc.Message));
 				return;
 			}
-			x.ReceiveAsync(callback);
+			x.ReceiveAsync(callback!);
 		};
 		conn.ReceiveAsync(callback);
 	}
@@ -119,7 +115,7 @@ public sealed class TcpBusClientSide : TcpBus {
 		var type = message.GetType();
 		Log.Trace($"Message {message.MsgId} (Type {type.Name}) to be sent over TCP.");
 
-		if (TcpConnections == null) {
+		if (TcpConnections.IsEmpty()) {
 			Log.Debug($"TCP connection not yet established - Message {message.MsgId} (Type {type.Name}) will be discarded.");
 			return;
 		}

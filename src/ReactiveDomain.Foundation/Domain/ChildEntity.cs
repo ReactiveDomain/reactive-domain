@@ -1,6 +1,5 @@
-﻿using System;
-
-namespace ReactiveDomain.Foundation.Domain;
+﻿// ReSharper disable once CheckNamespace
+namespace ReactiveDomain;
 
 public abstract class ChildEntity {
 	public readonly Guid Id;
@@ -16,7 +15,7 @@ public abstract class ChildEntity {
 	}
 	/// <summary>
 	/// Registers a route for the specified <typeparamref name="TEvent">type of event</typeparamref> to the logic that needs to be applied to this instance to support future behaviors.
-	/// n.b. A ChildAggregate will need to filter events by Id before applying
+	/// n.b. A ChildAggregate will need to filter events by <see cref="Id"/> before applying
 	/// </summary>
 	/// <typeparam name="TEvent">The type of event.</typeparam>
 	/// <param name="route">The logic to route the event to.</param>
@@ -26,7 +25,7 @@ public abstract class ChildEntity {
 
 	/// <summary>
 	/// Registers a route for the specified <paramref name="typeOfEvent">type of event</paramref> to the logic that needs to be applied to this instance to support future behaviors.
-	/// n.b. A ChildAggregate will need to filter events by Id before applying
+	/// n.b. A ChildAggregate will need to filter events by <see cref="Id"/> before applying
 	/// </summary>
 	/// <param name="typeOfEvent">The type of event.</param>
 	/// <param name="route">The logic to route the event to.</param>

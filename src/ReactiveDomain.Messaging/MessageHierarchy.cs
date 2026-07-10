@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace ReactiveDomain.Messaging;
@@ -11,30 +9,31 @@ namespace ReactiveDomain.Messaging;
 /// The hierarchy of types implementing the IMessage interface.  
 /// </summary>
 public static class MessageHierarchy {
-	public static Type IMessageType = typeof(IMessage);
-	private static readonly HashSet<Assembly> Loaded = new HashSet<Assembly>();
-	private static readonly HashSet<Assembly> Processed = new HashSet<Assembly>();
+	private static readonly Type _iMessageType = typeof(IMessage);
+	private static readonly HashSet<Assembly> _loaded = [];
+	private static readonly HashSet<Assembly> _processed = [];
 	public static readonly TimeSpan InitialLoadTime;
-	public static TimeSpan TotalLoadTime;
-	public static List<string> LoadedAssemblies() {
-		lock (Loaded) {
-			return Loaded.Select(a => a.FullName).ToList();
+	public static TimeSpan TotalLoadTime { get; private set; }
+
+	public static List<string?> LoadedAssemblies() {
+		lock (_loaded) {
+			return _loaded.Select(a => a.FullName).ToList();
 		}
 	}
 
-	public static List<string> ProcessedAssemblies() {
-		lock (Processed) {
-			return Processed.Select(a => a.FullName).ToList();
+	public static List<string?> ProcessedAssemblies() {
+		lock (_processed) {
+			return _processed.Select(a => a.FullName).ToList();
 		}
 	}
 
 	static MessageHierarchy() {
-		// Get the all of the types in the Assembly that are derived from Message and then build a 
+		// Get the all the types in the Assembly that are derived from Message and then build a 
 		// backing TypeTree.
 		//Load Root
-		var types = new HashSet<Type>(IMessageType.Assembly.GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface));
+		var types = new HashSet<Type>(_iMessageType.Assembly.GetLoadableTypes().Where(t => _iMessageType.IsAssignableFrom(t) && !t.IsInterface));
 		TypeTree.AddToTypeTree(types);
-		Processed.Add(IMessageType.Assembly);
+		_processed.Add(_iMessageType.Assembly);
 
 		var sw = Stopwatch.StartNew();
 		LoadTree();
@@ -45,12 +44,12 @@ public static class MessageHierarchy {
 
 	private static void LoadTree() {
 		var loaded = AppDomain.CurrentDomain.GetAssemblies();
-		lock (Loaded) { Loaded.UnionWith(loaded); }
+		lock (_loaded) { _loaded.UnionWith(loaded); }
 
 		var msgAssemblies = new List<Assembly>();
-		var rootName = IMessageType.Assembly.GetName();
+		var rootName = _iMessageType.Assembly.GetName();
 		for (int i = 0; i < loaded.Length; i++) {
-			AssemblyName[] refs = loaded[i].GetReferencedAssemblies();
+			var refs = loaded[i].GetReferencedAssemblies();
 			for (int j = 0; j < refs.Length; j++) {
 				if (AssemblyName.ReferenceMatchesDefinition(refs[j], rootName)) {
 					msgAssemblies.Add(loaded[i]);
@@ -58,10 +57,10 @@ public static class MessageHierarchy {
 				}
 			}
 		}
-		lock (Processed) { Processed.UnionWith(msgAssemblies); }
+		lock (_processed) { _processed.UnionWith(msgAssemblies); }
 		var types = new HashSet<Type>();
 		for (int i = 0; i < msgAssemblies.Count; i++) {
-			types.UnionWith(msgAssemblies[i].GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface));
+			types.UnionWith(msgAssemblies[i].GetLoadableTypes().Where(t => _iMessageType.IsAssignableFrom(t) && !t.IsInterface));
 		}
 		TypeTree.AddToTypeTree(types);
 	}
@@ -69,20 +68,20 @@ public static class MessageHierarchy {
 	private static void ExpandTree() {
 		var sw = Stopwatch.StartNew();
 
-		lock (Loaded) {
+		lock (_loaded) {
 			var updated = new HashSet<Assembly>(AppDomain.CurrentDomain.GetAssemblies());
-			updated.ExceptWith(Loaded);
+			updated.ExceptWith(_loaded);
 			if (!updated.Any()) {
 				sw.Stop();
 				TotalLoadTime += sw.Elapsed;
 				return;
 			}
-			Loaded.UnionWith(updated);
+			_loaded.UnionWith(updated);
 
 			foreach (var assembly in updated) {
 				if (assembly.GetReferencedAssemblies()
-					.Any(name => name.Name == IMessageType.Assembly.GetName().Name)) {
-					lock (Processed) { Processed.Add(assembly); }
+					.Any(name => name.Name == _iMessageType.Assembly.GetName().Name)) {
+					lock (_processed) { _processed.Add(assembly); }
 					LoadAssembly(assembly);
 				}
 			}
@@ -91,14 +90,16 @@ public static class MessageHierarchy {
 		}
 	}
 	private static void LoadAssembly(Assembly assembly) {
-		TypeTree.AddToTypeTree(new HashSet<Type>(assembly.GetLoadableTypes().Where(t => IMessageType.IsAssignableFrom(t) && !t.IsInterface)));
+		TypeTree.AddToTypeTree([
+			..assembly.GetLoadableTypes().Where(t => _iMessageType.IsAssignableFrom(t) && !t.IsInterface)
+		]);
 	}
 	private static IEnumerable<Type> GetLoadableTypes(this Assembly assembly) {
 		// See https://stackoverflow.com/questions/7889228/how-to-prevent-reflectiontypeloadexception-when-calling-assembly-gettypes
 		try {
 			return assembly.GetTypes();
 		} catch (ReflectionTypeLoadException e) {
-			return e.Types.Where(t => t != null);
+			return e.Types.Where(t => t is not null)!;
 		}
 	}
 
@@ -106,7 +107,7 @@ public static class MessageHierarchy {
 		if (name == null)
 			throw new ArgumentNullException(nameof(name));
 
-		if (TypeTree.TryGetTypeByName(name, out List<Type> result)) {
+		if (TypeTree.TryGetTypeByName(name, out var result)) {
 			return result;
 		}
 		ExpandTree();
@@ -119,7 +120,7 @@ public static class MessageHierarchy {
 	public static Type GetTypeByFullName(string fullName) {
 		if (fullName == null)
 			throw new ArgumentNullException(nameof(fullName));
-		if (TypeTree.TryGetTypeByFullName(fullName, out Type result)) {
+		if (TypeTree.TryGetTypeByFullName(fullName, out var result)) {
 			return result;
 		}
 		ExpandTree();
@@ -132,14 +133,14 @@ public static class MessageHierarchy {
 	public static List<Type> AncestorsAndSelf(Type type) {
 		if (type == null)
 			throw new ArgumentNullException(nameof(type));
-		if (type != IMessageType && !IMessageType.IsAssignableFrom(type)) {
-			throw new MessagingException($"{type.FullName} does not implement {IMessageType.FullName}");
+		if (type != _iMessageType && !_iMessageType.IsAssignableFrom(type)) {
+			throw new MessagingException($"{type.FullName} does not implement {_iMessageType.FullName}");
 		}
 		if (TypeTree.TryGetAncestorsAndSelf(type, out var types))
 			return types;
 		ExpandTree();
 		if (!TypeTree.TryGetAncestorsAndSelf(type, out types)) {
-			throw new UnregisteredMessageTypeNameException(type.FullName);
+			throw new UnregisteredMessageTypeNameException(type.FullName ?? type.Name);
 		}
 		return types;
 	}
@@ -147,62 +148,62 @@ public static class MessageHierarchy {
 	public static List<Type> DescendantsAndSelf(Type type) {
 		if (type == null)
 			throw new ArgumentNullException(nameof(type));
-		if (type != IMessageType && !IMessageType.IsAssignableFrom(type) && type != typeof(object)) {
-			throw new MessagingException($"{type.FullName} does not implement {IMessageType.FullName}");
+		if (type != _iMessageType && !_iMessageType.IsAssignableFrom(type) && type != typeof(object)) {
+			throw new MessagingException($"{type.FullName} does not implement {_iMessageType.FullName}");
 		}
 		if (TypeTree.TryGetDescendantsAndSelf(type, out var types))
 			return types;
 		ExpandTree();
 		if (!TypeTree.TryGetDescendantsAndSelf(type, out types)) {
-			throw new UnregisteredMessageTypeNameException(type.FullName);
+			throw new UnregisteredMessageTypeNameException(type.FullName ?? type.Name);
 		}
 		return types;
 	}
 }
 
 internal static class TypeTree {
-	private static readonly object LoadLock = new object();
-	private static readonly Type RootType;
-	private static readonly TypeTreeNode Root;
-	private static readonly ConcurrentBag<Type> KnownTypes = new ConcurrentBag<Type>();
-	private static readonly ConcurrentDictionary<Type, TypeTreeNode> NodesByType = new ConcurrentDictionary<Type, TypeTreeNode>();
-	private static readonly ConcurrentDictionary<string, ConcurrentBag<TypeTreeNode>> NodesByName = new ConcurrentDictionary<string, ConcurrentBag<TypeTreeNode>>();
-	private static readonly ConcurrentDictionary<string, TypeTreeNode> NodesByFullName = new ConcurrentDictionary<string, TypeTreeNode>();
+	private static readonly object _loadLock = new();
+	private static readonly Type _rootType;
+	private static readonly TypeTreeNode _root;
+	private static readonly ConcurrentBag<Type> _knownTypes = [];
+	private static readonly ConcurrentDictionary<Type, TypeTreeNode> _nodesByType = new();
+	private static readonly ConcurrentDictionary<string, ConcurrentBag<TypeTreeNode>> _nodesByName = new();
+	private static readonly ConcurrentDictionary<string, TypeTreeNode> _nodesByFullName = new();
 
 	static TypeTree() {
-		RootType = typeof(object);
-		Root = new TypeTreeNode(RootType);
-		KnownTypes.Add(RootType);
-		NodesByType.TryAdd(Root.Type, Root);
-		NodesByName.TryAdd(Root.Type.Name, new ConcurrentBag<TypeTreeNode> { Root });
+		_rootType = typeof(object);
+		_root = new TypeTreeNode(_rootType);
+		_knownTypes.Add(_rootType);
+		_nodesByType.TryAdd(_root.Type, _root);
+		_nodesByName.TryAdd(_root.Type.Name, [_root]);
 		// ReSharper disable once AssignNullToNotNullAttribute
-		NodesByFullName.TryAdd(Root.Type.FullName, Root);
+		_nodesByFullName.TryAdd(_root.Type.FullName!, _root);
 	}
 	internal static void AddToTypeTree(HashSet<Type> types) {
-		types.ExceptWith(KnownTypes);
+		types.ExceptWith(_knownTypes);
 		if (types.Count < 1) { return; }
-		lock (LoadLock) {
+		lock (_loadLock) {
 			foreach (var type in types) {
-				KnownTypes.Add(type);
+				_knownTypes.Add(type);
 			}
 
-			var newTypes = new HashSet<Type>(types.Where(t => RootType.IsAssignableFrom(t)));
+			var newTypes = new HashSet<Type>(types.Where(t => _rootType.IsAssignableFrom(t)));
 			var newNodes = new List<TypeTreeNode>(newTypes.Count);
 			foreach (var type in newTypes) {
 				var node = new TypeTreeNode(type);
-				NodesByType.TryAdd(type, node);
-				if (!NodesByName.TryGetValue(type.Name, out var list)) {
+				_nodesByType.TryAdd(type, node);
+				if (!_nodesByName.TryGetValue(type.Name, out var list)) {
 					list = new ConcurrentBag<TypeTreeNode>();
-					NodesByName.TryAdd(type.Name, list);
+					_nodesByName.TryAdd(type.Name, list);
 				}
 				list.Add(node);
 
 				if (!string.IsNullOrWhiteSpace(type.FullName)) {
-					NodesByFullName.TryAdd(type.FullName, node);
+					_nodesByFullName.TryAdd(type.FullName, node);
 				}
 				newNodes.Add(node);
 			}
-			UpdateByLevel(new List<TypeTreeNode> { Root }, newNodes);
+			UpdateByLevel([_root], newNodes);
 		}
 	}
 
@@ -223,24 +224,24 @@ internal static class TypeTree {
 			}
 			nextLevel.AddRange(node.Children);
 		}
-		if (!additions.Any())
+		if (additions.Count == 0)
 			return;
-		if (!nextLevel.Any()) {
+		if (nextLevel.Count == 0) {
 			var missing = string.Join(", ", additions.Select(n => n.Type.FullName));
 			throw new MessagingException($"Missing Type Ancestor in Hierarchy for {missing}");
 		}
 		UpdateByLevel(nextLevel, additions);
 	}
-	internal static bool TryGetTypeByFullName(string typeName, out Type type) {
+	internal static bool TryGetTypeByFullName(string typeName, [NotNullWhen(true)] out Type? type) {
 		type = null;
-		if (!NodesByFullName.TryGetValue(typeName, out var node))
+		if (!_nodesByFullName.TryGetValue(typeName, out var node))
 			return false;
 		type = node.Type;
 		return true;
 	}
-	internal static bool TryGetTypeByName(string typeName, out List<Type> types) {
+	internal static bool TryGetTypeByName(string typeName, [NotNullWhen(true)] out List<Type>? types) {
 		types = null;
-		if (!NodesByName.TryGetValue(typeName, out var nodeList))
+		if (!_nodesByName.TryGetValue(typeName, out var nodeList))
 			return false;
 		types = nodeList.Select(n => n.Type).ToList();
 		return true;
@@ -248,7 +249,7 @@ internal static class TypeTree {
 	}
 	internal static bool TryGetAncestorsAndSelf(Type type, out List<Type> types) {
 		types = new List<Type>();
-		if (!NodesByType.TryGetValue(type, out var startNode)) {
+		if (!_nodesByType.TryGetValue(type, out var startNode)) {
 			return false;
 		}
 
@@ -260,10 +261,10 @@ internal static class TypeTree {
 	}
 
 	internal static bool TryGetDescendantsAndSelf(Type type, out List<Type> types) {
-		// non recursive depth first search
+		// non-recursive depth first search
 		// Initialize a stack of typeNodes to visit with the type passed in.
-		types = new List<Type>();
-		if (!NodesByType.TryGetValue(type, out var startNode)) {
+		types = [];
+		if (!_nodesByType.TryGetValue(type, out var startNode)) {
 			return false;
 		}
 		Stack<TypeTreeNode> nodesToVisit = new Stack<TypeTreeNode>();
@@ -281,8 +282,8 @@ internal static class TypeTree {
 
 internal class TypeTreeNode {
 	public Type Type { get; }
-	public TypeTreeNode Parent { get; private set; }
-	private readonly List<TypeTreeNode> _children = new List<TypeTreeNode>();
+	public TypeTreeNode? Parent { get; private set; }
+	private readonly List<TypeTreeNode> _children = [];
 	public List<TypeTreeNode> Children {
 		get {
 			lock (_children) {

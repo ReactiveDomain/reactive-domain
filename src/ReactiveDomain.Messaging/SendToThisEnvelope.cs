@@ -11,8 +11,7 @@ public class SendToThisEnvelope : IEnvelope {
 	}
 
 	public void ReplyWith<T>(T message) where T : IMessage {
-		var x = _receiver as IHandle<T>;
-		if (x != null)
+		if (_receiver is IHandle<T> x)
 			x.Handle(message);
 	}
 }

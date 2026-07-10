@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 
@@ -9,13 +7,19 @@ namespace ReactiveDomain.Testing;
 /// <summary>
 /// An empty listener that implements <see cref="IListener"/>.
 /// </summary>
-public class NullListener : IListener, ISubscriber {
+public sealed class NullListener : IListener, ISubscriber {
 #pragma warning disable CS1066 // The default value specified will have no effect because it applies to a member that is used in contexts that do not allow optional arguments
 
-	private string _stream;
+	private string _stream = string.Empty;
 	private long _position;
+
 	/// <summary>
-	/// Gets a <see cref="NullListener"/>
+	/// Gets the name of the listener.
+	/// </summary>
+	public string Name { get; }
+
+	/// <summary>
+	/// Gets a <see cref="NullListener"/>.
 	/// </summary>
 	public ISubscriber EventStream => this;
 
@@ -34,13 +38,13 @@ public class NullListener : IListener, ISubscriber {
 	/// </summary>
 	/// <param name="name">This parameter is ignored.</param>
 	public NullListener(string name = "") {
+		Name = name;
 	}
 
 	/// <summary>
 	/// Cleans up resources.
 	/// </summary>
-	public void Dispose() {
-	}
+	public void Dispose() { }
 
 	/// <summary>
 	/// Starts the listener at the requested checkpoint. Since the listener is not connected to anything,
@@ -49,6 +53,7 @@ public class NullListener : IListener, ISubscriber {
 	/// <param name="stream">The name of the stream.</param>
 	/// <param name="checkpoint">The position at which the listener should start.</param>
 	/// <param name="blockUntilLive">This parameter is ignored.</param>
+	/// <param name="validateStream">Ensure the stream exists on start.</param>
 	/// <param name="cancelWaitToken">This parameter is ignored.</param>
 	public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) {
 		_stream = stream;
@@ -81,6 +86,7 @@ public class NullListener : IListener, ISubscriber {
 	/// <param name="id">The ID of the aggregate whose stream to listen to.</param>
 	/// <param name="checkpoint">This parameter is ignored.</param>
 	/// <param name="blockUntilLive">This parameter is ignored.</param>
+	/// <param name="validateStream">Ensure the stream exists on start.</param>
 	/// <param name="cancelWaitToken">This parameter is ignored.</param>
 	void IListener.Start<TAggregate>(Guid id, long? checkpoint, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) {
 		_stream = new PrefixedCamelCaseStreamNameBuilder().GenerateForAggregate(typeof(TAggregate), id);
@@ -92,6 +98,7 @@ public class NullListener : IListener, ISubscriber {
 	/// <typeparam name="TAggregate">The type of aggregate. Used for building the listener's stream name.</typeparam>
 	/// <param name="checkpoint">This parameter is ignored.</param>
 	/// <param name="blockUntilLive">This parameter is ignored.</param>
+	/// <param name="validateStream">Ensure the stream exists on start.</param>
 	/// <param name="cancelWaitToken">This parameter is ignored.</param>
 	void IListener.Start<TAggregate>(long? checkpoint, bool blockUntilLive = false, bool validateStream = false, CancellationToken cancelWaitToken = default) {
 		_stream = nameof(TAggregate);

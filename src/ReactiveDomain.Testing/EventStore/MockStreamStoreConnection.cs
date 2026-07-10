@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reactive;
+﻿using System.Reactive;
 using EventStore.ClientAPI.Exceptions;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -26,7 +23,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public MockStreamStoreConnection(string name) {
 		_subscriptions = [];
 
-		_store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, new List<RecordedEvent>() } };
+		_store = new Dictionary<string, List<RecordedEvent>> { { AllStreamName, [] } };
 		_inboundEventBus = new SingleThreadedBus();
 
 		_inboundEventHandler = new AdHocHandler<IMessage>(_inboundEventBus.Publish);
@@ -45,7 +42,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public void Close() {
 		lock (_readerWriterLock) {
 			_connected = false;
-			_subscriptions.ForEach(s => s?.Dispose());
+			_subscriptions.ForEach(s => s.Dispose());
 		}
 	}
 
@@ -55,7 +52,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public WriteResult AppendToStream(
 		string stream,
 		long expectedVersion,
-		UserCredentials credentials = null,
+		UserCredentials? credentials = null,
 		params EventData[] events) {
 
 		if (!_connected)
@@ -65,7 +62,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		if (string.IsNullOrWhiteSpace(stream))
 			throw new ArgumentNullException(nameof(stream), $"{nameof(stream)} cannot be null or whitespace");
 		lock (_readerWriterLock) {
-			List<RecordedEvent> eventStream;
+			List<RecordedEvent>? eventStream;
 			if (expectedVersion == ExpectedVersion.Any) {
 				eventStream = GetOrCreateStream(stream);
 			} else {
@@ -80,12 +77,12 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 					throw new WrongExpectedVersionException($"Stream {stream} does not exist, expected stream");
 
 				if (!streamExists) {
-					eventStream = new List<RecordedEvent>();
+					eventStream = [];
 					lock (_store) {
 						_store.Add(stream, eventStream);
 					}
 				}
-				var startingPosition = eventStream.Count - 1;
+				var startingPosition = eventStream!.Count - 1;
 				if (expectedVersion != ExpectedVersion.NoStream &&
 					expectedVersion != startingPosition)
 					throw new WrongExpectedVersionException(
@@ -150,10 +147,10 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		return GetOrCreateStream(streamName);
 	}
 	private List<RecordedEvent> GetOrCreateStream(string streamName) {
-		List<RecordedEvent> stream;
+		List<RecordedEvent>? stream;
 		lock (_store) {
 			if (!_store.TryGetValue(streamName, out stream)) {
-				stream = new List<RecordedEvent>();
+				stream = [];
 				_store.Add(streamName, stream);
 			}
 		}
@@ -163,7 +160,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		string streamName,
 		long start,
 		long count,
-		UserCredentials credentials = null) {
+		UserCredentials? credentials = null) {
 		lock (_readerWriterLock) {
 			if (!_connected)
 				throw new InvalidOperationException("Not Connected");
@@ -184,7 +181,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		string streamName,
 		long start,
 		long count,
-		UserCredentials credentials = null) {
+		UserCredentials? credentials = null) {
 		lock (_readerWriterLock) {
 			if (!_connected)
 				throw new InvalidOperationException("Not Connected");
@@ -259,13 +256,13 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		IHandle<EventCommitted>,
 		IDisposable {
 		private long _position;
-		private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
+		private readonly Action<SubscriptionDropReason, Exception?>? _subscriptionDropped;
 		private readonly Action<RecordedEvent> _eventAppeared;
-		public IDisposable BusSubscription;
+		public IDisposable? BusSubscription;
 
 		public AllStreamSubscription(
 			long startPosition,
-			Action<SubscriptionDropReason, Exception> subscriptionDropped,
+			Action<SubscriptionDropReason, Exception?>? subscriptionDropped,
 			Action<RecordedEvent> eventAppeared) {
 			_position = startPosition;
 			_subscriptionDropped = subscriptionDropped;
@@ -291,14 +288,14 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		IDisposable {
 		private readonly string _streamName;
 		private long _position;
-		private readonly Action<SubscriptionDropReason, Exception> _subscriptionDropped;
+		private readonly Action<SubscriptionDropReason, Exception?>? _subscriptionDropped;
 		private readonly Action<RecordedEvent> _eventAppeared;
-		public IDisposable BusSubscription;
+		public IDisposable? BusSubscription;
 
 		public Subscription(
 			string streamName,
 			long startPosition,
-			Action<SubscriptionDropReason, Exception> subscriptionDropped,
+			Action<SubscriptionDropReason, Exception?>? subscriptionDropped,
 			Action<RecordedEvent> eventAppeared) {
 			_streamName = streamName;
 			_position = startPosition;
@@ -327,8 +324,8 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public IDisposable SubscribeToStream(
 		string stream,
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null) {
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null) {
 		if (!_connected)
 			throw new InvalidOperationException("Not Connected");
 		if (_disposed)
@@ -352,11 +349,11 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public IDisposable SubscribeToStreamFrom(
 		string stream,
 		long? lastCheckpoint,
-		CatchUpSubscriptionSettings settings,
+		CatchUpSubscriptionSettings? settings,
 		Action<RecordedEvent> eventAppeared,
-		Action<Unit> liveProcessingStarted = null,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null) {
+		Action<Unit>? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null) {
 		if (!_connected)
 			throw new InvalidOperationException("Not Connected");
 		if (_disposed)
@@ -393,9 +390,14 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 
 
 
-	public IDisposable SubscribeToAllFrom(Position from, Action<RecordedEvent> eventAppeared, CatchUpSubscriptionSettings settings = null,
-		Action liveProcessingStarted = null, Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null, bool resolveLinkTos = true) {
+	public IDisposable SubscribeToAllFrom(
+		Position from,
+		Action<RecordedEvent> eventAppeared,
+		CatchUpSubscriptionSettings? settings = null,
+		Action? liveProcessingStarted = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
+		bool resolveLinkTos = true) {
 		if (!_connected)
 			throw new InvalidOperationException("Not Connected");
 		if (_disposed)
@@ -430,8 +432,8 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 
 	public IDisposable SubscribeToAll(
 		Action<RecordedEvent> eventAppeared,
-		Action<SubscriptionDropReason, Exception> subscriptionDropped = null,
-		UserCredentials credentials = null,
+		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
+		UserCredentials? credentials = null,
 		bool resolveLinkTos = true) {
 		return SubscribeToAllFrom(
 			Position.Start,
@@ -442,7 +444,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			credentials);
 	}
 
-	public void DeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+	public void DeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null) {
 		lock (_readerWriterLock) {
 			if (!_connected)
 				throw new InvalidOperationException("Not Connected");
@@ -463,7 +465,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		}
 	}
 
-	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials credentials = null) {
+	public void HardDeleteStream(string stream, long expectedVersion, UserCredentials? credentials = null) {
 		lock (_readerWriterLock) {
 			if (!_connected)
 				throw new InvalidOperationException("Not Connected");
@@ -581,40 +583,21 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		lock (_readerWriterLock) {
 			_disposed = true;
 			Close();
-			_subscriptions?.Clear();
+			_subscriptions.Clear();
 		}
 	}
 
-	public class EventWritten : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly string StreamName;
-		public readonly RecordedEvent Event;
-		public readonly bool ProjectedEvent;
-		public readonly long RecordedPosition;
-
-		public EventWritten(
-			string streamName,
-			RecordedEvent @event,
-			bool projectedEvent,
-			long recordedPosition) {
-			MsgId = Guid.NewGuid();
-			StreamName = streamName;
-			Event = @event;
-			ProjectedEvent = projectedEvent;
-			RecordedPosition = recordedPosition;
-		}
+	public record EventWritten(
+		string StreamName,
+		RecordedEvent Event,
+		bool ProjectedEvent,
+		long RecordedPosition)
+		: IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
-	public class EventCommitted : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly RecordedEvent Event;
-		public readonly long RecordedPosition;
-
-		public EventCommitted(
-			RecordedEvent @event,
-			long recordedPosition) {
-			MsgId = Guid.NewGuid();
-			RecordedPosition = recordedPosition;
-			Event = @event;
-		}
+	public record EventCommitted(
+		RecordedEvent Event,
+		long RecordedPosition) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
 	}
 }

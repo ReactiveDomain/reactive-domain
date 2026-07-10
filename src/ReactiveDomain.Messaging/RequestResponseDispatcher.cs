@@ -1,7 +1,5 @@
 // ReSharper disable MemberCanBePrivate.Global
 
-using System;
-using System.Collections.Generic;
 using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Messaging;
@@ -11,7 +9,7 @@ public sealed class RequestResponseDispatcher<TRequest, TResponse> : IHandle<TRe
 	where TResponse : IMessage {
 	//NOTE: this class is not intended to be used from multiple threads except from the QueuedHandlerThreadPool
 	//however it supports count requests from other threads for statistics purposes
-	private readonly Dictionary<Guid, Action<TResponse>> _map = new Dictionary<Guid, Action<TResponse>>();
+	private readonly Dictionary<Guid, Action<TResponse>> _map = new();
 	private readonly IPublisher _publisher;
 	private readonly Func<TRequest, Guid> _getRequestCorrelationId;
 	private readonly Func<TResponse, Guid> _getResponseCorrelationId;
@@ -47,10 +45,8 @@ public sealed class RequestResponseDispatcher<TRequest, TResponse> : IHandle<TRe
 
 	public bool Handle(TResponse message) {
 		var correlationId = _getResponseCorrelationId(message);
-		Action<TResponse> action;
 		lock (_map)
-			if (_map.TryGetValue(correlationId, out action)) {
-				_map.Remove(correlationId);
+			if (_map.Remove(correlationId, out var action)) {
 				action(message);
 				return true;
 			}

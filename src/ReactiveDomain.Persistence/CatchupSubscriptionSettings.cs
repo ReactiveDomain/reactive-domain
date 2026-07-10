@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Util;
+﻿using ReactiveDomain.Util;
 
 namespace ReactiveDomain;
 
@@ -8,7 +7,7 @@ namespace ReactiveDomain;
 /// </summary>
 public class CatchUpSubscriptionSettings {
 	/// <summary>Returns default settings.</summary>
-	public static readonly CatchUpSubscriptionSettings Default = new CatchUpSubscriptionSettings(10000, 500, false, string.Empty);
+	public static readonly CatchUpSubscriptionSettings Default = new(10000, 500, false, string.Empty);
 	/// <summary>
 	/// The maximum amount of events to cache when processing from a live subscription. Going above this value will drop the subscription.
 	/// </summary>

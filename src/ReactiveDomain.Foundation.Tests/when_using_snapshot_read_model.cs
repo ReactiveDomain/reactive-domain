@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
@@ -9,12 +7,10 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectionFixture> {
-
+public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectionFixture> {
 	private readonly IConfiguredConnection _configuredConnection;
 	private readonly IStreamStoreConnection _conn;
-	private readonly IEventSerializer _serializer =
-		new JsonMessageSerializer();
+	private readonly IEventSerializer _serializer = new JsonMessageSerializer();
 	private readonly IStreamNameBuilder _namer =
 		new PrefixedCamelCaseStreamNameBuilder(nameof(when_using_snapshot_read_model));
 
@@ -49,6 +45,7 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 		var snapshot = rm.GetState();
 
 		Assert.Equal(nameof(TestSnapShotReadModel), snapshot.ModelName);
+		Assert.NotNull(snapshot.Checkpoints);
 		Assert.Single(snapshot.Checkpoints);
 		Assert.Equal(_stream, snapshot.Checkpoints[0].Item1);
 		Assert.Equal(9, snapshot.Checkpoints[0].Item2);
@@ -61,7 +58,7 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 	public void can_apply_snapshot_to_read_model() {
 		var snapshot = new ReadModelState(
 			nameof(TestSnapShotReadModel),
-			new List<Tuple<string, long>> { new Tuple<string, long>(_stream, 9) },
+			[new Tuple<string, long>(_stream, 9)],
 			new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
@@ -145,7 +142,7 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 		public TestSnapShotReadModel(
 			Guid aggId,
 			IConfiguredConnection configuredConnection,
-			ReadModelState snapshot,
+			ReadModelState? snapshot,
 			bool forceDoubleRestoreError = false) :
 			base(nameof(TestSnapShotReadModel), configuredConnection) {
 			// ReSharper disable once RedundantTypeArgumentsOfMethod
@@ -156,7 +153,7 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 			} else {
 				Restore(snapshot);
 			}
-			if (forceDoubleRestoreError) {
+			if (snapshot is not null && forceDoubleRestoreError) {
 				Restore(snapshot);
 			}
 		}
@@ -166,14 +163,14 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 			Sum += @event.Value;
 			Count++;
 		}
-		protected override void ApplyState(ReadModelState snapshot) {
+		protected override void ApplyState(ReadModelState? snapshot) {
 			if (snapshot?.State == null) {
 				throw new ArgumentNullException(nameof(snapshot), $"Null State provided to {nameof(TestSnapShotReadModel)}");
 			}
-			if (!(snapshot.State is MyState)) {
+			if (snapshot.State is not MyState state) {
 				throw new ArgumentException($"Unknown state object: Expected {nameof(MyState)}, got {snapshot.State.GetType().Name}");
 			}
-			var state = (MyState)snapshot.State;
+
 			Count = state.Count;
 			Sum = state.Sum;
 		}
@@ -189,19 +186,10 @@ public class when_using_snapshot_read_model : IClassFixture<StreamStoreConnectio
 			public long Count { get; set; }
 		}
 	}
-	public class SnapReadModelTestAggregate : EventDrivenStateMachine { }
-	public class SnapReadModelTestEvent : IMessage {
-		public Guid MsgId { get; private set; }
-		public readonly int Number;
-		public readonly int Value;
-
-		public SnapReadModelTestEvent(
-			int number,
-			int value
-		) {
-			MsgId = Guid.NewGuid();
-			Number = number;
-			Value = value;
-		}
+	public class SnapReadModelTestAggregate : EventDrivenStateMachine;
+	public record SnapReadModelTestEvent(int Number, int Value) : IMessage {
+		public Guid MsgId { get; private set; } = Guid.NewGuid();
+		public readonly int Number = Number;
+		public readonly int Value = Value;
 	}
 }

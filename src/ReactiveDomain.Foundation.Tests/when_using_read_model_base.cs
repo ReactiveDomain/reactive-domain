@@ -1,5 +1,4 @@
-﻿using System;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -7,38 +6,36 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
-public class when_using_read_model_base :
+public sealed class when_using_read_model_base :
 	ReadModelBase,
 	IHandle<when_using_read_model_base.ReadModelTestEvent>,
 	IClassFixture<StreamStoreConnectionFixture> {
 
-	private static IStreamStoreConnection _conn;
-	private static readonly IEventSerializer Serializer =
-		new JsonMessageSerializer();
-	private static readonly IStreamNameBuilder Namer =
+	private readonly IStreamStoreConnection _conn;
+	private static readonly IEventSerializer _serializer = new JsonMessageSerializer();
+	private static readonly IStreamNameBuilder _namer =
 		new PrefixedCamelCaseStreamNameBuilder(nameof(when_using_read_model_base));
 
 	private readonly string _stream1;
 	private readonly string _stream2;
 
-
 	public when_using_read_model_base(StreamStoreConnectionFixture fixture)
-		: base(nameof(when_using_read_model_base), new ConfiguredConnection(fixture.Connection, Namer, Serializer)) {
+		: base(nameof(when_using_read_model_base), new ConfiguredConnection(fixture.Connection, _namer, _serializer)) {
 		_conn = fixture.Connection;
 		_conn.Connect();
 
 		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		EventStream.Subscribe<ReadModelTestEvent>(this);
 
-		_stream1 = Namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
-		_stream2 = Namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		_stream1 = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		_stream2 = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
 
 		AppendEvents(10, _conn, _stream1, 2);
 		AppendEvents(10, _conn, _stream2, 3);
 
 		_conn.TryConfirmStream(_stream1, 10);
 		_conn.TryConfirmStream(_stream2, 10);
-		_conn.TryConfirmStream(Namer.GenerateForCategory(typeof(TestAggregate)), 20);
+		_conn.TryConfirmStream(_namer.GenerateForCategory(typeof(TestAggregate)), 20);
 	}
 
 	private void AppendEvents(
@@ -48,13 +45,13 @@ public class when_using_read_model_base :
 		int value) {
 		for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++) {
 			var evt = new ReadModelTestEvent(evtNumber, value);
-			conn.AppendToStream(streamName, ExpectedVersion.Any, null, Serializer.Serialize(evt));
+			conn.AppendToStream(streamName, ExpectedVersion.Any, null, _serializer.Serialize(evt));
 		}
 	}
 	[Fact]
 	public void can_start_streams_by_aggregate() {
 		var aggId = Guid.NewGuid();
-		var s1 = Namer.GenerateForAggregate(typeof(TestAggregate), aggId);
+		var s1 = _namer.GenerateForAggregate(typeof(TestAggregate), aggId);
 		AppendEvents(1, _conn, s1, 7);
 		Start<TestAggregate>(aggId);
 		AssertEx.AtLeastModelVersion(this, 2, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
@@ -63,9 +60,9 @@ public class when_using_read_model_base :
 	[Fact]
 	public void can_start_streams_by_aggregate_category() {
 
-		var s1 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
+		var s1 = _namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
 		AppendEvents(1, _conn, s1, 7);
-		var s2 = Namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
+		var s2 = _namer.GenerateForAggregate(typeof(ReadModelTestCategoryAggregate), Guid.NewGuid());
 		AppendEvents(1, _conn, s2, 5);
 		Start<ReadModelTestCategoryAggregate>(null, true);
 

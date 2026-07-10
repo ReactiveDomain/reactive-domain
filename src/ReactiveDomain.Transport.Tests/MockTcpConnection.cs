@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
 namespace ReactiveDomain.Transport.Tests;
 
 public class MockTcpConnection : ITcpConnection {
-	private static EndPoint _remoteEndPoint;
+	private static EndPoint? _remoteEndPoint;
 	private static Guid _connectionId;
 
 	public static MockTcpConnection CreateConnectingTcpConnection(Guid connectionId,
@@ -25,13 +23,13 @@ public class MockTcpConnection : ITcpConnection {
 		throw new NotImplementedException();
 	}
 
-	public event Action<ITcpConnection, SocketError> ConnectionClosed;
+	public event Action<ITcpConnection, SocketError>? ConnectionClosed;
 
 	public Guid ConnectionId => _connectionId;
 
-	public EndPoint RemoteEndPoint => _remoteEndPoint;
+	public EndPoint? RemoteEndPoint => _remoteEndPoint;
 
-	public EndPoint LocalEndPoint => null;
+	public EndPoint? LocalEndPoint => null;
 
 	public int SendQueueSize {
 		get { throw new NotImplementedException(); }
@@ -47,28 +45,27 @@ public class MockTcpConnection : ITcpConnection {
 
 	public void EnqueueSend(IEnumerable<ArraySegment<byte>> data) {
 		SentData = data;
-		if (_callback != null) {
+		if (_callback != null && ResponseData != null) {
 			_callback(this, ResponseData);
 			_callback = null;
 		}
 
 	}
 
-	public IEnumerable<ArraySegment<byte>> SentData { get; set; }
-	public IEnumerable<ArraySegment<byte>> ResponseData { get; set; }
+	public IEnumerable<ArraySegment<byte>>? SentData { get; set; }
+	public IEnumerable<ArraySegment<byte>>? ResponseData { get; set; }
 
-	private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> _callback;
+	private Action<ITcpConnection, IEnumerable<ArraySegment<byte>>>? _callback;
 
 	public void ReceiveAsync(Action<ITcpConnection, IEnumerable<ArraySegment<byte>>> callback) {
 		_callback = callback;
 	}
 
-	public void Close(string reason) {
+	public void Close(string? reason) {
 		ConnectionClosed?.Invoke(this, SocketError.Success);
 	}
 
 	public override string ToString() {
-		return RemoteEndPoint.ToString();
+		return RemoteEndPoint?.ToString() ?? "remote end point";
 	}
-
 }
