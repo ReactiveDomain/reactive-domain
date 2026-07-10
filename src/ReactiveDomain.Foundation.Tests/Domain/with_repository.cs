@@ -5,9 +5,8 @@ using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests.Domain;
 
-[Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
 // ReSharper disable once InconsistentNaming
-public class with_repository {
+public class with_repository : IClassFixture<StreamStoreConnectionFixture> {
 	private readonly StreamStoreConnectionFixture _fixture;
 	private readonly IRepository _repo;
 	private readonly PrefixedCamelCaseStreamNameBuilder _streamNameBuilder = new();
