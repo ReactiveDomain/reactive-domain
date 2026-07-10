@@ -3,8 +3,7 @@ using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests;
 
-[Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public sealed class PrefixedCamelCaseStreamNameBuilderTests {
+public sealed class PrefixedCamelCaseStreamNameBuilderTests : IClassFixture<StreamStoreConnectionFixture> {
 	[Theory]
 	[InlineData("")]
 	[InlineData("  ")]

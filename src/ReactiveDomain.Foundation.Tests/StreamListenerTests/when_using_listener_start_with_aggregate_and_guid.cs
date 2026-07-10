@@ -7,8 +7,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
-[Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public sealed class when_using_listener_start_with_aggregate_and_guid {
+public sealed class when_using_listener_start_with_aggregate_and_guid : IClassFixture<StreamStoreConnectionFixture> {
 	private readonly IStreamNameBuilder _streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder();
 	private readonly IEventSerializer _eventSerializer = new JsonMessageSerializer();
 

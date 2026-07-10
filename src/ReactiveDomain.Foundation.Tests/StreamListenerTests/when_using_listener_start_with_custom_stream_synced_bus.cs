@@ -8,8 +8,7 @@ using Xunit;
 namespace ReactiveDomain.Foundation.Tests.StreamListenerTests;
 
 // ReSharper disable once InconsistentNaming
-[Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public sealed class when_using_listener_start_with_custom_stream_synced_bus : IDisposable {
+public sealed class when_using_listener_start_with_custom_stream_synced_bus : IClassFixture<StreamStoreConnectionFixture>, IDisposable {
 	private readonly JsonMessageSerializer _eventSerializer = new();
 	private readonly IStreamStoreConnection _conn;
 	private readonly StreamListener _listener;
