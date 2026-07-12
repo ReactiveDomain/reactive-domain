@@ -91,16 +91,8 @@ public sealed class CapturingSubscribableBus : IDispatcher {
 			// using IHandle<T> and will not handle synchronously. In those cases we publish on the internal bus, and
 			// then wait for a CommandResponse to be published onto that bus.
 			if (_bus.HasSubscriberFor(command.GetType())) {
-				CommandResponse? response = null;
-				using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => response = r));
-				_bus.Publish(command);
-				var startTime = Environment.TickCount; //returns MS since machine start
-				var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
-				while (response is null) {
-					var now = Environment.TickCount;
-					if (endTime - now <= 0)
-						throw new CommandTimedOutException(command);
-				}
+				var response = AwaitResponse(command, responseTimeout.Value)
+							   ?? throw new CommandTimedOutException(command);
 				if (response is Fail f)
 					throw new CommandException("Command failed", f.Exception, command);
 			} else
@@ -112,7 +104,27 @@ public sealed class CapturingSubscribableBus : IDispatcher {
 				throw new CommandException("Command failed", ex.InnerException, command);
 			}
 		}
-		command.Succeed();
+	}
+
+	/// <summary>
+	/// Publishes the command and waits for THIS command's response, or null on timeout.
+	/// The watcher must filter by <see cref="CommandResponse.CommandId"/>: with queued
+	/// subscribers a handler can still be running (and can send nested commands) after its
+	/// caller's wait begins, so an unfiltered watcher is completed by whichever response
+	/// happens to be published first — including a straggler from a previous command —
+	/// manufacturing phantom results for commands that were never even dequeued.
+	/// </summary>
+	private CommandResponse? AwaitResponse(ICommand command, TimeSpan responseTimeout) {
+		CommandResponse? response = null;
+		using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => {
+			if (r.CommandId == command.MsgId)
+				Volatile.Write(ref response, r);
+		}));
+		_bus.Publish(command);
+		// SpinUntil yields/sleeps between probes (the previous loop hot-spun a full core, which
+		// on a 2-core CI runner starved the very handler thread it was waiting on).
+		SpinWait.SpinUntil(() => Volatile.Read(ref response) is not null, responseTimeout);
+		return Volatile.Read(ref response);
 	}
 
 	public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null,
@@ -125,24 +137,17 @@ public sealed class CapturingSubscribableBus : IDispatcher {
 			// using IHandle<T> and will not handle synchronously. In those cases we publish on the internal bus, and
 			// then wait for a CommandResponse to be published onto that bus.
 			if (_bus.HasSubscriberFor(command.GetType())) {
-				CommandResponse? resp = null;
-				using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => resp = r));
-				_bus.Publish(command);
-				var startTime = Environment.TickCount; //returns MS since machine start
-				var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
-				while (resp is null) {
-					var now = Environment.TickCount;
-					if (endTime - now <= 0) {
-						response = command.Fail(new CommandTimedOutException(command));
-						return false;
-					}
+				var resp = AwaitResponse(command, responseTimeout.Value);
+				if (resp is null) {
+					response = command.Fail(new CommandTimedOutException(command));
+					return false;
 				}
 				if (resp is Fail f) {
 					response = command.Fail(f.Exception);
 					return false;
 				}
 
-				response = command.Succeed();
+				response = resp;
 				return true;
 			}
 
@@ -165,17 +170,8 @@ public sealed class CapturingSubscribableBus : IDispatcher {
 		_allMessages.Add(command);
 		responseTimeout ??= TimeSpan.FromSeconds(5); // Default timeout long enough for heavy load on slow test machines
 		if (!_handlerWrappers.TryGetValue(command.GetType(), out var handler)) {
-			CommandResponse? response = null;
-			using var d = _bus.Subscribe(new AdHocHandler<CommandResponse>(r => response = r));
-			_bus.Publish(command);
-			var startTime = Environment.TickCount; //returns MS since machine start
-			var endTime = startTime + (int)responseTimeout.Value.TotalMilliseconds;
-			while (response is null) {
-				var now = Environment.TickCount;
-				if (endTime - now <= 0)
-					return false;
-			}
-			return response is not Fail;
+			var response = AwaitResponse(command, responseTimeout.Value);
+			return response is not (null or Fail);
 		}
 		try {
 			handler.GetType().GetMethod("Handle")?.Invoke(handler, [command]);

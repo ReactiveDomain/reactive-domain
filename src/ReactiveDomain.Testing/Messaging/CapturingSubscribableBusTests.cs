@@ -248,6 +248,38 @@ public sealed class CapturingSubscribableBusTests : IDisposable {
 		Assert.Empty(_sut.AllMessages);
 	}
 
+	[Fact]
+	public void QueuedSendIgnoresResponsesForOtherCommands() {
+		// A straggler response from an earlier, still-draining command must not complete a
+		// later Send's wait: the watcher must match on CommandId. An unfiltered watcher
+		// reports a phantom result for the later command before its handler even runs.
+		using var subscriber = new StragglingCommandSubscriber(_sut);
+		subscriber.StragglerToPublish = new TestCommands.Command2();
+
+		var ex = Assert.Throws<CommandException>(() => _sut.Send(new TestCommands.Command2()));
+		Assert.IsType<InvalidOperationException>(ex.InnerException);
+	}
+
+	private class StragglingCommandSubscriber : QueuedSubscriber, IHandleCommand<TestCommands.Command2> {
+		private readonly IDispatcher _bus;
+		public ICommand? StragglerToPublish { get; set; }
+
+		public StragglingCommandSubscriber(IDispatcher bus) : base(bus) {
+			_bus = bus;
+			// ReSharper disable once RedundantTypeArgumentsOfMethod
+			Subscribe<TestCommands.Command2>(this);
+		}
+
+		public CommandResponse Handle(TestCommands.Command2 command) {
+			// Simulates a response from a previous command landing on the bus while the
+			// current command's sender is already waiting.
+			if (StragglerToPublish is not null)
+				_bus.Publish(StragglerToPublish.Succeed());
+			Thread.Sleep(20);
+			throw new InvalidOperationException("the real outcome");
+		}
+	}
+
 	private class DisposingCommandSubscriber : IHandleCommand<TestCommands.Command2>, IDisposable {
 		private readonly CompositeDisposable _disposables = [];
 		public DisposingCommandSubscriber(IDispatcher bus) {
