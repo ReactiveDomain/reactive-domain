@@ -8,6 +8,9 @@
     <Compile Remove="StreamStore\EventStoreMessageLogger.cs" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="ReactiveDomain.Testing" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Reactive" Version="6.1.0" />
   </ItemGroup>
