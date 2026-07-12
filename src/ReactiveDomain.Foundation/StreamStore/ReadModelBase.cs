@@ -41,8 +41,15 @@ public abstract class ReadModelBase :
 	/// Gets a task that completes when all streams started using a <c>StartAsync</c> overload are live.
 	/// </summary>
 	/// <remarks>The returned task represents the aggregate completion of all underlying read tasks. Awaiting
-	/// this property allows callers to determine when all read operations are complete.</remarks>
-	public Task IsLive => Task.WhenAll(_readTasks);
+	/// this property allows callers to determine when all read operations are complete. The task is a snapshot:
+	/// it does not cover streams started after the property is read.</remarks>
+	public Task IsLive {
+		get {
+			lock (_readTasks) {
+				return Task.WhenAll(_readTasks.ToArray());
+			}
+		}
+	}
 
 	/// <summary>
 	/// Creates a read model using the provided stream store connection. Reads existing events using a
@@ -68,6 +75,12 @@ public abstract class ReadModelBase :
 		lock (ReaderLock) {
 			_bus.Handle(message);
 			Version++;
+		}
+	}
+
+	private void AddReadTask(Task readTask) {
+		lock (_readTasks) {
+			_readTasks.Add(readTask);
 		}
 	}
 
@@ -126,7 +139,7 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync(string stream, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) {
-		_readTasks.Add(Task.Run(() => {
+		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
 			reader.Read(stream, () => Idle, checkpoint);
 			checkpoint = reader.Position ?? checkpoint;
@@ -169,7 +182,7 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync<TAggregate>(Guid id, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
-		_readTasks.Add(Task.Run(() => {
+		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(id, () => Idle, checkpoint);
 			checkpoint = reader.Position;
@@ -210,7 +223,7 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync<TAggregate>(long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
-		_readTasks.Add(Task.Run(() => {
+		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(() => Idle, checkpoint);
 			checkpoint = reader.Position;

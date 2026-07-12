@@ -68,13 +68,14 @@ public static class TestVisibilityExtensions {
 	/// <summary>
 	/// Allows test to access the current value of a ReadModelProperty.
 	/// This leverages the fact that the current value is stored to be published to new subscribers.
+	/// The value is read under the same lock that orders deliveries, so it cannot be torn.
 	/// </summary>
 	/// <typeparam name="T">the ReadModelProperty type</typeparam>
 	/// <param name="readModelProperty">the ReadModelProperty</param>
 	/// <returns></returns>
 	public static T CurrentValue<T>(this IObservable<T> readModelProperty) {
-		return readModelProperty is ReadModelProperty<T>
-			? GetInstanceField<T>(readModelProperty, "_lastValue")
+		return readModelProperty is ReadModelProperty<T> property
+			? property.CurrentValue
 			: throw new InvalidOperationException("Observable is not a ReadModelProperty.");
 	}
 }
