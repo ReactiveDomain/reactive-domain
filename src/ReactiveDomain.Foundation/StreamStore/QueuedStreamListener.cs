@@ -75,7 +75,7 @@ public class QueuedStreamListener : StreamListener, IHandle<IMessage> {
 		if (!_disposed) {
 			if (disposing) {
 				_isLive.Set();
-				_running.Reset();
+				_running.Set(); // release any in-flight Handle so Stop can join the queue thread
 				SyncQueue.Stop();
 				_running.Dispose();
 			}

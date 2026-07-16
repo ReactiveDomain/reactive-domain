@@ -54,18 +54,33 @@ public abstract class QueuedSubscriber : IDisposable {
 	}
 
 	public void Dispose() {
+		StopMessagePump();
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
 
 	private bool _disposed;
+	private bool _pumpStopped;
+
+	/// <summary>
+	/// Stops message intake and processing: unsubscribes so nothing new is enqueued, then
+	/// joins the queue thread. Runs ahead of the virtual dispose chain (which tears down
+	/// derived state) so that no handler can be dispatched into state a derived subscriber
+	/// has already disposed. Idempotent.
+	/// </summary>
+	private void StopMessagePump() {
+		if (_pumpStopped)
+			return;
+		_subscriptions.ForEach(s => s.Dispose());
+		_messageQueue.Stop();
+		_pumpStopped = true;
+	}
 
 	protected virtual void Dispose(bool disposing) {
 		if (_disposed)
 			return;
 		if (disposing) {
-			_messageQueue.RequestStop();
-			_subscriptions.ForEach(s => s.Dispose());
+			StopMessagePump();
 			_internalBus.Dispose();
 			_disposed = true;
 		}
