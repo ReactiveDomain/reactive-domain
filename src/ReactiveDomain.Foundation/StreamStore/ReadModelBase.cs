@@ -19,6 +19,10 @@ public abstract class ReadModelBase :
 	public int MessageCount => _queue.MessageCount;
 	public bool Idle => _queue.Idle;
 
+	// Readers complete when the queue has caught up — or when the model is disposed, so a
+	// dispose mid-read cannot leave the reader spinning against a stopped queue.
+	private bool ReadCompleted => Idle || _disposed;
+
 	/// <summary>
 	/// ReaderLock locks the event handler and can be used when reading the model 
 	/// to ensure model state is unchanged during read.
@@ -123,7 +127,9 @@ public abstract class ReadModelBase :
 	public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false,
 		bool validateStream = false, CancellationToken cancelWaitToken = default) {
 		using var reader = _getReader();
-		reader.Read(stream, () => Idle, checkpoint);
+		reader.Read(stream, () => ReadCompleted, checkpoint);
+		if (_disposed)
+			return;
 		checkpoint = reader.Position ?? checkpoint;
 
 		AddNewListener().Start(stream, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
@@ -141,7 +147,9 @@ public abstract class ReadModelBase :
 		CancellationToken cancelWaitToken = default) {
 		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
-			reader.Read(stream, () => Idle, checkpoint);
+			reader.Read(stream, () => ReadCompleted, checkpoint);
+			if (_disposed)
+				return;
 			checkpoint = reader.Position ?? checkpoint;
 
 			AddNewListener().Start(stream, checkpoint, false, validateStream, cancelWaitToken);
@@ -165,7 +173,9 @@ public abstract class ReadModelBase :
 		bool validateStream = false, CancellationToken cancelWaitToken = default)
 		where TAggregate : class, IEventSource {
 		using var reader = _getReader();
-		reader.Read<TAggregate>(id, () => Idle, checkpoint);
+		reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
+		if (_disposed)
+			return;
 		checkpoint = reader.Position;
 
 		AddNewListener().Start<TAggregate>(id, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
@@ -184,7 +194,9 @@ public abstract class ReadModelBase :
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
 		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
-			reader.Read<TAggregate>(id, () => Idle, checkpoint);
+			reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
+			if (_disposed)
+				return;
 			checkpoint = reader.Position;
 
 			AddNewListener().Start<TAggregate>(id, checkpoint, false, validateStream, cancelWaitToken);
@@ -206,7 +218,9 @@ public abstract class ReadModelBase :
 	public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
 		using var reader = _getReader();
-		reader.Read<TAggregate>(() => Idle, checkpoint);
+		reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
+		if (_disposed)
+			return;
 		checkpoint = reader.Position;
 
 		AddNewListener().Start<TAggregate>(checkpoint, blockUntilLive, validateStream, cancelWaitToken);
@@ -225,7 +239,9 @@ public abstract class ReadModelBase :
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
 		AddReadTask(Task.Run(() => {
 			using var reader = _getReader();
-			reader.Read<TAggregate>(() => Idle, checkpoint);
+			reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
+			if (_disposed)
+				return;
 			checkpoint = reader.Position;
 
 			AddNewListener().Start<TAggregate>(checkpoint, false, validateStream, cancelWaitToken);
@@ -236,21 +252,32 @@ public abstract class ReadModelBase :
 	/// Dispose of resources.
 	/// </summary>
 	public void Dispose() {
+		StopMessagePump();
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
 
 	private bool _disposed;
 
+	/// <summary>
+	/// Stops message intake and processing: disposes the listeners, then joins the queue
+	/// thread. Runs ahead of the virtual dispose chain (which tears down derived state)
+	/// so that no handler can be dispatched into state a derived class has already
+	/// disposed. Idempotent.
+	/// </summary>
+	private void StopMessagePump() {
+		lock (_listeners) {
+			_listeners.ForEach(l => l.Dispose());
+		}
+
+		_queue.Stop();
+	}
+
 	protected virtual void Dispose(bool disposing) {
 		if (_disposed)
 			return;
 		if (disposing) {
-			lock (_listeners) {
-				_listeners.ForEach(l => l.Dispose());
-			}
-
-			_queue.RequestStop();
+			StopMessagePump();
 			_bus.Dispose();
 		}
 

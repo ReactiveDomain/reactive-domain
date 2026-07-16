@@ -72,6 +72,10 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 
 	public void Stop() {
 		_stop = true;
+		// A handler on the queue thread may itself trigger Stop; self-joining would always
+		// time out, and the flag alone is enough — the loop exits after the current message.
+		if (Thread.CurrentThread == _thread)
+			return;
 		if (!_stopped.Wait(_threadStopWaitTimeout))
 			throw new TimeoutException($"Unable to stop thread '{Name}'.");
 	}
