@@ -80,7 +80,7 @@ class PackagRef
 #     Helper function to get a specific PackageRef from a .csproj file
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
-#         ConditionOperator - (the equality operator for a framework, == or !=)
+#         $ComparisonOperator - (the equality operator for a framework, == or !=)
 #         Framework - The framework this Packageref applies to: (net8.0, net10.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
@@ -95,9 +95,8 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     $currentVersion = ""
 
     # There may be duplicates of the same package when there are different versions
-    # for different frameworks (i.e. ReactiveUI). Therefore if our search
-    # returns more than one node, then we take the one that matches 
-    # the Framework in its Condition
+    # for different frameworks. Therefore if our search returns more than one node,
+    # then we take the one that matches the Framework in its Condition
 
     if ($targetPackage.Node.Count -gt 1)
     {
@@ -176,8 +175,8 @@ function UpdateDependencyVersions([string]$Nuspec, [string]$CsProj)
             ($pRef.version -ne ""))
         {
             $refnode.version = $pRef.Version
-        }      
-    }
+        }
+    }      
 	
 	$net10 = $xml | Select-XML -XPath "//package/metadata/dependencies/group[@targetFramework='net10.0']"
     $net10Nodes = $net10.Node.ChildNodes

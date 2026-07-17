@@ -4,21 +4,23 @@
     <id>ReactiveDomain.Testing</id>
     <version>0.15.1.0</version>
     <authors>Reactive Domain Group</authors>
-    <owners>Reactive Domain Group</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <description>Package includes ReactiveDomain assemblies needed for unit testing</description>
+    <description>Unit testing fixtures and extensions for use with ReactiveDomain.</description>
     <copyright>Copyright © 2026 Reactive Domain Group</copyright>
+    <readme>docs\README.md</readme>
+    <tags>CQRS ES event-sourcing messaging unit-tests xunit</tags>
+    <repository type="git" url="https://github.com/ReactiveDomain/reactive-domain" branch="master" />
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="ReactiveDomain" version="0.15.1.0" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.NET.Test.Sdk" version="18.7.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net10.0">
         <dependency id="ReactiveDomain" version="0.15.1.0" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.NET.Test.Sdk" version="18.7.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
@@ -27,7 +29,7 @@
       <group targetFramework="net8.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
-      <group targetFramework="net8.0">
+      <group targetFramework="net10.0">
         <reference file="ReactiveDomain.Testing.dll" />
       </group>
     </references>
@@ -40,5 +42,6 @@
     <file src="..\bld\Release\net10.0\ReactiveDomain.Testing.pdb" target="lib\net10.0" />
     <file src="..\bld\Release\net10.0\ReactiveDomain.Testing.dll" target="lib\net10.0" />
     <file src="..\bld\Release\net10.0\ReactiveDomain.Testing.dll" target="ref\net10.0" />
+    <file src="..\README.md" target="docs\" />
   </files>
 </package>

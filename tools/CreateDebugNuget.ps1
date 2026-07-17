@@ -35,12 +35,15 @@ $TempDir = Join-Path $env:temp $TempNum.ToString()
 $buildDir = Join-Path $ReactiveDomainRepo "bld"
 $propsDir = Join-Path $ReactiveDomainRepo "build"
 $sourceDir = Join-Path $ReactiveDomainRepo "src"
+$readme = Join-Path $ReactiveDomainRepo "README.md"
 $tempBuildDir = Join-Path $TempDir "bld"
 $tempPropsDir = Join-Path $TempDir "build"
 $tempSourceDir = Join-Path $TempDir "src"
+$tempReadme = Join-Path $TempDir "README.md"
 New-Item -ItemType "directory" -Path $tempSourceDir
 Copy-Item -Path $buildDir -Destination $tempBuildDir -Recurse
 Copy-Item -Path $propsDir -Destination $tempPropsDir -Recurse
+Copy-Item -Path $readme -Destination $tempReadme
 
 #source nuspec file paths
 $sourceRDNuspec = Join-Path $sourceDir "ReactiveDomain.Debug.nuspec"
@@ -112,7 +115,7 @@ class PackagRef
 #     Helper function to get a specific PackageRef from a .csproj file
 #     Parses and returns a PackagRef object (defined above) that contains:
 #         Version - (version of the package)
-#         ConditionOperator - (the equality operator for a framework, == or !=)
+#         $ComparisonOperator - (the equality operator for a framework, == or !=)
 #         Framework - The framework this Packageref applies to: (net8.0, net10.0)
 #
 function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framework)
@@ -127,9 +130,8 @@ function GetPackageRefFromProject([string]$Id, [string]$CsProj, [string]$Framewo
     $currentVersion = ""
 
     # There may be duplicates of the same package when there are different versions
-    # for different frameworks (i.e. ReactiveUI). Therefore if our search
-    # returns more than one node, then we take the one that matches 
-    # the Framework in its Condition
+    # for different frameworks. Therefore if our search returns more than one node,
+    # then we take the one that matches the Framework in its Condition
 
     if ($targetPackage.Node.Count -gt 1)
     {
