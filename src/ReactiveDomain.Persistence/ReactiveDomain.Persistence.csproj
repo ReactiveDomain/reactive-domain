@@ -1,21 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports" />
-  <PropertyGroup>
-    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <RootNamespace>ReactiveDomain</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="EventStoreCatchUpSubscription.cs" />
-    <Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
-    <Compile Remove="StreamSubscription.cs" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="EventStore.Client" Version="22.0.0" Condition="" />   
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
-  </ItemGroup>
+	<Import Project="../ci.build.imports" />
+	<PropertyGroup>
+		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+		<RootNamespace>ReactiveDomain</RootNamespace>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="EventStoreCatchUpSubscription.cs" />
+		<Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
+		<Compile Remove="StreamSubscription.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EventStore.Client" Version="22.0.0" Condition="" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+	</ItemGroup>
 </Project>

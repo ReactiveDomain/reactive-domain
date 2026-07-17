@@ -3,7 +3,8 @@
   <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <RootNamespace>ReactiveDomain</RootNamespace>   
+    <RootNamespace>ReactiveDomain</RootNamespace>
+		<IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ReactiveDomain.Persistence" />

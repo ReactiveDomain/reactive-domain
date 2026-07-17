@@ -1,23 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <Import Project="../ci.build.imports" />
-  <PropertyGroup>
-    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <IsPackable>true</IsPackable>
-    <RootNamespace>ReactiveDomain.Policy</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="DynamicData" Version="9.4.33" />
-    <PackageReference Include="IdentityModel" Version="4.6.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.DirectoryServices" Version="10.0.9" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.9" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
-    <ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
-  </ItemGroup>
+	<Import Project="../ci.build.imports" />
+	<PropertyGroup>
+		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+		<IsPackable>false</IsPackable>
+		<RootNamespace>ReactiveDomain.Policy</RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="DynamicData" Version="9.4.33" />
+		<PackageReference Include="IdentityModel" Version="4.6.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="System.DirectoryServices" Version="10.0.9" />
+		<PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.9" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
+	</ItemGroup>
 </Project>

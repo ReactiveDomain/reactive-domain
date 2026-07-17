@@ -1,18 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk"> 
-  <Import Project="../ci.build.imports" />
-  <PropertyGroup>
-    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.9" />
-    <PackageReference Include="System.Reactive" Version="6.1.0" />
-    <ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Reactive">
-      <HintPath>..\..\dependencies\system.reactive\6.0.1\lib\net6.0\System.Reactive.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../ci.build.imports" />
+	<PropertyGroup>
+		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.9" />
+		<PackageReference Include="System.Reactive" Version="6.1.0" />
+		<ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="System.Reactive">
+			<HintPath>..\..\dependencies\system.reactive\6.0.1\lib\net6.0\System.Reactive.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 </Project>
