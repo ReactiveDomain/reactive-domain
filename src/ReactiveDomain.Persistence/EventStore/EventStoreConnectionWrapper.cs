@@ -171,8 +171,9 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 		var sub = EsConnection.SubscribeToAllAsync(
 			resolveLinkTos,
 			async (_, evt) => {
-				if (evt.Event != null)
-					eventAppeared(evt.Event.ToRecordedEvent());
+				var delivered = evt.ToDeliveredEvent();
+				if (delivered != null)
+					eventAppeared(delivered);
 				await Task.FromResult(Unit.Default);
 			},
 			(_, reason, ex) => subscriptionDropped?.Invoke((SubscriptionDropReason)(int)reason, ex),
@@ -197,8 +198,9 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 			new ES.Position(from.CommitPosition, from.PreparePosition),
 			settings?.ToCatchUpSubscriptionSettings(),
 			async (_, evt) => {
-				if (evt.Event != null)
-					eventAppeared(evt.Event.ToRecordedEvent());
+				var delivered = evt.ToDeliveredEvent();
+				if (delivered != null)
+					eventAppeared(delivered);
 				await Task.FromResult(Unit.Default);
 			},
 			_ => { liveProcessingStarted?.Invoke(); },
@@ -267,6 +269,35 @@ public static class ConnectionHelpers {
 			events.Add(evt.ToRecordedEvent(resolvedEvents[i].OriginalEvent.EventNumber));
 		}
 		return events.ToArray();
+	}
+
+	/// <summary>
+	/// Maps a $all subscription delivery to a ReactiveDomain RecordedEvent, tagging link-resolved
+	/// deliveries as <see cref="ProjectedEvent"/>. A delivery whose resolved event carries a
+	/// non-null link is a projection copy (a $ce-/$et-/$streams link), not a distinct fact;
+	/// <see cref="ProjectedEvent.ProjectedStream"/> and
+	/// <see cref="ProjectedEvent.OriginalEventNumber"/> let consumers dedup it. This matches
+	/// MockStreamStoreConnection's tagging of its emulated projection copies. Returns null for
+	/// link events whose target was deleted or scavenged (see Docs/null-linkto-handling.md);
+	/// stream positions are immutable, so skipping them leaves checkpoints valid.
+	/// </summary>
+	public static RecordedEvent? ToDeliveredEvent(this ES.ResolvedEvent resolvedEvent) {
+		var evt = resolvedEvent.Event;
+		if (evt == null) { return null; }
+		var link = resolvedEvent.Link;
+		if (link == null) { return evt.ToRecordedEvent(); }
+		return new ProjectedEvent(
+			link.EventStreamId,   // the $ce-/$et-/$streams stream this copy lives in
+			evt.EventNumber,      // position in the source stream
+			evt.EventStreamId,
+			evt.EventId,
+			link.EventNumber,     // position in the projected stream
+			evt.EventType,
+			evt.Data,
+			evt.Metadata,
+			evt.IsJson,
+			evt.Created,
+			evt.CreatedEpoch);
 	}
 
 	public static RecordedEvent ToRecordedEvent(this ES.RecordedEvent recordedEvent, long? eventNumber = null) {
