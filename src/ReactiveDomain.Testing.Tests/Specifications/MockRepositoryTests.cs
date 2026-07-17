@@ -64,6 +64,38 @@ public sealed class MockRepositoryTests : IDisposable,
 	}
 
 	[Fact]
+	public void await_event_delivery_is_invisible_to_assertions() {
+		//the ctor marker and a bare fence never show up
+		_fixture.AwaitEventDelivery();
+		_fixture.RepositoryEvents.AssertEmpty();
+
+		//fence-then-assert round trip
+		var id = Guid.NewGuid();
+		_fixture.Repository.Save(new TestAggregate(id));
+		_fixture.AwaitEventDelivery();
+		_fixture
+			.RepositoryEvents
+			.AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Mismatch")
+			.AssertEmpty();
+	}
+
+	[Fact]
+	public void fenced_clear_queues_reopens_an_arrange_region() {
+		_fixture.Repository.Save(new TestAggregate(Guid.NewGuid()));
+		_fixture.ClearQueues();
+		_fixture.RepositoryEvents.AssertEmpty();
+
+		//the re-opened arrange region still fences and asserts cleanly
+		var id = Guid.NewGuid();
+		_fixture.Repository.Save(new TestAggregate(id));
+		_fixture.AwaitEventDelivery();
+		_fixture
+			.RepositoryEvents
+			.AssertNext<TestAggregateMessages.NewAggregate>(e => e.AggregateId == id, "Aggregate Id Mismatch")
+			.AssertEmpty();
+	}
+
+	[Fact]
 	public void create_mock_repository_without_a_prefix() {
 		var id = Guid.NewGuid();
 		var expectedStreamName = $"testAggregate-{id:n}";
