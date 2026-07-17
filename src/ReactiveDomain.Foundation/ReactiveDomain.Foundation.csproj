@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ReactiveDomain.Testing" />
+    <InternalsVisibleTo Include="ReactiveDomain.Testing.Tests" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

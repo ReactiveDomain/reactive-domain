@@ -3,7 +3,7 @@ using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Testing.Tests.Specifications;
 
 public sealed class MockRepositoryTests : IDisposable,
 	IHandleCommand<TestCommands.Command1> {

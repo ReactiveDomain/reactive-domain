@@ -1,8 +1,7 @@
-﻿using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Testing;
 using Xunit;
 
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Messaging.Tests;
 
 public class MessageHierarchyTests {
 	[Fact]

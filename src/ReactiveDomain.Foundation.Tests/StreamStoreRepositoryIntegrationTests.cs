@@ -1,14 +1,13 @@
-﻿using ReactiveDomain.Foundation;
+﻿using ReactiveDomain.Testing;
 using Xunit;
 
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Foundation.Tests;
 
 /// <summary>
 /// Integration tests for the GetEventStoreRepository. 
 /// </summary>
 [Collection(nameof(EmbeddedStreamStoreConnectionCollection))]
-public class EventStoreRepositoryIntegrationTests {
+public class StreamStoreRepositoryIntegrationTests {
 	private const string DomainPrefix = "UnitTest";
 
 	private static Guid SaveTestAggregateWithoutCustomHeaders(IRepository repository, int numberOfEvents) {
@@ -22,11 +21,12 @@ public class EventStoreRepositoryIntegrationTests {
 	private readonly IStreamStoreConnection _connection;
 	private readonly IStreamNameBuilder _streamNameBuilder;
 
-	public EventStoreRepositoryIntegrationTests(StreamStoreConnectionFixture fixture) {
+	public StreamStoreRepositoryIntegrationTests(StreamStoreConnectionFixture fixture) {
 		_connection = fixture.Connection;
 		_streamNameBuilder = new PrefixedCamelCaseStreamNameBuilder(DomainPrefix);
 		_repo = new StreamStoreRepository(_streamNameBuilder, _connection, new JsonMessageSerializer());
 	}
+
 	[Fact]
 	public void CanGetLatestVersionById() {
 		var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 3000 /* excludes TestAggregateCreated */);
@@ -56,7 +56,8 @@ public class EventStoreRepositoryIntegrationTests {
 	public void CanHandleLargeNumberOfEventsInOneTransaction() {
 		const int numberOfEvents = 50000;
 
-		var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, numberOfEvents /* excludes TestAggregateCreated */);
+		var aggregateId =
+			SaveTestAggregateWithoutCustomHeaders(_repo, numberOfEvents /* excludes TestAggregateCreated */);
 
 		var saved = _repo.GetById<TestWoftamAggregate>(aggregateId);
 		Assert.Equal(numberOfEvents, saved.AppliedEventCount);

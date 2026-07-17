@@ -1,13 +1,13 @@
-﻿using ReactiveDomain.Foundation;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing;
+using ReactiveDomain.Testing.EventStore;
 using Xunit;
 using Xunit.Abstractions;
-using StreamReader = ReactiveDomain.Foundation.StreamReader;
 
 // ReSharper disable UnusedParameter.Local
 
-namespace ReactiveDomain.Testing.EventStore;
+namespace ReactiveDomain.Foundation.Tests;
 
 public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IHandle<Event> {
 	private readonly List<IStreamStoreConnection> _stores = [];

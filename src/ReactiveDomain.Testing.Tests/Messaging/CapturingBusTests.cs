@@ -1,7 +1,8 @@
 ﻿using ReactiveDomain.Messaging;
+using ReactiveDomain.Testing.Messaging;
 using Xunit;
 
-namespace ReactiveDomain.Testing.Messaging;
+namespace ReactiveDomain.Testing.Tests.Messaging;
 
 public sealed class CapturingBusTests {
 	private readonly CapturingBus _sut = new();

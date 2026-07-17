@@ -3,8 +3,7 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Testing.Tests.StreamStore;
 
 // todo: separate stream connection tests and repo tests
 // ReSharper disable InconsistentNaming
