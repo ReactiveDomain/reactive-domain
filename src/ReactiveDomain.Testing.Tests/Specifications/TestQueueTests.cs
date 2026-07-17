@@ -1,9 +1,10 @@
 ﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using Xunit;
+
 // ReSharper disable AccessToDisposedClosure
 
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Testing.Tests.Specifications;
 
 public sealed class TestQueueTests :
 	IHandleCommand<TestCommands.Command1>,

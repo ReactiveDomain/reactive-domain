@@ -2,7 +2,7 @@
 using Xunit;
 using Xunit.Sdk;
 
-namespace ReactiveDomain.Testing;
+namespace ReactiveDomain.Testing.Tests.Specifications;
 
 public sealed class MessageListExtensionsTests : DispatcherSpecification {
 	[Fact]

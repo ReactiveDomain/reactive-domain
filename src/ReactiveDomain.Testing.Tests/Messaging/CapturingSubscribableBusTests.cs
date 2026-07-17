@@ -3,9 +3,10 @@ using System.Reactive.Disposables.Fluent;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Testing.Messaging;
 using Xunit;
 
-namespace ReactiveDomain.Testing.Messaging;
+namespace ReactiveDomain.Testing.Tests.Messaging;
 
 public sealed class CapturingSubscribableBusTests : IDisposable {
 	private readonly CapturingSubscribableBus _sut = new();

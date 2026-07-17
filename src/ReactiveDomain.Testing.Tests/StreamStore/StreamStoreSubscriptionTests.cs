@@ -1,9 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
-namespace ReactiveDomain.Testing.EventStore;
+namespace ReactiveDomain.Testing.Tests.StreamStore;
 
 public class StreamStoreSubscriptionTests : IClassFixture<StreamStoreConnectionFixture> {
 	private readonly List<IStreamStoreConnection> _stores = [];

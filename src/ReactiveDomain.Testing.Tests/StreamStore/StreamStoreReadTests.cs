@@ -1,8 +1,9 @@
 ﻿using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Testing.EventStore;
 using Xunit;
 
-namespace ReactiveDomain.Testing.EventStore;
+namespace ReactiveDomain.Testing.Tests.StreamStore;
 
 public class StreamStoreReadTests : IClassFixture<StreamStoreConnectionFixture> {
 	private readonly List<IStreamStoreConnection> _stores = [];
