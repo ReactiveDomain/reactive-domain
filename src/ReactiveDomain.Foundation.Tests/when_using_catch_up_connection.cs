@@ -8,9 +8,9 @@ namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
 public sealed class when_using_catch_up_connection : IDisposable {
-	private static readonly IEventSerializer Serializer = new JsonMessageSerializer();
-	private static readonly IStreamNameBuilder Namer =
-		new PrefixedCamelCaseStreamNameBuilder(nameof(when_using_catch_up_connection));
+	private static readonly JsonMessageSerializer Serializer = new();
+	private static readonly PrefixedCamelCaseStreamNameBuilder Namer =
+		new(nameof(when_using_catch_up_connection));
 
 	private readonly MockStreamStoreConnection _conn = new(nameof(when_using_catch_up_connection));
 	private readonly CatchUpConnection _catchUp;
@@ -33,11 +33,11 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		using var rm = new SumReadModel(_catchUp);
 		rm.StartAsync(_stream);
 
-		_catchUp.WaitForCatchUp(TimeSpan.FromSeconds(10), rm);
+		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor, rm);
 		Assert.Equal(20, rm.Sum); // deterministic: no IsOrBecomesTrue needed after the barrier
 
 		AppendEvents(10, 5);
-		_catchUp.WaitForCatchUp(TimeSpan.FromSeconds(10), rm);
+		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor, rm);
 		Assert.Equal(70, rm.Sum);
 	}
 
@@ -46,7 +46,7 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		AppendEvents(1, 1);
 		var listener = _catchUp.GetListener("laggard");
 		listener.Start(_stream);
-		_catchUp.WaitForCatchUp(TimeSpan.FromSeconds(10));
+		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor);
 
 		// a dead listener must read as a laggard, not as caught up
 		listener.Dispose();
@@ -65,7 +65,7 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		queued.Start(_stream);
 
 		// the queued listener does not feed the barrier, so no laggard is reported for it
-		_catchUp.WaitForCatchUp(TimeSpan.FromSeconds(10));
+		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor);
 		queued.Dispose();
 	}
 
