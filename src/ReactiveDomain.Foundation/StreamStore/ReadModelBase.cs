@@ -42,11 +42,26 @@ public abstract class ReadModelBase :
 	public int Version { get; private set; }
 
 	/// <summary>
-	/// Gets a task that completes when all streams started using a <c>StartAsync</c> overload are live.
+	/// Gets a task that completes when every stream started using a <c>StartAsync</c> overload has
+	/// finished its history read and <b>started</b> its live listener.
 	/// </summary>
-	/// <remarks>The returned task represents the aggregate completion of all underlying read tasks. Awaiting
-	/// this property allows callers to determine when all read operations are complete. The task is a snapshot:
-	/// it does not cover streams started after the property is read.</remarks>
+	/// <remarks>
+	/// <para><b>Timing contract:</b> each read task completes when its listener has been started, not
+	/// when the listener has caught up. Events between the reader's last position and the live
+	/// transition may still be in flight when this task completes, so a "live" read model can be
+	/// observed empty or stale. The listener replays from the reader's position, so those events are
+	/// still delivered — the gap is timing, never data loss.</para>
+	/// <para>Consumers that need "live <i>and</i> fully populated" should gate on
+	/// <c>CatchUpConnection.WaitForCatchUp</c> instead, or subscribe to
+	/// <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/> on <see cref="EventStream"/> for
+	/// the per-stream live transition. Downstream signals derived from that message (such as a
+	/// consumer-side live observable that fires after cache flushes) complete <b>after</b> this
+	/// task.</para>
+	/// <para>The task is a snapshot: it does not cover streams started after the property is read.
+	/// A dropped subscription currently sets the listener's live gate rather than faulting this
+	/// task; aligning that (and the completion point) is a consumer-visible timing change tracked
+	/// separately.</para>
+	/// </remarks>
 	public Task IsLive {
 		get {
 			lock (_readTasks) {
@@ -137,7 +152,8 @@ public abstract class ReadModelBase :
 
 	/// <summary>
 	/// Start playback of a named stream on a task pool thread.
-	/// Await <see cref="IsLive"/> to know when all streams are caught up.
+	/// Await <see cref="IsLive"/> to know when playback has started on every stream — see
+	/// <see cref="IsLive"/> for the timing contract (a live model may not be fully populated yet).
 	/// </summary>
 	/// <param name="stream">The name of the stream to play back.</param>
 	/// <param name="checkpoint">The event to start with.</param>
@@ -183,7 +199,8 @@ public abstract class ReadModelBase :
 
 	/// <summary>
 	/// Start playback of a specific stream of type <typeparamref name="TAggregate"/> on a task pool thread.
-	/// Await <see cref="IsLive"/> to know when all streams are caught up.
+	/// Await <see cref="IsLive"/> to know when playback has started on every stream — see
+	/// <see cref="IsLive"/> for the timing contract (a live model may not be fully populated yet).
 	/// </summary>
 	/// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
 	/// <param name="id">The ID of the stream to play back.</param>
@@ -229,7 +246,8 @@ public abstract class ReadModelBase :
 	/// <summary>
 	/// Start a category listener for type <typeparamref name="TAggregate"/>.
 	/// Events are played back on a task pool thread.
-	/// Await <see cref="IsLive"/> to know when all streams are caught up.
+	/// Await <see cref="IsLive"/> to know when playback has started on every stream — see
+	/// <see cref="IsLive"/> for the timing contract (a live model may not be fully populated yet).
 	/// </summary>
 	/// <typeparam name="TAggregate">The type of stream to play back.</typeparam>
 	/// <param name="checkpoint">The event to start with.</param>
