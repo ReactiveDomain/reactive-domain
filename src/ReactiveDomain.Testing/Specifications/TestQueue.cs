@@ -10,8 +10,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// <summary>
 	/// The types of messages to subscribe to. Child types are included.
 	/// </summary>
-	public Type[] MessageTypeFilter => (Type[])_messageTypeFilter.Clone();
-	private readonly Type[] _messageTypeFilter;
+	public Type[] MessageTypeFilter => (Type[])field.Clone();
 
 	private readonly bool _isFiltered;
 	/// <summary>
@@ -48,7 +47,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		Type[]? messageTypeFilter = null,
 		bool trackTypes = true) {
 		_isFiltered = messageTypeFilter != null;
-		_messageTypeFilter = messageTypeFilter ?? [];
+		MessageTypeFilter = messageTypeFilter ?? [];
 
 		_trackTypes = trackTypes;
 
@@ -88,7 +87,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 			}
 		}
 
-		if (_isFiltered && !_messageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
+		if (_isFiltered && !MessageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
 
 		Messages.Enqueue(message);
 
