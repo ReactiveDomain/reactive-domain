@@ -50,8 +50,8 @@ public sealed class when_using_listener_start_with_custom_stream_synced_bus : IC
 	}
 	[Fact]
 	public void can_get_events_from_custom_stream() {
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotLiveStarted) == 1);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _gotLiveStarted) == 1, TestTimeouts.ThrottleWaitFor);
 	}
 
 	private void Handle(IMessage message) {

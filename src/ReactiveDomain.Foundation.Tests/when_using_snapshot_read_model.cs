@@ -41,7 +41,7 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 	[Fact]
 	public void can_get_snapshot_from_read_model() {
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
 		var snapshot = rm.GetState();
 
 		Assert.Equal(nameof(TestSnapShotReadModel), snapshot.ModelName);
@@ -62,35 +62,35 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 			new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20, TestTimeouts.ThrottleWaitFor);
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
 	[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 	public void can_snapshot_and_recover_read_model() {
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20, TestTimeouts.ThrottleWaitFor);
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25, TestTimeouts.ThrottleWaitFor);
 		var snap = rm.GetState();
 		rm.Dispose();
 		var rm2 = new TestSnapShotReadModel(_aggId, _configuredConnection, snap);
-		AssertEx.IsOrBecomesTrue(() => rm2.Count == 11, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 25);
+		AssertEx.IsOrBecomesTrue(() => rm2.Count == 11, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 25, TestTimeouts.ThrottleWaitFor);
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm2.Count == 12, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 30);
+		AssertEx.IsOrBecomesTrue(() => rm2.Count == 12, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 30, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
 	public void can_only_restore_once() {
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);
 		// ReSharper disable once AccessToDisposedClosure
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
 		var state = rm.GetState();
 		rm.Dispose();
 		//create while forcing double restore
@@ -108,32 +108,32 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 			new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20, TestTimeouts.ThrottleWaitFor);
 
 		//n.b. will not start listening because no streams are provided
-		//confirm not listening
+		//confirm not listening (Count is already 10, so this returns immediately without waiting)
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20, TestTimeouts.ThrottleWaitFor);
 
 		//can manually start
 		rm.Start<SnapReadModelTestAggregate>(_aggId, 9, true);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 11, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25, TestTimeouts.ThrottleWaitFor);
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm.Count == 12, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm.Sum == 30);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 12, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 30, TestTimeouts.ThrottleWaitFor);
 
 		//can still get complete snapshot
 		var snap2 = rm.GetState();
 		//works as expected
 		var rm2 = new TestSnapShotReadModel(_aggId, _configuredConnection, snap2);
-		AssertEx.IsOrBecomesTrue(() => rm2.Count == 12, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 30);
+		AssertEx.IsOrBecomesTrue(() => rm2.Count == 12, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 30, TestTimeouts.ThrottleWaitFor);
 		AppendEvents(1, _conn, _stream, 5);
-		AssertEx.IsOrBecomesTrue(() => rm2.Count == 13, 1000);
-		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 35);
+		AssertEx.IsOrBecomesTrue(() => rm2.Count == 13, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm2.Sum == 35, TestTimeouts.ThrottleWaitFor);
 
 	}
 	public sealed class TestSnapShotReadModel :
