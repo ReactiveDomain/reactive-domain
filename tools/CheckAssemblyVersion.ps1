@@ -32,19 +32,23 @@ $RDVersion = $props.SelectSingleNode("//Project/PropertyGroup/AssemblyVersion")
 
 Write-Host ("Local Assembly Version node is " + $RDVersion.InnerText ) 
 
-$major = $RDVersion.InnerText.Split('.')[0]
-$minor = $RDVersion.InnerText.Split('.')[1]
-$build = $RDVersion.InnerText.Split('.')[2]
-$revision = $RDVersion.InnerText.Split('.')[3]
+$major = [int]$RDVersion.InnerText.Split('.')[0]
+$minor = [int]$RDVersion.InnerText.Split('.')[1]
+$build = [int]$RDVersion.InnerText.Split('.')[2]
+$revision = [int]$RDVersion.InnerText.Split('.')[3]
 
-&$nuget list packageid:ReactiveDomain -source https://api.nuget.org/v3/index.json | Tee-Object -Variable rdPackage
-$masterRDversion = ($rdPackage.Split(" "))[1]
+$rdPackages = &$nuget list packageid:ReactiveDomain -source https://api.nuget.org/v3/index.json
+# 'nuget list' is deprecated and prints a warning line ahead of the results, so the raw output is
+# multi-line. Select the exact 'ReactiveDomain <version>' entry — not the warning, and not the
+# ReactiveDomain.Testing/.Policy rows — then take the version token.
+$masterLine = $rdPackages | Where-Object { $_ -match '^ReactiveDomain\s+\d' } | Select-Object -First 1
+$masterRDversion = ($masterLine -split '\s+')[1]
 Write-Host "Latest ReactiveDomain nuget version is: " $masterRDversion
 
-$masterMajor = $masterRDversion.Split('.')[0]
-$masterMinor = $masterRDversion.Split('.')[1]
-$masterBuild = $masterRDversion.Split('.')[2]
-$masterRevision = $masterRDversion.Split('.')[3]
+$masterMajor = [int]$masterRDversion.Split('.')[0]
+$masterMinor = [int]$masterRDversion.Split('.')[1]
+$masterBuild = [int]$masterRDversion.Split('.')[2]
+$masterRevision = [int]$masterRDversion.Split('.')[3]
 
 # Verify the assembly has been incremented from the assembly version on master branch
 if ($masterMajor -gt $major)
