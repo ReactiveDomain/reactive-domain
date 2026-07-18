@@ -13,7 +13,7 @@ internal static class CommonHelpers {
 					return false;
 				}
 			},
-			2000,
+			TestTimeouts.ThrottleWaitFor,
 			$"Stream '{streamName}' not created");
 	}
 }

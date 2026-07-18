@@ -63,7 +63,7 @@ public sealed class when_using_listener_start_with_future_stream : IClassFixture
 
 		// Wait for the stream to be written
 		CommonHelpers.WaitForStream(_connection, _originStreamName);
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, TestTimeouts.ThrottleWaitFor);
 	}
 
 	private void Handle(IMessage message) {

@@ -52,8 +52,8 @@ public sealed class when_using_read_model_base_with_reader :
 		var s1 = _namer.GenerateForAggregate(typeof(TestAggregate), aggId);
 		AppendEvents(1, _conn, s1, 7);
 		Start<TestAggregate>(aggId);
-		AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 7);
+		AssertEx.IsOrBecomesTrue(() => Count == 1, TestTimeouts.ThrottleWaitFor, msg: $"Expected 1 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 7, TestTimeouts.ThrottleWaitFor);
 	}
 
 	[Fact]
@@ -63,8 +63,8 @@ public sealed class when_using_read_model_base_with_reader :
 		AppendEvents(1, _conn, s1, 7);
 		StartAsync<TestAggregate>(aggId);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 1, 1000, msg: $"Expected 1 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 7);
+		AssertEx.IsOrBecomesTrue(() => Count == 1, TestTimeouts.ThrottleWaitFor, msg: $"Expected 1 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 7, TestTimeouts.ThrottleWaitFor);
 	}
 
 	[Fact]
@@ -76,15 +76,15 @@ public sealed class when_using_read_model_base_with_reader :
 		StartAsync<ReadModelTestCategoryAggregate>();
 
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 2, 1000, msg: $"Expected 2 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 12);
+		AssertEx.IsOrBecomesTrue(() => Count == 2, TestTimeouts.ThrottleWaitFor, msg: $"Expected 2 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 12, TestTimeouts.ThrottleWaitFor);
 	}
 
 	[Fact]
 	public void can_read_one_stream() {
 		Start(_stream1);
-		AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(9, GetCheckpoint()[0].Item2);
@@ -94,8 +94,8 @@ public sealed class when_using_read_model_base_with_reader :
 	public void can_read_two_streams() {
 		Start(_stream1);
 		Start(_stream2);
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 50);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(9, GetCheckpoint()[0].Item2);
@@ -113,8 +113,8 @@ public sealed class when_using_read_model_base_with_reader :
 	public async Task can_await_one_stream_going_live() {
 		StartAsync(_stream1);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 20, 1000, msg: $"Expected 20 got {Sum}");
+		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Sum}");
 	}
 
 	[Fact]
@@ -122,19 +122,19 @@ public sealed class when_using_read_model_base_with_reader :
 		StartAsync(_stream1);
 		StartAsync(_stream2);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 50, 1000, msg: $"Expected 50 got {Sum}");
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor, msg: $"Expected 50 got {Sum}");
 	}
 
 	[Fact]
 	public void can_listen_to_one_stream() {
 		Start(_stream1);
-		AssertEx.IsOrBecomesTrue(() => Count == 10, 1000, msg: $"Expected 10 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 70);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(19, GetCheckpoint()[0].Item2);
@@ -146,13 +146,13 @@ public sealed class when_using_read_model_base_with_reader :
 	public void can_listen_to_two_streams() {
 		Start(_stream1);
 		Start(_stream2);
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 50);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
 		AppendEvents(10, _conn, _stream2, 7);
-		AssertEx.IsOrBecomesTrue(() => Count == 40, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 170);
+		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(19, GetCheckpoint()[0].Item2);
@@ -169,12 +169,12 @@ public sealed class when_using_read_model_base_with_reader :
 		//start at the checkpoint
 		Start(_stream1, checkPoint);
 		//add the one recorded event
-		AssertEx.IsOrBecomesTrue(() => Count == 10, 100, msg: $"Expected 10 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 20);
+		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 100, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 70);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(19, GetCheckpoint()[0].Item2);
@@ -190,13 +190,13 @@ public sealed class when_using_read_model_base_with_reader :
 		Start(_stream1, checkPoint1);
 		Start(_stream2, checkPoint2);
 		//add the recorded events 2 on stream 1 & 5 on stream 2
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 50, msg: $"Expected 50 got {Sum}");
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor, msg: $"Expected 50 got {Sum}");
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
 		AppendEvents(10, _conn, _stream2, 7);
-		AssertEx.IsOrBecomesTrue(() => Count == 40, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 170);
+		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
 		Assert.Equal(19, GetCheckpoint()[0].Item2);
@@ -212,12 +212,12 @@ public sealed class when_using_read_model_base_with_reader :
 		Start(_stream1);
 		Start(_stream1);
 		//double events
-		AssertEx.IsOrBecomesTrue(() => Count == 20, 1000, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 40);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 40, TestTimeouts.ThrottleWaitFor);
 		//even more doubled events
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.IsOrBecomesTrue(() => Count == 40, 2000, msg: $"Expected 40 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 140);
+		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 40 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 140, TestTimeouts.ThrottleWaitFor);
 	}
 
 	public long Sum { get; private set; }

@@ -45,7 +45,7 @@ public sealed class when_using_listener_start_with_aggregate_and_guid : IClassFi
 	private long _testEventCount;
 	[Fact]
 	public void can_get_events_from_aggregate_id_stream() {
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 3000);
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, TestTimeouts.ThrottleWaitFor);
 	}
 
 	private void Handle(IMessage message) {

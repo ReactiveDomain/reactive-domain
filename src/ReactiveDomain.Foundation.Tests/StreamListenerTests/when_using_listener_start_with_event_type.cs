@@ -49,7 +49,7 @@ public sealed class when_using_listener_start_with_event_type : IClassFixture<St
 	private long _testEventCount;
 	[Fact]
 	public void can_get_events_from_event_type_stream() {
-		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, 4000, "Event Not Received");
+		AssertEx.IsOrBecomesTrue(() => Interlocked.Read(ref _testEventCount) == 1, TestTimeouts.ThrottleWaitFor, "Event Not Received");
 	}
 
 	private void Handle(IMessage message) {

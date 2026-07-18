@@ -33,11 +33,11 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		using var rm = new SumReadModel(_catchUp);
 		rm.StartAsync(_stream);
 
-		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor, rm);
+		_catchUp.WaitForCatchUp(TestTimeouts.ThrottleWaitFor, rm);
 		Assert.Equal(20, rm.Sum); // deterministic: no IsOrBecomesTrue needed after the barrier
 
 		AppendEvents(10, 5);
-		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor, rm);
+		_catchUp.WaitForCatchUp(TestTimeouts.ThrottleWaitFor, rm);
 		Assert.Equal(70, rm.Sum);
 	}
 
@@ -46,7 +46,7 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		AppendEvents(1, 1);
 		var listener = _catchUp.GetListener("laggard");
 		listener.Start(_stream);
-		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor);
+		_catchUp.WaitForCatchUp(TestTimeouts.ThrottleWaitFor);
 
 		// a dead listener must read as a laggard, not as caught up
 		listener.Dispose();
@@ -65,7 +65,7 @@ public sealed class when_using_catch_up_connection : IDisposable {
 		queued.Start(_stream);
 
 		// the queued listener does not feed the barrier, so no laggard is reported for it
-		_catchUp.WaitForCatchUp(TestTimeouts.WaitFor);
+		_catchUp.WaitForCatchUp(TestTimeouts.ThrottleWaitFor);
 		queued.Dispose();
 	}
 
