@@ -276,8 +276,9 @@ public static class ConnectionHelpers {
 	/// deliveries as <see cref="ProjectedEvent"/>. A delivery whose resolved event carries a
 	/// non-null link is a projection copy (a $ce-/$et-/$streams link), not a distinct fact;
 	/// <see cref="ProjectedEvent.ProjectedStream"/> and
-	/// <see cref="ProjectedEvent.OriginalEventNumber"/> let consumers dedup it. This matches
-	/// MockStreamStoreConnection's tagging of its emulated projection copies. Returns null for
+	/// <see cref="ProjectedEvent.OriginalEventNumber"/> let consumers dedup it.
+	/// MockStreamStoreConnection emulates this tagging so its in-memory projection
+	/// copies present the same contract as the real store. Returns null for
 	/// link events whose target was deleted or scavenged (see Docs/null-linkto-handling.md);
 	/// stream positions are immutable, so skipping them leaves checkpoints valid.
 	/// </summary>
