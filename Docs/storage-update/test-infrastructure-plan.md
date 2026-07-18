@@ -28,6 +28,44 @@ real store.
 #232 (residual test migration), #233 (remove MockStreamStoreConnection), #234 (IsLive
 alignment), #235 (Testing.Host packaging — see storage-port doc).
 
+### Implementation checklist — 0.15.2
+
+Sequential, one PR per issue against `master`, in this order (fence depends on the TestQueue
+change and the timeout source). Each PR ticks its box here, adds targeted tests in the
+matching test project, and closes its issue (`Closes #NNN`); CI is the full gate. No version
+bump, no publishing.
+
+- [ ] **#223 TestQueue** — signal `_idWatchList` waiters before the type filter, **and**
+  record ids that arrive with no watcher registered (insert an already-set wait handle) —
+  without this the fence deterministically times out on the synchronous mock (see § 0.15.2/1).
+  Same pass: `WaitForMultiple<T>` full-queue re-snapshot per iteration, `is T` (wait) vs
+  `IsAssignableFrom` (ingest), unsynchronized `_handledTypes`.
+- [ ] **#227 TestTimeouts** — static source keyed on `GITHUB_ACTIONS` (WaitFor 500 ms/5 s,
+  CommandTimeout 500 ms/10 s, ThrottleWaitFor 2 s/10 s) plus `MaxCpuCount=1` runsettings and
+  `start /affinity` + `GITHUB_ACTIONS=true` repro guidance. Before #224 — the fence uses
+  `TestTimeouts.WaitFor`.
+- [ ] **#224 AwaitEventDelivery fence** — `SetupStartMarker`/`DeliveryFence` derive from
+  `Message` (a record), not `Event`; stream `setupMarkers`; ctor writes the first
+  `SetupStartMarker`; `ClearQueues()` = fence → clear → base → new `SetupStartMarker`;
+  markers never visible to `RepositoryEvents` assertions.
+- [ ] **#225 CatchUpConnection** (Foundation) — `GetQueuedListener` untracked by design
+  (XML-doc why); `lastDelivered` set *after* `base.GotEvent`; bounded `IsLive` wait first;
+  re-read stream ends via `ReadStreamBackward` every pass; timeout names laggards and busy
+  queues.
+- [ ] **#226 FaultInjectingConfiguredConnection** + `InjectedSaveException` — only repository
+  `Save` faults; `GetCorrelatedRepository` composes over the faulting repo; reads, readers,
+  listeners pass through.
+- [ ] **#228 ProjectedEvent tagging** — `SubscribeToAll`/`SubscribeToAllFrom` only:
+  `ProjectedStream = Link.EventStreamId`, `OriginalEventNumber = Event.EventNumber`,
+  `EventNumber = Link.EventNumber`; stream subscriptions and batch reads unchanged; keep the
+  `evt.Event != null` null-linkto guard; verify via mapping-parity test against the mock (no
+  live-ESDB test project exists). **Release-notes callout.**
+- [ ] **#229 IsLive XML docs** — document the contract as amended in § 0.15.2/7 (Task
+  completes at listener *start*, not live; a "live" model can be empty/stale; point to
+  `WaitForCatchUp`); `IsLiveObservable` is consumer-side, not an RD member — reconcile the
+  issue wording, don't invent the member.
+- [ ] **Milestone** — create the 0.15.2 milestone and assign #223–#229.
+
 ## Why async delivery forces harness changes
 
 The mock delivers synchronously through its internal `SingleThreadedBus`: when `Save`
@@ -48,6 +86,13 @@ Today `TestQueue.Handle` applies the constructor's `MessageTypeFilter` before en
 **and** before signaling `_idWatchList` waiters, so a message outside the filter can never
 complete a `WaitForMsgId` wait. Change the ordering: signal id-watchers first, then apply the
 filter for enqueue.
+
+Signal order alone is not enough: `Handle` must also record ids that arrive with **no watcher
+registered** — insert an already-set wait handle into `_idWatchList` so a `WaitForMsgId` that
+starts after delivery completes immediately (`WaitForMsgId` already short-circuits on a set
+handle). On the synchronous mock this is the *only* working path: delivery completes inside
+the marker append, before the fence's wait registers, and the filtered marker never enters
+the queue for the late-arrival scan. Growth is bounded by `Clear()`, same as the queue.
 
 This enables an **invisible fence** — a fence message completes a `WaitForMsgId` wait without
 ever entering the queue, so it can't break a subsequent `AssertEmpty`. The only observable
@@ -182,10 +227,12 @@ already-published contract. Deserves the release-notes callout.
 
 ### 7. IsLive: document the contract
 
-The `IsLive` **Task** completes when the subscription goes live — before any downstream
-batching cache flushes — while `IsLiveObservable` fires after. Consumers waiting on the Task
-can observe empty read models that are "live." Document this in 0.15.2; behavioral alignment
-(if any) changes consumer-visible timing and belongs in 0.16.0.
+The `IsLive` **Task** completes when each `StartAsync` read task has read history and merely
+*started* its listener (`blockUntilLive: false`) — before catch-up completes, and before any
+downstream batching cache flushes (see 0.16.0 § 5). Consumers waiting on the Task can observe
+read models that are "live" but empty or stale. (`IsLiveObservable` is a consumer-side
+construct, not an RD member; post-flush signals fire after the Task.) Document this in
+0.15.2; behavioral alignment changes consumer-visible timing and belongs in 0.16.0 (#234).
 
 ### Consumer guidance for the 0.15.2 window
 

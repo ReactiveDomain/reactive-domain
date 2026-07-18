@@ -197,6 +197,36 @@ public sealed class TestQueueTests :
 	}
 
 	[Fact]
+	public void can_wait_by_id_for_a_message_excluded_by_the_type_filter() {
+		using var tq = new TestQueue(_dispatcher, [typeof(Command)]);
+		var evt = new TestEvent();
+		//arrival before the wait starts (the synchronous-delivery fence case)
+		_dispatcher.Publish(evt);
+		tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200));
+
+		//arrival after the wait starts
+		var evt2 = new TestEvent();
+		var t = Task.Run(() => tq.WaitForMsgId(evt2.MsgId, TimeSpan.FromMilliseconds(1000)));
+		AssertEx.EnsureRunning(t);
+		_dispatcher.Publish(evt2);
+		AssertEx.EnsureComplete(t);
+
+		//neither filtered message entered the queue
+		tq.AssertEmpty();
+	}
+
+	[Fact]
+	public void clear_forgets_previously_seen_ids() {
+		using var tq = new TestQueue(_dispatcher);
+		var evt = new TestEvent();
+		_dispatcher.Publish(evt);
+		tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(200));
+		tq.Clear();
+		Assert.Throws<TimeoutException>(() => tq.WaitForMsgId(evt.MsgId, TimeSpan.FromMilliseconds(50)));
+		tq.AssertEmpty();
+	}
+
+	[Fact]
 	public void can_wait_for_multiple_messages_of_a_type() {
 		using var tq = new TestQueue(_dispatcher);
 		var evt = new TestEvent();

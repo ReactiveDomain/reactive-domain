@@ -10,14 +10,21 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	/// <summary>
 	/// The types of messages to subscribe to. Child types are included.
 	/// </summary>
-	public Type[] MessageTypeFilter => (Type[])field.Clone();
+	public Type[] MessageTypeFilter => (Type[])_messageTypeFilter.Clone();
+	private readonly Type[] _messageTypeFilter;
 
 	private readonly bool _isFiltered;
 	/// <summary>
 	/// Contains the list of the Types of messages processed since last time TestQueue was cleared.
 	/// If Type tracking is disabled, returns an empty list.
 	/// </summary>
-	public Type[] HandledTypes => _handledTypes.ToArray();
+	public Type[] HandledTypes {
+		get {
+			lock (_handledTypes) {
+				return _handledTypes.ToArray();
+			}
+		}
+	}
 	private readonly HashSet<Type> _handledTypes = [];
 	private readonly bool _trackTypes;
 	private readonly Dictionary<Guid, ManualResetEventSlim> _idWatchList = new();
@@ -41,7 +48,7 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		Type[]? messageTypeFilter = null,
 		bool trackTypes = true) {
 		_isFiltered = messageTypeFilter != null;
-		MessageTypeFilter = messageTypeFilter ?? [];
+		_messageTypeFilter = messageTypeFilter ?? [];
 
 		_trackTypes = trackTypes;
 
@@ -68,15 +75,25 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 	public void Handle(IMessage message) {
 		EnsureReady();
 		var msgType = message.GetType();
-		if (_isFiltered && !MessageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
 
-		Messages.Enqueue(message);
-
-		if (_trackTypes) { _handledTypes.Add(msgType); }
+		// Record the id before the type filter so WaitForMsgId completes even for messages the
+		// filter excludes (e.g. delivery-fence markers that must stay invisible to queue
+		// assertions). Unwatched ids get a pre-set handle so a wait that starts after delivery
+		// completes immediately; Clear() bounds the growth.
 		lock (_idWatchList) {
 			if (_idWatchList.TryGetValue(message.MsgId, out var resetEvent)) {
 				resetEvent.Set();
+			} else {
+				_idWatchList.Add(message.MsgId, new ManualResetEventSlim(true));
 			}
+		}
+
+		if (_isFiltered && !_messageTypeFilter.Any(t => t.IsAssignableFrom(msgType))) { return; }
+
+		Messages.Enqueue(message);
+
+		if (_trackTypes) {
+			lock (_handledTypes) { _handledTypes.Add(msgType); }
 		}
 	}
 
@@ -89,7 +106,9 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 			Interlocked.Exchange(ref _cleaning, 1); //It's ok to clean an extra message on the race condition
 			while (!Messages.IsEmpty)
 				Messages.TryDequeue(out _);
-			_handledTypes.Clear();
+			lock (_handledTypes) {
+				_handledTypes.Clear();
+			}
 			lock (_idWatchList) {
 				_idWatchList.Clear();
 			}
@@ -122,10 +141,9 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		var endTime = startTime + (int)timeout.TotalMilliseconds;
 
 		var delay = 1;
-		//Evaluating the entire queue is a bit heavy, but is required to support waiting on base types, interfaces, etc. 
-		//calling ToList allows the concurrent queue to handle grabbing a snapshot of the collection
-		// ReSharper disable once RemoveToList.2
-		while (Messages.ToList().Count(x => x is T) < num) {
+		//Evaluating the entire queue is required to support waiting on base types, interfaces, etc.
+		//ConcurrentQueue enumeration is a moment-in-time snapshot, so no materialization is needed.
+		while (Messages.Count(x => x is T) < num) {
 			ObjectDisposedException.ThrowIf(_disposed, this);
 			if (Interlocked.Read(ref _queueVersion) != version) { throw new InvalidOperationException("Test queue Cleared!"); }
 			var now = Environment.TickCount;
@@ -146,23 +164,16 @@ public sealed class TestQueue : IHandle<IMessage>, IDisposable {
 		var version = Interlocked.Read(ref _queueVersion);
 		var deadline = DateTime.Now + timeout;
 
-		//set up a watch
+		//set up a watch; Handle records every id it has seen since the last Clear, so an
+		//already-handled message (queued or filtered out) is an already-set handle here
 		ManualResetEventSlim? waitHandle;
 		lock (_idWatchList) {
-			if (_idWatchList.TryGetValue(id, out waitHandle)) {
-				if (waitHandle.IsSet) { return; }
-			} else {
+			if (!_idWatchList.TryGetValue(id, out waitHandle)) {
 				waitHandle = new ManualResetEventSlim(false);
 				_idWatchList.Add(id, waitHandle);
 			}
 		}
-		//check to see if the message was handled before we got the watch setup
-		if (Messages.ToArray().Any(m => m.MsgId == id)) {
-			lock (_idWatchList) {
-				_idWatchList[id].Set();
-			}
-			return;
-		}
+		if (waitHandle.IsSet) { return; }
 		//wait here to see if the message handler triggers the wait handle we added
 		while (!waitHandle.Wait(10)) {
 			if (DateTime.Now > deadline) { throw new TimeoutException($"Msg with ID {id} failed to arrive within {timeout}."); }
