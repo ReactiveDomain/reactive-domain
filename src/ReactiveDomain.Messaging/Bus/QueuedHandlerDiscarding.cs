@@ -32,6 +32,7 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 	private volatile bool _starving;
 	private readonly ManualResetEventSlim _stopped = new(true);
 	private readonly TimeSpan _threadStopWaitTimeout;
+	private readonly TimeSpan _idlePollInterval;
 
 	private readonly QueueMonitor _queueMonitor;
 	private readonly QueueStatsCollector _queueStats;
@@ -42,7 +43,8 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 		bool watchSlowMsg = true,
 		TimeSpan? slowMsgThreshold = null,
 		TimeSpan? threadStopWaitTimeout = null,
-		string? groupName = null) {
+		string? groupName = null,
+		TimeSpan? idlePollInterval = null) {
 		Ensure.NotNull(consumer, "consumer");
 		Ensure.NotNull(name, "name");
 
@@ -51,6 +53,7 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 		_watchSlowMsg = watchSlowMsg;
 		_slowMsgThreshold = slowMsgThreshold ?? InMemoryBus.DefaultSlowMessageThreshold;
 		_threadStopWaitTimeout = threadStopWaitTimeout ?? QueuedHandler.DefaultStopWaitTimeout;
+		_idlePollInterval = idlePollInterval ?? TimeSpan.FromMilliseconds(100);
 
 		_queueMonitor = QueueMonitor.Default;
 		_queueStats = new QueueStatsCollector(name, groupName);
@@ -70,12 +73,16 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 
 	public void Stop() {
 		_stop = true;
+		// Wake an idle pump parked in its poll wait so it observes _stop immediately.
+		_msgAddEvent.Set();
 		if (!_stopped.Wait(_threadStopWaitTimeout))
 			throw new TimeoutException($"Unable to stop thread '{Name}'.");
 	}
 
 	public void RequestStop() {
 		_stop = true;
+		// Wake an idle pump parked in its poll wait so it observes _stop immediately.
+		_msgAddEvent.Set();
 	}
 
 	private void ReadFromQueue(object? o) {
@@ -89,7 +96,7 @@ public class QueuedHandlerDiscarding : IQueuedHandler, IHandle<IMessage>, IPubli
 					_starving = true;
 
 					_queueStats.EnterIdle();
-					_msgAddEvent.Wait(100);
+					_msgAddEvent.Wait(_idlePollInterval);
 					_msgAddEvent.Reset();
 
 					_starving = false;

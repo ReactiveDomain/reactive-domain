@@ -25,6 +25,37 @@ public sealed class when_disposing_queued_components {
 			"Stop() called from the queue's own thread did not return.");
 	}
 
+	// A long idle poll interval paired with a short stop-wait timeout turns the #253 regression
+	// into a deterministic outcome instead of a wall-clock race: pre-fix, Stop() cannot wake the
+	// parked pump, so it blocks past the 2s stop-wait and throws TimeoutException; post-fix it
+	// wakes the pump at once and returns. No timing threshold to flake under CI load.
+	private static readonly TimeSpan LongIdlePoll = TimeSpan.FromSeconds(60);
+	private static readonly TimeSpan ShortStopWait = TimeSpan.FromSeconds(2);
+
+	[Fact]
+	public void queued_handler_stop_wakes_the_parked_idle_pump() {
+		var handled = new ManualResetEventSlim(false);
+		var queue = new QueuedHandler(new AdHocHandler<IMessage>(_ => handled.Set()), "idle-stop-queue",
+			threadStopWaitTimeout: ShortStopWait, idlePollInterval: LongIdlePoll);
+		queue.Start();
+		queue.Publish(new TestEvent());
+		Assert.True(handled.Wait(QueuedHandler.DefaultStopWaitTimeout), "queue never handled the message");
+		Assert.True(SpinWait.SpinUntil(() => queue.Idle, ShortStopWait), "pump never parked in its idle wait");
+		queue.Stop(); // pre-fix (#253): parked pump not woken -> TimeoutException at the 2s stop-wait
+	}
+
+	[Fact]
+	public void queued_handler_discarding_stop_wakes_the_parked_idle_pump() {
+		var handled = new ManualResetEventSlim(false);
+		var queue = new QueuedHandlerDiscarding(new AdHocHandler<IMessage>(_ => handled.Set()), "idle-stop-discarding",
+			threadStopWaitTimeout: ShortStopWait, idlePollInterval: LongIdlePoll);
+		queue.Start();
+		queue.Publish(new TestEvent());
+		Assert.True(handled.Wait(QueuedHandler.DefaultStopWaitTimeout), "queue never handled the message");
+		Assert.True(SpinWait.SpinUntil(() => queue.Idle, ShortStopWait), "pump never parked in its idle wait");
+		queue.Stop(); // pre-fix (#253): parked pump not woken -> TimeoutException at the 2s stop-wait
+	}
+
 	// Mirrors production QueuedSubscriber usage: the derived class disposes its own state
 	// before calling base.Dispose(bool); no handler may run once that teardown begins.
 	private sealed class DerivedStateSubscriber : QueuedSubscriber, IHandle<TestEvent> {

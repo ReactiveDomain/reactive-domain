@@ -35,6 +35,7 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 	private volatile bool _starving;
 	private readonly ManualResetEventSlim _stopped = new(true);
 	private readonly TimeSpan _threadStopWaitTimeout;
+	private readonly TimeSpan _idlePollInterval;
 
 	private readonly QueueMonitor _queueMonitor;
 	private readonly QueueStatsCollector _queueStats;
@@ -44,7 +45,8 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 		bool watchSlowMsg = true,
 		TimeSpan? slowMsgThreshold = null,
 		TimeSpan? threadStopWaitTimeout = null,
-		string? groupName = null) {
+		string? groupName = null,
+		TimeSpan? idlePollInterval = null) {
 		Ensure.NotNull(consumer, "consumer");
 		Ensure.NotNull(name, "name");
 
@@ -53,6 +55,7 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 		_watchSlowMsg = watchSlowMsg;
 		_slowMsgThreshold = slowMsgThreshold ?? InMemoryBus.DefaultSlowMessageThreshold;
 		_threadStopWaitTimeout = threadStopWaitTimeout ?? DefaultStopWaitTimeout;
+		_idlePollInterval = idlePollInterval ?? TimeSpan.FromMilliseconds(100);
 
 		_queueMonitor = QueueMonitor.Default;
 		_queueStats = new QueueStatsCollector(name, groupName);
@@ -72,6 +75,8 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 
 	public void Stop() {
 		_stop = true;
+		// Wake an idle pump parked in its poll wait so it observes _stop immediately.
+		_msgAddEvent.Set();
 		// A handler on the queue thread may itself trigger Stop; self-joining would always
 		// time out, and the flag alone is enough — the loop exits after the current message.
 		if (Thread.CurrentThread == _thread)
@@ -82,6 +87,8 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 
 	public void RequestStop() {
 		_stop = true;
+		// Wake an idle pump parked in its poll wait so it observes _stop immediately.
+		_msgAddEvent.Set();
 	}
 
 	private void ReadFromQueue(object? o) {
@@ -95,7 +102,7 @@ public class QueuedHandler : IQueuedHandler, IHandle<IMessage>, IPublisher, IMon
 					_starving = true;
 
 					_queueStats.EnterIdle();
-					_msgAddEvent.Wait(100);
+					_msgAddEvent.Wait(_idlePollInterval);
 					_msgAddEvent.Reset();
 
 					_starving = false;
