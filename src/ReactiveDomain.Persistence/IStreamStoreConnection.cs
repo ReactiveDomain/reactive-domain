@@ -1,5 +1,4 @@
 ﻿using System.Reactive;
-using EventStore.ClientAPI;
 
 namespace ReactiveDomain;
 

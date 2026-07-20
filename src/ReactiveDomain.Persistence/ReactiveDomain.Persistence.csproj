@@ -6,6 +6,9 @@
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 	<ItemGroup>
+		<InternalsVisibleTo Include="ReactiveDomain.Testing.Tests" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Remove="EventStoreCatchUpSubscription.cs" />
 		<Compile Remove="EventStoreStreamCatchUpSubscription.cs" />
 		<Compile Remove="StreamSubscription.cs" />
@@ -13,6 +16,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="EventStore.Client" Version="22.0.0" Condition="" />
+		<PackageReference Include="KurrentDB.Client" Version="1.4.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 	<ItemGroup>

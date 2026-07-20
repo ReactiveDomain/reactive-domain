@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Testing;

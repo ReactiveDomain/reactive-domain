@@ -285,8 +285,13 @@ public static class ConnectionHelpers {
 	public static RecordedEvent? ToDeliveredEvent(this ES.ResolvedEvent resolvedEvent) {
 		var evt = resolvedEvent.Event;
 		if (evt == null) { return null; }
+		// The $all position of this delivery, when the backend reports it (set on $all reads/subscriptions;
+		// null on plain stream reads against stores that don't carry it).
+		var position = resolvedEvent.OriginalPosition is { } p
+			? new Position(p.CommitPosition, p.PreparePosition)
+			: (Position?)null;
 		var link = resolvedEvent.Link;
-		if (link == null) { return evt.ToRecordedEvent(); }
+		if (link == null) { return evt.ToRecordedEvent(position: position); }
 		return new ProjectedEvent(
 			link.EventStreamId,   // the $ce-/$et-/$streams stream this copy lives in
 			evt.EventNumber,      // position in the source stream
@@ -298,10 +303,12 @@ public static class ConnectionHelpers {
 			evt.Metadata,
 			evt.IsJson,
 			evt.Created,
-			evt.CreatedEpoch);
+			evt.CreatedEpoch,
+			position);
 	}
 
-	public static RecordedEvent ToRecordedEvent(this ES.RecordedEvent recordedEvent, long? eventNumber = null) {
+	public static RecordedEvent ToRecordedEvent(this ES.RecordedEvent recordedEvent, long? eventNumber = null,
+		Position? position = null) {
 		return new RecordedEvent(
 			recordedEvent.EventStreamId,
 			recordedEvent.EventId,
@@ -311,7 +318,8 @@ public static class ConnectionHelpers {
 			recordedEvent.Metadata,
 			recordedEvent.IsJson,
 			recordedEvent.Created,
-			recordedEvent.CreatedEpoch);
+			recordedEvent.CreatedEpoch,
+			position);
 	}
 
 	public static ES.EventData[] ToESEventData(this EventData[] events) {
