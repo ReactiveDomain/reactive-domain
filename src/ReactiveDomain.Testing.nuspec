@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>ReactiveDomain.Testing</id>
-    <version>0.15.2.0</version>
+    <version>0.15.3.0</version>
     <authors>Reactive Domain Group</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
@@ -13,13 +13,13 @@
     <repository type="git" url="https://github.com/ReactiveDomain/reactive-domain" branch="master" />
     <dependencies>
       <group targetFramework="net8.0">
-        <dependency id="ReactiveDomain" version="0.15.2.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.15.3.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.NET.Test.Sdk" version="18.7.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework="net10.0">
-        <dependency id="ReactiveDomain" version="0.15.2.0" exclude="Build,Analyzers" />
+        <dependency id="ReactiveDomain" version="0.15.3.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.NET.Test.Sdk" version="18.7.0" exclude="Build,Analyzers" />
         <dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
         <dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
