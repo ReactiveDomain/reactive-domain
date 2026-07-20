@@ -1,13 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33205.214
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12009.203 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleMetadata", "SimpleMetadata\SimpleMetadata.csproj", "{5D07F2E4-0E18-45B0-9892-301D0F376674}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PersistedMetadata", "PersistedMetadata\PersistedMetadata.csproj", "{E7948E00-48F4-40EC-AEA7-95D4D980FF3A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E37482FD-52F2-4C89-80A8-635EC3D17626}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -3,14 +3,12 @@ using Terminal.Gui;
 
 namespace PersistedMetadata;
 
-internal class Program
-{
-    static void Main(string[] args)
-    {
-        Application.Init();
-        Application.Top.Add(new MessageWindow(new InMemoryBus("message bus")));
-        Application.Run();
+internal class Program {
+	static void Main(string[] args) {
+		Application.Init();
+		Application.Top.Add(new MessageWindow(new InMemoryBus("message bus")));
+		Application.Run();
 
-        Application.Shutdown();
-    }
+		Application.Shutdown();
+	}
 }

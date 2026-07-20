@@ -12,76 +12,75 @@ using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using Terminal.Gui;
 
-namespace PersistedMetadata
+namespace PersistedMetadata;
+
+public partial class MessageWindow
 {
-    public partial class MessageWindow
+    private readonly IBus _bus;
+    private Messages.Sender _currentUser;
+    public MessageWindow(InMemoryBus bus)
     {
-        private readonly IBus _bus;
-        private Messages.Sender _currentUser;
-        public MessageWindow(InMemoryBus bus)
+        _bus = bus;
+        InitializeComponent();
+        quit.Clicked += () => Application.RequestStop();
+        bus.Subscribe(new AdHocHandler<Messages.Greeting>(ReceiveGreetings));
+        bus.Subscribe(new AdHocHandler<Messages.Farewell>(ReceiveFarewells));
+        sendGreeting.Clicked += SendGreetings;
+        sendFarewell.Clicked += SendFarewell;
+        editMeMenuItem1.Action = () => { _currentUser = new Messages.Sender { Name = "Alice" }; senderName.Text = _currentUser.Name; };
+        editMeMenuItem2.Action = () => { _currentUser = new Messages.Sender { Name = "Bob" }; senderName.Text = _currentUser.Name; };
+    }
+    private bool TryGetCurrentUser(out Messages.Sender user)
+    {
+        user = _currentUser;
+        if (_currentUser == null)
         {
-            _bus = bus;
-            InitializeComponent();
-            quit.Clicked += () => Application.RequestStop();
-            bus.Subscribe(new AdHocHandler<Messages.Greeting>(ReceiveGreetings));
-            bus.Subscribe(new AdHocHandler<Messages.Farewell>(ReceiveFarewells));
-            sendGreeting.Clicked += SendGreetings;
-            sendFarewell.Clicked += SendFarewell;
-            editMeMenuItem1.Action = () => { _currentUser = new Messages.Sender { Name = "Alice" }; senderName.Text = _currentUser.Name; };
-            editMeMenuItem2.Action = () => { _currentUser = new Messages.Sender { Name = "Bob" }; senderName.Text = _currentUser.Name; };
+            MessageBox.Query(55, 7, "Error", "Please login via the login menu at the top ^^^ first.", "Ok");
+            return false;
         }
-        private bool TryGetCurrentUser(out Messages.Sender user)
-        {
-            user = _currentUser;
-            if (_currentUser == null)
-            {
-                MessageBox.Query(55, 7, "Error", "Please login via the login menu at the top ^^^ first.", "Ok");
-                return false;
-            }
-            return true;
-        }
+        return true;
+    }
 
-        public void SendGreetings()
-        {   
-            //get the logged-in user
-            if(!TryGetCurrentUser(out var user)){ return;}
-            //create message with greeting data
-            var msg = new Messages.Greeting((string)msgText.Text);
-            //add sender metadata to the message
-            msg.WriteMetadatum<Messages.Sender>(user);
-            _bus.Publish(msg);
-        }
-        public void SendFarewell()
-        {
-            //get the logged-in user
-            if(!TryGetCurrentUser(out var user)){ return;}
-            //create message with Farewell data
-            var msg = new Messages.Farewell((string)msgText.Text);
-            //add sender metadata to the message
-            msg.WriteMetadatum<Messages.Sender>(user);
-            _bus.Publish(msg);
-        }
-        public void ReceiveGreetings(Messages.Greeting msg)
-        {
-            // message type
-            msgType.Text = msg.GetType().Name;
+    public void SendGreetings()
+    {   
+        //get the logged-in user
+        if(!TryGetCurrentUser(out var user)){ return;}
+        //create message with greeting data
+        var msg = new Messages.Greeting((string)msgText.Text);
+        //add sender metadata to the message
+        msg.WriteMetadatum<Messages.Sender>(user);
+        _bus.Publish(msg);
+    }
+    public void SendFarewell()
+    {
+        //get the logged-in user
+        if(!TryGetCurrentUser(out var user)){ return;}
+        //create message with Farewell data
+        var msg = new Messages.Farewell((string)msgText.Text);
+        //add sender metadata to the message
+        msg.WriteMetadatum<Messages.Sender>(user);
+        _bus.Publish(msg);
+    }
+    public void ReceiveGreetings(Messages.Greeting msg)
+    {
+        // message type
+        msgType.Text = msg.GetType().Name;
 
-            //read message data
-            msgTextReceived.Text = msg.Text;
+        //read message data
+        msgTextReceived.Text = msg.Text;
 
-            //read sender metadata
-            msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;
-        }
-        public void ReceiveFarewells(Messages.Farewell msg)
-        {
-            //message type
-            msgType.Text = msg.GetType().Name;
+        //read sender metadata
+        msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;
+    }
+    public void ReceiveFarewells(Messages.Farewell msg)
+    {
+        //message type
+        msgType.Text = msg.GetType().Name;
 
-            //read message data
-            msgTextReceived.Text = msg.Text;
+        //read message data
+        msgTextReceived.Text = msg.Text;
 
-            //read sender metadata
-            msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;
-        }
+        //read sender metadata
+        msgFrom.Text = msg.ReadMetadatum<Messages.Sender>().Name;
     }
 }
