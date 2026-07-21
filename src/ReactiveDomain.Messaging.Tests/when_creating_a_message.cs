@@ -1,5 +1,5 @@
-﻿using ReactiveDomain.Testing;
-using Xunit;
+﻿using Xunit;
+using TestMessage = ReactiveDomain.Testing.TestMessage;
 
 namespace ReactiveDomain.Messaging.Tests;
 
