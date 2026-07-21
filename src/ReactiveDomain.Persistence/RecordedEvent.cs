@@ -10,7 +10,8 @@ public class RecordedEvent(
 	byte[] metadata,
 	bool isJson,
 	DateTime created,
-	long createdEpoch)
+	long createdEpoch,
+	Position? position = null)
 	: IEventData {
 	/// <summary>The Event Stream that this event belongs to</summary>
 	public readonly string EventStreamId = eventStreamId;
@@ -44,4 +45,10 @@ public class RecordedEvent(
 	/// A long representing the milliseconds since the epoch when the was created in the system
 	/// </summary>
 	public readonly long CreatedEpoch = createdEpoch;
+
+	/// <summary>
+	/// The event's position in the global <c>$all</c> stream (commit/prepare), when the backend supplies it.
+	/// Null when unavailable — e.g. a stream read against a store that does not report the $all position.
+	/// </summary>
+	public readonly Position? Position = position;
 }

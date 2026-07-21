@@ -11,7 +11,8 @@ public class ProjectedEvent(
 	byte[] metadata,
 	bool isJson,
 	DateTime created,
-	long createdEpoch)
+	long createdEpoch,
+	Position? position = null)
 	: RecordedEvent(eventStreamId,
 		eventId,
 		eventNumber,
@@ -20,7 +21,8 @@ public class ProjectedEvent(
 		metadata,
 		isJson,
 		created,
-		createdEpoch) {
+		createdEpoch,
+		position) {
 	public string ProjectedStream = projectedStream;
 	public long OriginalEventNumber = originalEventNumber;
 }
