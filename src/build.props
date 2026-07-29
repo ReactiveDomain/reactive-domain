@@ -1,59 +1,59 @@
 <Project>
-  <PropertyGroup>
-    <BuildPropsImported>true</BuildPropsImported>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <Nullable>enable</Nullable>
-	  <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
-    <IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
-    <DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
-    <DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PackageVersionPrefix>0.16.0</PackageVersionPrefix>
-    <PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
-    <PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
-    <NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
-  </PropertyGroup>
-  <PropertyGroup>
-    <Prefer32Bit>false</Prefer32Bit>
-    <Platforms>AnyCPU</Platforms>
-    <Authors>Reactive Domain Group</Authors>
-    <Copyright>Copyright © 2026 Reactive Domain Group</Copyright>
-    <Description />
-    <AssemblyVersion>0.16.0</AssemblyVersion>
-    <FileVersion>0.16.0</FileVersion>
-    <NeutralLanguage />
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup>
-    <NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
-  </PropertyGroup>
-  <Choose>
-    <When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
-      <PropertyGroup>
-        <HomeDirectory>$(HOME)</HomeDirectory>
-      </PropertyGroup>
-    </When>
-    <When Condition=" $(OS) == 'WINDOWS_NT'">
-      <PropertyGroup>
-        <HomeDirectory>$(USERPROFILE)</HomeDirectory>
-      </PropertyGroup>
-    </When>
-  </Choose>
-  <PropertyGroup>
-    <LibTargetFrameworks>net8.0;net10.0</LibTargetFrameworks>
-    <TestTargetFrameworks>net8.0;net10.0</TestTargetFrameworks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<BuildPropsImported>true</BuildPropsImported>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+	<PropertyGroup>
+		<IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
+		<IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
+		<DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
+		<DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
+	</PropertyGroup>
+	<PropertyGroup>
+		<PackageVersionPrefix>0.17.0</PackageVersionPrefix>
+		<PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
+		<PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
+		<NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
+	</PropertyGroup>
+	<PropertyGroup>
+		<Prefer32Bit>false</Prefer32Bit>
+		<Platforms>AnyCPU</Platforms>
+		<Authors>Reactive Domain Group</Authors>
+		<Copyright>Copyright © 2026 Reactive Domain Group</Copyright>
+		<Description />
+		<AssemblyVersion>0.17.0</AssemblyVersion>
+		<FileVersion>0.17.0</FileVersion>
+		<NeutralLanguage />
+		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup>
+		<OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
+	</PropertyGroup>
+	<PropertyGroup>
+		<RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
+	</PropertyGroup>
+	<Choose>
+		<When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
+			<PropertyGroup>
+				<HomeDirectory>$(HOME)</HomeDirectory>
+			</PropertyGroup>
+		</When>
+		<When Condition=" $(OS) == 'WINDOWS_NT'">
+			<PropertyGroup>
+				<HomeDirectory>$(USERPROFILE)</HomeDirectory>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<PropertyGroup>
+		<LibTargetFrameworks>net8.0;net10.0</LibTargetFrameworks>
+		<TestTargetFrameworks>net8.0;net10.0</TestTargetFrameworks>
+	</PropertyGroup>
 </Project>
