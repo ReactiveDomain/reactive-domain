@@ -34,8 +34,13 @@ public interface IEventSource {
 	void UpdateWithEvents(IEnumerable<object> events, long expectedVersion);
 
 	/// <summary>
-	/// Takes the recorded history of events from this instance (CQS violation, beware).
+	/// Takes the recorded history of events from this instance (CQRS violation, beware).
 	/// </summary>
 	/// <returns>The recorded events.</returns>
 	object[] TakeEvents();
+
+	/// <summary>
+	/// Indicates whether this instance has any recorded events.
+	/// </summary>
+	bool HasRecordedEvents { get; }
 }
