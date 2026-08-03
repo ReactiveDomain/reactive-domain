@@ -38,6 +38,12 @@ public abstract class QueuedSubscriber : IDisposable {
 	/// The number of handlers (including none) will not impact the version. Duplicate messages
 	/// dropped by an idempotent subscriber are never dequeued and so do not advance it.
 	/// This can be used to ensure subscriber state for tests.
+	/// <para>Dequeues are counted per <em>registration</em>, not per published message. Each
+	/// <c>Subscribe</c> call adds its own external-bus registration and the bus dispatches to
+	/// every registration a message matches, so a subscriber registered for both a base type and
+	/// a derived one enqueues — and so advances — twice for one derived message, and each of its
+	/// handlers runs once per enqueue. Overlapping registrations on one subscriber are therefore
+	/// not the shape to reach for; register each type once.</para>
 	/// </summary>
 	public int Version { get; private set; }
 
