@@ -48,7 +48,9 @@ public class TestCommandBusFixture :
 
 	public TestCommandBusFixture() {
 		StandardTimeout = TimeSpan.FromSeconds(0.2);
-		Bus = new Dispatcher(nameof(TestCommandBusFixture), 3, false, StandardTimeout, StandardTimeout);
+		// slow_commands_should_return_timeout depends on the response timeout staying this short.
+		Bus = new Dispatcher(nameof(TestCommandBusFixture), 3, false,
+			defaultAckTimeout: StandardTimeout, defaultResponseTimeout: StandardTimeout);
 
 		Bus.Subscribe<TestCommands.AckedCommand>(this);
 		Bus.Subscribe<TestCommands.Command1>(this);

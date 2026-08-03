@@ -12,8 +12,10 @@ public class RemoteBusFixture : IDisposable {
 
 	public RemoteBusFixture() {
 		StandardTimeout = TimeSpan.FromMilliseconds(200);
-		LocalBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false, StandardTimeout, StandardTimeout);
-		RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false, StandardTimeout, StandardTimeout);
+		LocalBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false,
+			defaultAckTimeout: StandardTimeout, defaultResponseTimeout: StandardTimeout);
+		RemoteBus = new Dispatcher(nameof(TestCommandBusFixture), 1, false,
+			defaultAckTimeout: StandardTimeout, defaultResponseTimeout: StandardTimeout);
 
 		LocalBus.SubscribeToAll(new AdHocHandler<IMessage>(_ => Interlocked.Increment(ref LocalMsgCount)));
 		RemoteBus.SubscribeToAll(new AdHocHandler<IMessage>(_ => Interlocked.Increment(ref RemoteMsgCount)));

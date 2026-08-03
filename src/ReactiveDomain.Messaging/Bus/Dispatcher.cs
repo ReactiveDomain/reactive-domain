@@ -10,16 +10,55 @@ public class Dispatcher : IDispatcher {
 	private readonly InMemoryBus _bus;
 	private bool _disposed;
 	public bool Idle => _queuedPublisher.Idle;
+
+	/// <inheritdoc cref="CommandManager.AckTimeout"/>
+	public TimeSpan AckTimeout {
+		get => _queuedPublisher.AckTimeout;
+		set => _queuedPublisher.AckTimeout = value;
+	}
+
+	/// <inheritdoc cref="CommandManager.ResponseTimeout"/>
+	public TimeSpan ResponseTimeout {
+		get => _queuedPublisher.ResponseTimeout;
+		set => _queuedPublisher.ResponseTimeout = value;
+	}
+
+	/// <inheritdoc cref="CommandManager.SlowCommandThreshold"/>
+	public TimeSpan SlowCommandThreshold {
+		get => _queuedPublisher.SlowCommandThreshold;
+		set => _queuedPublisher.SlowCommandThreshold = value;
+	}
+	/// <summary>
+	/// Creates a dispatcher over a bus named <paramref name="name"/>, sending commands with the default
+	/// timeouts supplied here.
+	/// </summary>
+	/// <param name="name">The name of the underlying bus.</param>
+	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
+	/// <param name="watchSlowMsg">Log messages that take longer than <paramref name="slowMsgThreshold"/>.</param>
+	/// <param name="slowMsgThreshold">Diagnostic only: a message that takes longer than this to handle is
+	/// logged as slow. It is not a timeout and has no bearing on when a command fails — set
+	/// <paramref name="defaultAckTimeout"/> for that.</param>
+	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
+	/// as slow. It is not a timeout and has no bearing on when a command fails — set
+	/// <paramref name="defaultResponseTimeout"/> for that.</param>
+	/// <param name="defaultAckTimeout">The ack timeout for every command this dispatcher sends without
+	/// an explicit one. Resolution is per-send, then this, then
+	/// <see cref="CommandManager.DefaultAckTimeout"/>.</param>
+	/// <param name="defaultResponseTimeout">The response timeout for every command this dispatcher sends
+	/// without an explicit one — including sends nested inside a handler, which have no send site to pass
+	/// a timeout from. Resolution is per-send, then this, then
+	/// <see cref="CommandManager.DefaultResponseTimeout"/>.</param>
 	public Dispatcher(
 		string name,
 		uint queueCount = 0,
 		bool watchSlowMsg = false,
 		TimeSpan? slowMsgThreshold = null,
-		TimeSpan? slowCmdThreshold = null) {
-		var slowMsgThreshold1 = slowMsgThreshold ?? TimeSpan.FromMilliseconds(100);
-		var slowCmdThreshold1 = slowCmdThreshold ?? TimeSpan.FromMilliseconds(500);
+		TimeSpan? slowCmdThreshold = null,
+		TimeSpan? defaultAckTimeout = null,
+		TimeSpan? defaultResponseTimeout = null) {
 		_bus = new InMemoryBus(name, watchSlowMsg, slowMsgThreshold);
-		_queuedPublisher = new MultiQueuedPublisher(_bus, queueCount, slowMsgThreshold1, slowCmdThreshold1);
+		_queuedPublisher = new MultiQueuedPublisher(
+			_bus, queueCount, slowMsgThreshold, slowCmdThreshold, defaultAckTimeout, defaultResponseTimeout);
 		_handleWrappers = new Dictionary<Type, object>();
 	}
 
