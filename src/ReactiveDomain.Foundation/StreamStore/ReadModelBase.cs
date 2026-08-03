@@ -67,11 +67,17 @@ public abstract class ReadModelBase :
 	/// <c>Start…(); await rm.IsLive;</c> rather than caching the task across starts.</para>
 	/// <para>The task faults if a start path throws before its listener is attached, and is cancelled
 	/// if the model is disposed with streams still outstanding, so an awaiting caller is never left
-	/// on a stream that can no longer drain. A subscription dropped before it goes live raises no
-	/// live marker; that case is bounded by the caller's own timeout. Ordering relies on the listener
+	/// on a stream that can no longer drain. Ordering relies on the listener
 	/// publishing the live marker behind the events it follows, which is what
 	/// <see cref="StreamListener"/> does; a listener that buffers events after receipt (see
 	/// <see cref="QueuedStreamListener"/>) can raise the marker early and is not used here.</para>
+	/// <para><b>Out of scope — subscription lifecycle.</b> This task answers one question: has the
+	/// read phase completed and handed over to the live subscription. What happens to that
+	/// subscription afterwards is a separate concern and is deliberately not folded in here. A
+	/// subscription that drops is today neither reported nor retried
+	/// (<a href="https://github.com/ReactiveDomain/reactive-domain/issues/267">#267</a>: reconnect
+	/// from the listener's position, and throw if the reconnect fails). Do not read this task as a
+	/// health signal — it says the model went live, not that it still is.</para>
 	/// <para><b>Scope:</b> a stream's history is bounded by its own live transition. Events committed
 	/// after a subscription goes live are still delivered, but they are not part of this task — a
 	/// barrier over those is <see cref="CatchUpConnection.WaitForCatchUp"/>.</para>
