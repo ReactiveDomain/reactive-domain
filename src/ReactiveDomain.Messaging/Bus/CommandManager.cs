@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using ReactiveDomain.Logging;
 
 namespace ReactiveDomain.Messaging.Bus;
@@ -10,16 +10,31 @@ public class CommandManager :
 	IHandle<AckTimeout>,
 	IHandle<CompletionTimeout> {
 	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
-	private static readonly TimeSpan _defaultAckTimeout = TimeSpan.FromMilliseconds(100);
 
 	/// <summary>
-	/// The response timeout applied to a command that neither the send site nor the owning bus
-	/// configured. This is the value the manager has always used; it remains the fallback when
-	/// no <c>defaultResponseTimeout</c> is supplied at construction.
+	/// How long a command waits for a handler to acknowledge it before it fails with
+	/// <see cref="CommandNotHandledException"/>, when neither the send site nor the owning bus supplied
+	/// a value. This is a timeout: exceeding it fails the command.
+	/// </summary>
+	public static readonly TimeSpan DefaultAckTimeout = TimeSpan.FromMilliseconds(100);
+
+	/// <summary>
+	/// How long a command waits for its handler to complete before it fails with
+	/// <see cref="CommandTimedOutException"/>, when neither the send site nor the owning bus supplied
+	/// a value. This is a timeout: exceeding it fails the command.
 	/// </summary>
 	public static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(500);
 
+	/// <summary>
+	/// How long a command may take before its completion is logged as slow, when the owning bus supplied
+	/// no value. This is a diagnostic threshold: exceeding it logs, and nothing else. It never fails,
+	/// cancels or delays a command — <see cref="DefaultResponseTimeout"/> is what does that.
+	/// </summary>
+	public static readonly TimeSpan DefaultSlowCommandThreshold = TimeSpan.FromMilliseconds(500);
+
+	private readonly TimeSpan _defaultAckTimeout;
 	private readonly TimeSpan _defaultResponseTimeout;
+	private readonly TimeSpan _slowCmdThreshold;
 	private readonly IBus _outBus;
 	private readonly IBus _timeoutBus;
 	private readonly ConcurrentDictionary<Guid, CommandTracker> _pendingCommands;
@@ -27,23 +42,43 @@ public class CommandManager :
 
 	/// <param name="bus">The bus commands and responses are published on.</param>
 	/// <param name="timeoutBus">The bus timeout messages are scheduled on.</param>
-	/// <param name="defaultResponseTimeout">The response timeout used for commands registered
-	/// without an explicit one. Defaults to <see cref="DefaultResponseTimeout"/> when unset,
-	/// which is the historical behavior. Must be greater than zero when supplied.</param>
-	public CommandManager(IBus bus, IBus timeoutBus, TimeSpan? defaultResponseTimeout = null) : base(bus) {
-		if (defaultResponseTimeout is { } configured && configured <= TimeSpan.Zero) {
-			throw new ArgumentOutOfRangeException(
-				nameof(defaultResponseTimeout),
-				configured,
-				"The default response timeout must be greater than zero.");
-		}
+	/// <param name="defaultAckTimeout">The ack timeout for commands registered without an explicit one.
+	/// Defaults to <see cref="DefaultAckTimeout"/>. Must be greater than zero when supplied.</param>
+	/// <param name="defaultResponseTimeout">The response timeout for commands registered without an
+	/// explicit one. Defaults to <see cref="DefaultResponseTimeout"/>. Must be greater than zero when
+	/// supplied.</param>
+	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
+	/// as slow. It has no bearing on when a command times out. Defaults to
+	/// <see cref="DefaultSlowCommandThreshold"/>. Must be greater than zero when supplied.</param>
+	public CommandManager(
+		IBus bus,
+		IBus timeoutBus,
+		TimeSpan? defaultAckTimeout = null,
+		TimeSpan? defaultResponseTimeout = null,
+		TimeSpan? slowCmdThreshold = null) : base(bus) {
+		EnsurePositive(defaultAckTimeout, nameof(defaultAckTimeout));
+		EnsurePositive(defaultResponseTimeout, nameof(defaultResponseTimeout));
+		EnsurePositive(slowCmdThreshold, nameof(slowCmdThreshold));
+		_defaultAckTimeout = defaultAckTimeout ?? DefaultAckTimeout;
 		_defaultResponseTimeout = defaultResponseTimeout ?? DefaultResponseTimeout;
+		_slowCmdThreshold = slowCmdThreshold ?? DefaultSlowCommandThreshold;
 		_outBus = bus;
 		_timeoutBus = timeoutBus;
 		_pendingCommands = new ConcurrentDictionary<Guid, CommandTracker>();
 		Subscribe<CommandResponse>(this);
 		Subscribe<AckCommand>(this);
 	}
+
+	/// <summary>
+	/// Rejects a non-positive timeout or threshold at construction, rather than letting it silently
+	/// expire every command it is given.
+	/// </summary>
+	internal static void EnsurePositive(TimeSpan? value, string paramName) {
+		if (value is { } supplied && supplied <= TimeSpan.Zero) {
+			throw new ArgumentOutOfRangeException(paramName, supplied, $"{paramName} must be greater than zero.");
+		}
+	}
+
 	public TaskCompletionSource<CommandResponse> RegisterCommandAsync(
 		ICommand command,
 		TimeSpan? ackTimeout = null,
@@ -72,7 +107,8 @@ public class CommandManager :
 			},
 			ackTimeout ?? _defaultAckTimeout,
 			responseTimeout ?? _defaultResponseTimeout,
-			_timeoutBus);
+			_timeoutBus,
+			_slowCmdThreshold);
 		if (_pendingCommands.TryAdd(command.MsgId, tracker)) {
 			return tcs;
 		}

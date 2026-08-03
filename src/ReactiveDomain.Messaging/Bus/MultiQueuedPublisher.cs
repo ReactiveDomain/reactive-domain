@@ -3,44 +3,50 @@
 public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	private readonly CommandManager _manager;
 	private readonly IBus _bus;
-	private readonly TimeSpan? _slowMsgThreshold;
-	private readonly TimeSpan? _slowCmdThreshold;
-	private readonly TimeSpan? _defaultResponseTimeout;
 	private readonly MultiQueuedHandler? _publishQueue;
 	private readonly LaterService _laterService;
 	private readonly InMemoryBus _timeoutBus;
 	public bool Idle => _publishQueue?.Idle ?? true;
 	/// <param name="bus">The bus messages are published on.</param>
 	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
-	/// <param name="slowMsgThreshold">The ack timeout applied to commands sent without an explicit one.</param>
-	/// <param name="slowCmdThreshold">The response timeout applied to commands sent without an explicit
-	/// one, when <paramref name="defaultResponseTimeout"/> is unset.</param>
+	/// <param name="slowMsgThreshold">Diagnostic only: a publish-queue message that takes longer than
+	/// this is logged as slow. It is not a timeout and has no bearing on when a command fails.</param>
+	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
+	/// as slow. It is not a timeout and has no bearing on when a command fails.</param>
+	/// <param name="defaultAckTimeout">The ack timeout for commands sent without an explicit one.
+	/// Resolution is per-send, then this, then <see cref="CommandManager.DefaultAckTimeout"/>.</param>
 	/// <param name="defaultResponseTimeout">The response timeout for commands sent without an explicit
-	/// one. Takes precedence over <paramref name="slowCmdThreshold"/>, which names a diagnostic
-	/// threshold rather than a timeout policy. Unset leaves the historical behavior untouched.</param>
+	/// one — including sends nested inside a command handler, which have no send site to pass one from.
+	/// Resolution is per-send, then this, then <see cref="CommandManager.DefaultResponseTimeout"/>.</param>
 	public MultiQueuedPublisher(
 		IBus bus,
 		uint queueCount,
 		TimeSpan? slowMsgThreshold,
 		TimeSpan? slowCmdThreshold,
+		TimeSpan? defaultAckTimeout = null,
 		TimeSpan? defaultResponseTimeout = null) {
+		// Rejected before anything is allocated, so a bad argument cannot leave a running queue behind.
+		CommandManager.EnsurePositive(slowMsgThreshold, nameof(slowMsgThreshold));
+		CommandManager.EnsurePositive(slowCmdThreshold, nameof(slowCmdThreshold));
+		CommandManager.EnsurePositive(defaultAckTimeout, nameof(defaultAckTimeout));
+		CommandManager.EnsurePositive(defaultResponseTimeout, nameof(defaultResponseTimeout));
 		_bus = bus;
-		_slowMsgThreshold = slowMsgThreshold;
-		_slowCmdThreshold = slowCmdThreshold;
-		_defaultResponseTimeout = defaultResponseTimeout;
 		_timeoutBus = new InMemoryBus(nameof(_timeoutBus), false);
 		_laterService = new LaterService(_timeoutBus, TimeSource.System);
 		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		_timeoutBus.Subscribe<DelaySendEnvelope>(_laterService);
 		_laterService.Start();
 
-		_manager = new CommandManager(bus, _timeoutBus, defaultResponseTimeout);
+		_manager = new CommandManager(bus, _timeoutBus, defaultAckTimeout, defaultResponseTimeout, slowCmdThreshold);
 		_timeoutBus.Subscribe<AckTimeout>(_manager);
 		_timeoutBus.Subscribe<CompletionTimeout>(_manager);
 		if (queueCount > 0) {
 			_publishQueue = new MultiQueuedHandler(
 				(int)queueCount,
-				_ => new QueuedHandler(new AdHocHandler<IMessage>(bus.Publish), nameof(MultiQueuedPublisher)));
+				_ => new QueuedHandler(
+					new AdHocHandler<IMessage>(bus.Publish),
+					nameof(MultiQueuedPublisher),
+					slowMsgThreshold: slowMsgThreshold));
 			_publishQueue.Start();
 		}
 	}
@@ -107,10 +113,10 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 
 		TaskCompletionSource<CommandResponse>? tcs = null;
 		try {
-			tcs = _manager.RegisterCommandAsync(
-				command,
-				ackTimeout ?? _slowMsgThreshold,
-				responseTimeout ?? _defaultResponseTimeout ?? _slowCmdThreshold);
+			// A null here is the send site declining to choose; the manager resolves it against the
+			// bus default and then against RD's documented constant. No diagnostic threshold is
+			// consulted along the way.
+			tcs = _manager.RegisterCommandAsync(command, ackTimeout, responseTimeout);
 		} catch (CommandException ex) {
 			tcs?.SetResult(command.Fail(ex));
 			throw;

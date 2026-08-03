@@ -100,12 +100,14 @@ public class can_cancel_concurrent_commands :
 public class can_cancel_commands_via_cancellation_token :
 	IHandleCommand<TestTokenCancellableCmd>,
 	IHandleCommand<TestTokenCancellableLongRunningCmd> {
+	// 2.5s was passed as slowMsgThreshold/slowCmdThreshold back when those doubled as the ack and
+	// response timeouts; the handler deliberately blocks, so it was always a timeout.
 	private readonly Dispatcher _bus = new(
 		nameof(can_cancel_nested_commands_via_cancellation_token),
 		3,
 		false,
-		TimeSpan.FromSeconds(2.5),
-		TimeSpan.FromSeconds(2.5));
+		defaultAckTimeout: TimeSpan.FromSeconds(2.5),
+		defaultResponseTimeout: TimeSpan.FromSeconds(2.5));
 
 	private long _canceled;
 	private long _success;
@@ -167,8 +169,8 @@ public class can_cancel_nested_commands_via_cancellation_token :
 			nameof(can_cancel_nested_commands_via_cancellation_token),
 			3,
 			false,
-			TimeSpan.FromSeconds(2.5),
-			TimeSpan.FromSeconds(2.5));
+			defaultAckTimeout: TimeSpan.FromSeconds(2.5),
+			defaultResponseTimeout: TimeSpan.FromSeconds(2.5));
 		Given();
 	}
 
