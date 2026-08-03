@@ -126,6 +126,8 @@ public class StreamStoreRepository : IRepository {
 	}
 
 	public void Save(IEventSource aggregate) {
+		if (!aggregate.HasRecordedEvents)
+			return;
 		var commitHeaders = new Dictionary<string, object>
 		{
 			{CommitIdHeader, Guid.NewGuid() /*commitId*/},

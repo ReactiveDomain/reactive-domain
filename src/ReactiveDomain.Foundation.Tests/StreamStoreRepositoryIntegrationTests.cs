@@ -88,7 +88,6 @@ public class StreamStoreRepositoryIntegrationTests {
 
 		var agg2 = _repo.GetById<TestWoftamAggregate>(savedId);
 		Assert.Equal(200, agg2.AppliedEventCount);
-
 	}
 
 	[Fact]
@@ -106,6 +105,16 @@ public class StreamStoreRepositoryIntegrationTests {
 		_repo.Save(aggregateToSave);
 
 		Assert.Empty(((IEventSource)aggregateToSave).TakeEvents());
+	}
+
+	[Fact]
+	public void SaveWithNoEventsProducesNoAppliedEvents() {
+		var savedId = SaveTestAggregateWithoutCustomHeaders(_repo, 0 /* excludes TestAggregateCreated */);
+
+		var agg = _repo.GetById<TestWoftamAggregate>(savedId);
+		_repo.Save(agg);
+
+		Assert.Equal(0, agg.AppliedEventCount);
 	}
 
 	[Fact]
