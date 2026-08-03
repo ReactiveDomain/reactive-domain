@@ -134,6 +134,25 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 			}
 		}
 	}
+	/// <summary>
+	/// The message types this bus has handlers registered for: one entry per distinct <c>T</c>
+	/// passed to <see cref="Subscribe{T}"/> or <see cref="SubscribeToAll"/>, not the derived types
+	/// a registration also fans out to (those share the registration's declared
+	/// <see cref="IMessageHandler.MessageType"/>). Each read returns a fresh snapshot, so the
+	/// registry itself is only ever changed by subscribing and unsubscribing.
+	/// </summary>
+	public IReadOnlyCollection<Type> RegisteredMessageTypes {
+		get {
+			lock (_handlers) {
+				return _handlers.Values
+					.SelectMany(handlers => handlers)
+					.Select(handler => handler.MessageType)
+					.Distinct()
+					.ToArray();
+			}
+		}
+	}
+
 	public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage {
 		return HasSubscriberFor(typeof(T), includeDerived);
 	}
