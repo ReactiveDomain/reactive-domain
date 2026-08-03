@@ -24,6 +24,23 @@ public abstract class QueuedSubscriber : IDisposable {
 	/// </remarks>
 	public IReadOnlyCollection<Type> RegisteredMessageTypes => _internalBus.RegisteredMessageTypes;
 
+	/// <summary>
+	/// ReaderLock locks the message handlers and can be used when reading the subscriber's state
+	/// to ensure that state is unchanged during the read.
+	/// The lock should *not* be used in Handle methods as they are inside the lock already by default.
+	/// </summary>
+	protected readonly object ReaderLock = new();
+
+	/// <summary>
+	/// The version is equal to the number of messages dequeued to this subscriber.
+	/// The version is incremented after all handlers have been processed, inside the
+	/// <see cref="ReaderLock"/>, so a reader holding the lock always sees state and version agree.
+	/// The number of handlers (including none) will not impact the version. Duplicate messages
+	/// dropped by an idempotent subscriber are never dequeued and so do not advance it.
+	/// This can be used to ensure subscriber state for tests.
+	/// </summary>
+	public int Version { get; private set; }
+
 	protected QueuedSubscriber(IBus bus, bool idempotent = false) {
 		_externalBus = bus ?? throw new ArgumentNullException(nameof(bus));
 		_internalBus = new InMemoryBus("SubscriptionBus");
@@ -31,14 +48,26 @@ public abstract class QueuedSubscriber : IDisposable {
 		if (idempotent)
 			_messageQueue = new QueuedHandler(
 				new IdempotentHandler<IMessage>(
-					new AdHocHandler<IMessage>(_internalBus.Publish)
+					new AdHocHandler<IMessage>(DequeueMessage)
 				),
 				"SubscriptionQueue");
 		else
 			_messageQueue = new QueuedHandler(
-				new AdHocHandler<IMessage>(_internalBus.Publish),
+				new AdHocHandler<IMessage>(DequeueMessage),
 				"SubscriptionQueue");
 		_messageQueue.Start();
+	}
+
+	/// <summary>
+	/// Every message handled by the subscriber passes through here. Dispatch order is the queue's,
+	/// unchanged — the lock only excludes readers and, through the single queue thread, is
+	/// uncontended on the dispatch path.
+	/// </summary>
+	private void DequeueMessage(IMessage message) {
+		lock (ReaderLock) {
+			_internalBus.Publish(message);
+			Version++;
+		}
 	}
 
 	public IDisposable Subscribe<T>(IHandle<T> handler) where T : class, IMessage {
