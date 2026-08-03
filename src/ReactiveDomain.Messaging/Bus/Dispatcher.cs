@@ -10,16 +10,28 @@ public class Dispatcher : IDispatcher {
 	private readonly InMemoryBus _bus;
 	private bool _disposed;
 	public bool Idle => _queuedPublisher.Idle;
+	/// <param name="name">The name of the underlying bus.</param>
+	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
+	/// <param name="watchSlowMsg">Log messages that take longer than <paramref name="slowMsgThreshold"/>.</param>
+	/// <param name="slowMsgThreshold">The ack timeout applied to commands sent without an explicit one.</param>
+	/// <param name="slowCmdThreshold">The response timeout applied to commands sent without an explicit
+	/// one, when <paramref name="defaultResponseTimeout"/> is unset.</param>
+	/// <param name="defaultResponseTimeout">The default response timeout for every command this
+	/// dispatcher sends without one — including sends nested inside a handler, which have no send site
+	/// to pass a timeout from. Takes precedence over <paramref name="slowCmdThreshold"/>. Unset leaves
+	/// the historical behavior untouched.</param>
 	public Dispatcher(
 		string name,
 		uint queueCount = 0,
 		bool watchSlowMsg = false,
 		TimeSpan? slowMsgThreshold = null,
-		TimeSpan? slowCmdThreshold = null) {
+		TimeSpan? slowCmdThreshold = null,
+		TimeSpan? defaultResponseTimeout = null) {
 		var slowMsgThreshold1 = slowMsgThreshold ?? TimeSpan.FromMilliseconds(100);
 		var slowCmdThreshold1 = slowCmdThreshold ?? TimeSpan.FromMilliseconds(500);
 		_bus = new InMemoryBus(name, watchSlowMsg, slowMsgThreshold);
-		_queuedPublisher = new MultiQueuedPublisher(_bus, queueCount, slowMsgThreshold1, slowCmdThreshold1);
+		_queuedPublisher = new MultiQueuedPublisher(
+			_bus, queueCount, slowMsgThreshold1, slowCmdThreshold1, defaultResponseTimeout);
 		_handleWrappers = new Dictionary<Type, object>();
 	}
 

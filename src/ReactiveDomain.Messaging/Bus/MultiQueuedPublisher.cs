@@ -5,25 +5,36 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	private readonly IBus _bus;
 	private readonly TimeSpan? _slowMsgThreshold;
 	private readonly TimeSpan? _slowCmdThreshold;
+	private readonly TimeSpan? _defaultResponseTimeout;
 	private readonly MultiQueuedHandler? _publishQueue;
 	private readonly LaterService _laterService;
 	private readonly InMemoryBus _timeoutBus;
 	public bool Idle => _publishQueue?.Idle ?? true;
+	/// <param name="bus">The bus messages are published on.</param>
+	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
+	/// <param name="slowMsgThreshold">The ack timeout applied to commands sent without an explicit one.</param>
+	/// <param name="slowCmdThreshold">The response timeout applied to commands sent without an explicit
+	/// one, when <paramref name="defaultResponseTimeout"/> is unset.</param>
+	/// <param name="defaultResponseTimeout">The response timeout for commands sent without an explicit
+	/// one. Takes precedence over <paramref name="slowCmdThreshold"/>, which names a diagnostic
+	/// threshold rather than a timeout policy. Unset leaves the historical behavior untouched.</param>
 	public MultiQueuedPublisher(
 		IBus bus,
 		uint queueCount,
 		TimeSpan? slowMsgThreshold,
-		TimeSpan? slowCmdThreshold) {
+		TimeSpan? slowCmdThreshold,
+		TimeSpan? defaultResponseTimeout = null) {
 		_bus = bus;
 		_slowMsgThreshold = slowMsgThreshold;
 		_slowCmdThreshold = slowCmdThreshold;
+		_defaultResponseTimeout = defaultResponseTimeout;
 		_timeoutBus = new InMemoryBus(nameof(_timeoutBus), false);
 		_laterService = new LaterService(_timeoutBus, TimeSource.System);
 		// ReSharper disable once RedundantTypeArgumentsOfMethod
 		_timeoutBus.Subscribe<DelaySendEnvelope>(_laterService);
 		_laterService.Start();
 
-		_manager = new CommandManager(bus, _timeoutBus);
+		_manager = new CommandManager(bus, _timeoutBus, defaultResponseTimeout);
 		_timeoutBus.Subscribe<AckTimeout>(_manager);
 		_timeoutBus.Subscribe<CompletionTimeout>(_manager);
 		if (queueCount > 0) {
@@ -99,7 +110,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			tcs = _manager.RegisterCommandAsync(
 				command,
 				ackTimeout ?? _slowMsgThreshold,
-				responseTimeout ?? _slowCmdThreshold);
+				responseTimeout ?? _defaultResponseTimeout ?? _slowCmdThreshold);
 		} catch (CommandException ex) {
 			tcs?.SetResult(command.Fail(ex));
 			throw;

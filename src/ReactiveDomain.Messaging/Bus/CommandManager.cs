@@ -11,13 +11,33 @@ public class CommandManager :
 	IHandle<CompletionTimeout> {
 	private static readonly ILogger _log = LogManager.GetLogger("ReactiveDomain");
 	private static readonly TimeSpan _defaultAckTimeout = TimeSpan.FromMilliseconds(100);
-	private static readonly TimeSpan _defaultResponseTimeout = TimeSpan.FromMilliseconds(500);
+
+	/// <summary>
+	/// The response timeout applied to a command that neither the send site nor the owning bus
+	/// configured. This is the value the manager has always used; it remains the fallback when
+	/// no <c>defaultResponseTimeout</c> is supplied at construction.
+	/// </summary>
+	public static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(500);
+
+	private readonly TimeSpan _defaultResponseTimeout;
 	private readonly IBus _outBus;
 	private readonly IBus _timeoutBus;
 	private readonly ConcurrentDictionary<Guid, CommandTracker> _pendingCommands;
 	private bool _disposed;
 
-	public CommandManager(IBus bus, IBus timeoutBus) : base(bus) {
+	/// <param name="bus">The bus commands and responses are published on.</param>
+	/// <param name="timeoutBus">The bus timeout messages are scheduled on.</param>
+	/// <param name="defaultResponseTimeout">The response timeout used for commands registered
+	/// without an explicit one. Defaults to <see cref="DefaultResponseTimeout"/> when unset,
+	/// which is the historical behavior. Must be greater than zero when supplied.</param>
+	public CommandManager(IBus bus, IBus timeoutBus, TimeSpan? defaultResponseTimeout = null) : base(bus) {
+		if (defaultResponseTimeout is { } configured && configured <= TimeSpan.Zero) {
+			throw new ArgumentOutOfRangeException(
+				nameof(defaultResponseTimeout),
+				configured,
+				"The default response timeout must be greater than zero.");
+		}
+		_defaultResponseTimeout = defaultResponseTimeout ?? DefaultResponseTimeout;
 		_outBus = bus;
 		_timeoutBus = timeoutBus;
 		_pendingCommands = new ConcurrentDictionary<Guid, CommandTracker>();
