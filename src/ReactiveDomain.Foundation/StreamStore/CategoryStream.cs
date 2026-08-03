@@ -49,7 +49,9 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 	private IStreamReader? _reader;
 	private IListener? _listener;
 	private IDisposable? _listenerSubscription;
-	private int _started;
+	// Read and written only under _relayLock, so "attach a relay" and "start" cannot interleave: a
+	// relay is either registered before the read begins or refused.
+	private bool _started;
 	private long _lastRelayedPosition = NoPosition;
 	private long _positionAtGoLive = NoPosition;
 	private volatile bool _disposed;
@@ -63,7 +65,18 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 		Ensure.NotNull(connection, nameof(connection));
 		_connection = connection;
 		_name = $"{nameof(CategoryStream<TAggregate>)}:{typeof(TAggregate).Name}";
+		StreamName = connection.StreamNamer.GenerateForCategory(typeof(TAggregate));
 	}
+
+	/// <summary>
+	/// The category stream this reads, as the store names it.
+	/// </summary>
+	/// <remarks>A checkpoint is a stream name and a position, and this type already owns the position
+	/// (<see cref="PositionAtGoLive"/>). A consumer merging checkpoints from several sources needs the
+	/// key as well, and the stream is the only thing that knows for certain which category it read —
+	/// rebuilding the name from the connection's namer is a second derivation that nothing keeps in step
+	/// with the first.</remarks>
+	public string StreamName { get; }
 
 	/// <summary>
 	/// The category position of the last event relayed before this stream forwarded its go-live, or
@@ -91,7 +104,7 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 
 	/// <summary>
 	/// Forwards every event in this category onto <paramref name="target"/>'s own queue, for as long as
-	/// the returned subscription is held. Call before <see cref="Start"/>.
+	/// the returned subscription is held. Must be called before <see cref="Start"/>.
 	/// </summary>
 	/// <param name="target">The read model to relay to.</param>
 	/// <param name="fromPosition">
@@ -101,6 +114,8 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 	/// and the target is relayed the whole category.
 	/// </param>
 	/// <returns>A subscription; disposing it detaches this relay.</returns>
+	/// <exception cref="InvalidOperationException">The stream has already been started, so this relay
+	/// would miss the history and the go-live.</exception>
 	/// <remarks>
 	/// <para>Gating is per relay, so one read serves a restored subscriber and a from-scratch one at the
 	/// same time: <see cref="Start"/> reads from the <b>lowest</b> position any relay still needs, and the
@@ -109,9 +124,11 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 	/// costs the restored subscribers nothing but a comparison per event.</para>
 	/// <para>Gating never touches the go-live, so a consumer counting one go-live per source still counts
 	/// correctly whether it was restored or not.</para>
-	/// <para>A relay attached after <see cref="Start"/> is not an error and does not throw, but it misses
-	/// whatever has already been relayed — including the go-live, if the stream has already gone live.
-	/// See <see cref="Start"/> for why the ordering matters.</para>
+	/// <para><b>Attaching after <see cref="Start"/> throws</b>, for the same reason a second
+	/// <see cref="Start"/> does: the alternative fails silently. A late relay misses the history that has
+	/// already been read and the go-live that has already been forwarded, and since exactly one go-live
+	/// per source is what subscriber liveness counting rests on, its target would sit forever one go-live
+	/// short of live with nothing to indicate why. The rule is: attach every relay, then start.</para>
 	/// </remarks>
 	public IDisposable RelayTo(ReadModelBase target, long? fromPosition = null) {
 		Ensure.NotNull(target, nameof(target));
@@ -119,12 +136,18 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 			Ensure.Nonnegative(fromPosition.Value, nameof(fromPosition));
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
-		var relay = new Relay(this, target, fromPosition);
 		lock (_relayLock) {
-			_relays.Add(relay);
-		}
+			if (_started) {
+				throw new InvalidOperationException(
+					$"{_name} has already been started, so this relay would miss the history already read " +
+					"and the go-live already forwarded, and its target would never go live. Attach every " +
+					"relay before starting.");
+			}
 
-		return relay;
+			var relay = new Relay(this, target, fromPosition);
+			_relays.Add(relay);
+			return relay;
+		}
 	}
 
 	/// <summary>
@@ -133,18 +156,24 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 	/// </summary>
 	/// <param name="cancelWaitToken">Cancellation token passed to the live listener.</param>
 	/// <exception cref="InvalidOperationException">The stream has already been started.</exception>
-	/// <remarks>Reading does not start in the constructor, and that is the whole point of having this
-	/// method. A read model opening its own catch-up subscribes its handlers first and starts reading
+	/// <remarks><para>Reading does not start in the constructor, and that is the whole point of having
+	/// this method. A read model opening its own catch-up subscribes its handlers first and starts reading
 	/// last, all inside one constructor, so it cannot miss its own history. A shared reader cannot: its
 	/// subscribers attach from <i>their</i> constructors, which necessarily run after this one. Reading on
 	/// construction would therefore lose every event delivered before a subscriber attached — and, worse,
 	/// the go-live along with them, so a model counting streams to live would never reach its count and
 	/// never flush its cache. That failure is a race, and it gets <i>more</i> likely as the store gets
-	/// faster: the faster the read, the more reliably it wins and the more data goes missing.</remarks>
+	/// faster: the faster the read, the more reliably it wins and the more data goes missing.</para>
+	/// <para>This marks the stream started before it reads, so a <see cref="RelayTo"/> racing it is
+	/// refused rather than half-attached: a relay is either registered before the read begins or
+	/// throws.</para></remarks>
 	public void Start(CancellationToken cancelWaitToken = default) {
 		ObjectDisposedException.ThrowIf(_disposed, this);
-		if (Interlocked.Exchange(ref _started, 1) != 0)
-			throw new InvalidOperationException($"{_name} has already been started.");
+		lock (_relayLock) {
+			if (_started)
+				throw new InvalidOperationException($"{_name} has already been started.");
+			_started = true;
+		}
 
 		var checkpoint = LowestPositionNeeded();
 		Log.Debug($"{_name} starting catch-up from checkpoint {(checkpoint?.ToString() ?? "start of stream")} " +
@@ -172,11 +201,13 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 
 	/// <summary>
 	/// Runs <see cref="Start"/> on a task pool thread. Call once, <b>after</b> every
-	/// <see cref="RelayTo"/>; see <see cref="Start"/> for why that ordering is not optional.
+	/// <see cref="RelayTo"/>; a relay attached after this throws, and <see cref="Start"/> says why.
 	/// </summary>
 	/// <param name="cancelWaitToken">Cancellation token passed to the live listener.</param>
 	/// <returns>A task that completes when the catch-up read has finished and the live listener has been
 	/// started. It does not signal that the stream has gone live.</returns>
+	/// <exception cref="InvalidOperationException">The stream has already been started. Thrown from the
+	/// returned task.</exception>
 	public Task StartAsync(CancellationToken cancelWaitToken = default) =>
 		Task.Run(() => Start(cancelWaitToken), cancelWaitToken);
 

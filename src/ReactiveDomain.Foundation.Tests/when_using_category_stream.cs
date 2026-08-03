@@ -173,8 +173,14 @@ public sealed class when_using_category_stream : IClassFixture<StreamStoreConnec
 		Assert.Null(source.PositionAtGoLive);
 	}
 
+	/// <summary>
+	/// The ordering rule is enforced, not merely documented, because getting it wrong fails silently:
+	/// a late relay misses the history already read and the go-live already forwarded, and a subscriber
+	/// whose liveness is counted one go-live per source would then never go live, with nothing to say
+	/// why. The throw is what turns that into a loud failure at the call site.
+	/// </summary>
 	[Fact]
-	public void a_relay_attached_after_start_misses_the_history_and_the_go_live() {
+	public void a_relay_attached_after_start_throws_rather_than_miss_the_history_and_the_go_live() {
 		AppendEvents(3);
 		var early = NewSubscriber();
 		var source = NewStream();
@@ -182,17 +188,26 @@ public sealed class when_using_category_stream : IClassFixture<StreamStoreConnec
 		source.Start();
 		WaitForGoLive(early);
 
-		// Attaching late does not throw — and this is exactly what it costs, which is why the rule is
-		// "attach every relay, then start".
 		var late = NewSubscriber();
-		source.RelayTo(late);
-		AppendEvents(2, firstValue: 100);
+		var thrown = Assert.Throws<InvalidOperationException>(() => source.RelayTo(late));
 
-		AssertEx.IsOrBecomesTrue(() => late.Received.Length == 2 && early.Received.Length == 5,
-			TestTimeouts.ThrottleWaitFor);
-		Assert.Equal([100, 101], late.Received);
-		Assert.Equal(0, late.GoLives);
+		// The message has to name the consequence, or the caller learns only that it is not allowed.
+		Assert.Contains("history", thrown.Message, StringComparison.OrdinalIgnoreCase);
+		Assert.Contains("go-live", thrown.Message, StringComparison.OrdinalIgnoreCase);
+
+		// Refused outright, not half-attached: the live phase reaches the early subscriber and nothing
+		// reaches the late one — the delivery the old behavior gave it is gone along with the silence.
+		AppendEvents(2, firstValue: 100);
+		AssertEx.IsOrBecomesTrue(() => early.Received.Length == 5, TestTimeouts.ThrottleWaitFor);
 		Assert.Equal([0, 1, 2, 100, 101], early.Received);
+		Assert.Empty(late.Received);
+		Assert.Equal(0, late.GoLives);
+	}
+
+	[Fact]
+	public void the_stream_names_the_category_it_reads() {
+		// The key half of the checkpoint a consumer stores alongside PositionAtGoLive.
+		Assert.Equal(_categoryStream, NewStream().StreamName);
 	}
 
 	[Fact]
