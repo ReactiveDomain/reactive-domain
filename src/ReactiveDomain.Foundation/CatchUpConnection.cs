@@ -7,10 +7,18 @@ namespace ReactiveDomain.Foundation;
 /// have consumed everything committed to their streams" barrier. Listeners handed out by
 /// <see cref="GetListener"/> are tracked; <see cref="WaitForCatchUp"/> blocks until every tracked
 /// listener has delivered through its stream's current end and every supplied read model is idle
-/// with an empty queue. Replaces heuristic waits (count-stability windows, version guessing, bare
-/// IsLive) whose failure mode is false completion under scheduler lag. Useful in production
-/// seeding and export paths as well as tests.
+/// with an empty queue. Replaces heuristic waits (count-stability windows, version guessing) whose
+/// failure mode is false completion under scheduler lag. Useful in production seeding and export
+/// paths as well as tests.
 /// </summary>
+/// <remarks>
+/// This extends <see cref="ReadModelBase.IsLive"/> rather than compensating for it.
+/// <c>IsLive</c> is the hydration barrier — it completes only once every started stream has
+/// dispatched its history through the model's handlers — but it is bounded by each subscription's
+/// live transition. Events committed <i>after</i> a stream goes live, which is the case seeding and
+/// export paths care about, are outside it; those are what the tracked listener positions and the
+/// read-model queue check below cover.
+/// </remarks>
 public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfiguredConnection {
 	private readonly List<TrackedStreamListener> _tracked = [];
 
@@ -56,16 +64,23 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 	public void WaitForCatchUp(TimeSpan timeout, params ReadModelBase[] readModels) {
 		var deadline = DateTime.UtcNow + timeout;
 
-		// Bound the IsLive wait: an unbounded wait here has hung CI for hours.
+		// Hydration is a single wait, not a poll: ReadModelBase.IsLive completes only once every
+		// started stream has dispatched its history through the model's handlers. Bounded — an
+		// unbounded wait here has hung CI for hours.
 		var isLive = Task.WhenAll(readModels.Select(rm => rm.IsLive).ToArray());
 		try {
 			if (!isLive.Wait(timeout)) {
 				throw new TimeoutException($"Read models did not go live within {timeout}.");
 			}
 		} catch (AggregateException ex) {
-			throw new TimeoutException("A read model faulted before going live.", ex);
+			// IsLive faults when a start path threw and cancels when the model was disposed with
+			// streams outstanding. Neither can complete later, so do not fall through to polling.
+			throw new TimeoutException("A read model faulted or was disposed before going live.", ex);
 		}
 
+		// What remains is the residue IsLive does not span: events committed after a subscription
+		// went live, and listeners started outside any read model. Those have no in-band completion
+		// marker, so this part stays a poll.
 		while (true) {
 			var laggards = ListLaggards(readModels);
 			if (laggards.Count == 0) { return; }

@@ -63,8 +63,9 @@ public sealed class when_using_read_model_base_with_reader :
 		AppendEvents(1, _conn, s1, 7);
 		StartAsync<TestAggregate>(aggId);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 1, TestTimeouts.ThrottleWaitFor, msg: $"Expected 1 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 7, TestTimeouts.ThrottleWaitFor);
+		// Asserted directly: IsLive completes only once the stream's history has been folded.
+		Assert.Equal(1, Count);
+		Assert.Equal(7, Sum);
 	}
 
 	[Fact]
@@ -76,8 +77,8 @@ public sealed class when_using_read_model_base_with_reader :
 		StartAsync<ReadModelTestCategoryAggregate>();
 
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 2, TestTimeouts.ThrottleWaitFor, msg: $"Expected 2 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 12, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal(2, Count);
+		Assert.Equal(12, Sum);
 	}
 
 	[Fact]
@@ -113,8 +114,8 @@ public sealed class when_using_read_model_base_with_reader :
 	public async Task can_await_one_stream_going_live() {
 		StartAsync(_stream1);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Sum}");
+		Assert.Equal(10, Count);
+		Assert.Equal(20, Sum);
 	}
 
 	[Fact]
@@ -122,8 +123,8 @@ public sealed class when_using_read_model_base_with_reader :
 		StartAsync(_stream1);
 		StartAsync(_stream2);
 		await IsLive;
-		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor, msg: $"Expected 50 got {Sum}");
+		Assert.Equal(20, Count);
+		Assert.Equal(50, Sum);
 	}
 
 	[Fact]
