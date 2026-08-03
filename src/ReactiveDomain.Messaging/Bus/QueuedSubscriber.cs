@@ -12,6 +12,18 @@ public abstract class QueuedSubscriber : IDisposable {
 	protected object? Last = null;
 	public bool Starving => _messageQueue.Idle;
 
+	/// <summary>
+	/// The message types currently registered on this subscriber — one entry per distinct type
+	/// passed to a <c>Subscribe</c> overload, command registrations included (a command registers
+	/// under the command type), and not the derived types each subscription also covers.
+	/// </summary>
+	/// <remarks>
+	/// A read-only view of the subscription seam, so a test can ask the subscriber what it handles
+	/// instead of scanning source for <c>Subscribe</c> calls. Each read is a fresh snapshot;
+	/// registrations change only through <c>Subscribe</c> and disposal of what it returns.
+	/// </remarks>
+	public IReadOnlyCollection<Type> RegisteredMessageTypes => _internalBus.RegisteredMessageTypes;
+
 	protected QueuedSubscriber(IBus bus, bool idempotent = false) {
 		_externalBus = bus ?? throw new ArgumentNullException(nameof(bus));
 		_internalBus = new InMemoryBus("SubscriptionBus");
