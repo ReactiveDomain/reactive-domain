@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>ReactiveDomain</id>
-		<version>0.16.0</version>
+		<version>0.17.0</version>
 		<authors>Reactive Domain Group</authors>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<license type="expression">MIT</license>
@@ -47,7 +47,7 @@
 	</metadata>
 	<files>
 		<file src="..\build\ReactiveDomain.props" target="build" />
-		
+
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Core.pdb" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Core.dll" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Core.dll" target="ref\net8.0" />
