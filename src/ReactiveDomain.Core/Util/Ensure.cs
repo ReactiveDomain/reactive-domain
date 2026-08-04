@@ -53,7 +53,7 @@ public static class Ensure {
 	/// <param name="argument">The value to test</param>
 	/// <param name="argumentName">The name of the argument</param>
 	/// <exception cref="ArgumentNullException">Thrown if <paramref name="argument"/> is null or contains only whitespace characters</exception>
-	public static void NotNullOrWhiteSpace(string argument, string argumentName) =>
+	public static void NotNullOrWhiteSpace(string? argument, string argumentName) =>
 		ArgumentNullException.ThrowIfNullOrWhiteSpace(argument, argumentName);
 
 	/// <summary>
@@ -448,7 +448,6 @@ public static class Ensure {
 	/// <exception cref="ArgumentException">Thrown if <paramref name="lookup"/> does not contain the <paramref name="key"/></exception>
 	public static void ContainsKey<TKey, TValue>(Dictionary<TKey, TValue> lookup, TKey key, string argumentName)
 		where TKey : notnull {
-		NotNull(lookup, argumentName);
 		if (!lookup.ContainsKey(key))
 			throw new ArgumentException($"{argumentName} expected to contain the key {key}, but it was not found.",
 				argumentName);
@@ -463,7 +462,6 @@ public static class Ensure {
 	/// <exception cref="ArgumentException">Thrown if <paramref name="lookup"/> contains the <paramref name="key"/></exception>
 	public static void DoesNotContainKey<TKey, TValue>(Dictionary<TKey, TValue> lookup, TKey key, string argumentName)
 		where TKey : notnull {
-		NotNull(lookup, argumentName);
 		if (lookup.ContainsKey(key))
 			throw new ArgumentException($"{argumentName} contain the key {key}.", argumentName);
 	}
