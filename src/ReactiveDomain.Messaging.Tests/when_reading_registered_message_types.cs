@@ -1,4 +1,4 @@
-using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
 // Xunit v3 also declares a TestMessage.
@@ -38,6 +38,19 @@ public sealed class when_reading_registered_message_types {
 
 		Assert.Equal(1, handled);
 		Assert.Equal([typeof(ParentTestMessage)], bus.RegisteredMessageTypes.ToArray());
+	}
+
+	/// <summary>
+	/// A subscribe-to-all registration is declared as <see cref="IMessage"/>, so it reports as that
+	/// one type rather than as every type it happens to route.
+	/// </summary>
+	[Fact]
+	public void subscribing_to_all_reports_one_registration() {
+		using var bus = new InMemoryBus(nameof(when_reading_registered_message_types));
+
+		bus.SubscribeToAll(new AdHocHandler<IMessage>(_ => { }));
+
+		Assert.Equal([typeof(IMessage)], bus.RegisteredMessageTypes.ToArray());
 	}
 
 	[Fact]
