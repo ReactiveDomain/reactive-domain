@@ -6,11 +6,6 @@ using TestMessage = ReactiveDomain.Testing.TestMessage;
 
 namespace ReactiveDomain.Messaging.Tests;
 
-/// <summary>
-/// Covers <see cref="QueuedSubscriber.RegisteredMessageTypes"/> and the
-/// <see cref="InMemoryBus.RegisteredMessageTypes"/> it reads from: the subscription seam a
-/// completeness test reflects over instead of scanning source for Subscribe calls.
-/// </summary>
 // ReSharper disable once InconsistentNaming
 public sealed class when_reading_registered_message_types {
 	[Fact]
@@ -40,10 +35,7 @@ public sealed class when_reading_registered_message_types {
 		Assert.Equal([typeof(ParentTestMessage)], bus.RegisteredMessageTypes.ToArray());
 	}
 
-	/// <summary>
-	/// A subscribe-to-all registration is declared as <see cref="IMessage"/>, so it reports as that
-	/// one type rather than as every type it happens to route.
-	/// </summary>
+	/// <summary>Declared as <see cref="IMessage"/>, so it reports as one type, not every type it routes.</summary>
 	[Fact]
 	public void subscribing_to_all_reports_one_registration() {
 		using var bus = new InMemoryBus(nameof(when_reading_registered_message_types));

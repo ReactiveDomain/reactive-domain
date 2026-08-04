@@ -6,10 +6,6 @@ using Xunit;
 
 namespace ReactiveDomain.Foundation.Tests;
 
-/// <summary>
-/// Covers <see cref="ReadModelBase.RegisteredMessageTypes"/>: the subscription seam a completeness
-/// test reflects over instead of scanning source for EventStream.Subscribe calls.
-/// </summary>
 // ReSharper disable once InconsistentNaming
 public sealed class when_reading_read_model_registrations {
 	[Fact]
@@ -28,10 +24,7 @@ public sealed class when_reading_read_model_registrations {
 		Assert.Empty(rm.RegisteredMessageTypes);
 	}
 
-	/// <summary>
-	/// Starting a stream subscribes the model's queue to the listener's event stream. That is
-	/// plumbing, on a different bus, and must not show up as something the model handles.
-	/// </summary>
+	/// <summary>The queue's subscription to the listener is on a different bus, and is not a handler.</summary>
 	[Fact]
 	public void a_live_listener_does_not_add_a_registration() {
 		var namer = new PrefixedCamelCaseStreamNameBuilder(nameof(when_reading_read_model_registrations));

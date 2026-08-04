@@ -128,15 +128,8 @@ public abstract class ReadModelBase :
 	/// </summary>
 	public ISubscriber EventStream => _bus;
 
-	/// <summary>
-	/// The message types currently registered on <see cref="EventStream"/> — one entry per distinct
-	/// type a handler was subscribed for, not the derived types each subscription also covers.
-	/// </summary>
-	/// <remarks>
-	/// A read-only view of the subscription seam, so a test can ask the model what it handles instead
-	/// of scanning source for <c>Subscribe</c> calls. Each read is a fresh snapshot; registrations
-	/// change only through <see cref="EventStream"/>.
-	/// </remarks>
+	/// <inheritdoc cref="InMemoryBus.RegisteredMessageTypes"/>
+	/// <remarks>Registrations reach this only through <see cref="EventStream"/>.</remarks>
 	public IReadOnlyCollection<Type> RegisteredMessageTypes => _bus.RegisteredMessageTypes;
 
 	/// <summary>
