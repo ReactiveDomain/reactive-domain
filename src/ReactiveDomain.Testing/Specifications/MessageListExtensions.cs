@@ -75,9 +75,9 @@ public static class MessageListExtensions {
 		/// <remarks>This method modifies the input list by removing its first element. Use this method when
 		/// message order and type are important, and ensure that the expected type is at the front of the list.</remarks>
 		/// <typeparam name="TMsg">The type of message to dequeue. Must implement the IMessage interface.</typeparam>
-		/// <returns>The first message in the list if it is of type <see cref="TMsg"/>.</returns>
+		/// <returns>The first message in the list if it is of type <typeparamref name="TMsg"/>.</returns>
 		/// <exception cref="InvalidOperationException">Thrown if the messages list is empty.</exception>
-		/// <exception cref="Exception">Thrown if the first message in the list is not of type <see cref="TMsg"/>.</exception>
+		/// <exception cref="Exception">Thrown if the first message in the list is not of type <typeparamref name="TMsg"/>.</exception>
 		public TMsg DequeueNext<TMsg>() where TMsg : IMessage {
 			if (messages.Count == 0)
 				throw new InvalidOperationException("The list is empty");

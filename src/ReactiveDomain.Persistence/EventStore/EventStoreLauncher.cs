@@ -89,7 +89,7 @@ public sealed class EventStoreLauncher : IDisposable {
 	/// Terminate an EventStore instance created by SetupEventStore
 	/// </summary>
 	/// <remarks>
-	/// Yin for the <see cref="SetupEventStore"/> yang.
+	/// Yin for the <see cref="SetupEventStore(EsdbConfig)"/> yang.
 	/// </remarks>
 	/// <param name="leaveRunning">bool: true = close the connection, but leave the process running.</param>
 	public void TeardownEventStore(bool leaveRunning = true) {

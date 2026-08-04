@@ -55,27 +55,39 @@
 
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.pdb" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.dll" target="lib\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.xml" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.dll" target="ref\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.Policy.xml" target="ref\net8.0" />
 
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Policy.pdb" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Policy.dll" target="lib\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.Policy.xml" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Policy.dll" target="ref\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.Policy.xml" target="ref\net10.0" />
 
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.pdb" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.dll" target="lib\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.xml" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.dll" target="ref\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.PolicyStorage.xml" target="ref\net8.0" />
 
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.PolicyStorage.pdb" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.PolicyStorage.dll" target="lib\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.PolicyStorage.xml" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.PolicyStorage.dll" target="ref\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.PolicyStorage.xml" target="ref\net10.0" />
 
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.pdb" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.dll" target="lib\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.xml" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.dll" target="ref\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.IdentityStorage.xml" target="ref\net8.0" />
 
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.IdentityStorage.pdb" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.IdentityStorage.dll" target="lib\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.IdentityStorage.xml" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.IdentityStorage.dll" target="ref\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.IdentityStorage.xml" target="ref\net10.0" />
 
 		<file src="..\README.md" target="docs\" />
 	</files>

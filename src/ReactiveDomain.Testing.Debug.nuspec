@@ -39,11 +39,15 @@
 
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.pdb" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.dll" target="lib\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.xml" target="lib\net8.0" />
 		<file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.dll" target="ref\net8.0" />
+		<file src="..\bld\Debug\net8.0\ReactiveDomain.Testing.xml" target="ref\net8.0" />
 
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Testing.pdb" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Testing.dll" target="lib\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.Testing.xml" target="lib\net10.0" />
 		<file src="..\bld\Debug\net10.0\ReactiveDomain.Testing.dll" target="ref\net10.0" />
+		<file src="..\bld\Debug\net10.0\ReactiveDomain.Testing.xml" target="ref\net10.0" />
 
 		<file src="..\README.md" target="docs\" />
 	</files>

@@ -155,7 +155,7 @@ public class BufferManager {
 	/// </summary>
 	/// <remarks>
 	/// It is the client's responsibility to return the buffer to the manager by
-	/// calling <see cref="CheckIn"></see> on the buffer
+	/// calling <see cref="CheckIn(ArraySegment{byte})"></see> on the buffer
 	/// </remarks>
 	/// <returns>A <see cref="ArraySegment{T}"></see> that can be used as a buffer</returns>
 	public ArraySegment<byte> CheckOut() {
@@ -174,7 +174,7 @@ public class BufferManager {
 	/// </summary>
 	/// <remarks>
 	/// It is the client's responsibility to return the buffer to the manager by
-	/// calling <see cref="CheckIn"></see> on the buffer
+	/// calling <see cref="CheckIn(IEnumerable{ArraySegment{byte}})"></see> on the buffers
 	/// </remarks>
 	/// <returns>A <see cref="ArraySegment{T}"></see> that can be used as a buffer</returns>
 	public IEnumerable<ArraySegment<byte>> CheckOut(int toGet) {
@@ -200,10 +200,6 @@ public class BufferManager {
 	/// <summary>
 	/// Returns a buffer to the control of the manager
 	/// </summary>
-	/// <remarks>
-	/// It is the client's responsibility to return the buffer to the manager by
-	/// calling <see cref="CheckIn"></see> on the buffer
-	/// </remarks>
 	/// <param name="buffer">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
 	public void CheckIn(ArraySegment<byte> buffer) {
 		CheckBuffer(buffer);
@@ -213,10 +209,6 @@ public class BufferManager {
 	/// <summary>
 	/// Returns a set of buffers to the control of the manager
 	/// </summary>
-	/// <remarks>
-	/// It is the client's responsibility to return the buffer to the manager by
-	/// calling <see cref="CheckIn"></see> on the buffer
-	/// </remarks>
 	/// <param name="buffersToReturn">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
 	public void CheckIn(IEnumerable<ArraySegment<byte>>? buffersToReturn) {
 		ArgumentNullException.ThrowIfNull(buffersToReturn);

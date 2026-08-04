@@ -30,6 +30,11 @@
 		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 		<DebugSymbols>true</DebugSymbols>
 		<DebugType>full</DebugType>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- CS1591 (missing XML comment) is not a build signal: it fires thousands of times and buries
+		     the malformed-doc warnings that are worth acting on. Documentation coverage is enforced by
+		     review, per CONTRIBUTING.md. -->
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
 	</PropertyGroup>
 	<PropertyGroup>
 		<OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
