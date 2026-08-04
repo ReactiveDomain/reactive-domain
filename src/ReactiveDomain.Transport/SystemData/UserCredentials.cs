@@ -3,8 +3,7 @@
 namespace ReactiveDomain.Transport.SystemData;
 
 /// <summary>
-/// A username/password pair used for authentication and
-/// authorization to perform operations over an <see cref="IEventStoreConnection"/>.
+/// A username/password pair used to authenticate and authorize operations over a connection.
 /// </summary>
 public class UserCredentials {
 	/// <summary>

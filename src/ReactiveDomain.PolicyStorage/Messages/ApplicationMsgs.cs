@@ -76,6 +76,7 @@ public class ApplicationMsgs {
 	/// <param name="PolicyId">The unique ID of the policy.</param>
 	/// <param name="ClientId">The unique ID of the client to which the policy applies.</param>
 	/// <param name="ApplicationId">The unique ID of the application to which the policy applies.</param>
+	/// <param name="OneRolePerUser">If true, each user may only have a single role.</param>
 	public record PolicyCreated(
 		Guid PolicyId,
 		string ClientId,
