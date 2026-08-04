@@ -38,10 +38,11 @@ public sealed class when_reading_read_model_registrations {
 		using var rm = new RegistrationTestReadModel(new ConfiguredConnection(conn, namer, serializer));
 		rm.StartAsync(stream);
 
-		// The listener is live once the model has folded the event, so the plumbing subscription
-		// this test is about definitely exists by the time the assertion runs.
-		AssertEx.IsOrBecomesTrue(() => rm.Handled > 0, 5_000);
-		Assert.Single(rm.GetCheckpoint());
+		// Wait on the listener, not on the fold: the read delivers the event and the listener is
+		// attached after it, so a folded event proves nothing about the subscription under test.
+		// A checkpoint exists only once the listener does.
+		AssertEx.IsOrBecomesTrue(() => rm.GetCheckpoint().Count == 1, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Handled > 0, TestTimeouts.ThrottleWaitFor);
 
 		Assert.Equal(
 			[typeof(RegistrationTestEventA), typeof(RegistrationTestEventB)],
