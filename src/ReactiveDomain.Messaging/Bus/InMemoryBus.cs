@@ -141,6 +141,11 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 	/// <see cref="IMessageHandler.MessageType"/>). Each read returns a fresh snapshot, so the
 	/// registry itself is only ever changed by subscribing and unsubscribing.
 	/// </summary>
+	/// <remarks>
+	/// Not cheap, and not for a hot path. It walks every registration in every type slot while holding
+	/// the lock <see cref="Publish"/> also takes, so reading it repeatedly contends with publishing —
+	/// and one <see cref="SubscribeToAll"/> puts a registration in every slot in the hierarchy.
+	/// </remarks>
 	public IReadOnlyCollection<Type> RegisteredMessageTypes {
 		get {
 			lock (_handlers) {
