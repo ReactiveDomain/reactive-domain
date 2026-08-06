@@ -14,33 +14,39 @@
 		<dependencies>
 			<group targetFramework="net8.0">
 				<dependency id="ReactiveDomain" version="0.17.0-rc.1" exclude="Build,Analyzers" />
-				<dependency id="DynamicData" version="8.4.1" exclude="Build,Analyzers" />
+				<dependency id="DynamicData" version="9.4.33" exclude="Build,Analyzers" />
 				<dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
 				<dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
-				<dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
-				<dependency id="System.DirectoryServices" version="8.0.0" exclude="Build,Analyzers"/>
-				<dependency id="System.DirectoryServices.AccountManagement" version="8.0.0" exclude="Build,Analyzers" />
+				<dependency id="Newtonsoft.Json" version="13.0.4" exclude="Build,Analyzers" />
+				<dependency id="System.DirectoryServices" version="10.0.10" exclude="Build,Analyzers"/>
+				<dependency id="System.DirectoryServices.AccountManagement" version="10.0.10" exclude="Build,Analyzers" />
 			</group>
 			<group targetFramework="net10.0">
 				<dependency id="ReactiveDomain" version="0.17.0-rc.1" exclude="Build,Analyzers" />
-				<dependency id="DynamicData" version="8.4.1" exclude="Build,Analyzers" />
+				<dependency id="DynamicData" version="9.4.33" exclude="Build,Analyzers" />
 				<dependency id="IdentityModel" version="4.6.0" exclude="Build,Analyzers" />
 				<dependency id="IdentityServer4.Storage" version="4.1.2" exclude="Build,Analyzers"/>
-				<dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
-				<dependency id="System.DirectoryServices" version="10.0.0" exclude="Build,Analyzers"/>
-				<dependency id="System.DirectoryServices.AccountManagement" version="10.0.0" exclude="Build,Analyzers" />
+				<dependency id="Newtonsoft.Json" version="13.0.4" exclude="Build,Analyzers" />
+				<dependency id="System.DirectoryServices" version="10.0.10" exclude="Build,Analyzers"/>
+				<dependency id="System.DirectoryServices.AccountManagement" version="10.0.10" exclude="Build,Analyzers" />
 			</group>
 		</dependencies>
 		<references>
 			<group targetFramework="net8.0">
 				<reference file="ReactiveDomain.Policy.dll" />
+				<reference file="ReactiveDomain.Policy.xml" />
 				<reference file="ReactiveDomain.PolicyStorage.dll" />
+				<reference file="ReactiveDomain.PolicyStorage.xml" />
 				<reference file="ReactiveDomain.IdentityStorage.dll" />
+				<reference file="ReactiveDomain.IdentityStorage.xml" />
 			</group>
 			<group targetFramework="net10.0">
 				<reference file="ReactiveDomain.Policy.dll" />
+				<reference file="ReactiveDomain.Policy.xml" />
 				<reference file="ReactiveDomain.PolicyStorage.dll" />
+				<reference file="ReactiveDomain.PolicyStorage.xml" />
 				<reference file="ReactiveDomain.IdentityStorage.dll" />
+				<reference file="ReactiveDomain.IdentityStorage.xml" />
 			</group>
 		</references>
 	</metadata>

@@ -14,23 +14,25 @@
 		<dependencies>
 			<group targetFramework="net8.0">
 				<dependency id="ReactiveDomain" version="0.17.0-rc.1" exclude="Build,Analyzers" />
-				<dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
-				<dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
-				<dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
+				<dependency id="Microsoft.NET.Test.Sdk" version="18.8.1" exclude="Build,Analyzers" />
+				<dependency id="xunit" version="2.9.3" exclude="Build,Analyzers" />
+				<dependency id="xunit.runner.console" version="2.9.3" exclude="Build,Analyzers" />
 			</group>
 			<group targetFramework="net10.0">
 				<dependency id="ReactiveDomain" version="0.17.0-rc.1" exclude="Build,Analyzers" />
-				<dependency id="Microsoft.NET.Test.Sdk" version="17.10.0" exclude="Build,Analyzers" />
-				<dependency id="xunit" version="2.9.0" exclude="Build,Analyzers" />
-				<dependency id="xunit.runner.console" version="2.9.0" exclude="Build,Analyzers" />
+				<dependency id="Microsoft.NET.Test.Sdk" version="18.8.1" exclude="Build,Analyzers" />
+				<dependency id="xunit" version="2.9.3" exclude="Build,Analyzers" />
+				<dependency id="xunit.runner.console" version="2.9.3" exclude="Build,Analyzers" />
 			</group>
 		</dependencies>
 		<references>
 			<group targetFramework="net8.0">
 				<reference file="ReactiveDomain.Testing.dll" />
+				<reference file="ReactiveDomain.Testing.xml" />
 			</group>
 			<group targetFramework="net10.0">
 				<reference file="ReactiveDomain.Testing.dll" />
+				<reference file="ReactiveDomain.Testing.xml" />
 			</group>
 		</references>
 	</metadata>
