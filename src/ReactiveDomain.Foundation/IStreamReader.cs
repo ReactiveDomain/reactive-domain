@@ -8,6 +8,16 @@ public interface IStreamReader : IDisposable {
 	/// </summary>
 	long? Position { get; }
 	/// <summary>
+	/// Where this read left off: the stream, its version, and the <c>$all</c> position of the last
+	/// event read. Null when nothing was read. This is what lets a listener resuming from the read
+	/// report a checkpoint covering the history the reader already applied.
+	/// </summary>
+	/// <remarks>
+	/// Read together deliberately — see <see cref="IListener.Checkpoint"/> for why the two clocks must
+	/// not be sampled separately.
+	/// </remarks>
+	StreamCheckpoint? Checkpoint { get; }
+	/// <summary>
 	/// The name of the stream being read
 	/// </summary>
 	string StreamName { get; }

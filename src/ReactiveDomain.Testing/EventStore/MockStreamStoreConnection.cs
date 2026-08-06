@@ -14,6 +14,21 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	public const string AllStreamName = "$All";
 	private readonly Dictionary<string, List<RecordedEvent>> _store;
 	private readonly List<RecordedEvent> _allStream = [];
+
+	/// <summary>
+	/// The position the next entry will take in the all-stream — this store's whole log, so it is
+	/// monotonic across streams and stands in for a real <c>$all</c> position. Link entries consume
+	/// positions of their own, so a stream's events are not contiguous here, which is also true of a
+	/// real store.
+	/// </summary>
+	/// <remarks>
+	/// Callers must hold <c>lock (_allStream)</c>, and must add the entry before releasing it. Counts
+	/// from one, so a real position is never <see cref="Position.Start"/>.
+	/// </remarks>
+	private Position NextAllPosition() {
+		var next = _allStream.Count + 1;
+		return new Position(next, next);
+	}
 	private readonly AdHocHandler<IMessage> _inboundEventHandler;
 	private readonly SingleThreadedBus _inboundEventBus;
 	private readonly List<IDisposable> _subscriptions;
@@ -92,19 +107,23 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			for (var i = 0; i < events.Length; i++) {
 				var created = DateTime.UtcNow;
 				var epochTime = (long)(created - epochStart).TotalSeconds;
-				var recordedEvent = new RecordedEvent(
-					stream,
-					events[i].EventId,
-					eventStream.Count,
-					events[i].EventType,
-					events[i].Data,
-					events[i].Metadata,
-					events[i].IsJson,
-					created,
-					epochTime);
+				RecordedEvent recordedEvent;
+				lock (_allStream) {
+					recordedEvent = new RecordedEvent(
+						stream,
+						events[i].EventId,
+						eventStream.Count,
+						events[i].EventType,
+						events[i].Data,
+						events[i].Metadata,
+						events[i].IsJson,
+						created,
+						epochTime,
+						NextAllPosition());
 
-				_allStream.Add(recordedEvent);
-				_inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
+					_allStream.Add(recordedEvent);
+					_inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
+				}
 				eventStream.Add(recordedEvent);
 				var written = new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber);
 				_inboundEventHandler.Handle(written);
@@ -511,19 +530,23 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		var created = DateTime.UtcNow;
 		var epochTime = (long)(created - epochStart).TotalSeconds;
 
-		var projectedEvent = new ProjectedEvent(
-			streamName,
-			@event.Event.EventNumber,
-			@event.Event.EventStreamId,
-			@event.Event.EventId, // reusing since the projection is linking to the original event
-			stream.Count,
-			@event.Event.EventType,
-			@event.Event.Data,
-			@event.Event.Metadata,
-			@event.Event.IsJson,
-			created,
-			epochTime);
+		ProjectedEvent projectedEvent;
 		lock (_allStream) {
+			// A link is its own entry in the all-stream, so it carries its own position — matching a
+			// real store, where a resolved delivery reports the position of the entry that was read.
+			projectedEvent = new ProjectedEvent(
+				streamName,
+				@event.Event.EventNumber,
+				@event.Event.EventStreamId,
+				@event.Event.EventId, // reusing since the projection is linking to the original event
+				stream.Count,
+				@event.Event.EventType,
+				@event.Event.Data,
+				@event.Event.Metadata,
+				@event.Event.IsJson,
+				created,
+				epochTime,
+				NextAllPosition());
 			_allStream.Add(projectedEvent);
 			_inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
 		}
@@ -556,19 +579,23 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		var created = DateTime.UtcNow;
 		var epochTime = (long)(created - epochStart).TotalSeconds;
 
-		var projectedEvent = new ProjectedEvent(
-			streamName,
-			@event.Event.EventNumber,
-			@event.Event.EventStreamId,
-			@event.Event.EventId, // reusing since the projection is linking to the original event
-			stream.Count,
-			@event.Event.EventType,
-			@event.Event.Data,
-			@event.Event.Metadata,
-			@event.Event.IsJson,
-			created,
-			epochTime);
+		ProjectedEvent projectedEvent;
 		lock (_allStream) {
+			// A link is its own entry in the all-stream, so it carries its own position — matching a
+			// real store, where a resolved delivery reports the position of the entry that was read.
+			projectedEvent = new ProjectedEvent(
+				streamName,
+				@event.Event.EventNumber,
+				@event.Event.EventStreamId,
+				@event.Event.EventId, // reusing since the projection is linking to the original event
+				stream.Count,
+				@event.Event.EventType,
+				@event.Event.Data,
+				@event.Event.Metadata,
+				@event.Event.IsJson,
+				created,
+				epochTime,
+				NextAllPosition());
 			_allStream.Add(projectedEvent);
 			_inboundEventHandler.Handle(new EventCommitted(projectedEvent, _allStream.Count));
 		}

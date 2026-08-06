@@ -27,9 +27,10 @@ public class QueuedStreamListener : StreamListener, IHandle<IMessage> {
 	protected override void GotEvent(RecordedEvent recordedEvent) {
 		if (_disposed)
 			return; //todo: fix dispose
-		Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+		RecordDelivered(recordedEvent);
 		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
-			//todo: this needs to publish a RecordedEvent
+			// The envelope reaches checkpoints through the listener, not the subscriber: handlers
+			// still receive the bare message. Delivering it per-event is #211's remaining half.
 			SyncQueue.Publish(@event);
 		}
 	}

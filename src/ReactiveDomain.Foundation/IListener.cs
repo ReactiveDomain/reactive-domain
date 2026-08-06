@@ -4,7 +4,29 @@ namespace ReactiveDomain.Foundation;
 
 public interface IListener : IDisposable {
 	ISubscriber EventStream { get; }
+
+	/// <summary>The version of the last event delivered from <see cref="StreamName"/>.</summary>
 	long Position { get; }
+
+	/// <summary>
+	/// How far this listener has delivered: its stream, that stream's version, and the <c>$all</c>
+	/// position of the last event, read as one value. Null before the listener has started, when it
+	/// has no stream to report.
+	/// </summary>
+	/// <remarks>
+	/// Read together deliberately. Taken separately, a version and a position can come from different
+	/// events, producing a checkpoint whose position claims an event its version says was never
+	/// applied.
+	/// </remarks>
+	StreamCheckpoint? Checkpoint { get; }
+
+	/// <summary>
+	/// Adopts the <c>$all</c> position of history applied before this listener started, so a
+	/// checkpoint taken before the first live event still covers what the reader handled. Any event
+	/// this listener delivers replaces it.
+	/// </summary>
+	void SeedAllPosition(Position? position);
+
 	string StreamName { get; }
 
 	/// <summary>

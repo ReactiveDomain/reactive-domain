@@ -17,6 +17,20 @@ public class StreamReader : IStreamReader {
 	protected long StreamPosition;
 	protected bool FirstEventRead;
 	public long? Position => FirstEventRead ? StreamPosition : null;
+
+	private readonly object _checkpointLock = new();
+	private Position? _allPosition;
+
+	/// <inheritdoc cref="IStreamReader.Checkpoint"/>
+	public StreamCheckpoint? Checkpoint {
+		get {
+			lock (_checkpointLock) {
+				return FirstEventRead && !string.IsNullOrEmpty(StreamName)
+					? new StreamCheckpoint(StreamName, Interlocked.Read(ref StreamPosition), _allPosition)
+					: null;
+			}
+		}
+	}
 	public Action<IMessage> Handle { get; set; }
 	public string StreamName { get; private set; } = string.Empty;
 	private const int ReadPageSize = 500;
@@ -196,8 +210,13 @@ public class StreamReader : IStreamReader {
 		if (_cancelled)
 			return;
 
-		Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
-		FirstEventRead = true;
+		// Both clocks and the read flag move together, so a reader of Checkpoint cannot see a version
+		// from one event beside a position from another.
+		lock (_checkpointLock) {
+			Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+			_allPosition = recordedEvent.Position;
+			FirstEventRead = true;
+		}
 
 		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
 			Handle(@event);

@@ -28,6 +28,14 @@ public sealed class NullListener : IListener, ISubscriber {
 	/// </summary>
 	public long Position => _position;
 
+	/// <inheritdoc cref="IListener.Checkpoint"/>
+	/// <remarks>Always null: nothing is ever delivered, so there is nothing to checkpoint.</remarks>
+	public StreamCheckpoint? Checkpoint => null;
+
+	/// <inheritdoc cref="IListener.SeedAllPosition"/>
+	/// <remarks>Ignored, as nothing here reports a position.</remarks>
+	public void SeedAllPosition(Position? position) { }
+
 	/// <summary>
 	/// Gets the name of the stream.
 	/// </summary>

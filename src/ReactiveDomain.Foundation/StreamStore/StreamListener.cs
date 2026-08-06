@@ -34,6 +34,44 @@ public class StreamListener : IListener {
 	private readonly IStreamStoreConnection _streamStoreConnection;
 	protected long StreamPosition;
 	public long Position => StreamPosition;
+
+	private readonly object _checkpointLock = new();
+	private Position? _allPosition;
+
+	/// <inheritdoc cref="IListener.Checkpoint"/>
+	public StreamCheckpoint? Checkpoint {
+		get {
+			lock (_checkpointLock) {
+				// Named only once Start has run. Before that there is no stream to report, and the
+				// version and position hold seed values that belong to nothing yet.
+				return string.IsNullOrEmpty(StreamName)
+					? null
+					: new StreamCheckpoint(StreamName, Interlocked.Read(ref StreamPosition), _allPosition);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Records how far this listener has delivered. Both clocks come from one event and are written
+	/// under one lock, so a reader cannot see a version from one event beside a position from another.
+	/// </summary>
+	/// <remarks>
+	/// The position is assigned unconditionally, so a store that stops reporting positions leaves this
+	/// null rather than stale — it belongs to the last event delivered, not to the last one that
+	/// happened to carry one.
+	/// </remarks>
+	/// <param name="recordedEvent">The event just delivered.</param>
+	protected void RecordDelivered(RecordedEvent recordedEvent) {
+		lock (_checkpointLock) {
+			Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+			_allPosition = recordedEvent.Position;
+		}
+	}
+
+	/// <inheritdoc cref="IListener.SeedAllPosition"/>
+	public void SeedAllPosition(Position? position) {
+		lock (_checkpointLock) { _allPosition = position; }
+	}
 	public string StreamName { get; private set; } = string.Empty;
 	public CatchUpSubscriptionSettings Settings { get; set; }
 
@@ -187,9 +225,12 @@ public class StreamListener : IListener {
 		Action? liveProcessingStarted = null,
 		Action<SubscriptionDropReason, Exception?>? subscriptionDropped = null,
 		UserCredentials? userCredentials = null) {
-		StreamName = stream;
-
-		Interlocked.Exchange(ref StreamPosition, lastCheckpoint ?? 0);
+		// Named and positioned together: naming is what makes this listener checkpointable, so a
+		// reader must not see the name before the version it goes with.
+		lock (_checkpointLock) {
+			StreamName = stream;
+			Interlocked.Exchange(ref StreamPosition, lastCheckpoint ?? 0);
+		}
 		var sub = _streamStoreConnection.SubscribeToStreamFrom(
 			stream,
 			lastCheckpoint,
@@ -218,7 +259,7 @@ public class StreamListener : IListener {
 	}
 
 	protected virtual void GotEvent(RecordedEvent recordedEvent) {
-		Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+		RecordDelivered(recordedEvent);
 		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
 			Bus.Publish(@event);
 		}
