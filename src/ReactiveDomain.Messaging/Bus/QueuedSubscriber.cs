@@ -3,7 +3,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus;
 
-public abstract class QueuedSubscriber : IDisposable {
+public abstract class QueuedSubscriber : IMessageRegistry, IDisposable {
 	private readonly List<IDisposable> _subscriptions = [];
 
 	private readonly QueuedHandler _messageQueue;
@@ -12,9 +12,16 @@ public abstract class QueuedSubscriber : IDisposable {
 	protected object? Last = null;
 	public bool Starving => _messageQueue.Idle;
 
-	/// <inheritdoc cref="InMemoryBus.RegisteredMessageTypes"/>
+	/// <inheritdoc cref="IMessageRegistry.RegisteredMessageTypes"/>
 	/// <remarks>Includes command registrations, which register under the command type.</remarks>
 	public IReadOnlyCollection<Type> RegisteredMessageTypes => _internalBus.RegisteredMessageTypes;
+
+	/// <inheritdoc cref="IMessageRegistry.HandledMessageTypes"/>
+	/// <remarks>
+	/// The types this subscriber's own handlers receive. It says nothing about what reaches its
+	/// queue: the queue is fed by separate subscriptions on the external bus.
+	/// </remarks>
+	public IReadOnlyCollection<Type> HandledMessageTypes => _internalBus.HandledMessageTypes;
 
 	/// <summary>
 	/// Locks the message handlers. Hold it while reading the subscriber's state to see that state

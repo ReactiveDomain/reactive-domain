@@ -19,7 +19,7 @@ namespace ReactiveDomain.Messaging.Bus;
 /// Synchronously dispatches messages to zero or more subscribers.
 /// Subscribers are responsible for handling exceptions
 /// </summary>
-public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDisposable {
+public class InMemoryBus : IBus, ISubscriber, IPublisher, IMessageRegistry, IHandle<IMessage>, IDisposable {
 
 	public static InMemoryBus CreateTest() {
 		return new InMemoryBus();
@@ -134,17 +134,16 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 			}
 		}
 	}
-	/// <summary>
-	/// The message types this bus has handlers registered for: one entry per distinct <c>T</c>
-	/// passed to <see cref="Subscribe{T}"/> or <see cref="SubscribeToAll"/>, not the derived types
-	/// a registration also fans out to (those share the registration's declared
-	/// <see cref="IMessageHandler.MessageType"/>). Each read returns a fresh snapshot, so the
-	/// registry itself is only ever changed by subscribing and unsubscribing.
-	/// </summary>
+	/// <inheritdoc cref="IMessageRegistry.RegisteredMessageTypes"/>
 	/// <remarks>
-	/// Not cheap, and not for a hot path. It walks every registration in every type slot while holding
-	/// the lock <see cref="Publish"/> also takes, so reading it repeatedly contends with publishing —
-	/// and one <see cref="SubscribeToAll"/> puts a registration in every slot in the hierarchy.
+	/// <para>The declared type of a registration, which is what <see cref="Unsubscribe{T}"/> matches
+	/// on. The slots a registration was fanned out to share it, so a <c>T</c> subscribed with
+	/// <c>includeDerived: true</c> and one subscribed without it report the same single entry here —
+	/// <see cref="HandledMessageTypes"/> is where they differ.</para>
+	/// <para>Not cheap, and not for a hot path. It walks every registration in every type slot while
+	/// holding the lock <see cref="Publish"/> also takes, so reading it repeatedly contends with
+	/// publishing — and one <see cref="SubscribeToAll"/> puts a registration in every slot in the
+	/// hierarchy.</para>
 	/// </remarks>
 	public IReadOnlyCollection<Type> RegisteredMessageTypes {
 		get {
@@ -153,6 +152,24 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 					.SelectMany(handlers => handlers)
 					.Select(handler => handler.MessageType)
 					.Distinct()
+					.ToArray();
+			}
+		}
+	}
+
+	/// <inheritdoc cref="IMessageRegistry.HandledMessageTypes"/>
+	/// <remarks>
+	/// The slots that hold a registration, which is what <see cref="Publish"/> dispatches through, so
+	/// this is the set a message type is tested against. A slot emptied by
+	/// <see cref="Unsubscribe{T}"/> is not one of them: the key stays behind, and a type nothing
+	/// handles is not a type this bus handles.
+	/// </remarks>
+	public IReadOnlyCollection<Type> HandledMessageTypes {
+		get {
+			lock (_handlers) {
+				return _handlers
+					.Where(slot => slot.Value.Count > 0)
+					.Select(slot => slot.Key)
 					.ToArray();
 			}
 		}
