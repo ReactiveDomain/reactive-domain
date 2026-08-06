@@ -5,9 +5,12 @@ using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Foundation;
 
-public abstract class TransientSubscriber : IDisposable {
+public abstract class TransientSubscriber : IMessageRegistry, IDisposable {
 	private readonly List<IDisposable> _subscriptions = [];
-	private readonly List<(object Handler, Type MessageType, object Wrapper)> _wrappers = [];
+
+	// Also the registry the IMessageRegistry members answer from, so it is guarded rather than
+	// merely appended to. This subscriber has no bus of its own to ask.
+	private readonly List<(object Handler, Type MessageType, object Wrapper, bool RoutesDerived)> _wrappers = [];
 	private readonly ISubscriber? _eventSubscriber;
 	private readonly ICommandSubscriber? _commandSubscriber;
 
@@ -67,26 +70,64 @@ public abstract class TransientSubscriber : IDisposable {
 	/// would misbehave for a handler type that overrides <see cref="object.Equals(object)"/>.
 	/// </remarks>
 	private IHandle<T> Serialized<T>(IHandle<T> handler) where T : class, IMessage {
-		if (Existing<T>(handler) is SerializedHandler<T> existing)
-			return existing;
-		var wrapper = new SerializedHandler<T>(this, handler);
-		_wrappers.Add((handler, typeof(T), wrapper));
-		return wrapper;
+		lock (_wrappers) {
+			if (Existing<T>(handler) is SerializedHandler<T> existing)
+				return existing;
+			var wrapper = new SerializedHandler<T>(this, handler);
+			// An event subscription takes the bus's default, which routes the derived types too.
+			_wrappers.Add((handler, typeof(T), wrapper, true));
+			return wrapper;
+		}
 	}
 
 	private IHandleCommand<T> Serialized<T>(IHandleCommand<T> handler) where T : Command {
-		if (Existing<T>(handler) is SerializedCommandHandler<T> existing)
-			return existing;
-		var wrapper = new SerializedCommandHandler<T>(this, handler);
-		_wrappers.Add((handler, typeof(T), wrapper));
-		return wrapper;
+		lock (_wrappers) {
+			if (Existing<T>(handler) is SerializedCommandHandler<T> existing)
+				return existing;
+			var wrapper = new SerializedCommandHandler<T>(this, handler);
+			// A command subscription is registered for its exact type: one handler per command.
+			_wrappers.Add((handler, typeof(T), wrapper, false));
+			return wrapper;
+		}
 	}
 
+	/// <remarks>Callers hold <c>_wrappers</c>.</remarks>
 	private object? Existing<T>(object handler) {
 		foreach (var entry in _wrappers)
 			if (ReferenceEquals(entry.Handler, handler) && entry.MessageType == typeof(T))
 				return entry.Wrapper;
 		return null;
+	}
+
+	/// <inheritdoc cref="IMessageRegistry.RegisteredMessageTypes"/>
+	/// <remarks>
+	/// Answered from this subscriber's own registrations, not from the bus it registered on: that bus
+	/// is shared, and its registry is everyone's. Empty once disposed.
+	/// </remarks>
+	public IReadOnlyCollection<Type> RegisteredMessageTypes {
+		get {
+			lock (_wrappers) {
+				return _wrappers.Select(entry => entry.MessageType).Distinct().ToArray();
+			}
+		}
+	}
+
+	/// <inheritdoc cref="IMessageRegistry.HandledMessageTypes"/>
+	/// <remarks>
+	/// An event registration routes the derived types as well; a command registration is made for its
+	/// exact type, so the two contribute differently. Empty once disposed.
+	/// </remarks>
+	public IReadOnlyCollection<Type> HandledMessageTypes {
+		get {
+			lock (_wrappers) {
+				return _wrappers
+					.SelectMany(entry => entry.RoutesDerived
+						? MessageHierarchy.DescendantsAndSelf(entry.MessageType)
+						: [entry.MessageType])
+					.Distinct()
+					.ToArray();
+			}
+		}
 	}
 
 	/// <summary>Runs a handler under <see cref="ReaderLock"/> and advances the version.</summary>
@@ -132,6 +173,8 @@ public abstract class TransientSubscriber : IDisposable {
 			return;
 		if (disposing) {
 			_subscriptions.ForEach(s => s.Dispose());
+			// The registrations are gone, so the registry that describes them must go with them.
+			lock (_wrappers) { _wrappers.Clear(); }
 		}
 		_disposed = true;
 	}

@@ -9,6 +9,7 @@ public abstract class ReadModelBase :
 	IHandle<IMessage>,
 	IHandle<Message>,
 	IPublisher,
+	IMessageRegistry,
 	IDisposable {
 	private readonly Func<IListener> _getListener;
 	private readonly List<IListener> _listeners;
@@ -127,6 +128,18 @@ public abstract class ReadModelBase :
 	/// The stream of events that handlers should subscribe to.
 	/// </summary>
 	public ISubscriber EventStream => _bus;
+
+	/// <inheritdoc cref="IMessageRegistry.RegisteredMessageTypes"/>
+	/// <remarks>Registrations reach this only through <see cref="EventStream"/>.</remarks>
+	public IReadOnlyCollection<Type> RegisteredMessageTypes => _bus.RegisteredMessageTypes;
+
+	/// <inheritdoc cref="IMessageRegistry.HandledMessageTypes"/>
+	/// <remarks>
+	/// The types this model's handlers receive. It says nothing about which streams it listens to:
+	/// a listener feeds the queue whatever its stream carries, and the types nothing handles are
+	/// dropped here rather than at the listener.
+	/// </remarks>
+	public IReadOnlyCollection<Type> HandledMessageTypes => _bus.HandledMessageTypes;
 
 	/// <summary>
 	/// Start playback of a named stream.
