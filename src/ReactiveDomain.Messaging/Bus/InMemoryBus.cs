@@ -53,21 +53,37 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 		}
 	}
 
+	/// <summary>
+	/// Subscribes <paramref name="handler"/> to messages of type <typeparamref name="T"/>, and by
+	/// default to types derived from it.
+	/// </summary>
+	/// <remarks>
+	/// Subscribing the same handler again for the same <typeparamref name="T"/> is a no-op — a
+	/// subscription is a set, not a count, so any one of the returned disposers releases it.
+	/// Subscribing it for a <i>different</i> <typeparamref name="T"/> is a separate subscription:
+	/// a handler registered for both a base and a derived type is called once through each.
+	/// </remarks>
 	public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage {
 		Ensure.NotNull(handler, "handler");
-		Subscribe(new MessageHandler<T>(handler, handler.GetType().Name), includeDerived);
+		Subscribe(new MessageHandler<T>(handler, handler.GetType().Name), handler, includeDerived);
 		return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
 	}
 
-	private void Subscribe(IMessageHandler handler, bool includeDerived) {
+	private void Subscribe(IMessageHandler handler, object rawHandler, bool includeDerived) {
 		var messageTypes = includeDerived
 			? MessageHierarchy.DescendantsAndSelf(handler.MessageType).ToArray()
 			: [handler.MessageType];
 		for (var i = 0; i < messageTypes.Length; i++) {
-			Subscribe(handler, messageTypes[i]);
+			Subscribe(handler, rawHandler, messageTypes[i]);
 		}
 	}
 
+	/// <summary>Subscribes <paramref name="handler"/> to every known message type.</summary>
+	/// <remarks>
+	/// Idempotent per handler; one that also subscribes to a type is called through both. The types
+	/// are taken from the message hierarchy as it stands when this is called, so a type first seen
+	/// afterwards — from an assembly loaded later — does not reach this handler.
+	/// </remarks>
 	public IDisposable SubscribeToAll(IHandle<IMessage> handler) {
 		Ensure.NotNull(handler, "handler");
 		var allHandler = new MessageHandler<IMessage>(handler, handler.GetType().Name);
@@ -75,21 +91,31 @@ public class InMemoryBus : IBus, ISubscriber, IPublisher, IHandle<IMessage>, IDi
 		var messageTypes = MessageHierarchy.DescendantsAndSelf(typeof(object)).ToArray();
 
 		for (var i = 0; i < messageTypes.Length; i++) {
-			Subscribe(allHandler, messageTypes[i]);
+			Subscribe(allHandler, handler, messageTypes[i]);
 		}
 		return new Disposer(() => { Unsubscribe(handler); return Unit.Default; });
 	}
-	private void Subscribe(IMessageHandler handler, Type messageType) {
-		var handlers = GetHandlesFor(messageType);
-		if (!handlers.Any(hndl => hndl.IsSame(messageType, handler))) {
-			lock (_handlers) {
-				if (!_handlers.TryGetValue(messageType, out var handleList)) {
-					handleList = new List<IMessageHandler>();
-					_handlers.Add(messageType, handleList);
-				}
 
-				handleList.Add(handler);
+	/// <summary>
+	/// Adds <paramref name="handler"/> to the handler list for <paramref name="messageType"/>, unless
+	/// <paramref name="rawHandler"/> is already registered there for <paramref name="handler"/>'s own
+	/// message type.
+	/// </summary>
+	/// <remarks>
+	/// Duplicates are matched on <c>handler.MessageType</c>, not <paramref name="messageType"/>. This
+	/// runs once per slot a registration covers, so matching the slot would read a base-type and a
+	/// derived-type registration of one handler as duplicates of each other.
+	/// </remarks>
+	private void Subscribe(IMessageHandler handler, object rawHandler, Type messageType) {
+		lock (_handlers) {
+			if (!_handlers.TryGetValue(messageType, out var handleList)) {
+				handleList = new List<IMessageHandler>();
+				_handlers.Add(messageType, handleList);
+			} else if (handleList.Any(hndl => hndl.IsSame(handler.MessageType, rawHandler))) {
+				return;
 			}
+
+			handleList.Add(handler);
 		}
 	}
 
