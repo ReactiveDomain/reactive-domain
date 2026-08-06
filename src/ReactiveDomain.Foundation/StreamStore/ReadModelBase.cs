@@ -185,6 +185,25 @@ public abstract class ReadModelBase :
 	private void MarkReadDrained(int generation) =>
 		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation));
 
+	/// <summary>
+	/// Records that something else will feed this model a stream it does not read itself, so
+	/// <see cref="IsLive"/> does not report live before that feed has handed over its history.
+	/// </summary>
+	/// <returns>
+	/// The generation to hand back to <see cref="MarkExternalSourceDrained"/>. Stamping it keeps a
+	/// late release from retiring a source registered after this one was abandoned.
+	/// </returns>
+	/// <exception cref="InvalidOperationException">A capture is in flight.</exception>
+	internal int RegisterExternalSource() => RegisterStream();
+
+	/// <summary>
+	/// Queues the sentinel retiring a source registered by <see cref="RegisterExternalSource"/>. Call
+	/// it after the last of that source's history has been handed over, so the sentinel goes in behind
+	/// it and the target's queue folds that history first.
+	/// </summary>
+	/// <param name="generation">The value <see cref="RegisterExternalSource"/> returned.</param>
+	internal void MarkExternalSourceDrained(int generation) => MarkReadDrained(generation);
+
 	private sealed record ReadDrained(int Generation) : IMessage {
 		public Guid MsgId { get; } = Guid.NewGuid();
 	}
