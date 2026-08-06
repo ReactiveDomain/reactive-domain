@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reactive;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
@@ -24,20 +25,41 @@ public class QueuedStreamListener : StreamListener, IHandle<IMessage> {
 		SyncQueue = new QueuedHandler(this, "SyncListenerQueue");
 	}
 
+	// One entry per event off the store, in stream order, carrying the clocks the message itself
+	// cannot until #211 gives it an envelope. This listener has a queue of its own between the store
+	// and the model, so recording at GotEvent would checkpoint events that have not left this
+	// listener yet; the entries wait here until the queue thread reaches them.
+	private readonly ConcurrentQueue<(RecordedEvent Event, bool Published)> _delivering = new();
+
 	protected override void GotEvent(RecordedEvent recordedEvent) {
 		if (_disposed)
 			return; //todo: fix dispose
-		RecordDelivered(recordedEvent);
-		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
-			// The envelope reaches checkpoints through the listener, not the subscriber: handlers
-			// still receive the bare message. Delivering it per-event is #211's remaining half.
+		var @event = Serializer.Deserialize(recordedEvent) as IMessage;
+		// Enqueued before the publish: the queue thread must never dequeue a message whose clocks
+		// have not arrived. An event that deserializes to nothing publishable still gets an entry —
+		// it is real history, and dropping it would leave a hole the checkpoint has to skip over.
+		_delivering.Enqueue((recordedEvent, @event is not null));
+		if (@event is not null)
 			SyncQueue.Publish(@event);
-		}
 	}
 	public void Handle(IMessage @event) {
 		_running.Wait();
-		//todo: this needs to take a RecordedEvent
-		Bus.Publish(@event);
+		// Taken here rather than in GotEvent: this listener's own queue sits between the store and the
+		// subscriber, so this thread is where it delivers, and this is the publish a holder has to be
+		// able to exclude.
+		lock (DeliveryLock) {
+			//todo: this needs to take a RecordedEvent
+			Bus.Publish(@event);
+			// After the publish, so the checkpoint follows the model's queue rather than leading it.
+			// Unpublishable events ahead of this one are recorded on the way past: nothing waits behind
+			// them. A trailing run of them holds the checkpoint back until the next message, which costs
+			// a replay of events that deserialize to nothing anyway.
+			while (_delivering.TryDequeue(out var delivered)) {
+				RecordDelivered(delivered.Event);
+				if (delivered.Published)
+					break;
+			}
+		}
 
 		if (!_isLive.IsSet) {
 			Interlocked.Decrement(ref _pendingCount);

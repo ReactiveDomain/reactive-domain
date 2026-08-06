@@ -126,6 +126,38 @@ public sealed class when_reading_subscriber_state_under_the_reader_lock {
 		public void Handle(ReaderLockTestEvent message) => Interlocked.Increment(ref Handled);
 	}
 
+	/// <summary>One object can be both sorts of handler for one message, and each sort needs its own
+	/// wrapper. Finding the wrong sort must not count as not having found one — the sort that looks
+	/// second would then make a new wrapper every time, and the bus, which matches on the wrapper,
+	/// would register each as another handler.</summary>
+	[Fact]
+	public void subscribing_a_handler_that_is_both_sorts_registers_each_once() {
+		using var bus = new Dispatcher(nameof(when_reading_subscriber_state_under_the_reader_lock));
+		using var sut = new DualRoleSubscriber(bus);
+
+		bus.Publish(new ReaderLockTestCommand());
+
+		Assert.Equal(1, sut.Handled);
+	}
+
+	private sealed class DualRoleSubscriber :
+		TransientSubscriber, IHandle<ReaderLockTestCommand>, IHandleCommand<ReaderLockTestCommand> {
+		public int Handled;
+
+		public DualRoleSubscriber(IDispatcher bus) : base(bus) {
+			// The command sort first, so the event sort's lookup meets it. A command takes one handler
+			// and the bus says so, which is why only the event sort is subscribed twice.
+			Subscribe<ReaderLockTestCommand>((IHandleCommand<ReaderLockTestCommand>)this);
+			Subscribe<ReaderLockTestCommand>((IHandle<ReaderLockTestCommand>)this);
+			Subscribe<ReaderLockTestCommand>((IHandle<ReaderLockTestCommand>)this);
+		}
+
+		public void Handle(ReaderLockTestCommand message) => Interlocked.Increment(ref Handled);
+
+		CommandResponse IHandleCommand<ReaderLockTestCommand>.Handle(ReaderLockTestCommand command) =>
+			command.Succeed();
+	}
+
 	private sealed class PairSubscriber : TransientSubscriber, IHandle<ReaderLockTestEvent> {
 		private readonly ManualResetEventSlim _entered;
 		private readonly ManualResetEventSlim _release;

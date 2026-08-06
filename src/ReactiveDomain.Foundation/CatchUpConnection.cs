@@ -19,7 +19,7 @@ namespace ReactiveDomain.Foundation;
 /// listener positions and the read-model queue check below cover.
 /// </remarks>
 public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfiguredConnection {
-	private readonly List<TrackedStreamListener> _tracked = [];
+	private readonly List<IListener> _tracked = [];
 
 	public IStreamStoreConnection Connection => inner.Connection;
 	public IStreamNameBuilder StreamNamer => inner.StreamNamer;
@@ -29,17 +29,20 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 	/// Returns a listener whose delivered-through position feeds <see cref="WaitForCatchUp"/>.
 	/// </summary>
 	public IListener GetListener(string name) {
-		var listener = new TrackedStreamListener(name, inner.Connection, inner.StreamNamer, inner.Serializer);
+		// Constructed rather than delegated: what this barrier promises rests on the listener being
+		// this one, not on whatever the wrapped connection hands out.
+		var listener = new StreamListener(name, inner.Connection, inner.StreamNamer, inner.Serializer);
 		lock (_tracked) { _tracked.Add(listener); }
 		return listener;
 	}
 
 	/// <summary>
-	/// Deliberately NOT tracked: <see cref="QueuedStreamListener"/>'s internal queue
-	/// buffers events after receipt, so a tracked position would over-report delivery —
-	/// "received by the listener" is not "handed to the subscriber". Do not "fix" this by
-	/// tracking it.
+	/// The wrapped connection's queued listener, which this barrier does not track.
 	/// </summary>
+	/// <remarks>
+	/// <see cref="WaitForCatchUp"/> spans the listeners handed out by <see cref="GetListener"/>. A
+	/// model fed from a queued listener is outside it and needs a barrier of its own.
+	/// </remarks>
 	public IListener GetQueuedListener(string name) => inner.GetQueuedListener(name);
 
 	public IStreamReader GetReader(string name, Action<IMessage> handle) => inner.GetReader(name, handle);
@@ -93,16 +96,20 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 	// Checked in causal order each pass: store delivery first, then read-model queues.
 	private List<string> ListLaggards(ReadModelBase[] readModels) {
 		var laggards = new List<string>();
-		TrackedStreamListener[] tracked;
+		IListener[] tracked;
 		lock (_tracked) { tracked = _tracked.ToArray(); }
 		foreach (var listener in tracked) {
-			if (string.IsNullOrEmpty(listener.StreamName)) { continue; } // not started yet
-			var slice = inner.Connection.ReadStreamBackward(listener.StreamName, -1, 1);
+			// A checkpoint arrives with the stream name, so an unnamed listener has not started.
+			if (listener.Checkpoint is not { } checkpoint) { continue; }
+			var slice = inner.Connection.ReadStreamBackward(checkpoint.StreamName, -1, 1);
 			if (slice is null or StreamNotFoundSlice || slice.Events.Length == 0) { continue; }
 			var target = slice.LastEventNumber;
-			var delivered = listener.DeliveredThrough;
+			// Recorded once the event is in the subscriber's queue, and null until there is one, so
+			// this is "in the read model's queue or applied" — never "in flight", never a seed 0
+			// passing for event 0. -1 is before every event, which is what no version means here.
+			var delivered = checkpoint.Version ?? -1;
 			if (delivered < target) {
-				laggards.Add($"{listener.StreamName} delivered {delivered} of {target}");
+				laggards.Add($"{checkpoint.StreamName} delivered {delivered} of {target}");
 			}
 		}
 		if (laggards.Count > 0) { return laggards; }
@@ -114,39 +121,4 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 		return laggards;
 	}
 
-	/// <summary>
-	/// Exposes DeliveredThrough = max(startCheckpoint, lastDelivered), with lastDelivered
-	/// recorded after the base publishes into the subscriber's queue — so DeliveredThrough >= N
-	/// means "event N is in the read model's queue or applied", never "in flight". This fixes two
-	/// ambiguities in the base <see cref="StreamListener.Position"/>: it advances at receipt
-	/// (before the subscriber sees the event) and initializes to 0 (indistinguishable from
-	/// "applied event 0").
-	/// </summary>
-	private sealed class TrackedStreamListener(
-		string listenerName,
-		IStreamStoreConnection connection,
-		IStreamNameBuilder streamNameBuilder,
-		IEventSerializer serializer)
-		: StreamListener(listenerName, connection, streamNameBuilder, serializer) {
-		private long _startCheckpoint = -1;
-		private long _lastDelivered = -1;
-
-		public long DeliveredThrough =>
-			Math.Max(Interlocked.Read(ref _startCheckpoint), Interlocked.Read(ref _lastDelivered));
-
-		public override void Start(
-			string streamName,
-			long? checkpoint = null,
-			bool blockUntilLive = false,
-			bool validateStream = false,
-			CancellationToken cancelWaitToken = default) {
-			Interlocked.Exchange(ref _startCheckpoint, checkpoint ?? -1);
-			base.Start(streamName, checkpoint, blockUntilLive, validateStream, cancelWaitToken);
-		}
-
-		protected override void GotEvent(RecordedEvent recordedEvent) {
-			base.GotEvent(recordedEvent); // deliver first, then record
-			Interlocked.Exchange(ref _lastDelivered, recordedEvent.EventNumber);
-		}
-	}
 }

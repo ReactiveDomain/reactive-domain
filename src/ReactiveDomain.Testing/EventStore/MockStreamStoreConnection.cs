@@ -423,25 +423,24 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
 
 		lock (_readerWriterLock) {
-			var current = (int)from.CommitPosition;
-			RecordedEvent[] currentEvents = [];
+			RecordedEvent[] currentEvents;
+			long lastDelivered;
 			lock (_allStream) {
-				if (from == Position.End) {
-					current = _allStream.Count - 1;
-				}
-
-				if (current < _allStream.Count - 1) {
-					var events = new RecordedEvent[_allStream.Count - current];
-					_allStream.CopyTo(events, current);
-					currentEvents = events;
-				}
+				// Positions count from one, so the entry at position p sits at index p-1 and the next
+				// one to deliver is at index p: `from` names what the caller has already seen and is
+				// not re-delivered. Position.End asks for live traffic only, which is one past the end.
+				var start = from == Position.End ? _allStream.Count : (int)from.CommitPosition;
+				currentEvents = _allStream.Skip(Math.Clamp(start, 0, _allStream.Count)).ToArray();
+				lastDelivered = _allStream.Count;
 			}
 
 			for (int i = 0; i < currentEvents.Length; i++) {
 				eventAppeared(currentEvents[i]);
 			}
 
-			var subscription = new AllStreamSubscription(current, subscriptionDropped, eventAppeared);
+			// Seeded with what the catch-up delivered, so a live event already replayed above is not
+			// handed over a second time.
+			var subscription = new AllStreamSubscription(lastDelivered, subscriptionDropped, eventAppeared);
 			subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
 			_subscriptions.Add(subscription);
 			liveProcessingStarted?.Invoke();

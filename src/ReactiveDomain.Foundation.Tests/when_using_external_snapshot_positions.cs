@@ -222,7 +222,9 @@ public sealed class when_using_external_snapshot_positions : IClassFixture<Strea
 			Count = state.Count;
 			Sum = state.Sum;
 			if (TryGetExternalCheckpoint(_relayedStream, out var checkpoint)) {
-				PositionSeenWhileRestoring = checkpoint.Version;
+				// An external source records a checkpoint only when it has fed something, so the
+				// version is always there; -1 keeps the "nothing seen" reading in one place either way.
+				PositionSeenWhileRestoring = checkpoint!.Version ?? -1;
 			}
 		}
 

@@ -69,6 +69,20 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 		AssertEx.IsOrBecomesTrue(() => rm.Sum == 25, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
+	public void a_checkpoint_with_no_version_restores_from_the_first_event() {
+		// What a stream that had delivered nothing when the snapshot was taken records. A version of
+		// 0 would resume *after* the first event and lose it; no version resumes from the start.
+		var snapshot = new ReadModelState(
+			nameof(TestSnapShotReadModel),
+			[new StreamCheckpoint(_stream, null)],
+			new TestSnapShotReadModel.MyState { Count = 0, Sum = 0 });
+
+		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 10, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => rm.Sum == 20, TestTimeouts.ThrottleWaitFor);
+	}
+
+	[Fact]
 	[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 	public void can_snapshot_and_recover_read_model() {
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, null);

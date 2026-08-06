@@ -79,7 +79,16 @@ jobs:
       # budget is stated here rather than inferred.
       env:
         REACTIVEDOMAIN_TEST_CAPACITY: Small
-      run: dotnet test ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -p:ParallelizeTestCollections=false -c Release  --no-build 
+      run: dotnet test ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -p:ParallelizeTestCollections=false -c Release  --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ../test-results
+
+    # Named results, because a failure that only shows up under load has to be identifiable from the
+    # run that saw it. The console summary says how many failed, not which.
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-net${{ matrix.dotnet-version }}
+        path: test-results/
 
     # Format
     - name: Check Formatting

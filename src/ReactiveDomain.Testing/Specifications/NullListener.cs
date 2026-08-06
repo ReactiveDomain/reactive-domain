@@ -36,6 +36,14 @@ public sealed class NullListener : IListener, ISubscriber {
 	/// <remarks>Ignored, as nothing here reports a position.</remarks>
 	public void SeedAllPosition(Position? position) { }
 
+	/// <inheritdoc cref="IListener.HoldDelivery"/>
+	/// <remarks>Holds nothing, as nothing is ever delivered.</remarks>
+	public IDisposable HoldDelivery() => new NoHold();
+
+	private sealed class NoHold : IDisposable {
+		public void Dispose() { }
+	}
+
 	/// <summary>
 	/// Gets the name of the stream.
 	/// </summary>

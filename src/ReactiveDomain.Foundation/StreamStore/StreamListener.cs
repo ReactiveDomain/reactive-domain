@@ -38,6 +38,11 @@ public class StreamListener : IListener {
 	private readonly object _checkpointLock = new();
 	private Position? _allPosition;
 
+	// False while StreamPosition still holds its seed rather than a version anything reached: a
+	// listener started on a stream with no events on it. Zero cannot say that — see
+	// StreamCheckpoint.Version.
+	private bool _versioned;
+
 	/// <inheritdoc cref="IListener.Checkpoint"/>
 	public StreamCheckpoint? Checkpoint {
 		get {
@@ -46,7 +51,10 @@ public class StreamListener : IListener {
 				// version and position hold seed values that belong to nothing yet.
 				return string.IsNullOrEmpty(StreamName)
 					? null
-					: new StreamCheckpoint(StreamName, Interlocked.Read(ref StreamPosition), _allPosition);
+					: new StreamCheckpoint(
+						StreamName,
+						_versioned ? Interlocked.Read(ref StreamPosition) : null,
+						_allPosition);
 			}
 		}
 	}
@@ -56,21 +64,66 @@ public class StreamListener : IListener {
 	/// under one lock, so a reader cannot see a version from one event beside a position from another.
 	/// </summary>
 	/// <remarks>
-	/// The position is assigned unconditionally, so a store that stops reporting positions leaves this
-	/// null rather than stale — it belongs to the last event delivered, not to the last one that
-	/// happened to carry one.
+	/// <para>Call this <b>after</b> handing the event on, never before: until the publish returns, the
+	/// event is in no queue, and a checkpoint naming it would claim an event nothing downstream can
+	/// still reach.</para>
+	/// <para>The position is assigned unconditionally, so a store that stops reporting positions leaves
+	/// this null rather than stale — it belongs to the last event delivered, not to the last one that
+	/// happened to carry one.</para>
 	/// </remarks>
 	/// <param name="recordedEvent">The event just delivered.</param>
 	protected void RecordDelivered(RecordedEvent recordedEvent) {
 		lock (_checkpointLock) {
 			Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
 			_allPosition = recordedEvent.Position;
+			_versioned = true;
 		}
 	}
 
 	/// <inheritdoc cref="IListener.SeedAllPosition"/>
 	public void SeedAllPosition(Position? position) {
 		lock (_checkpointLock) { _allPosition = position; }
+	}
+
+	/// <summary>
+	/// Serializes publishing an event with recording it. The store already delivers to one
+	/// subscription sequentially, so in the steady state this is uncontended: it exists so that a
+	/// holder can be sure no delivery is caught between its publish and its record, where the
+	/// checkpoint does not yet name an event a subscriber already has.
+	/// </summary>
+	protected readonly object DeliveryLock = new();
+
+	/// <inheritdoc cref="IListener.HoldDelivery"/>
+	public IDisposable HoldDelivery() => new DeliveryHold(this);
+
+	/// <summary>A held delivery lock, released once, by the thread that took it.</summary>
+	/// <remarks>
+	/// Deliberately not a <see cref="Disposer"/>. That swallows whatever its dispose function throws,
+	/// so a release from the wrong thread would report success and leave delivery held for the life of
+	/// the listener — the one failure here that nothing downstream could detect.
+	/// </remarks>
+	private sealed class DeliveryHold : IDisposable {
+		private readonly object _lock;
+		private readonly int _heldBy = Environment.CurrentManagedThreadId;
+		private bool _released;
+
+		public DeliveryHold(StreamListener listener) {
+			_lock = listener.DeliveryLock;
+			Monitor.Enter(_lock);
+		}
+
+		public void Dispose() {
+			if (_released)
+				return;
+			if (Environment.CurrentManagedThreadId != _heldBy) {
+				throw new SynchronizationLockException(
+					$"A delivery hold must be released by the thread that took it ({_heldBy}), and this is " +
+					$"thread {Environment.CurrentManagedThreadId}. The hold is still held.");
+			}
+			// Flagged after the release, so a throw leaves the hold usable rather than spent.
+			Monitor.Exit(_lock);
+			_released = true;
+		}
 	}
 	public string StreamName { get; private set; } = string.Empty;
 	public CatchUpSubscriptionSettings Settings { get; set; }
@@ -201,14 +254,22 @@ public class StreamListener : IListener {
 				throw new InvalidOperationException("Listener already started.");
 			if (validateStream && !ValidateStreamName(streamName))
 				throw new ArgumentException("Stream not found.", streamName);
-			StreamName = streamName;
+			// Not named here: SubscribeToStreamFrom names it under the checkpoint lock, together with
+			// the version it goes with. Naming it first publishes a listener that reports no version
+			// for a stream being resumed at a real one.
 			_subscription =
 				SubscribeToStreamFrom(
 					streamName,
 					checkpoint,
 					eventAppeared: GotEvent,
 					liveProcessingStarted: () => {
-						Bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
+						// Under the delivery lock like an event, because it reaches subscribers the same
+						// way and is counted the same way. Published outside it, it could land in a
+						// subscriber's queue while a holder believed delivery was stopped — no checkpoint
+						// names it, so a model that handles it would hold state its checkpoints disown.
+						lock (DeliveryLock) {
+							Bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
+						}
 						_liveLock.Set();
 						_liveProcessingStarted?.Invoke(Unit.Default);
 					});
@@ -229,7 +290,10 @@ public class StreamListener : IListener {
 		// reader must not see the name before the version it goes with.
 		lock (_checkpointLock) {
 			StreamName = stream;
+			// A resume point is a version this stream reached; the zero standing in for "no resume
+			// point" is not, and must not be checkpointed as one.
 			Interlocked.Exchange(ref StreamPosition, lastCheckpoint ?? 0);
+			_versioned = lastCheckpoint.HasValue;
 		}
 		var sub = _streamStoreConnection.SubscribeToStreamFrom(
 			stream,
@@ -259,9 +323,15 @@ public class StreamListener : IListener {
 	}
 
 	protected virtual void GotEvent(RecordedEvent recordedEvent) {
-		RecordDelivered(recordedEvent);
-		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
-			Bus.Publish(@event);
+		lock (DeliveryLock) {
+			if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
+				Bus.Publish(@event);
+			}
+			// After the publish, and under the same lock. The bus hands the event to the subscriber's
+			// queue synchronously, so once this runs the event is queued; recording first left a window
+			// where the checkpoint named an event that had not been handed on at all, and recording
+			// outside the lock leaves one where a subscriber has an event the checkpoint disowns.
+			RecordDelivered(recordedEvent);
 		}
 	}
 

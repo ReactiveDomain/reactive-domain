@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -46,10 +47,17 @@ public abstract class SnapshotReadModel : ReadModelBase {
 			}
 		}
 		ApplyState(StartingState);
+		// ApplyState is the one place DirectApply is expected: rebuilding state from a snapshot is not
+		// input from outside, it is the snapshot's own, and the checkpoints restored alongside it
+		// describe exactly that. Anything applied after this is unaccounted for again.
+		MarkInputReplayable();
 		if (!startListeners || StartingState.Checkpoints == null)
 			return;
 
 		foreach (var stream in StartingState.Checkpoints) {
+			// A null version passes straight through as "no checkpoint", which starts the stream from
+			// its first event — the only reading of a checkpoint that never delivered one that does
+			// not skip that event.
 			Start(stream.StreamName, stream.Version, block, validateStreams, cancelWaitToken);
 		}
 	}
@@ -87,6 +95,9 @@ public abstract class SnapshotReadModel : ReadModelBase {
 		lock (_externalCheckpoints) {
 			_externalCheckpoints[streamName] = new StreamCheckpoint(streamName, version, position);
 		}
+		// Input that arrived through DirectApply or Publish now has somewhere to be replayed from,
+		// which is what makes the model snapshottable again.
+		MarkInputReplayable();
 	}
 
 	/// <summary>
@@ -103,7 +114,91 @@ public abstract class SnapshotReadModel : ReadModelBase {
 
 	protected abstract void ApplyState(ReadModelState snapshot);
 
+	/// <summary>
+	/// The model's state and checkpoints, read on the calling thread.
+	/// </summary>
+	/// <remarks>
+	/// Under live traffic the two are read at different moments, so the checkpoints can name events the
+	/// state does not yet contain — restoring such a snapshot resumes past them and never applies them.
+	/// Use <see cref="CaptureConsistentState"/> for a snapshot to persist; this remains for reading a
+	/// model that is quiet, and for supplying the state that capture pairs with a checkpoint.
+	/// </remarks>
 	public abstract ReadModelState GetState();
+
+	/// <summary>
+	/// Captures a snapshot whose checkpoints describe exactly the events built into its state.
+	/// </summary>
+	/// <returns>
+	/// <see cref="GetState"/>'s result with its <see cref="ReadModelState.Checkpoints"/> replaced by the
+	/// ones true at the point the state was read. Cancelled if the model is disposed while capturing.
+	/// </returns>
+	/// <exception cref="InvalidOperationException">
+	/// The model has input no checkpoint accounts for — see <see cref="HasUnreplayableInput"/>.
+	/// </exception>
+	/// <remarks>
+	/// <see cref="GetState"/> runs on the queue thread, so an implementation of it must not block or
+	/// wait on this model. The checkpoints it collects itself are discarded in favour of the captured
+	/// ones; everything else it returns is kept.
+	/// </remarks>
+	public Task<ReadModelState> CaptureConsistentState() {
+		if (HasUnreplayableInput) {
+			throw new InvalidOperationException(
+				$"{GetType().Name} has had messages applied through DirectApply or Publish that no " +
+				"checkpoint accounts for, so a snapshot of it could not be restored. A model fed from " +
+				"outside its own listeners must record where that input came from — see " +
+				$"{nameof(SetExternalCheckpoint)}.");
+		}
+		return ReadAtConsistentCut(checkpoints => {
+			var state = GetState();
+			return new ReadModelState(
+				state.ModelName,
+				checkpoints.ToList(),
+				state.State,
+				state.ExternalCheckpoints);
+		});
+	}
+
+	/// <summary>
+	/// True once a message has reached this model through <see cref="DirectApply"/> or
+	/// <see cref="Publish"/> without anything recording where it came from, which makes the model's
+	/// state unreachable by replay and so unsafe to snapshot.
+	/// </summary>
+	/// <remarks>
+	/// <para>A checkpoint describes what the model's listeners delivered. Input from anywhere else is
+	/// in the state and in no checkpoint, so restoring would silently produce a different model — not
+	/// a stale one, a wrong one. <see cref="CaptureConsistentState"/> refuses rather than hand back a
+	/// snapshot with that in it.</para>
+	/// <para>Cleared by <see cref="SetExternalCheckpoint"/>: a relay that says where its input came
+	/// from has made it replayable, which is the whole point of an external checkpoint. A model that
+	/// feeds itself and records nothing stays unsnapshottable, which is correct.</para>
+	/// </remarks>
+	public bool HasUnreplayableInput { get; private set; }
+
+	/// <summary>
+	/// Records that input reaching this model from outside its listeners has been accounted for, and
+	/// can be replayed from what the next snapshot will carry.
+	/// </summary>
+	protected void MarkInputReplayable() => HasUnreplayableInput = false;
+
+	/// <inheritdoc cref="ReadModelBase.DirectApply"/>
+	/// <remarks>
+	/// No listener saw this, so no checkpoint will describe it: this sets
+	/// <see cref="HasUnreplayableInput"/> until something records where the message came from.
+	/// </remarks>
+	public override void DirectApply(IMessage message) {
+		HasUnreplayableInput = true;
+		base.DirectApply(message);
+	}
+
+	/// <inheritdoc cref="ReadModelBase.Publish"/>
+	/// <remarks>
+	/// No listener saw this, so no checkpoint will describe it: this sets
+	/// <see cref="HasUnreplayableInput"/> until something records where the message came from.
+	/// </remarks>
+	public override void Publish(IMessage message) {
+		HasUnreplayableInput = true;
+		base.Publish(message);
+	}
 
 	private bool _disposed;
 	protected override void Dispose(bool disposing) {
