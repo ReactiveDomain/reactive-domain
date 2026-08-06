@@ -5,6 +5,8 @@ namespace ReactiveDomain.Messaging.Bus;
 
 public abstract class QueuedSubscriber : IMessageRegistry, IDisposable {
 	private readonly List<IDisposable> _subscriptions = [];
+	private readonly Dictionary<Type, Feed> _feeds = [];
+	private readonly object _feedLock = new();
 
 	private readonly QueuedHandler _messageQueue;
 	private readonly IBus _externalBus;
@@ -72,28 +74,93 @@ public abstract class QueuedSubscriber : IMessageRegistry, IDisposable {
 	}
 
 	public IDisposable Subscribe<T>(IHandle<T> handler) where T : class, IMessage {
-		var internalSub = _internalBus.Subscribe(handler);
-		var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
-		_subscriptions.Add(internalSub);
-		_subscriptions.Add(externalSub);
+		return Register<T>(_internalBus.Subscribe(handler));
+	}
+
+	public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
+		return Register<T>(_internalBus.Subscribe(new CommandHandler<T>(_externalBus, handler)));
+	}
+
+	/// <summary>The returned handle drops this registration and its share of the feed, nothing else.</summary>
+	private IDisposable Register<T>(IDisposable internalSub) where T : class, IMessage {
+		lock (_feedLock) {
+			_subscriptions.Add(internalSub);
+			Claim(typeof(T), () => _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle)));
+		}
 		return new Disposer(() => {
-			internalSub.Dispose();
-			externalSub.Dispose();
+			lock (_feedLock) {
+				internalSub.Dispose();
+				_subscriptions.Remove(internalSub);
+				Release(typeof(T));
+			}
 			return Unit.Default;
 		});
 	}
 
-	public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
-		var internalSub = _internalBus.Subscribe(new CommandHandler<T>(_externalBus, handler));
-		var externalSub = _externalBus.Subscribe(new AdHocHandler<T>(_messageQueue.Handle));
-		_subscriptions.Add(internalSub);
-		_subscriptions.Add(externalSub);
-		return new Disposer(() => {
-			internalSub.Dispose();
-			externalSub.Dispose();
-			return Unit.Default;
-		});
+	/// <summary>
+	/// One external-bus subscription feeding the queue, shared by every handler declared for this
+	/// type. <see cref="Attach"/> is a factory because the type is only known generically at
+	/// <c>Subscribe</c>, and a feed dropped as covered may have to come back.
+	/// </summary>
+	private sealed class Feed {
+		public Feed(Func<IDisposable> attach) => Attach = attach;
+		public readonly Func<IDisposable> Attach;
+		public IDisposable? Subscription;
+		public int Handlers;
 	}
+
+	private void Claim(Type declared, Func<IDisposable> attach) {
+		if (!_feeds.TryGetValue(declared, out var feed))
+			_feeds.Add(declared, feed = new Feed(attach));
+		feed.Handlers++;
+		Reconcile();
+	}
+
+	private void Release(Type declared) {
+		if (!_feeds.TryGetValue(declared, out var feed))
+			return;
+		feed.Handlers--;
+		Reconcile();
+	}
+
+	/// <summary>
+	/// Holds one subscription per <i>maximal</i> live type — one no other live type covers. A
+	/// subscription per declared type would feed the queue once per registration a message matches;
+	/// ancestors form a chain, so exactly one maximal type matches.
+	/// </summary>
+	/// <remarks>
+	/// Two orderings this must keep. Recompute rather than patch — one claim can subsume several
+	/// feeds and one release strand several. Attach before detaching — the reverse leaves an instant
+	/// with nothing subscribed, turning a handover into a dropped message.
+	/// </remarks>
+	private void Reconcile() {
+		var live = _feeds.Where(f => f.Value.Handlers > 0).Select(f => f.Key).ToArray();
+		var wanted = _feeds
+			.ToDictionary(f => f.Key,
+				f => f.Value.Handlers > 0 && !live.Any(other => other != f.Key && Covers(other, f.Key)));
+
+		foreach (var (type, feed) in _feeds)
+			if (wanted[type] && feed.Subscription is null)
+				feed.Subscription = feed.Attach();
+
+		foreach (var (type, feed) in _feeds) {
+			if (wanted[type] || feed.Subscription is null)
+				continue;
+			feed.Subscription.Dispose();
+			feed.Subscription = null;
+		}
+
+		foreach (var spent in _feeds.Where(f => f.Value.Handlers <= 0).Select(f => f.Key).ToArray())
+			_feeds.Remove(spent);
+	}
+
+	/// <summary>
+	/// Whether a subscription declared for <paramref name="outer"/> also receives
+	/// <paramref name="inner"/>. Equivalent to the <c>MessageHierarchy.DescendantsAndSelf</c>
+	/// expansion the bus uses, but that walk is uncached and allocates, and this runs over every
+	/// pair of declared types on each subscribe.
+	/// </summary>
+	private static bool Covers(Type outer, Type inner) => outer.IsAssignableFrom(inner);
 
 	public void Dispose() {
 		StopMessagePump();
@@ -113,7 +180,13 @@ public abstract class QueuedSubscriber : IMessageRegistry, IDisposable {
 	private void StopMessagePump() {
 		if (_pumpStopped)
 			return;
-		_subscriptions.ForEach(s => s.Dispose());
+		lock (_feedLock) {
+			_subscriptions.ForEach(s => s.Dispose());
+			_subscriptions.Clear();
+			foreach (var feed in _feeds.Values)
+				feed.Subscription?.Dispose();
+			_feeds.Clear();
+		}
 		_messageQueue.Stop();
 		_pumpStopped = true;
 	}
