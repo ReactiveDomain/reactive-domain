@@ -75,8 +75,8 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(9, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(9, GetCheckpoint()[0].Version);
 	}
 	[Fact]
 	public void can_read_two_streams() {
@@ -85,10 +85,10 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 22, TestTimeouts.ThrottleWaitFor, msg: $"Expected 22 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(9, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(9, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(9, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(9, GetCheckpoint()[1].Version);
 	}
 	[Fact]
 	public void can_wait_for_one_stream_to_go_live() {
@@ -116,10 +116,10 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 21, TestTimeouts.ThrottleWaitFor, msg: $"Expected 21 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
 	}
 	[Fact]
 	public void can_listen_to_two_streams() {
@@ -133,10 +133,10 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 42, TestTimeouts.ThrottleWaitFor, msg: $"Expected 42 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(19, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(19, GetCheckpoint()[1].Version);
 	}
 	[Fact]
 	public void can_use_checkpoint_on_one_stream() {
@@ -153,8 +153,8 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 12, TestTimeouts.ThrottleWaitFor, msg: $"Expected 12 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
 	}
 	[Fact]
 	public void can_use_checkpoint_on_two_streams() {
@@ -173,10 +173,10 @@ public sealed class when_using_read_model_base :
 		AssertEx.AtLeastModelVersion(this, 27, TestTimeouts.ThrottleWaitFor, msg: $"Expected 27 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(19, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(19, GetCheckpoint()[1].Version);
 	}
 	[Fact]
 	public void can_listen_to_the_same_stream_twice() {

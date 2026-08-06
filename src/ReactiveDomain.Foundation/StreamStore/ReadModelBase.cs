@@ -238,13 +238,14 @@ public abstract class ReadModelBase :
 		return l;
 	}
 
-	/// <summary>
-	/// Get the positions of all listeners.
-	/// </summary>
-	/// <returns>A list of Tuples of listener names and checkpoints.</returns>
-	public List<Tuple<string, long>> GetCheckpoint() {
+	/// <summary>How far this model has applied each stream it listens to.</summary>
+	/// <remarks>
+	/// <see cref="StreamCheckpoint.Position"/> is null: a listener tracks its stream's version, not the
+	/// <c>$all</c> position of the events it delivered.
+	/// </remarks>
+	public List<StreamCheckpoint> GetCheckpoint() {
 		lock (_listeners) {
-			return _listeners.Select(l => new Tuple<string, long>(l.StreamName, l.Position)).ToList();
+			return _listeners.Select(l => new StreamCheckpoint(l.StreamName, l.Position)).ToList();
 		}
 	}
 

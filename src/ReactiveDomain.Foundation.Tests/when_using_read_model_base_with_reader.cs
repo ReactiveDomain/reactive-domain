@@ -87,8 +87,8 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(9, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(9, GetCheckpoint()[0].Version);
 	}
 
 	[Fact]
@@ -98,10 +98,10 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(9, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(9, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(9, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(9, GetCheckpoint()[1].Version);
 	}
 
 	[Fact]
@@ -137,10 +137,10 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
 	}
 
 	[Fact]
@@ -155,10 +155,10 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(19, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(19, GetCheckpoint()[1].Version);
 	}
 
 	[Fact]
@@ -177,8 +177,8 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
 	}
 
 	[Fact]
@@ -199,10 +199,10 @@ public sealed class when_using_read_model_base_with_reader :
 		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
-		Assert.Equal(_stream1, GetCheckpoint()[0].Item1);
-		Assert.Equal(19, GetCheckpoint()[0].Item2);
-		Assert.Equal(_stream2, GetCheckpoint()[1].Item1);
-		Assert.Equal(19, GetCheckpoint()[1].Item2);
+		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
+		Assert.Equal(19, GetCheckpoint()[0].Version);
+		Assert.Equal(_stream2, GetCheckpoint()[1].StreamName);
+		Assert.Equal(19, GetCheckpoint()[1].Version);
 	}
 
 	[Fact]
