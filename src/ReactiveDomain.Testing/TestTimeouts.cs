@@ -1,42 +1,59 @@
 namespace ReactiveDomain.Testing;
 
 /// <summary>
-/// CI-aware timeout source for test waits, keyed on the <c>GITHUB_ACTIONS</c> environment
-/// variable. CI runners (typically 2 cores) suffer scheduler starvation that surfaces as
-/// spurious timeouts when tests use locally-tuned values, so waits get generous CI values
-/// while staying fast for the local edit-test loop.
+/// Timeout source for test waits, bucketed by the cores available to the process (see
+/// <see cref="TestCapacityDetector"/>) so a machine that cannot run the suite in parallel is not
+/// held to a budget written for one that can.
 /// </summary>
 /// <remarks>
-/// To reproduce CI-only timing failures locally, launch the test runner restricted to two
-/// cores with the CI flag set, e.g. from cmd:
-/// <c>set GITHUB_ACTIONS=true &amp;&amp; start /affinity 3 dotnet test ...</c>.
+/// <para>The shipped budgets are defaults, not measurements. Tune them per project by assigning
+/// <see cref="Budget"/> once at startup — an xunit assembly fixture, a module initializer — before
+/// any test reads a wait.</para>
+/// <para>To reproduce a smaller machine's timing on a larger one, force the bucket and restrict the
+/// runner to matching cores, e.g. from cmd:
+/// <c>set REACTIVEDOMAIN_TEST_CAPACITY=Small &amp;&amp; start /affinity 3 dotnet test ...</c>.
 /// Run test assemblies sequentially (<c>MaxCpuCount=1</c> in a .runsettings file or
 /// <c>-maxcpucount:1</c>) — concurrent in-process stores starve the thread pool.
-/// See Docs/ci-test-guidance.md.
+/// See Docs/ci-test-guidance.md.</para>
 /// </remarks>
 public static class TestTimeouts {
-	/// <summary>
-	/// True when running under GitHub Actions (<c>GITHUB_ACTIONS</c> = "true"), or under the
-	/// local repro recipe that sets the same variable.
-	/// </summary>
-	public static bool IsCi { get; } =
-		string.Equals(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"), "true", StringComparison.OrdinalIgnoreCase);
+	/// <summary>The detected bucket, and so which defaults <see cref="Budget"/> starts from.</summary>
+	public static TestCapacity Capacity { get; } = TestCapacityDetector.Detected;
+
+	/// <summary>What chose <see cref="Capacity"/>, so a red run can state the budget it used.</summary>
+	public static string CapacityReason { get; } = TestCapacityDetector.Reason;
 
 	/// <summary>
-	/// Timeout for message-arrival waits: <see cref="TestQueue.WaitFor{T}"/>,
-	/// <see cref="TestQueue.WaitForMsgId"/>, and RepositoryEvents waits.
-	/// 500 ms locally, 5 s on CI.
+	/// The budgets in force. Defaults to <see cref="TestTimeoutBudget.For"/> of
+	/// <see cref="Capacity"/>; assign to tune a project's own numbers.
 	/// </summary>
-	public static TimeSpan WaitFor { get; } = IsCi ? TimeSpan.FromSeconds(5) : TimeSpan.FromMilliseconds(500);
+	/// <remarks>Set it once before any test reads a wait — this is process-wide, and nothing
+	/// re-reads a value a wait has already started against.</remarks>
+	public static TestTimeoutBudget Budget { get; set; } = TestTimeoutBudget.For(Capacity);
+
+	/// <inheritdoc cref="TestTimeoutBudget.WaitFor"/>
+	public static TimeSpan WaitFor => Budget.WaitFor;
+
+	/// <inheritdoc cref="TestTimeoutBudget.CommandTimeout"/>
+	public static TimeSpan CommandTimeout => Budget.CommandTimeout;
+
+	/// <inheritdoc cref="TestTimeoutBudget.ThrottleWaitFor"/>
+	public static TimeSpan ThrottleWaitFor => Budget.ThrottleWaitFor;
+
+	/// <summary>True at <see cref="TestCapacity.Small"/> — the bucket, not "a CI system is running".</summary>
+	public static bool IsCi => Capacity == TestCapacity.Small;
 
 	/// <summary>
-	/// Timeout for command-response waits (dispatcher Send). 500 ms locally, 10 s on CI.
+	/// One line naming the bucket, what chose it, and the budgets in force — so a red gate can state
+	/// which budget the run used instead of leaving it to be guessed.
 	/// </summary>
-	public static TimeSpan CommandTimeout { get; } = IsCi ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(500);
+	public static string CapacityDescription =>
+		$"ReactiveDomain.Testing capacity: {Capacity} ({CapacityReason}); " +
+		$"{nameof(WaitFor)}={WaitFor}, {nameof(CommandTimeout)}={CommandTimeout}, " +
+		$"{nameof(ThrottleWaitFor)}={ThrottleWaitFor}";
 
-	/// <summary>
-	/// Timeout for waits on real-time Rx operators (Throttle, Buffer, Sample) whose timers
-	/// run on wall-clock schedulers. 2 s locally, 10 s on CI.
-	/// </summary>
-	public static TimeSpan ThrottleWaitFor { get; } = IsCi ? TimeSpan.FromSeconds(10) : TimeSpan.FromSeconds(2);
+	/// <summary>Writes <see cref="CapacityDescription"/>, by default to the console.</summary>
+	/// <param name="output">Where to write; defaults to <see cref="Console.Out"/>.</param>
+	public static void WriteCapacity(TextWriter? output = null) =>
+		(output ?? Console.Out).WriteLine(CapacityDescription);
 }
