@@ -47,8 +47,8 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 		Assert.Equal(nameof(TestSnapShotReadModel), snapshot.ModelName);
 		Assert.NotNull(snapshot.Checkpoints);
 		Assert.Single(snapshot.Checkpoints);
-		Assert.Equal(_stream, snapshot.Checkpoints[0].Item1);
-		Assert.Equal(9, snapshot.Checkpoints[0].Item2);
+		Assert.Equal(_stream, snapshot.Checkpoints[0].StreamName);
+		Assert.Equal(9, snapshot.Checkpoints[0].Version);
 		var state = snapshot.State as TestSnapShotReadModel.MyState;
 		Assert.NotNull(state);
 		Assert.Equal(10, state.Count);
@@ -58,7 +58,7 @@ public sealed class when_using_snapshot_read_model : IClassFixture<StreamStoreCo
 	public void can_apply_snapshot_to_read_model() {
 		var snapshot = new ReadModelState(
 			nameof(TestSnapShotReadModel),
-			[new Tuple<string, long>(_stream, 9)],
+			[new StreamCheckpoint(_stream, 9)],
 			new TestSnapShotReadModel.MyState { Count = 10, Sum = 20 });
 
 		var rm = new TestSnapShotReadModel(_aggId, _configuredConnection, snapshot);

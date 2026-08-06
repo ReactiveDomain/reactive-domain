@@ -244,7 +244,7 @@ public sealed class when_awaiting_read_model_liveness : IClassFixture<StreamStor
 		var stream = NewStream();
 		AppendEvents(stream, 6, 5);
 		var rm = Track(new LivenessTestSnapshotReadModel(_configured,
-			new ReadModelState(nameof(LivenessTestSnapshotReadModel), [new Tuple<string, long>(stream, 2)], new object())));
+			new ReadModelState(nameof(LivenessTestSnapshotReadModel), [new StreamCheckpoint(stream, 2)], new object())));
 
 		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
 
