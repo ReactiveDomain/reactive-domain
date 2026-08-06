@@ -74,6 +74,11 @@ jobs:
     # Test
     - name: Test     
       working-directory: src
+      # A hosted runner reports 4 cores but shares them, and runs every test assembly of this
+      # solution at once. It behaves like the smallest bucket whatever the count says, so the
+      # budget is stated here rather than inferred.
+      env:
+        REACTIVEDOMAIN_TEST_CAPACITY: Small
       run: dotnet test ReactiveDomain.sln -f net${{ matrix.dotnet-version }} -p:ParallelizeTestCollections=false -c Release  --no-build 
 
     # Format
