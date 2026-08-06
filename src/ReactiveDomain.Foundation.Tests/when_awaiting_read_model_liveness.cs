@@ -339,6 +339,7 @@ public sealed class when_awaiting_read_model_liveness : IClassFixture<StreamStor
 		Action<string>? beforeRead,
 		Action<string, Action<IMessage>>? afterRead) : IStreamReader {
 		public long? Position => inner.Position;
+		public StreamCheckpoint? Checkpoint => inner.Checkpoint;
 		public string StreamName => inner.StreamName;
 		public Action<IMessage> Handle { set => inner.Handle = value; }
 

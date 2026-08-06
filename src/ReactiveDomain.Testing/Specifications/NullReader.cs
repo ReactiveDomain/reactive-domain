@@ -25,6 +25,10 @@ public class NullReader : IStreamReader {
 	/// </summary>
 	public long? Position => 0;
 
+	/// <inheritdoc cref="IStreamReader.Checkpoint"/>
+	/// <remarks>Always null: nothing is ever read, so there is nothing to checkpoint.</remarks>
+	public StreamCheckpoint? Checkpoint => null;
+
 	/// <summary>
 	/// Gets the name of the stream.
 	/// </summary>

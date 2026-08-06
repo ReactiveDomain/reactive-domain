@@ -228,24 +228,77 @@ public abstract class ReadModelBase :
 		}
 	}
 
-	private IListener AddNewListener() {
+	/// <summary>Creates a listener, seeds its <c>$all</c> position, and feeds it into this model's queue.</summary>
+	/// <param name="readAllPosition">
+	/// Where the reader that just replayed this stream's history left off, so a checkpoint taken
+	/// before the first live event still accounts for what the reader applied.
+	/// </param>
+	private IListener AddNewListener(Position? readAllPosition) {
 		var l = _getListener();
 		lock (_listeners) {
 			_listeners.Add(l);
 		}
 
+		l.SeedAllPosition(readAllPosition);
 		l.EventStream.SubscribeToAll(_queue);
 		return l;
 	}
 
 	/// <summary>How far this model has applied each stream it listens to.</summary>
+	/// <returns>One checkpoint per started listener.</returns>
 	/// <remarks>
-	/// <see cref="StreamCheckpoint.Position"/> is null: a listener tracks its stream's version, not the
-	/// <c>$all</c> position of the events it delivered.
+	/// <see cref="StreamCheckpoint.Position"/> is null for any stream whose last delivered event
+	/// carried no <c>$all</c> position, which is what a store that does not report one produces.
 	/// </remarks>
 	public List<StreamCheckpoint> GetCheckpoint() {
 		lock (_listeners) {
-			return _listeners.Select(l => new StreamCheckpoint(l.StreamName, l.Position)).ToList();
+			// A listener is in this list from the moment it is created, but is only checkpointable
+			// once started — until then it has no stream name to report.
+			return _listeners.Select(l => l.Checkpoint).OfType<StreamCheckpoint>().ToList();
+		}
+	}
+
+	/// <summary>
+	/// The furthest into the store's <c>$all</c> log this model has reached — the greatest position
+	/// among the last events applied from its streams.
+	/// </summary>
+	/// <remarks>
+	/// <para><b>Not a completeness claim.</b> The model only ever saw events on its own streams, so it
+	/// has not seen everything below this position. To gate a read on freshness use
+	/// <see cref="LowestAppliedPosition"/>.</para>
+	/// <para>Null when the model has no listeners, or when any one of them reports no position —
+	/// projecting over the rest would silently overstate.</para>
+	/// </remarks>
+	public Position? HighWaterMark => ProjectAllPositions(takeGreatest: true);
+
+	/// <summary>
+	/// The position through which every one of this model's streams has been applied — the least
+	/// position among the last events applied from them.
+	/// </summary>
+	/// <remarks>
+	/// <para>This is the honest freshness signal: everything each source had delivered up to here has
+	/// been handled. Compare against it to gate a read.</para>
+	/// <para>Null when the model has no listeners, or when any one of them reports no position —
+	/// projecting over the rest would silently understate which sources are covered.</para>
+	/// </remarks>
+	public Position? LowestAppliedPosition => ProjectAllPositions(takeGreatest: false);
+
+	private Position? ProjectAllPositions(bool takeGreatest) {
+		lock (_listeners) {
+			if (_listeners.Count == 0)
+				return null;
+			Position? projected = null;
+			foreach (var listener in _listeners) {
+				if (listener.Checkpoint?.Position is not { } position)
+					return null;
+				if (projected is not { } current) {
+					projected = position;
+					continue;
+				}
+				if (takeGreatest ? position > current : position < current)
+					projected = position;
+			}
+			return projected;
 		}
 	}
 
@@ -284,9 +337,11 @@ public abstract class ReadModelBase :
 			reader.Read(stream, () => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position ?? checkpoint;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version ?? checkpoint;
 
-			AddNewListener().Start(stream, position, blockUntilLive, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start(stream, position, blockUntilLive, validateStream, cancelWaitToken);
 			return true;
 		});
 	}
@@ -307,9 +362,11 @@ public abstract class ReadModelBase :
 			reader.Read(stream, () => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position ?? checkpoint;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version ?? checkpoint;
 
-			AddNewListener().Start(stream, position, false, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start(stream, position, false, validateStream, cancelWaitToken);
 			return true;
 		}, cancelWaitToken);
 	}
@@ -335,9 +392,11 @@ public abstract class ReadModelBase :
 			reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version;
 
-			AddNewListener().Start<TAggregate>(id, position, blockUntilLive, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start<TAggregate>(id, position, blockUntilLive, validateStream, cancelWaitToken);
 			return true;
 		});
 	}
@@ -359,9 +418,11 @@ public abstract class ReadModelBase :
 			reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version;
 
-			AddNewListener().Start<TAggregate>(id, position, false, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start<TAggregate>(id, position, false, validateStream, cancelWaitToken);
 			return true;
 		}, cancelWaitToken);
 	}
@@ -385,9 +446,11 @@ public abstract class ReadModelBase :
 			reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version;
 
-			AddNewListener().Start<TAggregate>(position, blockUntilLive, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start<TAggregate>(position, blockUntilLive, validateStream, cancelWaitToken);
 			return true;
 		});
 	}
@@ -409,9 +472,11 @@ public abstract class ReadModelBase :
 			reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
 			if (_disposed)
 				return false;
-			var position = reader.Position;
+			// One read of the reader: version and position must come from the same event.
+			var read = reader.Checkpoint;
+			var position = read?.Version;
 
-			AddNewListener().Start<TAggregate>(position, false, validateStream, cancelWaitToken);
+			AddNewListener(read?.Position).Start<TAggregate>(position, false, validateStream, cancelWaitToken);
 			return true;
 		}, cancelWaitToken);
 	}
