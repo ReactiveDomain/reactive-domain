@@ -18,7 +18,8 @@ public class when_sending_concurrent_commands :
 	private const int Count = 5;
 
 	public when_sending_concurrent_commands() {
-		_bus = new Dispatcher("Test", 3, false, _5Sec, _5Sec);
+		// Long enough that parallel sends do not time out under load.
+		_bus = new Dispatcher("Test", 3, false, defaultAckTimeout: _5Sec, defaultResponseTimeout: _5Sec);
 		_bus.Subscribe<TestCommands.Command1>(this);
 		_bus.Subscribe<TestCommands.Command2>(this);
 		_bus.Subscribe<TestCommands.Command3>(this);

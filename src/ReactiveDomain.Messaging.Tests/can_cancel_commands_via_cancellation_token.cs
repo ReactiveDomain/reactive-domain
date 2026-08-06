@@ -104,8 +104,8 @@ public class can_cancel_commands_via_cancellation_token :
 		nameof(can_cancel_nested_commands_via_cancellation_token),
 		3,
 		false,
-		TimeSpan.FromSeconds(2.5),
-		TimeSpan.FromSeconds(2.5));
+		defaultAckTimeout: TimeSpan.FromSeconds(2.5),
+		defaultResponseTimeout: TimeSpan.FromSeconds(2.5));
 
 	private long _canceled;
 	private long _success;
@@ -167,8 +167,8 @@ public class can_cancel_nested_commands_via_cancellation_token :
 			nameof(can_cancel_nested_commands_via_cancellation_token),
 			3,
 			false,
-			TimeSpan.FromSeconds(2.5),
-			TimeSpan.FromSeconds(2.5));
+			defaultAckTimeout: TimeSpan.FromSeconds(2.5),
+			defaultResponseTimeout: TimeSpan.FromSeconds(2.5));
 		Given();
 	}
 
