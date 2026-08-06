@@ -12,6 +12,25 @@ public abstract class QueuedSubscriber : IDisposable {
 	protected object? Last = null;
 	public bool Starving => _messageQueue.Idle;
 
+	/// <summary>
+	/// Locks the message handlers. Hold it while reading the subscriber's state to see that state
+	/// unchanged for the duration of the read.
+	/// </summary>
+	/// <remarks>
+	/// Do <i>not</i> take it in a Handle method — handlers already run inside it.
+	/// </remarks>
+	protected readonly object ReaderLock = new();
+
+	/// <summary>
+	/// The number of messages dequeued to this subscriber, whatever the handler count — including none.
+	/// </summary>
+	/// <remarks>
+	/// A duplicate dropped by an idempotent subscriber does not advance the version. Incremented
+	/// inside the <see cref="ReaderLock"/> after the handlers run, so a reader holding the lock
+	/// always sees state and version agree.
+	/// </remarks>
+	public int Version { get; private set; }
+
 	protected QueuedSubscriber(IBus bus, bool idempotent = false) {
 		_externalBus = bus ?? throw new ArgumentNullException(nameof(bus));
 		_internalBus = new InMemoryBus("SubscriptionBus");
@@ -19,14 +38,26 @@ public abstract class QueuedSubscriber : IDisposable {
 		if (idempotent)
 			_messageQueue = new QueuedHandler(
 				new IdempotentHandler<IMessage>(
-					new AdHocHandler<IMessage>(_internalBus.Publish)
+					new AdHocHandler<IMessage>(DequeueMessage)
 				),
 				"SubscriptionQueue");
 		else
 			_messageQueue = new QueuedHandler(
-				new AdHocHandler<IMessage>(_internalBus.Publish),
+				new AdHocHandler<IMessage>(DequeueMessage),
 				"SubscriptionQueue");
 		_messageQueue.Start();
+	}
+
+	/// <summary>Every message handled by the subscriber passes through here.</summary>
+	/// <remarks>
+	/// Dispatch order is the queue's — the lock only excludes readers and, through the single queue
+	/// thread, is uncontended on the dispatch path.
+	/// </remarks>
+	private void DequeueMessage(IMessage message) {
+		lock (ReaderLock) {
+			_internalBus.Publish(message);
+			Version++;
+		}
 	}
 
 	public IDisposable Subscribe<T>(IHandle<T> handler) where T : class, IMessage {
