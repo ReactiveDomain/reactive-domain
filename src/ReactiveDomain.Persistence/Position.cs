@@ -4,7 +4,13 @@
 /// A structure referring to a potential logical record position in the Store Main transaction file.
 /// While this is based on the Event Store implementation, keep in mind not all stores use the prepare position.
 /// </summary>
-public struct Position {
+/// <remarks>
+/// Ordered as the store orders them, which is unsigned. The components are carried in a signed
+/// <see cref="long"/>, so <see cref="End"/>'s -1 is the same bit pattern as the store's largest
+/// position — and that is how it round-trips through the connection wrappers. Compared as signed it
+/// would sort below <see cref="Start"/>, putting the end of the log before the beginning of it.
+/// </remarks>
+public struct Position : IEquatable<Position>, IComparable<Position>, IComparable {
 	/// <summary>
 	/// Position representing the start of the transaction file
 	/// </summary>
@@ -32,49 +38,56 @@ public struct Position {
 		PreparePosition = preparePosition;
 	}
 
+	/// <summary>
+	/// Orders two positions, unsigned, commit position first. See the note on <see cref="Position"/>
+	/// for why signed comparison puts <see cref="End"/> in the wrong place.
+	/// </summary>
+	private static int Order(Position p1, Position p2) {
+		var commit = ((ulong)p1.CommitPosition).CompareTo((ulong)p2.CommitPosition);
+		return commit != 0
+			? commit
+			: ((ulong)p1.PreparePosition).CompareTo((ulong)p2.PreparePosition);
+	}
+
 	/// <summary>Compares whether p1 &lt; p2.</summary>
 	/// <param name="p1">A <see cref="Position" />.</param>
 	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &lt; p2.</returns>
-	public static bool operator <(Position p1, Position p2) {
-		if (p1.CommitPosition < p2.CommitPosition)
-			return true;
-		if (p1.CommitPosition == p2.CommitPosition)
-			return p1.PreparePosition < p2.PreparePosition;
-		return false;
-	}
+	public static bool operator <(Position p1, Position p2) => Order(p1, p2) < 0;
 
 	/// <summary>Compares whether p1 &gt; p2.</summary>
 	/// <param name="p1">A <see cref="Position" />.</param>
 	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &gt; p2.</returns>
-	public static bool operator >(Position p1, Position p2) {
-		if (p1.CommitPosition > p2.CommitPosition)
-			return true;
-		if (p1.CommitPosition == p2.CommitPosition)
-			return p1.PreparePosition > p2.PreparePosition;
-		return false;
-	}
+	public static bool operator >(Position p1, Position p2) => Order(p1, p2) > 0;
 
 	/// <summary>Compares whether p1 &gt;= p2.</summary>
 	/// <param name="p1">A <see cref="Position" />.</param>
 	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &gt;= p2.</returns>
-	public static bool operator >=(Position p1, Position p2) {
-		if (!(p1 > p2))
-			return p1 == p2;
-		return true;
-	}
+	public static bool operator >=(Position p1, Position p2) => Order(p1, p2) >= 0;
 
 	/// <summary>Compares whether p1 &lt;= p2.</summary>
 	/// <param name="p1">A <see cref="Position" />.</param>
 	/// <param name="p2">A <see cref="Position" />.</param>
 	/// <returns>True if p1 &lt;= p2.</returns>
-	public static bool operator <=(Position p1, Position p2) {
-		if (!(p1 < p2))
-			return p1 == p2;
-		return true;
-	}
+	public static bool operator <=(Position p1, Position p2) => Order(p1, p2) <= 0;
+
+	/// <summary>Orders this position against another, so positions can be sorted.</summary>
+	/// <param name="other">The position to compare against.</param>
+	/// <returns>Negative, zero or positive as this precedes, matches or follows <paramref name="other"/>.</returns>
+	public int CompareTo(Position other) => Order(this, other);
+
+	/// <inheritdoc cref="CompareTo(Position)"/>
+	/// <param name="obj">A <see cref="Position"/>, or null, which every position follows.</param>
+	/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="Position"/>.</exception>
+	public int CompareTo(object? obj) =>
+		obj switch {
+			null => 1,
+			Position other => Order(this, other),
+			_ => throw new ArgumentException($"Cannot compare a {nameof(Position)} to a {obj.GetType().Name}.",
+				nameof(obj))
+		};
 
 	/// <summary>Compares p1 and p2 for equality.</summary>
 	/// <param name="p1">A <see cref="Position" />.</param>

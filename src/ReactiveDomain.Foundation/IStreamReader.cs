@@ -9,8 +9,10 @@ public interface IStreamReader : IDisposable {
 	long? Position { get; }
 	/// <summary>
 	/// Where this read left off: the stream, its version, and the <c>$all</c> position of the last
-	/// event read. Null when nothing was read. This is what lets a listener resuming from the read
-	/// report a checkpoint covering the history the reader already applied.
+	/// event read. Null when nothing was read — a reader reports no checkpoint at all rather than one
+	/// with no version, since a read that reached nothing has no stream to resume either. This is what
+	/// lets a listener resuming from the read report a checkpoint covering the history the reader
+	/// already applied.
 	/// </summary>
 	/// <remarks>
 	/// Read together deliberately — see <see cref="IListener.Checkpoint"/> for why the two clocks must

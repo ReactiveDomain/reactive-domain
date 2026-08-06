@@ -71,7 +71,7 @@ public abstract class TransientSubscriber : IMessageRegistry, IDisposable {
 	/// </remarks>
 	private IHandle<T> Serialized<T>(IHandle<T> handler) where T : class, IMessage {
 		lock (_wrappers) {
-			if (Existing<T>(handler) is SerializedHandler<T> existing)
+			if (Existing<T, SerializedHandler<T>>(handler) is { } existing)
 				return existing;
 			var wrapper = new SerializedHandler<T>(this, handler);
 			// An event subscription takes the bus's default, which routes the derived types too.
@@ -82,7 +82,7 @@ public abstract class TransientSubscriber : IMessageRegistry, IDisposable {
 
 	private IHandleCommand<T> Serialized<T>(IHandleCommand<T> handler) where T : Command {
 		lock (_wrappers) {
-			if (Existing<T>(handler) is SerializedCommandHandler<T> existing)
+			if (Existing<T, SerializedCommandHandler<T>>(handler) is { } existing)
 				return existing;
 			var wrapper = new SerializedCommandHandler<T>(this, handler);
 			// A command subscription is registered for its exact type: one handler per command.
@@ -91,11 +91,23 @@ public abstract class TransientSubscriber : IMessageRegistry, IDisposable {
 		}
 	}
 
-	/// <remarks>Callers hold <c>_wrappers</c>.</remarks>
-	private object? Existing<T>(object handler) {
+	/// <summary>
+	/// The wrapper of the wanted kind for this handler and message type, if one was already made.
+	/// </summary>
+	/// <remarks>
+	/// Matched on kind as well as on handler and type: one object can be both an
+	/// <see cref="IHandle{T}"/> and an <see cref="IHandleCommand{T}"/> of the same message, and the
+	/// two need a wrapper each. Matching without the kind returns whichever was registered first, so
+	/// the second sort never finds its own and makes a new one on every subscription.
+	/// <para>Callers hold <c>_wrappers</c>.</para>
+	/// </remarks>
+	private TWrapper? Existing<T, TWrapper>(object handler) where TWrapper : class {
 		foreach (var entry in _wrappers)
-			if (ReferenceEquals(entry.Handler, handler) && entry.MessageType == typeof(T))
-				return entry.Wrapper;
+			if (ReferenceEquals(entry.Handler, handler) &&
+				entry.MessageType == typeof(T) &&
+				entry.Wrapper is TWrapper wrapper) {
+				return wrapper;
+			}
 		return null;
 	}
 

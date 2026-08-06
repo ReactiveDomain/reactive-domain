@@ -90,26 +90,45 @@ public abstract class ReadModelBase :
 		return source;
 	}
 
+	// Captures in flight, guarded by _liveLock along with _pendingStreams: a start and a capture
+	// decide against each other, so they must decide under one lock or both can pass.
+	private int _capturing;
+
+	// Bumped whenever the outstanding streams are abandoned wholesale, so a sentinel queued before
+	// that cannot be counted against the streams started after it.
+	private int _generation;
+
 	/// <summary>
 	/// Records a stream as outstanding, arming a fresh task if none were.
 	/// Called synchronously from every Start overload, so a caller that reads
 	/// <see cref="IsLive"/> after starting cannot see the previous, completed task.
 	/// </summary>
-	private void RegisterStream() {
+	/// <exception cref="InvalidOperationException">A capture is in flight.</exception>
+	private int RegisterStream() {
 		lock (_liveLock) {
+			if (_capturing > 0) {
+				throw new InvalidOperationException(
+					$"{GetType().Name} is being captured, so a stream cannot be started: its read would " +
+					"deliver events into the model ahead of the cut being captured, and no checkpoint " +
+					"would name them. Await the capture, then start the stream.");
+			}
 			if (_pendingStreams == 0)
 				_live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingStreams++;
+			return _generation;
 		}
 	}
 
 	/// <summary>
 	/// Retires one outstanding stream; completes the armed task when the last one drains.
 	/// </summary>
-	private void RetireStream() {
+	private void RetireStream(int generation) {
 		TaskCompletionSource? drained = null;
 		lock (_liveLock) {
-			if (_pendingStreams == 0)
+			// A sentinel outlives the streams it was queued alongside when one of them fails, and the
+			// count it would decrement by then belongs to whatever started next. Stamping it keeps it
+			// from retiring a stream it never described.
+			if (generation != _generation || _pendingStreams == 0)
 				return;
 			if (--_pendingStreams == 0)
 				drained = _live;
@@ -130,6 +149,7 @@ public abstract class ReadModelBase :
 			if (_pendingStreams == 0)
 				return;
 			_pendingStreams = 0;
+			_generation++; // sentinels already queued describe streams that are no longer outstanding
 			armed = _live;
 		}
 		// Signalled outside the lock, as in RetireStream.
@@ -144,10 +164,10 @@ public abstract class ReadModelBase :
 	/// A body returning false did not attach a listener (the model was disposed mid-read).
 	/// </summary>
 	private void RunStart(Func<bool> start) {
-		RegisterStream();
+		var generation = RegisterStream();
 		try {
 			if (start())
-				MarkReadDrained();
+				MarkReadDrained(generation);
 			else
 				RetireAllStreams(null);
 		} catch (Exception ex) {
@@ -162,9 +182,10 @@ public abstract class ReadModelBase :
 	/// because that check reads the queue's starving flag and can see it set before the queue thread
 	/// has picked up the work just enqueued.
 	/// </summary>
-	private void MarkReadDrained() => ((IHandle<IMessage>)_queue).Handle(new ReadDrained());
+	private void MarkReadDrained(int generation) =>
+		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation));
 
-	private sealed record ReadDrained : IMessage {
+	private sealed record ReadDrained(int Generation) : IMessage {
 		public Guid MsgId { get; } = Guid.NewGuid();
 	}
 
@@ -173,11 +194,11 @@ public abstract class ReadModelBase :
 	/// the work so the registration is visible to the calling thread on return.
 	/// </summary>
 	private void RunStartAsync(Func<bool> start, CancellationToken cancelWaitToken) {
-		RegisterStream();
+		var generation = RegisterStream();
 		var readTask = Task.Run(() => {
 			try {
 				if (start())
-					MarkReadDrained();
+					MarkReadDrained(generation);
 				else
 					RetireAllStreams(null);
 			} catch (Exception ex) {
@@ -218,13 +239,148 @@ public abstract class ReadModelBase :
 	/// </summary>
 	private void DequeueMessage(IMessage message) {
 		// Not published to handlers and not counted: it is this model's own bookkeeping, not an event.
-		if (message is ReadDrained) {
-			RetireStream();
+		if (message is ReadDrained drained) {
+			RetireStream(drained.Generation);
+			return;
+		}
+		if (message is CaptureBarrier barrier) {
+			RunCapture(barrier);
 			return;
 		}
 		lock (ReaderLock) {
 			_bus.Handle(message);
 			Version++;
+		}
+	}
+
+	private readonly List<CaptureBarrier> _captures = [];
+
+	/// <summary>
+	/// Carries the checkpoints sampled where it was enqueued, so that reaching it on the queue is
+	/// proof that they describe what has been applied.
+	/// </summary>
+	private sealed class CaptureBarrier : IMessage {
+		public Guid MsgId { get; } = Guid.NewGuid();
+		public required IReadOnlyList<StreamCheckpoint> Checkpoints { get; init; }
+		public required Action<IReadOnlyList<StreamCheckpoint>> Complete { get; init; }
+		public required Action<Exception?> Abandon { get; init; }
+	}
+
+	/// <summary>
+	/// Reads this model at a cut: <paramref name="read"/> runs against the exact state the supplied
+	/// checkpoints describe, with nothing applied that they do not name.
+	/// </summary>
+	/// <param name="read">
+	/// Reads the model's state. Runs on the queue thread under <see cref="ReaderLock"/> at the point
+	/// the checkpoints describe, so it must not block, start a stream, or wait on this model.
+	/// </param>
+	/// <returns>Whatever <paramref name="read"/> returned, once the cut has been reached.</returns>
+	/// <exception cref="InvalidOperationException">A stream is still reading, so there is no cut yet.</exception>
+	/// <remarks>
+	/// <para>Every listener's delivery is held while the checkpoints are sampled and a barrier is
+	/// enqueued, so nothing can be published in between: everything the sample names is already ahead
+	/// of the barrier, and nothing past the sample is. Reaching the barrier on the queue is therefore
+	/// proof that exactly the sampled events have been applied. The hold spans two operations, not the
+	/// wait — the queue drains afterwards, on its own.</para>
+	/// <para>The returned task is cancelled if the model is disposed before the barrier is reached.
+	/// Calling this from a handler and blocking on the result would deadlock: the barrier is behind
+	/// the message being handled, on the thread that is waiting.</para>
+	/// <para>Starting a stream is refused while a cut is being taken, and taking one is refused while
+	/// a stream is still reading: a read in flight publishes through this model's own
+	/// <see cref="Handle(IMessage)"/> rather than through a listener, so its events would be in the
+	/// state with no checkpoint naming them.</para>
+	/// </remarks>
+	protected Task<T> ReadAtConsistentCut<T>(Func<IReadOnlyList<StreamCheckpoint>, T> read) {
+		Ensure.NotNull(read, nameof(read));
+		var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		// Checked and claimed together, so a start cannot slip between them.
+		lock (_liveLock) {
+			if (_pendingStreams > 0) {
+				throw new InvalidOperationException(
+					$"{GetType().Name} has a stream still reading, so there is no cut to capture yet. " +
+					"Await IsLive first.");
+			}
+			_capturing++;
+		}
+
+		IListener[] listeners;
+		lock (_listeners) {
+			listeners = _listeners.ToArray();
+		}
+
+		var holds = new List<IDisposable>(listeners.Length);
+		CaptureBarrier? pending = null;
+		try {
+			// In list order, and nothing else takes more than one, so no two callers can take them in
+			// opposite orders.
+			foreach (var listener in listeners) {
+				holds.Add(listener.HoldDelivery());
+			}
+			var barrier = new CaptureBarrier {
+				Checkpoints = listeners.Select(l => l.Checkpoint).OfType<StreamCheckpoint>().ToList(),
+				Complete = checkpoints => completion.TrySetResult(read(checkpoints)),
+				Abandon = error => {
+					if (error is null) { completion.TrySetCanceled(); } else { completion.TrySetException(error); }
+				}
+			};
+			lock (_captures) {
+				_captures.Add(pending = barrier);
+			}
+			((IHandle<IMessage>)_queue).Handle(barrier);
+		} catch {
+			// Exactly one path releases the capture, and it is whoever takes the barrier off the list.
+			// Nothing can have taken it if it never went on.
+			if (pending is null || Claim(pending))
+				ReleaseCapture();
+			throw;
+		} finally {
+			for (var i = holds.Count - 1; i >= 0; i--) {
+				holds[i].Dispose();
+			}
+		}
+		// A queue already stopped, or on its way there, will never dequeue the barrier.
+		if (_closing)
+			AbandonCaptures(null);
+		return completion.Task;
+	}
+
+	private bool Claim(CaptureBarrier barrier) {
+		lock (_captures) {
+			return _captures.Remove(barrier);
+		}
+	}
+
+	// Taken under _liveLock alone and never nested inside _captures, so the two have no order to get
+	// wrong.
+	private void ReleaseCapture() {
+		lock (_liveLock) {
+			_capturing--;
+		}
+	}
+
+	private void RunCapture(CaptureBarrier barrier) {
+		if (!Claim(barrier))
+			return; // already abandoned
+		ReleaseCapture();
+		try {
+			lock (ReaderLock) {
+				barrier.Complete(barrier.Checkpoints);
+			}
+		} catch (Exception ex) {
+			barrier.Abandon(ex);
+		}
+	}
+
+	private void AbandonCaptures(Exception? error) {
+		CaptureBarrier[] outstanding;
+		lock (_captures) {
+			outstanding = _captures.ToArray();
+			_captures.Clear();
+		}
+		foreach (var barrier in outstanding) {
+			ReleaseCapture();
+			barrier.Abandon(error);
 		}
 	}
 
@@ -244,11 +400,21 @@ public abstract class ReadModelBase :
 		return l;
 	}
 
-	/// <summary>How far this model has applied each stream it listens to.</summary>
+	/// <summary>How far each stream this model listens to has been delivered to it.</summary>
 	/// <returns>One checkpoint per started listener.</returns>
 	/// <remarks>
-	/// <see cref="StreamCheckpoint.Position"/> is null for any stream whose last delivered event
-	/// carried no <c>$all</c> position, which is what a store that does not report one produces.
+	/// <para><b>Delivered, not applied.</b> A listener records an event once it has handed it to this
+	/// model's queue, so under live traffic this runs ahead of the state the handlers have built, by
+	/// whatever is still queued. The error is one-directional and it is the dangerous direction:
+	/// anything that pairs these checkpoints with a reading of the model claims events the handlers
+	/// have not run yet. Read the two together with <see cref="ReadAtConsistentCut{T}"/>, or take
+	/// both where nothing is in flight — after <see cref="IsLive"/> on a model whose streams are
+	/// quiet, or once <see cref="Idle"/> holds and stays held. Pairing them per event needs the
+	/// checkpoint to travel with the message
+	/// (<a href="https://github.com/ReactiveDomain/reactive-domain/issues/211">#211</a>).</para>
+	/// <para><see cref="StreamCheckpoint.Version"/> is null for a stream that has delivered nothing,
+	/// and <see cref="StreamCheckpoint.Position"/> is null for any stream whose last delivered event
+	/// carried no <c>$all</c> position, which is what a store that does not report one produces.</para>
 	/// </remarks>
 	public List<StreamCheckpoint> GetCheckpoint() {
 		lock (_listeners) {
@@ -260,45 +426,70 @@ public abstract class ReadModelBase :
 
 	/// <summary>
 	/// The furthest into the store's <c>$all</c> log this model has reached — the greatest position
-	/// among the last events applied from its streams.
+	/// among the last events delivered from its streams.
 	/// </summary>
 	/// <remarks>
 	/// <para><b>Not a completeness claim.</b> The model only ever saw events on its own streams, so it
 	/// has not seen everything below this position. To gate a read on freshness use
 	/// <see cref="LowestAppliedPosition"/>.</para>
-	/// <para>Null when the model has no listeners, or when any one of them reports no position —
-	/// projecting over the rest would silently overstate.</para>
+	/// <para>Sources reporting no position are skipped rather than suppressing the answer: a greatest
+	/// position over some of them is still a position this model reached, and leaving one out can only
+	/// understate the reach. Null when no source reports one at all.</para>
+	/// <para>Delivered, not applied — see <see cref="GetCheckpoint"/>.</para>
+	/// <para><b>Not a way to compare models.</b> See <see cref="LowestAppliedPosition"/>.</para>
 	/// </remarks>
-	public Position? HighWaterMark => ProjectAllPositions(takeGreatest: true);
+	public Position? HighWaterMark {
+		get {
+			lock (_listeners) {
+				Position? furthest = null;
+				foreach (var listener in _listeners) {
+					if (listener.Checkpoint?.Position is not { } position)
+						continue;
+					if (furthest is not { } current || position > current)
+						furthest = position;
+				}
+				return furthest;
+			}
+		}
+	}
 
 	/// <summary>
-	/// The position through which every one of this model's streams has been applied — the least
-	/// position among the last events applied from them.
+	/// The position through which every one of this model's streams has been delivered — the least
+	/// position among the last events delivered from them.
 	/// </summary>
 	/// <remarks>
-	/// <para>This is the honest freshness signal: everything each source had delivered up to here has
-	/// been handled. Compare against it to gate a read.</para>
-	/// <para>Null when the model has no listeners, or when any one of them reports no position —
-	/// projecting over the rest would silently understate which sources are covered.</para>
+	/// <para>This is the freshness signal to gate a read on: every source has handed over everything it
+	/// had up to here.</para>
+	/// <para>Null when the model has no listeners, or when any one of them reports no position. Unlike
+	/// <see cref="HighWaterMark"/> this one cannot skip a source: a least position over some of them
+	/// claims coverage for the ones left out, which is the overstatement this signal exists to
+	/// avoid.</para>
+	/// <para>Delivered, not applied — see <see cref="GetCheckpoint"/>. This is a lower bound on reach,
+	/// not proof of application, so a reader gated on it can still be one queue depth early.</para>
+	/// <para><b>A freshness reading, not a state comparison.</b> Two models that have applied the very
+	/// same events report different watermarks when they read them by different routes: a projected
+	/// stream's link entry sits at its own place in <c>$all</c>, later than the event it points at, so
+	/// a category-fed model reports a greater position than a stream-fed one at the identical state.
+	/// The skew is small and bounded, which is why this still answers "how far behind is this model",
+	/// but equal watermarks are not equal states and a greater one is not a later one. To order what a
+	/// model has applied, compare the checkpoints — <see cref="StreamCheckpoint.Compare"/>, which is
+	/// per stream and can say <see cref="CheckpointOrder.Concurrent"/> where a single position cannot.
+	/// </para>
 	/// </remarks>
-	public Position? LowestAppliedPosition => ProjectAllPositions(takeGreatest: false);
-
-	private Position? ProjectAllPositions(bool takeGreatest) {
-		lock (_listeners) {
-			if (_listeners.Count == 0)
-				return null;
-			Position? projected = null;
-			foreach (var listener in _listeners) {
-				if (listener.Checkpoint?.Position is not { } position)
+	public Position? LowestAppliedPosition {
+		get {
+			lock (_listeners) {
+				if (_listeners.Count == 0)
 					return null;
-				if (projected is not { } current) {
-					projected = position;
-					continue;
+				Position? nearest = null;
+				foreach (var listener in _listeners) {
+					if (listener.Checkpoint?.Position is not { } position)
+						return null;
+					if (nearest is not { } current || position < current)
+						nearest = position;
 				}
-				if (takeGreatest ? position > current : position < current)
-					projected = position;
+				return nearest;
 			}
-			return projected;
 		}
 	}
 
@@ -491,6 +682,7 @@ public abstract class ReadModelBase :
 	}
 
 	private bool _disposed;
+	private volatile bool _closing;
 
 	/// <summary>
 	/// Stops message intake and processing: disposes the listeners, then joins the queue
@@ -499,6 +691,9 @@ public abstract class ReadModelBase :
 	/// disposed. Idempotent.
 	/// </summary>
 	private void StopMessagePump() {
+		// Set before anything is torn down, so a capture registered at any point from here on abandons
+		// itself. Until now this held only because Dispose happens to run this method twice.
+		_closing = true;
 		lock (_listeners) {
 			_listeners.ForEach(l => l.Dispose());
 		}
@@ -507,6 +702,9 @@ public abstract class ReadModelBase :
 		// The queue is stopped, so a sentinel still in it will never be dequeued; release anyone
 		// awaiting IsLive rather than leave them on a stream that can no longer drain.
 		RetireAllStreams(null);
+		// Same for a capture waiting on a marker that can no longer arrive. After the listeners are
+		// disposed, so a hold this releases cannot be retaken.
+		AbandonCaptures(null);
 	}
 
 	protected virtual void Dispose(bool disposing) {
@@ -525,7 +723,7 @@ public abstract class ReadModelBase :
 	/// is respected and bypasses both the queue and listeners. This is primarily useful in tests.
 	/// </summary>
 	/// <param name="message">The message to apply.</param>
-	public void DirectApply(IMessage message) {
+	public virtual void DirectApply(IMessage message) {
 		DequeueMessage(message);
 	}
 
@@ -543,7 +741,7 @@ public abstract class ReadModelBase :
 	/// is respected. All messages will be processed in order from the queue thread.
 	/// </summary>
 	/// <param name="message">The message to publish.</param>
-	public void Publish(IMessage message) {
+	public virtual void Publish(IMessage message) {
 		((IPublisher)_queue).Publish(message);
 	}
 }

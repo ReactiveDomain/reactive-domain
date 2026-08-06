@@ -46,7 +46,7 @@ public sealed class when_checkpointing_all_positions :
 	}
 
 	public int Handled { get; private set; }
-	public void Handle(PositionTestEvent @event) => Handled++;
+	void IHandle<PositionTestEvent>.Handle(PositionTestEvent @event) => Handled++;
 
 	[Fact]
 	public void a_checkpoint_carries_the_all_position_of_the_last_event_applied() {
@@ -97,17 +97,45 @@ public sealed class when_checkpointing_all_positions :
 	}
 
 	[Fact]
-	public void a_source_that_has_delivered_nothing_suppresses_both_projections() {
+	public void a_source_that_has_delivered_nothing_suppresses_only_the_watermark() {
 		Start(_early, null, true);
 		AssertEx.IsOrBecomesTrue(() => Handled == 3, TestTimeouts.ThrottleWaitFor);
-		Assert.NotNull(HighWaterMark);
+		var reached = HighWaterMark;
+		Assert.NotNull(reached);
 
-		// A second stream with nothing on it reports no position. Projecting over the rest would
-		// claim a reach and a coverage the model cannot stand behind.
+		// A second stream with nothing on it reports no position. The two projections part company
+		// here: the model still reached everything it reached, so leaving the silent source out can
+		// only understate the reach — but claiming coverage through the nearest of the rest would
+		// speak for a source that has said nothing.
 		Start(_namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid()), null, false);
 
-		Assert.Null(HighWaterMark);
+		Assert.Equal(reached, HighWaterMark);
 		Assert.Null(LowestAppliedPosition);
+	}
+
+	[Fact]
+	public void a_stream_that_has_delivered_nothing_checkpoints_no_version() {
+		var empty = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		Start(empty, null, false);
+
+		var checkpoint = Assert.Single(GetCheckpoint());
+		Assert.Equal(empty, checkpoint.StreamName);
+		// Not 0. Version 0 is this stream's first event, and it has not been delivered — resuming
+		// from it would step over the event the checkpoint is meant to precede.
+		Assert.Null(checkpoint.Version);
+		Assert.Null(checkpoint.Position);
+	}
+
+	[Fact]
+	public void a_resumed_stream_reports_its_resume_point_before_it_delivers_anything() {
+		// _early's last event is version 2, so resuming from there delivers nothing. The resume point
+		// is still a version this stream reached — unlike the zero that stands in for no resume point
+		// — so it is reportable straight away.
+		Start(_early, 2, true);
+
+		var checkpoint = Assert.Single(GetCheckpoint());
+		Assert.Equal(2, checkpoint.Version);
+		Assert.Equal(0, Handled);
 	}
 
 	public record PositionTestEvent : Event;
