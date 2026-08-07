@@ -40,6 +40,9 @@ public interface IListener : IDisposable {
 	/// </summary>
 	void SeedAllPosition(Position? position);
 
+	/// <summary>Whether this listener has been disposed; a disposed listener delivers nothing further.</summary>
+	bool IsDisposed { get; }
+
 	/// <summary>
 	/// Holds this listener's delivery, so that nothing is published to <see cref="EventStream"/> and
 	/// <see cref="Checkpoint"/> cannot move, until the returned handle is disposed.

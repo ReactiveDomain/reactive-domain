@@ -337,7 +337,11 @@ public class StreamListener : IListener {
 
 	#region Implementation of IDisposable
 
-	private bool _disposed;
+	private volatile bool _disposed;
+
+	/// <inheritdoc cref="IListener.IsDisposed"/>
+	public bool IsDisposed => _disposed;
+
 	public void Dispose() {
 		Dispose(true);
 		GC.SuppressFinalize(this);

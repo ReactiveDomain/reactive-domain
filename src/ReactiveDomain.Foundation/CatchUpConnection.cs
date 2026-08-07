@@ -80,6 +80,12 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 			throw new TimeoutException("A read model faulted or was disposed before going live.", ex);
 		}
 
+		// Queryability includes the go-live cache flushes that ride ModelWentLive. An armed model's
+		// marker is a task-pool continuation off IsLive and can lose the race to the idle check
+		// below, so enqueue one here — behind the histories the wait just proved delivered, and
+		// idempotent by the marker's contract when the armed one also lands.
+		foreach (var rm in readModels) { rm.Handle(new ModelWentLive()); }
+
 		// What remains is the residue IsLive does not span: events committed after the read phase,
 		// and listeners started outside any read model. Those have no in-band completion signal, so
 		// this part stays a poll.
@@ -97,7 +103,14 @@ public sealed class CatchUpConnection(IConfiguredConnection inner) : IConfigured
 	private List<string> ListLaggards(ReadModelBase[] readModels) {
 		var laggards = new List<string>();
 		IListener[] tracked;
-		lock (_tracked) { tracked = _tracked.ToArray(); }
+		lock (_tracked) {
+			// A disposed listener can never deliver again; keeping it would pin the barrier below a
+			// moving stream tail whenever a model is deliberately torn down while the connection
+			// lives on — snapshot-restore and kill/resume flows do exactly that. A subscription that
+			// merely drops leaves its listener undisposed, so that failure still reads as a laggard.
+			_tracked.RemoveAll(static listener => listener.IsDisposed);
+			tracked = _tracked.ToArray();
+		}
 		foreach (var listener in tracked) {
 			// A checkpoint arrives with the stream name, so an unnamed listener has not started.
 			if (listener.Checkpoint is not { } checkpoint) { continue; }
