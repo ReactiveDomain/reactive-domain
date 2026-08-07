@@ -67,12 +67,41 @@ public sealed class TestCapacityDetectorTests {
 		Assert.Equal(TestCapacity.Small, TestCapacityDetector.Detect(2, Override(value)).Capacity);
 	}
 
-	/// <summary>Naming a CI system is what this replaced: a large runner is not small for being CI.</summary>
-	[Fact]
-	public void a_ci_variable_alone_does_not_shrink_the_bucket() {
-		var (capacity, _, _) = TestCapacityDetector.Detect(64, Env(("GITHUB_ACTIONS", "true"), ("CI", "true")));
+	/// <summary>The direction that must never regress: CI cannot silently drop to narrower budgets
+	/// for having cores — a hosted runner's cores say nothing about noisy neighbours or I/O-bound
+	/// waits. (Deliberate reversal, Chris 2026-08-07: the cores-only shape shipped in the RC and cost
+	/// a downstream suite exactly this way.)</summary>
+	[Theory]
+	[InlineData("GITHUB_ACTIONS", "true")]
+	[InlineData("GITHUB_ACTIONS", "TRUE")]
+	[InlineData("CI", "true")]
+	[InlineData("CI", "1")]
+	public void a_ci_environment_floors_the_bucket_at_small(string variable, string value) {
+		var (capacity, cores, reason) = TestCapacityDetector.Detect(64, Env((variable, value)));
 
-		Assert.Equal(TestCapacity.Large, capacity);
+		Assert.Equal(TestCapacity.Small, capacity);
+		Assert.Equal(64, cores);
+		Assert.Contains(variable, reason);
+		Assert.Contains(TestCapacityDetector.OverrideEnvironmentVariable, reason);
+	}
+
+	[Fact]
+	public void the_override_wins_over_the_ci_floor_in_both_directions() {
+		var ciAndOverride = Env(("GITHUB_ACTIONS", "true"),
+			(TestCapacityDetector.OverrideEnvironmentVariable, "Large"));
+
+		Assert.Equal(TestCapacity.Large, TestCapacityDetector.Detect(2, ciAndOverride).Capacity);
+		Assert.Equal(TestCapacity.Large, TestCapacityDetector.Detect(64, ciAndOverride).Capacity);
+	}
+
+	/// <summary>Only an affirmative value marks CI; a variable that exists but says no is not one.</summary>
+	[Theory]
+	[InlineData("false")]
+	[InlineData("0")]
+	[InlineData("")]
+	public void a_non_affirmative_ci_value_leaves_the_cores_in_charge(string value) {
+		Assert.Equal(TestCapacity.Large,
+			TestCapacityDetector.Detect(64, Env(("GITHUB_ACTIONS", value), ("CI", value))).Capacity);
 	}
 
 	[Fact]
