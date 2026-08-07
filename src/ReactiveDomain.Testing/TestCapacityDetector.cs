@@ -1,21 +1,32 @@
 namespace ReactiveDomain.Testing;
 
 /// <summary>
-/// Buckets a test process by the cores available to it, and reports what it decided on.
+/// Buckets a test process by the cores available to it, floored at <see cref="TestCapacity.Small"/>
+/// on a recognized CI environment, and reports what it decided on.
 /// </summary>
 /// <remarks>
-/// Cores are the signal because cores are the cause: a wait that expires early did so because the
-/// machine could not schedule the work in time. Naming CI providers answered that by proxy, and
-/// answered it wrong for everything off the list — a capped container, a self-hosted runner, an old
-/// laptop. <see cref="Environment.ProcessorCount"/> already reflects a container's CPU cap.
+/// <para>Cores are the primary signal because cores are the usual cause: a wait that expires early
+/// did so because the machine could not schedule the work in time.
+/// <see cref="Environment.ProcessorCount"/> already reflects a container's CPU cap.</para>
+/// <para>CI is the exception cores cannot see: a hosted runner's cores say nothing about noisy
+/// neighbours, cold caches, or suites whose waits price I/O rather than scheduling — so a
+/// recognized CI variable keeps the widest budgets regardless of core count, and
+/// <see cref="OverrideEnvironmentVariable"/> is the escape hatch in both directions.</para>
 /// </remarks>
 public static class TestCapacityDetector {
 	/// <summary>
-	/// Forces a bucket regardless of cores, for when the core count is not the whole story — a
+	/// Forces a bucket regardless of cores or CI, for when neither is the whole story — a
 	/// many-core machine running several test jobs at once has the cores but not the capacity.
 	/// Recognized values are the <see cref="TestCapacity"/> names, case-insensitively.
 	/// </summary>
 	public const string OverrideEnvironmentVariable = "REACTIVEDOMAIN_TEST_CAPACITY";
+
+	/// <summary>
+	/// The variables whose value <c>true</c> or <c>1</c> marks a CI environment: <c>GITHUB_ACTIONS</c>,
+	/// and the generic <c>CI</c> most providers set. A CI system off this list sets
+	/// <see cref="OverrideEnvironmentVariable"/> instead.
+	/// </summary>
+	public static readonly IReadOnlyList<string> CiEnvironmentVariables = ["GITHUB_ACTIONS", "CI"];
 
 	/// <summary>Default lower bound for <see cref="TestCapacity.Large"/>.</summary>
 	public const int LargeCores = 8;
@@ -51,6 +62,15 @@ public static class TestCapacityDetector {
 					return (capacity, cores, $"{OverrideEnvironmentVariable}={capacity} (explicit override)");
 			}
 			// Unrecognized: fall through to the cores rather than honour a default nobody asked for.
+		}
+
+		foreach (var variable in CiEnvironmentVariables) {
+			var value = getEnvironmentVariable(variable);
+			if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1") {
+				return (TestCapacity.Small, cores,
+					$"{variable}={value}: CI floors the bucket at {TestCapacity.Small} over {cores} cores " +
+					$"({OverrideEnvironmentVariable} overrides)");
+			}
 		}
 
 		if (cores >= LargeCores)
