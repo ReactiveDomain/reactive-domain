@@ -57,10 +57,15 @@ public sealed class NullListener : IListener, ISubscriber {
 		Name = name;
 	}
 
+	/// <inheritdoc cref="IListener.IsDisposed"/>
+	public bool IsDisposed { get; private set; }
+
 	/// <summary>
 	/// Cleans up resources.
 	/// </summary>
-	public void Dispose() { }
+	public void Dispose() {
+		IsDisposed = true;
+	}
 
 	/// <summary>
 	/// Starts the listener at the requested checkpoint. Since the listener is not connected to anything,
