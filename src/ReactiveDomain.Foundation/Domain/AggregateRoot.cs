@@ -43,9 +43,18 @@ public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventS
 				"Cannot take events without valid source.");
 		}
 	}
+
+	// One-shot: set by the repository's intermediate save immediately before the take it covers,
+	// so the source survives exactly that save and the safe-by-default clearing returns after.
+	private bool _continueSource;
+	internal void ContinueSourceThroughNextTake() => _continueSource = true;
+
 	protected override void TakeEventsCompleted() {
-		_correlationId = Guid.Empty;
-		_causationId = Guid.Empty;
+		if (!_continueSource) {
+			_correlationId = Guid.Empty;
+			_causationId = Guid.Empty;
+		}
+		_continueSource = false;
 		base.TakeEventsCompleted();
 	}
 	protected override void OnEventRaised(object @event) {
