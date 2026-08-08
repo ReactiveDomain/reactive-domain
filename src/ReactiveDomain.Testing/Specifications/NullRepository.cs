@@ -52,6 +52,12 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	/// <summary>
 	/// Does nothing. Required for implementation of <see cref="ICorrelatedRepository"/>.
 	/// </summary>
+	/// <param name="aggregate">This parameter is ignored.</param>
+	public void SaveAndContinue(IEventSource aggregate) { }
+
+	/// <summary>
+	/// Does nothing. Required for implementation of <see cref="ICorrelatedRepository"/>.
+	/// </summary>
 	/// <typeparam name="TAggregate">This type parameter is ignored.</typeparam>
 	/// <param name="id">This parameter is ignored.</param>
 	/// <param name="aggregate">Output parameter for the retrieved aggregate.</param>

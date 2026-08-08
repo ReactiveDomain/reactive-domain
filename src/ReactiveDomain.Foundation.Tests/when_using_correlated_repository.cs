@@ -9,11 +9,16 @@ namespace ReactiveDomain.Foundation.Tests;
 public sealed class when_using_correlated_repository {
 	private readonly CorrelatedStreamStoreRepository _correlatedRepo;
 	private readonly Guid _accountId = Guid.NewGuid();
+	private readonly MockStreamStoreConnection _mockStore;
+	private readonly JsonMessageSerializer _serializer = new();
+	private readonly string _streamName;
 
 	public when_using_correlated_repository() {
-		var mockStore = new MockStreamStoreConnection("testRepo");
-		mockStore.Connect();
-		var repo = new StreamStoreRepository(new PrefixedCamelCaseStreamNameBuilder(), mockStore, new JsonMessageSerializer());
+		_mockStore = new MockStreamStoreConnection("testRepo");
+		_mockStore.Connect();
+		var namer = new PrefixedCamelCaseStreamNameBuilder();
+		_streamName = namer.GenerateForAggregate(typeof(Account), _accountId);
+		var repo = new StreamStoreRepository(namer, _mockStore, _serializer);
 		_correlatedRepo = new CorrelatedStreamStoreRepository(repo);
 		var source = MessageBuilder.New(() => new CreateAccount(_accountId));
 		var account = new Account(_accountId, source);
@@ -153,6 +158,42 @@ public sealed class when_using_correlated_repository {
 		Assert.NotNull(retrievedAccount2);
 		Assert.Equal(_accountId, retrievedAccount2.Id);
 		Assert.Equal(101, retrievedAccount.Balance);
+	}
+
+	[Fact]
+	public void save_ends_the_unit_of_work() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+		account.Credit(50);
+		_correlatedRepo.Save(account);
+
+		Assert.Throws<InvalidOperationException>(() => account.Credit(1));
+	}
+
+	[Fact]
+	public void save_and_continue_keeps_the_source_armed() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+		account.Credit(50);
+		_correlatedRepo.SaveAndContinue(account);
+
+		// The held instance keeps raising in the same unit of work, and every persisted event —
+		// before and after the intermediate save — carries the one command's correlation and causation.
+		account.Credit(49);
+		_correlatedRepo.Save(account);
+
+		Assert.Equal(150, _correlatedRepo.GetById<Account>(_accountId, source).Balance);
+		var slice = _mockStore.ReadStreamForward(_streamName, 4, 2);
+		foreach (var recorded in slice.Events) {
+			var evt = Assert.IsAssignableFrom<ICorrelatedMessage>(_serializer.Deserialize(recorded));
+			Assert.Equal(source.MsgId, evt.CausationId);
+			Assert.Equal(source.CorrelationId, evt.CorrelationId);
+		}
+
+		// The final save cleared the source as usual, and a fresh retrieval re-arms it.
+		Assert.Throws<InvalidOperationException>(() => account.Credit(1));
+		var next = MessageBuilder.New(() => new CreditAccount(_accountId, 1));
+		_correlatedRepo.GetById<Account>(_accountId, next).Credit(1);
 	}
 
 	[Fact]

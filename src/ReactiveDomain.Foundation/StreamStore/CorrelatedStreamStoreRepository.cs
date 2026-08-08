@@ -66,6 +66,14 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 		}
 	}
 
+	/// <inheritdoc cref="ICorrelatedRepository.SaveAndContinue"/>
+	public void SaveAndContinue(IEventSource aggregate) {
+		// An uncorrelated event source has no source to preserve; the plain save is exactly equivalent.
+		if (aggregate is AggregateRoot root)
+			root.ContinueSourceThroughNextTake();
+		Save(aggregate);
+	}
+
 	/// <summary>
 	/// Soft delete the aggregate. Its stream can be re-created by appending new events.
 	/// </summary>
