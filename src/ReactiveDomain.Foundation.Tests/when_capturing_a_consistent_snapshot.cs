@@ -128,22 +128,22 @@ public sealed class when_capturing_a_consistent_snapshot : IDisposable {
 		rm.Start(stream, null, true);
 		await rm.IsLive;
 
-		// Appending throughout, so the cut lands somewhere in the middle of delivery rather than at a
-		// quiet point chosen to suit it.
-		// A bounded burst: the handler is slower than the writer, so captures meet a queue with events
-		// in it, but the queue still drains — an endless writer would outrun it and no cut would ever
-		// be reached, since a capture completes only when its marker does.
-		// The loop runs on queue depth, not the writer's lifetime: a fast writer can finish before the
-		// first capture while the slow handler still holds the deep queue the case needs.
+		// The guaranteed cut: wedged, the burst piles into the queue, and the capture is requested
+		// against that provably non-empty queue — no race decides whether the case arises. Unwedging
+		// lets it drain with the writer still appending behind the marker, so the cut lands mid-delivery.
+		rm.Wedge();
 		var writer = Task.Run(() => Append(stream, 150));
-		var captures = 0;
+		AssertEx.IsOrBecomesTrue(() => rm.MessageCount > 0, TestTimeouts.ThrottleWaitFor);
+		var capturing = rm.CaptureConsistentState();
+		rm.Unwedge();
+		AssertSelfConsistent(await capturing);
+		// Opportunistic extra cuts while the burst drains — every one that meets a non-empty queue
+		// must also be self-consistent.
 		while (AwaitQueueDepth(rm, writer)) {
 			AssertSelfConsistent(await rm.CaptureConsistentState());
-			captures++;
 		}
 		await writer;
 		AssertSelfConsistent(await rm.CaptureConsistentState());
-		Assert.True(captures > 0, "no capture met a non-empty queue");
 	}
 
 	[Fact]
@@ -192,17 +192,20 @@ public sealed class when_capturing_a_consistent_snapshot : IDisposable {
 		rm.Start(second, null, true);
 		await rm.IsLive;
 
+		// Both streams at one cut: the state has to be the sum of the two prefixes, so a listener that
+		// kept delivering past the sample shows up as a state ahead of its checkpoints. The wedge makes
+		// the first cut guaranteed rather than raced — see the single-stream case above.
+		rm.Wedge();
 		var writer = Task.Run(() => { for (var i = 0; i < 75; i++) { Append(first, 1); Append(second, 1); } });
-		var captures = 0;
+		AssertEx.IsOrBecomesTrue(() => rm.MessageCount > 0, TestTimeouts.ThrottleWaitFor);
+		var capturing = rm.CaptureConsistentState();
+		rm.Unwedge();
+		AssertSelfConsistent(await capturing);
 		while (AwaitQueueDepth(rm, writer)) {
-			// Both streams at one cut: the state has to be the sum of the two prefixes, so a listener
-			// that kept delivering past the sample shows up here as a state ahead of its checkpoints.
 			AssertSelfConsistent(await rm.CaptureConsistentState());
-			captures++;
 		}
 		await writer;
 		AssertSelfConsistent(await rm.CaptureConsistentState());
-		Assert.True(captures > 0, "no capture met a non-empty queue");
 	}
 
 	[Fact]
