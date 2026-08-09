@@ -133,16 +133,17 @@ public sealed class when_capturing_a_consistent_snapshot : IDisposable {
 		// A bounded burst: the handler is slower than the writer, so captures meet a queue with events
 		// in it, but the queue still drains — an endless writer would outrun it and no cut would ever
 		// be reached, since a capture completes only when its marker does.
+		// The loop runs on queue depth, not the writer's lifetime: a fast writer can finish before the
+		// first capture while the slow handler still holds the deep queue the case needs.
 		var writer = Task.Run(() => Append(stream, 150));
 		var captures = 0;
-		while (!writer.IsCompleted) {
-			if (!AwaitQueueDepth(rm, writer)) { break; }
+		while (AwaitQueueDepth(rm, writer)) {
 			AssertSelfConsistent(await rm.CaptureConsistentState());
 			captures++;
 		}
 		await writer;
 		AssertSelfConsistent(await rm.CaptureConsistentState());
-		Assert.True(captures > 0, "no capture was taken while the writer was running");
+		Assert.True(captures > 0, "no capture met a non-empty queue");
 	}
 
 	[Fact]
@@ -193,8 +194,7 @@ public sealed class when_capturing_a_consistent_snapshot : IDisposable {
 
 		var writer = Task.Run(() => { for (var i = 0; i < 75; i++) { Append(first, 1); Append(second, 1); } });
 		var captures = 0;
-		while (!writer.IsCompleted) {
-			if (!AwaitQueueDepth(rm, writer)) { break; }
+		while (AwaitQueueDepth(rm, writer)) {
 			// Both streams at one cut: the state has to be the sum of the two prefixes, so a listener
 			// that kept delivering past the sample shows up here as a state ahead of its checkpoints.
 			AssertSelfConsistent(await rm.CaptureConsistentState());
@@ -202,7 +202,7 @@ public sealed class when_capturing_a_consistent_snapshot : IDisposable {
 		}
 		await writer;
 		AssertSelfConsistent(await rm.CaptureConsistentState());
-		Assert.True(captures > 0, "no capture was taken while the writer was running");
+		Assert.True(captures > 0, "no capture met a non-empty queue");
 	}
 
 	[Fact]
