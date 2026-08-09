@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>ReactiveDomain</id>
-		<version>0.17.0-rc.1</version>
+		<version>0.17.0</version>
 		<authors>Reactive Domain Group</authors>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<license type="expression">MIT</license>

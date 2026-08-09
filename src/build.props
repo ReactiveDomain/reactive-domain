@@ -12,7 +12,7 @@
 		<DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
 	</PropertyGroup>
 	<PropertyGroup>
-		<PackageVersionPrefix>0.17.0-rc.1</PackageVersionPrefix>
+		<PackageVersionPrefix>0.17.0</PackageVersionPrefix>
 		<PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
 		<PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
 		<PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
