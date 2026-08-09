@@ -69,8 +69,7 @@ public sealed class TestCapacityDetectorTests {
 
 	/// <summary>The direction that must never regress: CI cannot silently drop to narrower budgets
 	/// for having cores — a hosted runner's cores say nothing about noisy neighbours or I/O-bound
-	/// waits. (Deliberate reversal, Chris 2026-08-07: the cores-only shape shipped in the RC and cost
-	/// a downstream suite exactly this way.)</summary>
+	/// waits.</summary>
 	[Theory]
 	[InlineData("GITHUB_ACTIONS", "true")]
 	[InlineData("GITHUB_ACTIONS", "TRUE")]
