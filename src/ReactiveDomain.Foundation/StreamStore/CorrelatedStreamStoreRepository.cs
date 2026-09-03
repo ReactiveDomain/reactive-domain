@@ -69,9 +69,18 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 	/// <inheritdoc cref="ICorrelatedRepository.SaveAndContinue"/>
 	public void SaveAndContinue(IEventSource aggregate) {
 		// An uncorrelated event source has no source to preserve; the plain save is exactly equivalent.
-		if (aggregate is AggregateRoot root)
-			root.ContinueSourceThroughNextTake();
-		Save(aggregate);
+		if (aggregate is not AggregateRoot root) {
+			Save(aggregate);
+			return;
+		}
+		root.ContinueSourceThroughNextTake();
+		try {
+			Save(aggregate);
+		} catch {
+			// A failed save takes nothing, so the flag would otherwise stay armed for a later plain Save.
+			root.ContinueSourceThroughNextTake(false);
+			throw;
+		}
 	}
 
 	/// <summary>

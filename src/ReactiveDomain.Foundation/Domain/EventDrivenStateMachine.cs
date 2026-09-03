@@ -67,12 +67,24 @@ public abstract class EventDrivenStateMachine : IEventSource {
 	/// </summary>
 	/// <returns>Array of Object containing the Events Raised by the Aggregate since it was loaded or the last time TakeEvents was called</returns>
 	public object[] TakeEvents() {
+		object[] taken = [];
+		TakeEvents(events => taken = events);
+		return taken;
+	}
+
+	/// <inheritdoc cref="IEventSource.TakeEvents(Action{object[]})"/>
+	/// <remarks>
+	/// <see cref="TakeEventStarted"/> runs before <paramref name="persist"/>; the recorder is cleared,
+	/// <see cref="Version"/> advanced and <see cref="TakeEventsCompleted"/> run only after it returns.
+	/// </remarks>
+	public void TakeEvents(Action<object[]> persist) {
+		ArgumentNullException.ThrowIfNull(persist);
 		TakeEventStarted();
 		var records = _recorder.RecordedEvents;
+		persist(records);
 		_recorder.Reset();
 		Version += records.Length;
 		TakeEventsCompleted();
-		return records;
 	}
 	protected virtual void TakeEventStarted() { }
 	protected virtual void TakeEventsCompleted() { }

@@ -12,7 +12,7 @@ namespace ReactiveDomain.Foundation.StreamStore;
 ///
 /// Cache management (e.g. eviction) is the responsibility of the caller/external owner
 ///
-/// Save failures will clear the aggregate from the cache and return false
+/// Save failures will clear the aggregate from the cache and rethrow
 /// </summary>
 public class ReadThroughAggregateCache : IAggregateCache {
 
@@ -103,6 +103,7 @@ public class ReadThroughAggregateCache : IAggregateCache {
 			}
 		} catch {
 			_knownAggregates.Remove((type, aggregate.Id));
+			throw;
 		}
 	}
 

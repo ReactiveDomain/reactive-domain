@@ -47,7 +47,7 @@ public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventS
 	// One-shot: set by the repository's intermediate save immediately before the take it covers,
 	// so the source survives exactly that save and the safe-by-default clearing returns after.
 	private bool _continueSource;
-	internal void ContinueSourceThroughNextTake() => _continueSource = true;
+	internal void ContinueSourceThroughNextTake(bool continueSource = true) => _continueSource = continueSource;
 
 	protected override void TakeEventsCompleted() {
 		if (!_continueSource) {

@@ -115,6 +115,28 @@ public sealed class when_using_caching_repository {
 	}
 
 	[Fact]
+	public void failed_save_rethrows_and_evicts_from_the_cache() {
+		var id = Guid.NewGuid();
+		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));
+		var cachedAccount = new Account(id, source);
+		_cachingRepo.Save(cachedAccount);
+
+		var uncachedAccount = _repo.GetById<Account>(id);
+		uncachedAccount.Credit(1);
+		_repo.Save(uncachedAccount);
+
+		cachedAccount.Credit(5);
+		Assert.Throws<WrongExpectedVersionException>(() => _cachingRepo.Save(cachedAccount));
+
+		// The failed instance keeps its unsaved events; the cache no longer hands it out.
+		Assert.True(((IEventSource)cachedAccount).HasRecordedEvents);
+		Assert.Equal(0, ((IEventSource)cachedAccount).ExpectedVersion);
+		var reloaded = _cachingRepo.GetById<Account>(id);
+		Assert.NotSame(cachedAccount, reloaded);
+		Assert.Equal(1, reloaded.Balance);
+	}
+
+	[Fact]
 	public void can_delete_aggregate() {
 		var newAccountId = Guid.NewGuid();
 		ICorrelatedMessage source = MessageBuilder.New(() => new when_using_correlated_repository.CreateAccount(newAccountId));
