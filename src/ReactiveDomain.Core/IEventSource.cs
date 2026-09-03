@@ -40,6 +40,17 @@ public interface IEventSource {
 	object[] TakeEvents();
 
 	/// <summary>
+	/// Hands the recorded events to <paramref name="persist"/> and takes them only once it returns.
+	/// </summary>
+	/// <remarks>
+	/// If <paramref name="persist"/> throws, this instance is unchanged: the events stay recorded and
+	/// <see cref="ExpectedVersion"/> does not advance, so the same save can be retried. The default
+	/// implementation takes first and cannot offer that guarantee; implementers should override it.
+	/// </remarks>
+	/// <param name="persist">Receives the recorded events; its normal return commits the take.</param>
+	void TakeEvents(Action<object[]> persist) => persist(TakeEvents());
+
+	/// <summary>
 	/// Indicates whether this instance has any recorded events.
 	/// </summary>
 	bool HasRecordedEvents { get; }

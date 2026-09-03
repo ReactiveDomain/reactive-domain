@@ -141,15 +141,16 @@ public class StreamStoreRepository : IRepository {
 
 		var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
 		var expectedVersion = aggregate.ExpectedVersion;
-		var newEvents = aggregate.TakeEvents().ToArray();
-		var eventsToSave = new EventData[newEvents.Length];
-		for (int i = 0; i < newEvents.Length; i++) {
-			eventsToSave[i] =
-				_eventSerializer.Serialize(
-					newEvents[i],
-					new Dictionary<string, object>(commitHeaders));
-		}
-		_streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
+		aggregate.TakeEvents(newEvents => {
+			var eventsToSave = new EventData[newEvents.Length];
+			for (int i = 0; i < newEvents.Length; i++) {
+				eventsToSave[i] =
+					_eventSerializer.Serialize(
+						newEvents[i],
+						new Dictionary<string, object>(commitHeaders));
+			}
+			_streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
+		});
 	}
 
 	/// <summary>

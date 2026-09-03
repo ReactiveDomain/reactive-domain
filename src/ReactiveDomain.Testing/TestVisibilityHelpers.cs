@@ -44,10 +44,12 @@ public static class TestVisibilityExtensions {
 			var listener = listeners.FirstOrDefault(l => l.StreamName == name);
 			if (listener == null) { throw new StreamNotFoundException($"Listener {name}"); }
 			if (aggregate == null) { return; }
-			foreach (IMessage evt in aggregate.TakeEvents()) {
-				model.DirectApply(evt);
-				SetInstanceField(listener, "_position", listener.Position + 1);
-			}
+			aggregate.TakeEvents(events => {
+				foreach (IMessage evt in events) {
+					model.DirectApply(evt);
+					SetInstanceField(listener, "_position", listener.Position + 1);
+				}
+			});
 		}
 
 		/// <summary>
@@ -59,9 +61,11 @@ public static class TestVisibilityExtensions {
 		/// </summary>
 		/// <param name="aggregate">Source Aggregate</param>
 		public void UpdateFromAggregate(EventDrivenStateMachine aggregate) {
-			foreach (IMessage evt in aggregate.TakeEvents()) {
-				model.DirectApply(evt);
-			}
+			aggregate.TakeEvents(events => {
+				foreach (IMessage evt in events) {
+					model.DirectApply(evt);
+				}
+			});
 		}
 	}
 

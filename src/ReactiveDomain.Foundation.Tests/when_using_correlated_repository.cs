@@ -197,6 +197,52 @@ public sealed class when_using_correlated_repository {
 	}
 
 	[Fact]
+	public void failed_save_leaves_the_aggregate_retryable() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+		account.Credit(50);
+
+		var other = MessageBuilder.New(() => new CreditAccount(_accountId, 1));
+		var competitor = _correlatedRepo.GetById<Account>(_accountId, other);
+		competitor.Credit(1);
+		_correlatedRepo.Save(competitor);
+
+		Assert.Throws<WrongExpectedVersionException>(() => _correlatedRepo.Save(account));
+
+		IEventSource eventSource = account;
+		Assert.True(eventSource.HasRecordedEvents);
+		Assert.Equal(3, eventSource.ExpectedVersion);
+
+		// Still in the same unit of work: the source survived, so more can be raised and the
+		// whole batch is what a retry would send.
+		account.Credit(1);
+		var pending = eventSource.TakeEvents();
+		Assert.Equal(2, pending.Length);
+		foreach (var evt in pending.Cast<ICorrelatedMessage>()) {
+			Assert.Equal(source.MsgId, evt.CausationId);
+			Assert.Equal(source.CorrelationId, evt.CorrelationId);
+		}
+	}
+
+	[Fact]
+	public void failed_save_and_continue_does_not_keep_the_source_past_the_next_save() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+		account.Credit(50);
+
+		var other = MessageBuilder.New(() => new CreditAccount(_accountId, 1));
+		var competitor = _correlatedRepo.GetById<Account>(_accountId, other);
+		competitor.Credit(1);
+		_correlatedRepo.Save(competitor);
+
+		Assert.Throws<WrongExpectedVersionException>(() => _correlatedRepo.SaveAndContinue(account));
+
+		// A plain take after the failure ends the unit of work as it always does.
+		((IEventSource)account).TakeEvents();
+		Assert.Throws<InvalidOperationException>(() => account.Credit(1));
+	}
+
+	[Fact]
 	public void can_delete_aggregate() {
 		var newAccountId = Guid.NewGuid();
 		var source = MessageBuilder.New(() => new CreateAccount(newAccountId));
