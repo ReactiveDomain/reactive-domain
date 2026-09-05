@@ -243,6 +243,31 @@ public sealed class when_using_correlated_repository {
 	}
 
 	[Fact]
+	public void a_second_save_lands_after_a_transient_persist_failure() {
+		var serializer = new FailOnceSerializer(_serializer);
+		var repo = new CorrelatedStreamStoreRepository(
+			new StreamStoreRepository(new PrefixedCamelCaseStreamNameBuilder(), _mockStore, serializer));
+
+		var id = Guid.NewGuid();
+		var source = MessageBuilder.New(() => new CreateAccount(id));
+		var account = new Account(id, source);
+		account.Credit(7);
+
+		Assert.Throws<IOException>(() => repo.Save(account));
+
+		IEventSource eventSource = account;
+		Assert.True(eventSource.HasRecordedEvents);
+		Assert.Equal(-1, eventSource.ExpectedVersion);
+
+		repo.Save(account);
+
+		Assert.False(eventSource.HasRecordedEvents);
+		Assert.Equal(1, eventSource.ExpectedVersion);
+		var loaded = repo.GetById<Account>(id, source);
+		Assert.Equal(7, loaded.Balance);
+	}
+
+	[Fact]
 	public void can_delete_aggregate() {
 		var newAccountId = Guid.NewGuid();
 		var source = MessageBuilder.New(() => new CreateAccount(newAccountId));
@@ -282,5 +307,18 @@ public sealed class when_using_correlated_repository {
 		public Guid MsgId { get; } = Guid.NewGuid();
 		public Guid CorrelationId { get; set; }
 		public Guid CausationId { get; set; }
+	}
+
+	private sealed class FailOnceSerializer(IEventSerializer inner) : IEventSerializer {
+		private int _attempts;
+
+		public EventData Serialize(object @event, IDictionary<string, object>? headers = null) {
+			if (Interlocked.CompareExchange(ref _attempts, 1, 0) == 0)
+				throw new IOException("serializer down");
+			return inner.Serialize(@event, headers);
+		}
+
+		public object? Deserialize(IEventData @event) => inner.Deserialize(@event);
+		public Type? FindType(string typeName) => inner.FindType(typeName);
 	}
 }
