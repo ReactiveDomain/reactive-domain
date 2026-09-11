@@ -73,12 +73,12 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 			Save(aggregate);
 			return;
 		}
-		root.ContinueSourceThroughNextTake();
+		root.ContinueSourceThroughNextTake = true;
 		try {
 			Save(aggregate);
 		} catch {
 			// A failed save takes nothing, so the flag would otherwise stay armed for a later plain Save.
-			root.ContinueSourceThroughNextTake(false);
+			root.ContinueSourceThroughNextTake = false;
 			throw;
 		}
 	}
