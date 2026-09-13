@@ -43,6 +43,11 @@ public abstract record Command(CancellationToken? CancellationToken = null) : Me
 		return new Success(this);
 	}
 
+	/// <inheritdoc cref="ICommand.Succeed(StreamCheckpoint[])"/>
+	public CommandResponse Succeed(params StreamCheckpoint[] writes) {
+		return new Success(this) { WritePositions = writes };
+	}
+
 	/// <summary>
 	/// Create a CommandResponse indicating that this command has failed.
 	/// </summary>

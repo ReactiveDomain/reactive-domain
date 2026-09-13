@@ -1,5 +1,4 @@
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation;
+namespace ReactiveDomain;
 
 /// <summary>
 /// How one set of checkpoints stands to another: the four answers a partial order can give.

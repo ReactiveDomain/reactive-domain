@@ -23,6 +23,30 @@ When submitting a Pull Request, keep these rules in mind:
 - All unit tests in the solution must pass on all versions of .NET that the solution supports
 - Any new code must be covered by at least one unit test
 - All public methods must be documented with XML comments, following the [documentation guidelines](#docs) below
+- Framework words carry their framework meaning, in code and in prose, following the [naming guidelines](#naming) below
+
+### <a href="naming"></a>Naming Guidelines
+RD gives ordinary English words specific meanings. Once a word names a type in the framework, it stops
+being available as a casual synonym — a reader who knows the framework will read the framework meaning,
+and a local variable that borrows the word sends them looking for a type that isn't there.
+
+The reserved ones, and what they mean:
+
+| Word | Means | Not |
+|---|---|---|
+| ack | `AckCommand` / `AckTimeout` — a handler has picked the command up | a handler finished, or finished successfully |
+| success, succeed | `Success` — the response a completed handling returns | a test passed, an operation worked out |
+| fail | `Fail` — the response a rejected or faulted handling returns | any error |
+| live | a read model has caught up to the live stream | running, healthy, connected |
+| position | a place in the store's `$all` log | an index, an offset into a collection |
+| version | a stream's event count | an assembly or package version |
+
+So a local holding a `Success` is `success`, never `ack`; a test about responses is named for
+responding, not acknowledging. Where a variable genuinely means the everyday word, pick a different
+everyday word.
+
+This applies to test names as much as production code. A test named for the wrong concept is read by
+whoever is deciding what is already covered.
 
 ### <a href="docs"></a>Documentation Guidelines
 RD ships its XML docs in its NuGet packages. They are what a consumer sees in Intellisense, so

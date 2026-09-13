@@ -20,6 +20,18 @@ net10.0 alone and reports green; the net8.0 half fails as `Testhost process ... 
 You must install or update .NET to run this application` only if you ask for it by name. Check
 `dotnet --list-sdks` before trusting a green run.
 
+## Naming
+
+RD's own words are reserved. `ack` is `AckCommand`/`AckTimeout` — a handler has picked the command up —
+not "the handler finished"; a local holding a `Success` is `success`. The same holds for `success`,
+`fail`, `live`, `position` and `version`, in test names as much as production code.
+
+`CONTRIBUTING.md`'s Naming Guidelines carry the table of what each word means and what it does not.
+Keep the two in step.
+
+Where a type lives is a separate question from what it is called: `Docs/assembly-and-namespace-layout.md`
+owns the assembly/namespace split and what moving a public type between assemblies costs.
+
 ## Comments
 
 Write only what the code cannot say. The test: delete the comment and ask what a reader loses. If
