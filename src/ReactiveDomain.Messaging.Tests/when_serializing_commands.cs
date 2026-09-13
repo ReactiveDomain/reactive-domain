@@ -2,7 +2,9 @@
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -76,6 +78,66 @@ public class when_serializing_commands {
 		Assert.Equal(nearSide.CausationId, farSide.CausationId);
 
 		Assert.Equal(nearSide.Data, farSide.Data);
+	}
+
+	[Fact]
+	public void success_write_positions_round_trip_through_json_and_bson() {
+		var cmd = new TestCommands.Command1();
+		var nearSide = (Success)cmd.Succeed(
+			new StreamCheckpoint("account-1", 7, new Position(1234, 1200)),
+			new StreamCheckpoint("ledger-9", 0));
+
+		var json = JsonConvert.SerializeObject(nearSide, Json.JsonSettings);
+		var fromJson = JsonConvert.DeserializeObject<Success>(json, Json.JsonSettings);
+		AssertWritePositionsMatch(nearSide, fromJson);
+
+		var ms = new MemoryStream();
+		using (var writer = new BsonDataWriter(ms)) {
+			JsonSerializer.Create(Json.JsonSettings).Serialize(writer, nearSide);
+		}
+		using var reader = new BsonDataReader(new MemoryStream(ms.ToArray()));
+		var fromBson = JsonSerializer.Create(Json.JsonSettings).Deserialize<Success>(reader);
+		AssertWritePositionsMatch(nearSide, fromBson);
+	}
+
+	[Fact]
+	public void success_without_write_positions_round_trips_as_empty() {
+		var nearSide = (Success)new TestCommands.Command1().Succeed();
+		Assert.Empty(nearSide.WritePositions);
+
+		var json = JsonConvert.SerializeObject(nearSide, Json.JsonSettings);
+		var farSide = JsonConvert.DeserializeObject<Success>(json, Json.JsonSettings);
+
+		Assert.NotNull(farSide);
+		Assert.NotNull(farSide.WritePositions);
+		Assert.Empty(farSide.WritePositions);
+	}
+
+	[Fact]
+	public void success_from_a_sender_without_write_positions_reads_as_empty() {
+		var nearSide = (Success)new TestCommands.Command1().Succeed();
+		var payload = JObject.Parse(JsonConvert.SerializeObject(nearSide, Json.JsonSettings));
+		Assert.True(payload.Remove(nameof(Success.WritePositions)));
+
+		var farSide = JsonConvert.DeserializeObject<Success>(payload.ToString(), Json.JsonSettings);
+
+		Assert.NotNull(farSide);
+		Assert.Equal(nearSide.CommandId, farSide.CommandId);
+		Assert.NotNull(farSide.WritePositions);
+		Assert.Empty(farSide.WritePositions);
+	}
+
+	private static void AssertWritePositionsMatch(Success nearSide, Success? farSide) {
+		Assert.NotNull(farSide);
+		Assert.Equal(nearSide.MsgId, farSide.MsgId);
+		Assert.Equal(nearSide.CommandId, farSide.CommandId);
+		Assert.Equal(nearSide.WritePositions.Count, farSide.WritePositions.Count);
+		for (var i = 0; i < nearSide.WritePositions.Count; i++) {
+			Assert.Equal(nearSide.WritePositions[i].StreamName, farSide.WritePositions[i].StreamName);
+			Assert.Equal(nearSide.WritePositions[i].Version, farSide.WritePositions[i].Version);
+			Assert.Equal(nearSide.WritePositions[i].Position, farSide.WritePositions[i].Position);
+		}
+		Assert.Equal(CheckpointOrder.Equal, StreamCheckpoint.Compare(nearSide.WritePositions, farSide.WritePositions));
 	}
 
 	[Fact]

@@ -1,7 +1,6 @@
 ﻿using ReactiveDomain.Util;
 
-// ReSharper disable once CheckNamespace
-namespace ReactiveDomain.Foundation;
+namespace ReactiveDomain;
 
 /// <summary>
 /// How far a stream has been delivered to a read model: the stream's own version, and where that
@@ -15,9 +14,11 @@ namespace ReactiveDomain.Foundation;
 /// versions are not.</para>
 /// <para><see cref="Position"/> is null when the store does not report one, and is meaningful only
 /// within the store that issued it. Positions from two stores have no defined ordering.</para>
-/// <para><b>Delivered, not applied.</b> A checkpoint is recorded when an event is handed to the
-/// model's queue, which is ahead of where its handlers have run — see
-/// <see cref="ReadModelBase.GetCheckpoint"/> for what that costs a snapshot.</para>
+/// <para><b>Delivered, not applied.</b> A read model records a checkpoint when an event is handed
+/// to its queue, which is ahead of where its handlers have run — see <c>ReadModelBase.GetCheckpoint</c>
+/// for what that costs a snapshot.</para>
+/// <para>Also the shape a write reports itself in: <c>IRepository.Save</c> returns the stream at the
+/// version the append left it, so a writer's checkpoint compares against a reader's directly.</para>
 /// </remarks>
 public sealed record StreamCheckpoint {
 	/// <summary>The stream this checkpoint is for.</summary>
@@ -62,7 +63,7 @@ public sealed record StreamCheckpoint {
 	/// <remarks>
 	/// <para>Compared per stream and combined, never through a single projected number. Ahead on one
 	/// stream and behind on another is <see cref="CheckpointOrder.Concurrent"/>, which a scalar cannot
-	/// express — see <see cref="ReadModelBase.LowestAppliedPosition"/> for what those are and are not
+	/// express — see <c>ReadModelBase.LowestAppliedPosition</c> for what those are and are not
 	/// for.</para>
 	/// <para><see cref="Version"/> is the only clock this reads. Within a stream it and
 	/// <see cref="Position"/> order alike, and versions are dense where positions are not, so a
