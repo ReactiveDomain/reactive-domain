@@ -14,9 +14,11 @@ namespace ReactiveDomain;
 /// versions are not.</para>
 /// <para><see cref="Position"/> is null when the store does not report one, and is meaningful only
 /// within the store that issued it. Positions from two stores have no defined ordering.</para>
-/// <para><b>Delivered, not applied.</b> A read model records a checkpoint when an event is handed
-/// to its queue, which is ahead of where its handlers have run — see <c>ReadModelBase.GetCheckpoint</c>
-/// for what that costs a snapshot.</para>
+/// <para><b>Delivered, not applied.</b> A listener records a checkpoint when it hands an event to
+/// the model's queue, which is ahead of where the handlers have run.
+/// <c>ReadModelBase.GetCheckpoint</c> reports that delivered position;
+/// <c>ReadModelBase.AppliedCheckpoints</c> reports where the handlers have actually reached,
+/// which is the one a snapshot must record.</para>
 /// <para>Also the shape a write reports itself in: <c>IRepository.Save</c> returns the stream at the
 /// version the append left it, so a writer's checkpoint compares against a reader's directly.</para>
 /// </remarks>
@@ -50,6 +52,64 @@ public sealed record StreamCheckpoint {
 		StreamName = streamName;
 		Version = version;
 		Position = position;
+	}
+
+	/// <summary>
+	/// Where to resume this stream when the state it feeds was hydrated from another model's: this
+	/// checkpoint, held back to <paramref name="source"/> where that model is behind.
+	/// </summary>
+	/// <param name="source">
+	/// The source model's checkpoint for the same stream; null when it has none recorded.
+	/// </param>
+	/// <returns>
+	/// The earlier of the two. A null <paramref name="source"/>, or one with no
+	/// <see cref="Version"/>, gives a checkpoint with no version — resume from the beginning — since
+	/// nothing says how much of the source's state exists.
+	/// </returns>
+	/// <exception cref="ArgumentException"><paramref name="source"/> names another stream.</exception>
+	/// <remarks>
+	/// <para>Two models that resume from their own checkpoints are each correct and jointly wrong when
+	/// one hydrates from state the other owns: whatever the source had not folded at shutdown is
+	/// missing from the hydrated state and sits <i>before</i> the resume point, so replay never
+	/// redelivers it. Resuming from the earlier position redelivers it instead. Re-applying an event
+	/// the source did reflect is a no-op for a handler that recomputes from the source rather than
+	/// accumulating, which is what a handler hydrating from another model's state is.</para>
+	/// <para>Exact when the source commits its state and its checkpoint together, as
+	/// <c>BufferedReadModelBase</c> arranges. Otherwise the bound lands earlier than it needs
+	/// to, and events the source had already folded are redelivered — correct, at the cost of work
+	/// already done. One stream, two positions on it — a total order, so this does not meet the
+	/// partial order <see cref="Compare"/> reports.</para>
+	/// </remarks>
+	public StreamCheckpoint BoundedBy(StreamCheckpoint? source) {
+		if (source is null || source.Version is null)
+			return new StreamCheckpoint(StreamName, null);
+		if (!string.Equals(source.StreamName, StreamName, StringComparison.Ordinal)) {
+			throw new ArgumentException(
+				$"A resume on '{StreamName}' cannot be bounded by a checkpoint on '{source.StreamName}': the " +
+				"bound is a position on the same stream held by another model.", nameof(source));
+		}
+		return Version is null || Version <= source.Version ? this : source;
+	}
+
+	/// <summary>
+	/// Bounds each of <paramref name="own"/> by the source's checkpoint for the same stream — see
+	/// <see cref="BoundedBy(StreamCheckpoint?)"/>. Streams the source has no entry for are unchanged:
+	/// nothing hydrated from it depends on them.
+	/// </summary>
+	/// <param name="own">This model's checkpoints, as its last snapshot recorded them.</param>
+	/// <param name="source">The source model's, as its last snapshot recorded them.</param>
+	public static List<StreamCheckpoint> BoundedBy(IEnumerable<StreamCheckpoint> own, IEnumerable<StreamCheckpoint> source) {
+		Ensure.NotNull(own, nameof(own));
+		Ensure.NotNull(source, nameof(source));
+		var bounds = new Dictionary<string, StreamCheckpoint>(StringComparer.Ordinal);
+		foreach (var checkpoint in source) {
+			// Two entries for one stream is the caller's mistake; the lesser bound is the safe one.
+			if (!bounds.TryGetValue(checkpoint.StreamName, out var seen) || (checkpoint.Version ?? Nothing) < (seen.Version ?? Nothing))
+				bounds[checkpoint.StreamName] = checkpoint;
+		}
+		return own
+			.Select(checkpoint => bounds.TryGetValue(checkpoint.StreamName, out var bound) ? checkpoint.BoundedBy(bound) : checkpoint)
+			.ToList();
 	}
 
 	// Before every version, including 0, which is what a stream that has delivered nothing covers.

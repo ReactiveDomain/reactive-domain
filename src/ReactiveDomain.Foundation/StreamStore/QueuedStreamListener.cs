@@ -48,17 +48,21 @@ public class QueuedStreamListener : StreamListener, IHandle<IMessage> {
 		// subscriber, so this thread is where it delivers, and this is the publish a holder has to be
 		// able to exclude.
 		lock (DeliveryLock) {
-			//todo: this needs to take a RecordedEvent
-			Bus.Publish(@event);
-			// After the publish, so the checkpoint follows the model's queue rather than leading it.
 			// Unpublishable events ahead of this one are recorded on the way past: nothing waits behind
 			// them. A trailing run of them holds the checkpoint back until the next message, which costs
 			// a replay of events that deserialize to nothing anyway.
+			RecordedEvent? mine = null;
 			while (_delivering.TryDequeue(out var delivered)) {
-				RecordDelivered(delivered.Event);
-				if (delivered.Published)
+				if (delivered.Published) {
+					mine = delivered.Event;
 					break;
+				}
+				RecordDelivered(delivered.Event);
 			}
+			Deliver(@event, mine is null ? null : CheckpointOf(mine));
+			// After the publish, so the checkpoint follows the model's queue rather than leading it.
+			if (mine is not null)
+				RecordDelivered(mine);
 		}
 
 		if (!_isLive.IsSet) {

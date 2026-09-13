@@ -16,6 +16,10 @@ public class ReadModelState {
 	/// — or from the beginning of the stream when that is null, which is what is recorded by a stream that had
 	/// delivered nothing when the snapshot was taken.
 	/// </summary>
+	/// <remarks>
+	/// A model whose state was hydrated from another model's checkpoints must not resume from these checkpoints alone; bound
+	/// them by the other model's checkpoints first — <see cref="StreamCheckpoint.BoundedBy(IEnumerable{StreamCheckpoint}, IEnumerable{StreamCheckpoint})"/>.
+	/// </remarks>
 	public readonly List<StreamCheckpoint>? Checkpoints;
 
 	/// <summary>

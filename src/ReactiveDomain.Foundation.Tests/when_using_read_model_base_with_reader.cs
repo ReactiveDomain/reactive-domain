@@ -206,19 +206,17 @@ public sealed class when_using_read_model_base_with_reader :
 	}
 
 	[Fact]
-	public void can_listen_to_the_same_stream_twice() {
+	public void cannot_listen_to_the_same_stream_twice() {
 		Assert.Equal(0, Count);
-		//weird but true
-		//n.b. Don't do this on purpose
 		Start(_stream1);
-		Start(_stream1);
-		//double events
-		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 40, TestTimeouts.ThrottleWaitFor);
-		//even more doubled events
+		AssertEx.IsOrBecomesTrue(() => Count == 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Count}");
+
+		Assert.Throws<InvalidOperationException>(() => Start(_stream1));
+
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.IsOrBecomesTrue(() => Count == 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 40 got {Count}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 140, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => Count == 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Count}");
+		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
+		Assert.Single(GetCheckpoint());
 	}
 
 	public long Sum { get; private set; }

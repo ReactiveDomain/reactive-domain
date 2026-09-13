@@ -13,6 +13,7 @@ public abstract class ReadModelBase :
 	IDisposable {
 	private readonly Func<IListener> _getListener;
 	private readonly List<IListener> _listeners;
+	private readonly IStreamNameBuilder _namer;
 	private readonly Func<IStreamReader> _getReader;
 	private readonly InMemoryBus _bus;
 	private readonly QueuedHandler _queue;
@@ -43,7 +44,13 @@ public abstract class ReadModelBase :
 
 	private readonly object _liveLock = new();
 	private int _pendingStreams;
+	private long _registrations;
 	private TaskCompletionSource _live = AlreadyLive();
+
+	// Callbacks waiting for the live transition (Queued false) or already on the queue (Queued
+	// true). Guarded by _liveLock, with _pendingStreams: which of the two a registration becomes is
+	// decided against the count, so it must be decided under the same lock.
+	private readonly List<LiveCallback> _liveCallbacks = [];
 
 	/// <summary>
 	/// Gets a task that completes when every stream started on this model has <b>dispatched</b> its
@@ -62,10 +69,15 @@ public abstract class ReadModelBase :
 	/// property was read. Starting a stream while none are outstanding arms a fresh task, so a
 	/// <c>Start</c> issued after an earlier <c>await</c> completed <i>is</i> represented — by the next
 	/// read of the property. A task already handed out never "un-completes". Always write
-	/// <c>Start…(); await rm.IsLive;</c> rather than caching the task across starts.</para>
-	/// <para>The task faults if a start path throws before its listener is attached, and is cancelled
-	/// if the model is disposed with streams still outstanding, so an awaiting caller is never left
-	/// on a stream that can no longer drain.</para>
+	/// <c>Start…(); await rm.IsLive;</c> rather than caching the task across starts — or let
+	/// <see cref="StartAllAsync"/> do the sequencing, which is what it is for.</para>
+	/// <para>Continuations run off the queue thread and race the next <c>Handle</c>. To run something
+	/// <i>at</i> the transition, sequenced with the handlers, use <see cref="OnceLive"/>.</para>
+	/// <para>The task faults if a start path throws before its listener is attached. It also faults if
+	/// the model's own transition throws — a <see cref="BufferedReadModelBase"/> whose first flush
+	/// fails.</para>
+	/// <para>It is cancelled if the model is disposed with streams still outstanding, so an awaiting
+	/// caller is never left on a stream that can no longer drain.</para>
 	/// <para><b>Out of scope — subscription lifecycle.</b> Nothing a subscription does can stall or
 	/// falsely complete this task; ordering rests on this model's own queue alone. A subscription
 	/// that drops is today neither reported nor retried
@@ -115,26 +127,79 @@ public abstract class ReadModelBase :
 			if (_pendingStreams == 0)
 				_live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingStreams++;
+			_registrations++;
 			return _generation;
 		}
 	}
 
 	/// <summary>
-	/// Retires one outstanding stream; completes the armed task when the last one drains.
+	/// Retires one outstanding stream. When the last one drains, runs the live transition on this
+	/// thread — the queue's — and then completes the armed task.
 	/// </summary>
 	private void RetireStream(int generation) {
 		TaskCompletionSource? drained = null;
+		List<LiveCallback>? callbacks = null;
 		lock (_liveLock) {
 			// A sentinel outlives the streams it was queued alongside when one of them fails, and the
 			// count it would decrement by then belongs to whatever started next. Stamping it keeps it
 			// from retiring a stream it never described.
 			if (generation != _generation || _pendingStreams == 0)
 				return;
-			if (--_pendingStreams == 0)
+			if (--_pendingStreams == 0) {
 				drained = _live;
+				callbacks = TakeWaitingCallbacks();
+			}
 		}
-		// Capture under the lock, signal outside it: an awaiter released here may take _liveLock.
-		drained?.TrySetResult();
+		if (drained is null)
+			return;
+		// Under ReaderLock and ahead of the next dequeue, so the transition is sequenced with the
+		// handlers exactly as an event is. A failure here faults the armed task rather than reporting
+		// live over a model whose own transition did not complete.
+		Exception? failure = null;
+		lock (ReaderLock) {
+			try {
+				AtLiveTransition();
+			} catch (Exception ex) {
+				failure = ex;
+			}
+			foreach (var callback in callbacks!) {
+				callback.Run();
+			}
+		}
+		// Signalled outside the lock: an awaiter released here may take _liveLock.
+		if (failure is null)
+			drained.TrySetResult();
+		else
+			drained.TrySetException(failure);
+	}
+
+	/// <summary>Removes and returns the callbacks still waiting for the transition. Call under <c>_liveLock</c>.</summary>
+	private List<LiveCallback> TakeWaitingCallbacks() {
+		var waiting = _liveCallbacks.Where(c => !c.Queued).ToList();
+		_liveCallbacks.RemoveAll(c => !c.Queued);
+		return waiting;
+	}
+
+	/// <summary>
+	/// Runs on the queue thread, under <see cref="ReaderLock"/>, each time the last outstanding stream
+	/// drains — before any <see cref="OnceLive"/> callback and before <see cref="IsLive"/> completes.
+	/// A throw faults <see cref="IsLive"/>.
+	/// </summary>
+	internal virtual void AtLiveTransition() { }
+
+	/// <summary>
+	/// Runs on the queue thread, under <see cref="ReaderLock"/>, after each message has been through
+	/// the handlers.
+	/// </summary>
+	internal virtual void AfterDispatch() { }
+
+	/// <summary>True while no started stream is still reading. Guarded by <c>_liveLock</c>.</summary>
+	internal bool NoStreamsPending {
+		get {
+			lock (_liveLock) {
+				return _pendingStreams == 0;
+			}
+		}
 	}
 
 	/// <summary>
@@ -145,31 +210,47 @@ public abstract class ReadModelBase :
 	/// </summary>
 	private void RetireAllStreams(Exception? error) {
 		TaskCompletionSource? armed = null;
+		List<LiveCallback>? callbacks = null;
 		lock (_liveLock) {
 			if (_pendingStreams == 0)
 				return;
 			_pendingStreams = 0;
 			_generation++; // sentinels already queued describe streams that are no longer outstanding
 			armed = _live;
+			// Only those waiting for the transition: one already on the queue describes a model that
+			// was live when it was registered, and still runs.
+			callbacks = TakeWaitingCallbacks();
 		}
 		// Signalled outside the lock, as in RetireStream.
 		if (error is null)
 			armed.TrySetCanceled();
 		else
 			armed.TrySetException(error);
+		foreach (var callback in callbacks) {
+			Abandon(callback, error);
+		}
+	}
+
+	private static void Abandon(LiveCallback callback, Exception? error) {
+		if (error is null)
+			callback.Completion.TrySetCanceled();
+		else
+			callback.Completion.TrySetException(error);
 	}
 
 	/// <summary>
-	/// Runs a start body under liveness tracking. Queues the retiring sentinel once the body returns.
-	/// A body returning false did not attach a listener (the model was disposed mid-read).
+	/// Runs a start body under liveness tracking. Queues the retiring sentinel once the body returns,
+	/// carrying where the read left the stream. A body that finds the model disposed returns null
+	/// without attaching a listener.
 	/// </summary>
-	private void RunStart(Func<bool> start) {
+	private void RunStart(Func<StreamCheckpoint?> start) {
 		var generation = RegisterStream();
 		try {
-			if (start())
-				MarkReadDrained(generation);
-			else
+			var read = start();
+			if (read is null && _disposed)
 				RetireAllStreams(null);
+			else
+				MarkReadDrained(generation, read);
 		} catch (Exception ex) {
 			RetireAllStreams(ex);
 			throw;
@@ -182,8 +263,14 @@ public abstract class ReadModelBase :
 	/// because that check reads the queue's starving flag and can see it set before the queue thread
 	/// has picked up the work just enqueued.
 	/// </summary>
-	private void MarkReadDrained(int generation) =>
-		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation));
+	/// <param name="generation">The value <see cref="RegisterStream"/> returned for this stream.</param>
+	/// <param name="read">
+	/// Where the read left the stream, so <see cref="AppliedCheckpoints"/> can take it up at the point
+	/// the read's events have all been applied. The read delivers bare messages, so nothing else
+	/// carries that position.
+	/// </param>
+	private void MarkReadDrained(int generation, StreamCheckpoint? read) =>
+		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation, read));
 
 	/// <summary>
 	/// Records that something else will feed this model a stream it does not read itself, so
@@ -202,24 +289,49 @@ public abstract class ReadModelBase :
 	/// it and the target's queue folds that history first.
 	/// </summary>
 	/// <param name="generation">The value <see cref="RegisterExternalSource"/> returned.</param>
-	internal void MarkExternalSourceDrained(int generation) => MarkReadDrained(generation);
+	internal void MarkExternalSourceDrained(int generation) => MarkReadDrained(generation, null);
 
-	private sealed record ReadDrained(int Generation) : IMessage {
+	private sealed record ReadDrained(int Generation, StreamCheckpoint? Read) : IMessage {
 		public Guid MsgId { get; } = Guid.NewGuid();
+	}
+
+	/// <summary>An event off a listener, with the checkpoint that names it — see <see cref="IListener.SubscribeToDelivery"/>.</summary>
+	private sealed record Delivered(IMessage Message, StreamCheckpoint? Checkpoint) : IMessage {
+		public Guid MsgId => Message.MsgId;
+	}
+
+	/// <summary>A callback registered through <see cref="OnceLive"/>.</summary>
+	private sealed class LiveCallback : IMessage {
+		public Guid MsgId { get; } = Guid.NewGuid();
+		public required Action Callback { get; init; }
+		public required TaskCompletionSource Completion { get; init; }
+		/// <summary>Set when the model was live at registration and the callback went straight onto the queue.</summary>
+		public bool Queued { get; init; }
+
+		/// <summary>Runs the callback and settles <see cref="Completion"/> with what it did. Never throws.</summary>
+		public void Run() {
+			try {
+				Callback();
+				Completion.TrySetResult();
+			} catch (Exception ex) {
+				Completion.TrySetException(ex);
+			}
+		}
 	}
 
 	/// <summary>
 	/// The <see cref="RunStart"/> counterpart for the task-pool overloads. Registers before queuing
 	/// the work so the registration is visible to the calling thread on return.
 	/// </summary>
-	private void RunStartAsync(Func<bool> start, CancellationToken cancelWaitToken) {
+	private void RunStartAsync(Func<StreamCheckpoint?> start, CancellationToken cancelWaitToken) {
 		var generation = RegisterStream();
 		var readTask = Task.Run(() => {
 			try {
-				if (start())
-					MarkReadDrained(generation);
-				else
+				var read = start();
+				if (read is null && _disposed)
 					RetireAllStreams(null);
+				else
+					MarkReadDrained(generation, read);
 			} catch (Exception ex) {
 				RetireAllStreams(ex);
 				throw;
@@ -244,6 +356,7 @@ public abstract class ReadModelBase :
 	/// <param name="connection">A connection to a stream store.</param>
 	protected ReadModelBase(string name, IConfiguredConnection connection) {
 		Ensure.NotNull(connection, nameof(connection));
+		_namer = connection.StreamNamer;
 		_getReader = () => connection.GetReader(name, Handle);
 		_getListener = () => connection.GetListener(name);
 		_listeners = [];
@@ -257,18 +370,199 @@ public abstract class ReadModelBase :
 	/// Every message handled by the read model will pass through here.
 	/// </summary>
 	private void DequeueMessage(IMessage message) {
-		// Not published to handlers and not counted: it is this model's own bookkeeping, not an event.
-		if (message is ReadDrained drained) {
-			RetireStream(drained.Generation);
-			return;
+		// The first four are this model's own bookkeeping, not events: not published, not counted.
+		switch (message) {
+			case ReadDrained drained:
+				if (drained.Read is not null) {
+					lock (ReaderLock) {
+						Advance(drained.Read);
+					}
+				}
+				RetireStream(drained.Generation);
+				return;
+			case CaptureBarrier barrier:
+				RunCapture(barrier);
+				return;
+			case LiveCallback callback:
+				RunLiveCallback(callback);
+				return;
+			case Delivered delivered:
+				Dispatch(delivered.Message, delivered.Checkpoint);
+				return;
+			default:
+				Dispatch(message, null);
+				return;
 		}
-		if (message is CaptureBarrier barrier) {
-			RunCapture(barrier);
-			return;
-		}
+	}
+
+	private void Dispatch(IMessage message, StreamCheckpoint? checkpoint) {
 		lock (ReaderLock) {
+			// Before the handlers, so a handler asking where it stands is told the event it is applying.
+			if (checkpoint is not null)
+				Advance(checkpoint);
 			_bus.Handle(message);
 			Version++;
+			AfterDispatch();
+		}
+	}
+
+	// Written on the queue thread only, under ReaderLock, so a handler reads it consistently with
+	// the state it sits beside.
+	private readonly Dictionary<string, StreamCheckpoint> _applied = new(StringComparer.Ordinal);
+
+	/// <summary>Moves a stream's applied checkpoint forward, never back. Call under <see cref="ReaderLock"/>.</summary>
+	private void Advance(StreamCheckpoint checkpoint) {
+		// A seed from a read arrives behind live events the listener queued before the sentinel, and
+		// must not undo them; -1 orders "nothing yet" before version 0.
+		if (_applied.TryGetValue(checkpoint.StreamName, out var current) && (current.Version ?? -1) > (checkpoint.Version ?? -1))
+			return;
+		_applied[checkpoint.StreamName] = checkpoint;
+	}
+
+	/// <summary>
+	/// How far each stream has been <b>applied</b>: one checkpoint per stream, naming the last event
+	/// this model's handlers have run — including the one being handled, if read from a handler.
+	/// </summary>
+	/// <remarks>
+	/// <para>The applied counterpart of <see cref="GetCheckpoint"/>, which is delivered-not-applied.
+	/// This one is safe to persist beside the state, because it names nothing the state lacks. It is
+	/// exact only where it is read — on the queue thread: from a handler, an <see cref="OnceLive"/>
+	/// callback, or <see cref="BufferedReadModelBase.Flush"/>. Read from anywhere else it is a
+	/// snapshot the next dequeue may have moved past.</para>
+	/// <para>A stream still in its read phase is reported where it stood before the read: the read
+	/// delivers bare messages, and its entry catches up when the read drains. From that point, and for
+	/// every event the listener delivers after it, the entry is exact.</para>
+	/// </remarks>
+	protected IReadOnlyList<StreamCheckpoint> AppliedCheckpoints {
+		get {
+			lock (ReaderLock) {
+				return _applied.Values.ToList();
+			}
+		}
+	}
+
+	private void RunLiveCallback(LiveCallback callback) {
+		lock (_liveLock) {
+			if (!_liveCallbacks.Remove(callback))
+				return; // already abandoned
+		}
+		lock (ReaderLock) {
+			callback.Run();
+		}
+	}
+
+	private void AbandonLiveCallbacks() {
+		List<LiveCallback> outstanding;
+		lock (_liveLock) {
+			outstanding = _liveCallbacks.ToList();
+			_liveCallbacks.Clear();
+		}
+		foreach (var callback in outstanding) {
+			Abandon(callback, null);
+		}
+	}
+
+	/// <summary>
+	/// Runs <paramref name="callback"/> once every started stream has drained — on the queue thread,
+	/// under <see cref="ReaderLock"/>, before the next event is handled. Call it as many times as you
+	/// need callbacks.
+	/// </summary>
+	/// <param name="callback">Runs once, sequenced with the handlers. Must not block or wait on this model.</param>
+	/// <returns>
+	/// Completes when the callback has run; faults with what it threw; cancelled if the model is
+	/// disposed first or a start fails before the transition.
+	/// </returns>
+	/// <remarks>
+	/// <para>The sequenced counterpart of <see cref="IsLive"/>. An <c>IsLive</c> continuation runs off
+	/// the queue thread and races the next <c>Handle</c>; this runs at the transition itself, so a
+	/// buffer accumulated during catch-up can be flushed with nothing arriving in between.</para>
+	/// <para>Registered while the model is already live — nothing started, or everything drained — it
+	/// is queued and runs behind whatever is queued now, still on the queue thread under the lock.
+	/// That includes a model that has not started anything yet, so the same rule as <c>IsLive</c>
+	/// holds: register after the last <c>Start</c>, or pass it to <see cref="StartAllAsync"/>.</para>
+	/// <para>One registration, one run. A later <c>Start</c> that re-arms <c>IsLive</c> does not run it
+	/// again; register another.</para>
+	/// <para>Callbacks waiting on the same transition run in the order they were registered, each to
+	/// completion before the next starts.</para>
+	/// </remarks>
+	public Task OnceLive(Action callback) {
+		Ensure.NotNull(callback, nameof(callback));
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		LiveCallback registered;
+		lock (_liveLock) {
+			registered = new LiveCallback { Callback = callback, Completion = completion, Queued = _pendingStreams == 0 };
+			_liveCallbacks.Add(registered);
+		}
+		if (registered.Queued) {
+			((IHandle<IMessage>)_queue).Handle(registered);
+			// A queue already stopped, or on its way there, will never dequeue it.
+			if (_closing)
+				AbandonLiveCallbacks();
+		}
+		return completion.Task;
+	}
+
+	/// <summary>
+	/// Starts every stream in <paramref name="streams"/> and returns the task that completes once all
+	/// of them have drained.
+	/// </summary>
+	/// <param name="streams">The streams to start. At least one, each on a distinct stream.</param>
+	/// <param name="onceLive">
+	/// Optionally, what to run at the transition — see <see cref="OnceLive"/>. Given one, the returned
+	/// task is the callback's, which completes only after it has run.
+	/// </param>
+	/// <param name="cancelWaitToken">Cancels the reads this call starts.</param>
+	/// <returns><see cref="IsLive"/>, covering every stream started here, or the callback's task.</returns>
+	/// <exception cref="ArgumentException">Nothing to start, or two starters name one stream.</exception>
+	/// <exception cref="InvalidOperationException">A stream is already started, or a capture is in flight.</exception>
+	/// <remarks>
+	/// <para>The whole set is resolved and checked before anything starts, so a rejected set leaves the
+	/// model exactly as it was.</para>
+	/// <para><see cref="IsLive"/> read between two <c>Start</c> calls covers only the first, and one
+	/// read before any covers nothing. Reading it here, after every registration, is what makes the
+	/// returned task cover all of them.</para>
+	/// <para>Registering <paramref name="onceLive"/> through <see cref="OnceLive"/> after the last start
+	/// would race the transition: every stream can drain in between, and the callback then runs behind
+	/// whatever arrived rather than at the transition. Passing it here cannot — the call holds the model
+	/// short of the transition until the callback is registered.</para>
+	/// </remarks>
+	public Task StartAllAsync(
+		IReadOnlyList<StreamStarter> streams,
+		Action? onceLive = null,
+		CancellationToken cancelWaitToken = default) {
+		Ensure.NotNull(streams, nameof(streams));
+		if (streams.Count == 0) {
+			throw new ArgumentException(
+				$"{GetType().Name}.{nameof(StartAllAsync)} was given no streams, so the task it would " +
+				"return describes nothing. Pass at least one.", nameof(streams));
+		}
+
+		var names = new string[streams.Count];
+		var seen = new HashSet<string>(StringComparer.Ordinal);
+		for (var i = 0; i < streams.Count; i++) {
+			if (streams[i] is null)
+				throw new ArgumentException("A stream starter is null.", nameof(streams));
+			names[i] = streams[i].StreamName(_namer);
+			if (!seen.Add(names[i])) {
+				throw new ArgumentException(
+					$"'{names[i]}' appears twice. A model reads a stream once.", nameof(streams));
+			}
+			EnsureStreamNotStarted(names[i]);
+		}
+
+		// Held across the whole sequence so the model cannot reach the transition part-way through it:
+		// the callback registers as pending rather than queued, and the task read at the end covers
+		// every stream. Released through the queue, behind everything the reads delivered.
+		var gate = RegisterStream();
+		try {
+			for (var i = 0; i < streams.Count; i++)
+				StartAsync(names[i], streams[i].Checkpoint, streams[i].ValidateStream, cancelWaitToken);
+			var live = onceLive is null ? IsLive : OnceLive(onceLive);
+			MarkReadDrained(gate, null);
+			return live;
+		} catch {
+			RetireAllStreams(null);
+			throw;
 		}
 	}
 
@@ -403,6 +697,31 @@ public abstract class ReadModelBase :
 		}
 	}
 
+	/// <summary>
+	/// Refuses a stream this model is already listening to.
+	/// </summary>
+	/// <remarks>
+	/// <para>Two listeners on one stream both feed this model's single queue, and the model has one set
+	/// of handlers, so every event on that stream is handled twice with nothing able to tell the two
+	/// deliveries apart. A handler that accumulates rather than recomputes is wrong from the second
+	/// delivery on, and <see cref="GetCheckpoint"/> reports the stream twice.</para>
+	/// <para>Disposal is the release: a disposed listener no longer delivers, so a stream can be
+	/// started again after its listener drops.</para>
+	/// <para>This does not make delivery unique. A category stream and a member aggregate's own stream
+	/// are different names carrying overlapping events, and so are two categories whose membership
+	/// overlaps; either pair delivers an event twice and neither is refused here.</para>
+	/// </remarks>
+	/// <exception cref="InvalidOperationException">A live listener already reads this stream.</exception>
+	private void EnsureStreamNotStarted(string stream) {
+		lock (_listeners) {
+			if (!_listeners.Any(l => !l.IsDisposed && string.Equals(l.StreamName, stream, StringComparison.Ordinal)))
+				return;
+		}
+		throw new InvalidOperationException(
+			$"{GetType().Name} is already listening to '{stream}'. A second listener would hand this " +
+			"model every event on that stream twice.");
+	}
+
 	/// <summary>Creates a listener, seeds its <c>$all</c> position, and feeds it into this model's queue.</summary>
 	/// <param name="readAllPosition">
 	/// Where the reader that just replayed this stream's history left off, so a checkpoint taken
@@ -415,8 +734,29 @@ public abstract class ReadModelBase :
 		}
 
 		l.SeedAllPosition(readAllPosition);
-		l.EventStream.SubscribeToAll(_queue);
+		// Paired delivery rather than EventStream, so each event reaches the queue with the checkpoint
+		// that names it — what AppliedCheckpoints is built from.
+		var queue = (IHandle<IMessage>)_queue;
+		l.SubscribeToDelivery((message, checkpoint) => queue.Handle(new Delivered(message, checkpoint)));
 		return l;
+	}
+
+	/// <summary>
+	/// Attaches a listener where a read left off and reports where that is, for the sentinel to carry.
+	/// </summary>
+	/// <param name="reader">The reader that has just replayed the stream's history.</param>
+	/// <param name="resumeFrom">The checkpoint the start was asked to resume after, if any.</param>
+	/// <param name="start">Starts the listener from the version handed to it.</param>
+	private StreamCheckpoint? Attach(IStreamReader reader, long? resumeFrom, Action<IListener, long?> start) {
+		// One read of the reader: version and position must come from the same event. A read that
+		// delivered nothing leaves the stream where the caller said it was, not at its beginning.
+		var read = reader.Checkpoint;
+		var position = read?.Version ?? resumeFrom;
+		var listener = AddNewListener(read?.Position);
+		start(listener, position);
+		// The listener's name, not the reader's: a reader that found no stream never names one. A
+		// listener that names nothing either cannot be seeded, and its first event names it instead.
+		return read ?? (string.IsNullOrEmpty(listener.StreamName) ? null : new StreamCheckpoint(listener.StreamName, position));
 	}
 
 	/// <summary>How far each stream this model listens to has been delivered to it.</summary>
@@ -428,9 +768,8 @@ public abstract class ReadModelBase :
 	/// anything that pairs these checkpoints with a reading of the model claims events the handlers
 	/// have not run yet. Read the two together with <see cref="ReadAtConsistentCut{T}"/>, or take
 	/// both where nothing is in flight — after <see cref="IsLive"/> on a model whose streams are
-	/// quiet, or once <see cref="Idle"/> holds and stays held. Pairing them per event needs the
-	/// checkpoint to travel with the message
-	/// (<a href="https://github.com/ReactiveDomain/reactive-domain/issues/211">#211</a>).</para>
+	/// quiet, or once <see cref="Idle"/> holds and stays held. From the queue thread, read
+	/// <see cref="AppliedCheckpoints"/> instead: it names exactly what the handlers have run.</para>
 	/// <para><see cref="StreamCheckpoint.Version"/> is null for a stream that has delivered nothing,
 	/// and <see cref="StreamCheckpoint.Position"/> is null for any stream whose last delivered event
 	/// carried no <c>$all</c> position, which is what a store that does not report one produces.</para>
@@ -542,17 +881,14 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void Start(string stream, long? checkpoint = null, bool blockUntilLive = false,
 		bool validateStream = false, CancellationToken cancelWaitToken = default) {
+		EnsureStreamNotStarted(stream);
 		RunStart(() => {
 			using var reader = _getReader();
 			reader.Read(stream, () => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version ?? checkpoint;
-
-			AddNewListener(read?.Position).Start(stream, position, blockUntilLive, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start(stream, position, blockUntilLive, validateStream, cancelWaitToken));
 		});
 	}
 
@@ -567,17 +903,14 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync(string stream, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) {
+		EnsureStreamNotStarted(stream);
 		RunStartAsync(() => {
 			using var reader = _getReader();
 			reader.Read(stream, () => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version ?? checkpoint;
-
-			AddNewListener(read?.Position).Start(stream, position, false, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start(stream, position, false, validateStream, cancelWaitToken));
 		}, cancelWaitToken);
 	}
 
@@ -597,17 +930,14 @@ public abstract class ReadModelBase :
 	public void Start<TAggregate>(Guid id, long? checkpoint = null, bool blockUntilLive = false,
 		bool validateStream = false, CancellationToken cancelWaitToken = default)
 		where TAggregate : class, IEventSource {
+		EnsureStreamNotStarted(_namer.GenerateForAggregate(typeof(TAggregate), id));
 		RunStart(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version;
-
-			AddNewListener(read?.Position).Start<TAggregate>(id, position, blockUntilLive, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start<TAggregate>(id, position, blockUntilLive, validateStream, cancelWaitToken));
 		});
 	}
 
@@ -623,17 +953,14 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync<TAggregate>(Guid id, long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
+		EnsureStreamNotStarted(_namer.GenerateForAggregate(typeof(TAggregate), id));
 		RunStartAsync(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(id, () => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version;
-
-			AddNewListener(read?.Position).Start<TAggregate>(id, position, false, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start<TAggregate>(id, position, false, validateStream, cancelWaitToken));
 		}, cancelWaitToken);
 	}
 
@@ -651,17 +978,14 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void Start<TAggregate>(long? checkpoint = null, bool blockUntilLive = false, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
+		EnsureStreamNotStarted(_namer.GenerateForCategory(typeof(TAggregate)));
 		RunStart(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version;
-
-			AddNewListener(read?.Position).Start<TAggregate>(position, blockUntilLive, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start<TAggregate>(position, blockUntilLive, validateStream, cancelWaitToken));
 		});
 	}
 
@@ -677,17 +1001,14 @@ public abstract class ReadModelBase :
 	/// <param name="cancelWaitToken">Cancellation token to cancel waiting if blockUntilLive is true.</param>
 	public void StartAsync<TAggregate>(long? checkpoint = null, bool validateStream = false,
 		CancellationToken cancelWaitToken = default) where TAggregate : class, IEventSource {
+		EnsureStreamNotStarted(_namer.GenerateForCategory(typeof(TAggregate)));
 		RunStartAsync(() => {
 			using var reader = _getReader();
 			reader.Read<TAggregate>(() => ReadCompleted, checkpoint);
 			if (_disposed)
-				return false;
-			// One read of the reader: version and position must come from the same event.
-			var read = reader.Checkpoint;
-			var position = read?.Version;
-
-			AddNewListener(read?.Position).Start<TAggregate>(position, false, validateStream, cancelWaitToken);
-			return true;
+				return null;
+			return Attach(reader, checkpoint,
+				(l, position) => l.Start<TAggregate>(position, false, validateStream, cancelWaitToken));
 		}, cancelWaitToken);
 	}
 
@@ -724,6 +1045,7 @@ public abstract class ReadModelBase :
 		// Same for a capture waiting on a marker that can no longer arrive. After the listeners are
 		// disposed, so a hold this releases cannot be retaken.
 		AbandonCaptures(null);
+		AbandonLiveCallbacks();
 	}
 
 	protected virtual void Dispose(bool disposing) {

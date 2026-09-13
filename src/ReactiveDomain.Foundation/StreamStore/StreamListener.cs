@@ -93,6 +93,39 @@ public class StreamListener : IListener {
 	/// </summary>
 	protected readonly object DeliveryLock = new();
 
+	// Guarded by DeliveryLock, the lock every delivery already holds, so a subscribe cannot land
+	// between a publish and its pairing.
+	private readonly List<Action<IMessage, StreamCheckpoint?>> _deliverySubscribers = [];
+
+	/// <inheritdoc cref="IListener.SubscribeToDelivery"/>
+	public IDisposable SubscribeToDelivery(Action<IMessage, StreamCheckpoint?> handler) {
+		Ensure.NotNull(handler, nameof(handler));
+		lock (DeliveryLock) {
+			_deliverySubscribers.Add(handler);
+		}
+		return new Disposer(() => {
+			lock (DeliveryLock) {
+				_deliverySubscribers.Remove(handler);
+			}
+			return Unit.Default;
+		});
+	}
+
+	/// <summary>
+	/// Hands a message to <see cref="EventStream"/> and to every delivery subscriber, paired with
+	/// <paramref name="checkpoint"/>. Call under <see cref="DeliveryLock"/>, before recording.
+	/// </summary>
+	protected void Deliver(IMessage message, StreamCheckpoint? checkpoint) {
+		Bus.Publish(message);
+		foreach (var subscriber in _deliverySubscribers) {
+			subscriber(message, checkpoint);
+		}
+	}
+
+	/// <summary>The checkpoint this listener stands at once <paramref name="recordedEvent"/> is delivered.</summary>
+	protected StreamCheckpoint CheckpointOf(RecordedEvent recordedEvent) =>
+		new(StreamName, recordedEvent.EventNumber, recordedEvent.Position);
+
 	/// <inheritdoc cref="IListener.HoldDelivery"/>
 	public IDisposable HoldDelivery() => new DeliveryHold(this);
 
@@ -268,7 +301,7 @@ public class StreamListener : IListener {
 						// subscriber's queue while a holder believed delivery was stopped — no checkpoint
 						// names it, so a model that handles it would hold state its checkpoints disown.
 						lock (DeliveryLock) {
-							Bus.Publish(new StreamStoreMsgs.CatchupSubscriptionBecameLive());
+							Deliver(new StreamStoreMsgs.CatchupSubscriptionBecameLive(), Checkpoint);
 						}
 						_liveLock.Set();
 						_liveProcessingStarted?.Invoke(Unit.Default);
@@ -325,7 +358,7 @@ public class StreamListener : IListener {
 	protected virtual void GotEvent(RecordedEvent recordedEvent) {
 		lock (DeliveryLock) {
 			if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
-				Bus.Publish(@event);
+				Deliver(@event, CheckpointOf(recordedEvent));
 			}
 			// After the publish, and under the same lock. The bus hands the event to the subscriber's
 			// queue synchronously, so once this runs the event is queued; recording first left a window

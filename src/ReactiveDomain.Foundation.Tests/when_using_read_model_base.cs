@@ -179,19 +179,16 @@ public sealed class when_using_read_model_base :
 		Assert.Equal(19, GetCheckpoint()[1].Version);
 	}
 	[Fact]
-	public void can_listen_to_the_same_stream_twice() {
+	public void cannot_listen_to_the_same_stream_twice() {
 		Assert.Equal(0, Version);
-		//weird but true
-		//n.b. Don't do this on purpose
 		Start(_stream1);
-		Start(_stream1);
-		//double events
-		AssertEx.AtLeastModelVersion(this, 22, TestTimeouts.ThrottleWaitFor, msg: $"Expected 22 got {Version}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 40, TestTimeouts.ThrottleWaitFor);
-		//even more doubled events
+		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+
+		Assert.Throws<InvalidOperationException>(() => Start(_stream1));
+
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.AtLeastModelVersion(this, 42, TestTimeouts.ThrottleWaitFor, msg: $"Expected 42 got {Version}");
-		AssertEx.IsOrBecomesTrue(() => Sum == 140, TestTimeouts.ThrottleWaitFor);
+		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor, msg: $"Expected 70 got {Sum}");
+		Assert.Single(GetCheckpoint());
 	}
 
 	public long Sum { get; private set; }
