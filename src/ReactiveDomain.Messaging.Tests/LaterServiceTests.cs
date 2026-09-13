@@ -46,10 +46,11 @@ public class LaterServiceTests {
 		using var delay =
 			new LaterService(
 				new TestPublisher(msg => {
-					Interlocked.Increment(ref msgCount);
-					var num = ((TestMessage)msg).MessageNumber;
+					// The number first: the count is what the waits below observe, so it must be
+					// the last thing written.
 					// ReSharper disable once AccessToModifiedClosure
-					Interlocked.Exchange(ref messageNumber, num);
+					Interlocked.Exchange(ref messageNumber, ((TestMessage)msg).MessageNumber);
+					Interlocked.Increment(ref msgCount);
 				}),
 				timeSource);
 		delay.Start();
