@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging.Bus;
+﻿using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Foundation;
 
@@ -11,6 +12,25 @@ public interface IListener : IDisposable {
 	/// of a model reading it, or another thread that might. Subscribe a queue rather than work.
 	/// </remarks>
 	ISubscriber EventStream { get; }
+
+	/// <summary>
+	/// Subscribes to everything this listener delivers, each message paired with the checkpoint the
+	/// listener stands at once that message is delivered.
+	/// </summary>
+	/// <param name="handler">Receives each message and its checkpoint, on the delivery thread.</param>
+	/// <returns>A handle that ends the subscription when disposed.</returns>
+	/// <remarks>
+	/// <para>Same thread, ordering and hold semantics as <see cref="EventStream"/>, so the same rule
+	/// applies: queue, do not work. What it adds is the pairing. <see cref="Checkpoint"/> is delivered,
+	/// not applied — read from downstream it names events still in flight — whereas the checkpoint
+	/// handed here belongs to the message beside it, so a subscriber that applies the message and then
+	/// records the checkpoint has recorded exactly what it applied.</para>
+	/// <para>The checkpoint is null for a message that is not an event of the stream, such as the live
+	/// transition on a stream that has delivered nothing, and for an implementation that cannot pair
+	/// them: the default routes <see cref="EventStream"/> with null throughout.</para>
+	/// </remarks>
+	IDisposable SubscribeToDelivery(Action<IMessage, StreamCheckpoint?> handler) =>
+		EventStream.SubscribeToAll(new AdHocHandler<IMessage>(message => handler(message, null)));
 
 	/// <summary>
 	/// The version of the last event delivered from <see cref="StreamName"/>, or 0 when none has
