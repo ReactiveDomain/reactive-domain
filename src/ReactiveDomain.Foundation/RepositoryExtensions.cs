@@ -1,7 +1,8 @@
 ﻿namespace ReactiveDomain.Foundation;
 
 public static class RepositoryExtensions {
-	public static void Save(this IRepository repository, IEventSource aggregate) {
-		repository.Save(aggregate);
+	/// <inheritdoc cref="IRepository.Save"/>
+	public static StreamCheckpoint Save(this IRepository repository, IEventSource aggregate) {
+		return repository.Save(aggregate);
 	}
 }

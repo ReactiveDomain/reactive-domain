@@ -231,7 +231,8 @@ public class EventStoreConnectionWrapper : IStreamStoreConnection {
 }
 
 public static class ConnectionHelpers {
-	public static WriteResult ToWriteResult(this ES.WriteResult result) => new(result.NextExpectedVersion);
+	public static WriteResult ToWriteResult(this ES.WriteResult result) =>
+		new(result.NextExpectedVersion, new Position(result.LogPosition.CommitPosition, result.LogPosition.PreparePosition));
 
 	public static ES.SystemData.UserCredentials ToESCredentials(this UserCredentials credentials) =>
 		new(credentials.Username, credentials.Password);

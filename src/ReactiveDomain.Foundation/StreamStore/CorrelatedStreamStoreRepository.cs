@@ -58,24 +58,21 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 		return agg;
 	}
 
-	public void Save(IEventSource aggregate) {
-		if (_cache != null) {
-			_cache.Save(aggregate);
-		} else {
-			_repository.Save(aggregate);
-		}
+	/// <inheritdoc cref="IRepository.Save"/>
+	public StreamCheckpoint Save(IEventSource aggregate) {
+		return _cache != null
+			? _cache.Save(aggregate)
+			: _repository.Save(aggregate);
 	}
 
 	/// <inheritdoc cref="ICorrelatedRepository.SaveAndContinue"/>
-	public void SaveAndContinue(IEventSource aggregate) {
+	public StreamCheckpoint SaveAndContinue(IEventSource aggregate) {
 		// An uncorrelated event source has no source to preserve; the plain save is exactly equivalent.
-		if (aggregate is not AggregateRoot root) {
-			Save(aggregate);
-			return;
-		}
+		if (aggregate is not AggregateRoot root)
+			return Save(aggregate);
 		root.ContinueSourceThroughNextTake = true;
 		try {
-			Save(aggregate);
+			return Save(aggregate);
 		} catch {
 			// A failed save takes nothing, so the flag would otherwise stay armed for a later plain Save.
 			root.ContinueSourceThroughNextTake = false;

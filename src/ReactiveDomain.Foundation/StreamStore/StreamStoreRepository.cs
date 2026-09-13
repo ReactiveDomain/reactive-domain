@@ -125,9 +125,11 @@ public class StreamStoreRepository : IRepository {
 		return (TAggregate)Activator.CreateInstance(typeof(TAggregate), true)!;
 	}
 
-	public void Save(IEventSource aggregate) {
+	/// <inheritdoc cref="IRepository.Save"/>
+	public StreamCheckpoint Save(IEventSource aggregate) {
+		var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
 		if (!aggregate.HasRecordedEvents)
-			return;
+			return new StreamCheckpoint(streamName, VersionOrNull(aggregate.ExpectedVersion));
 		var commitHeaders = new Dictionary<string, object>
 		{
 			{CommitIdHeader, Guid.NewGuid() /*commitId*/},
@@ -139,8 +141,8 @@ public class StreamStoreRepository : IRepository {
 			commitHeaders.Add(PolicyUserIdHeader, policyUserId);
 		}
 
-		var streamName = _streamNameBuilder.GenerateForAggregate(aggregate.GetType(), aggregate.Id);
 		var expectedVersion = aggregate.ExpectedVersion;
+		var result = default(WriteResult);
 		aggregate.TakeEvents(newEvents => {
 			var eventsToSave = new EventData[newEvents.Length];
 			for (int i = 0; i < newEvents.Length; i++) {
@@ -149,9 +151,13 @@ public class StreamStoreRepository : IRepository {
 						newEvents[i],
 						new Dictionary<string, object>(commitHeaders));
 			}
-			_streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
+			result = _streamStoreConnection.AppendToStream(streamName, expectedVersion, null, eventsToSave);
 		});
+		return new StreamCheckpoint(streamName, result.NextExpectedVersion, result.LogPosition);
 	}
+
+	// A never-written stream is -1 to the aggregate and null to a checkpoint; see StreamCheckpoint.Version.
+	private static long? VersionOrNull(long expectedVersion) => expectedVersion < 0 ? null : expectedVersion;
 
 	/// <summary>
 	/// Soft delete the aggregate. Its stream can be re-created by appending new events.

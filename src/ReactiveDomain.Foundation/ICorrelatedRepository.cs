@@ -8,7 +8,8 @@ public interface ICorrelatedRepository {
 	bool TryGetById<TAggregate>(Guid id, int version, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
 	TAggregate GetById<TAggregate>(Guid id, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
 	TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
-	void Save(IEventSource aggregate);
+	/// <inheritdoc cref="IRepository.Save"/>
+	StreamCheckpoint Save(IEventSource aggregate);
 
 	/// <summary>
 	/// Persists the recorded events and leaves the aggregate armed with the same source — the
@@ -22,7 +23,8 @@ public interface ICorrelatedRepository {
 	/// cached-instance reuse across commands is unaffected.</para>
 	/// </remarks>
 	/// <param name="aggregate">The aggregate whose recorded events to persist.</param>
-	void SaveAndContinue(IEventSource aggregate);
+	/// <returns>The aggregate's stream at the version it has after the write, as reported by <see cref="Save"/>.</returns>
+	StreamCheckpoint SaveAndContinue(IEventSource aggregate);
 
 	void Delete(IEventSource aggregate);
 	void HardDelete(IEventSource aggregate);

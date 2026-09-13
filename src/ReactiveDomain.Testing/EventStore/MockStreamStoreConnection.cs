@@ -104,6 +104,7 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 						$"Stream {stream} at position {eventStream.Count} expected {expectedVersion}.");
 			}
 			var epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			Position? lastPosition = null;
 			for (var i = 0; i < events.Length; i++) {
 				var created = DateTime.UtcNow;
 				var epochTime = (long)(created - epochStart).TotalSeconds;
@@ -124,13 +125,14 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 					_allStream.Add(recordedEvent);
 					_inboundEventHandler.Handle(new EventCommitted(recordedEvent, _allStream.Count));
 				}
+				lastPosition = recordedEvent.Position;
 				eventStream.Add(recordedEvent);
 				var written = new EventWritten(stream, recordedEvent, false, recordedEvent.EventNumber);
 				_inboundEventHandler.Handle(written);
 				WriteToByCategoryProjection(written);
 				WriteToByEventProjection(written);
 			}
-			return new WriteResult(eventStream.Count - 1);
+			return new WriteResult(eventStream.Count - 1, lastPosition);
 		}
 	}
 

@@ -213,7 +213,7 @@ public sealed class GrpcConnectionWrapper : IStreamStoreConnectionGrpc {
 		}
 
 		return result switch {
-			SuccessResult success => new WriteResult(success.NextExpectedVersion),
+			SuccessResult success => new WriteResult(success.NextExpectedVersion, FromEsdbPosition(success.LogPosition)),
 			WrongExpectedVersionResult wev => throw new WrongExpectedVersionExceptionRD(stream,
 				(int)wev.ActualStreamState.ToInt64(), (int)expectedVersion),
 			_ => throw new InvalidOperationException($"Unexpected result type: {result.GetType().Name}")
