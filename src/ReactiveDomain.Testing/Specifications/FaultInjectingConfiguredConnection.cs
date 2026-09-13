@@ -47,9 +47,9 @@ public sealed class FaultInjectingConfiguredConnection(
 		public void Update<TAggregate>(ref TAggregate aggregate, int version = int.MaxValue)
 			where TAggregate : class, IEventSource => inner.Update(ref aggregate, version);
 
-		public void Save(IEventSource aggregate) {
+		public StreamCheckpoint Save(IEventSource aggregate) {
 			if (shouldFail(aggregate)) { throw new InjectedSaveException(aggregate); }
-			inner.Save(aggregate);
+			return inner.Save(aggregate);
 		}
 
 		public void Delete(IEventSource aggregate) => inner.Delete(aggregate);

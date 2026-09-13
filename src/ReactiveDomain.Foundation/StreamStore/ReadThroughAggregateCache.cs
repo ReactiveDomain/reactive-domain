@@ -92,15 +92,16 @@ public class ReadThroughAggregateCache : IAggregateCache {
 		}
 	}
 
-	public void Save(IEventSource aggregate) {
+	public StreamCheckpoint Save(IEventSource aggregate) {
 		var type = aggregate.GetType();
 		try {
-			_baseRepository.Save(aggregate);
+			var checkpoint = _baseRepository.Save(aggregate);
 			if (!_knownAggregates.ContainsKey((type, aggregate.Id))) {
 				_knownAggregates.Add((type, aggregate.Id), aggregate);
 			} else {
 				_knownAggregates[(type, aggregate.Id)] = aggregate;
 			}
+			return checkpoint;
 		} catch {
 			_knownAggregates.Remove((type, aggregate.Id));
 			throw;

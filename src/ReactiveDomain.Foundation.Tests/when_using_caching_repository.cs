@@ -115,6 +115,23 @@ public sealed class when_using_caching_repository {
 	}
 
 	[Fact]
+	public void save_reports_the_write_through_the_cache() {
+		var id = Guid.NewGuid();
+		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));
+		var account = new Account(id, source);
+		account.Credit(1);
+		account.Credit(2);
+
+		var cached = _cachingRepo.Save(account);
+		account.Credit(3);
+		var direct = _repo.Save(account);
+
+		Assert.Equal(2, cached.Version);
+		Assert.Equal(3, direct.Version);
+		Assert.Equal(cached.StreamName, direct.StreamName);
+	}
+
+	[Fact]
 	public void failed_save_rethrows_and_evicts_from_the_cache() {
 		var id = Guid.NewGuid();
 		ICorrelatedMessage source = MessageBuilder.New(() => new CreateAccount(id));

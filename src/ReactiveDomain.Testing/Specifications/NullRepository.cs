@@ -44,16 +44,18 @@ public class NullRepository : ICorrelatedRepository, IRepository {
 	public void HardDelete(IEventSource aggregate) { }
 
 	/// <summary>
-	/// Does nothing. Required for implementation of <see cref="ICorrelatedRepository"/> and <see cref="IRepository"/>.
+	/// Writes nothing. Required for implementation of <see cref="ICorrelatedRepository"/> and <see cref="IRepository"/>.
 	/// </summary>
-	/// <param name="aggregate">This parameter is ignored.</param>
-	public void Save(IEventSource aggregate) { }
+	/// <param name="aggregate">Names the checkpoint's stream and supplies its version; its events are left in place.</param>
+	/// <returns>A checkpoint at the aggregate's current version with no position.</returns>
+	public StreamCheckpoint Save(IEventSource aggregate) {
+		return new StreamCheckpoint(
+			$"{aggregate.GetType().Name}-{aggregate.Id}",
+			aggregate.ExpectedVersion < 0 ? null : aggregate.ExpectedVersion);
+	}
 
-	/// <summary>
-	/// Does nothing. Required for implementation of <see cref="ICorrelatedRepository"/>.
-	/// </summary>
-	/// <param name="aggregate">This parameter is ignored.</param>
-	public void SaveAndContinue(IEventSource aggregate) { }
+	/// <inheritdoc cref="Save"/>
+	public StreamCheckpoint SaveAndContinue(IEventSource aggregate) => Save(aggregate);
 
 	/// <summary>
 	/// Does nothing. Required for implementation of <see cref="ICorrelatedRepository"/>.

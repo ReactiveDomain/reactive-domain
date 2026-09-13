@@ -26,8 +26,8 @@ public class CachingRepository : IDisposable {
 	public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IEventSource {
 		return _cache.GetById<TAggregate>(id);
 	}
-	public void Save(IEventSource aggregate) {
-		_cache.Save(aggregate);
+	public StreamCheckpoint Save(IEventSource aggregate) {
+		return _cache.Save(aggregate);
 	}
 	public void Delete(IEventSource aggregate) {
 		_cache.Delete(aggregate);

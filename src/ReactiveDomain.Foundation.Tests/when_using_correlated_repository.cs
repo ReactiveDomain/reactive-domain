@@ -197,6 +197,23 @@ public sealed class when_using_correlated_repository {
 	}
 
 	[Fact]
+	public void save_and_continue_reports_each_intermediate_write() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+
+		account.Credit(50);
+		var intermediate = _correlatedRepo.SaveAndContinue(account);
+		account.Credit(49);
+		var final = _correlatedRepo.Save(account);
+
+		Assert.Equal(_streamName, intermediate.StreamName);
+		Assert.Equal(4, intermediate.Version);
+		Assert.Equal(_streamName, final.StreamName);
+		Assert.Equal(5, final.Version);
+		Assert.Equal(CheckpointOrder.Before, StreamCheckpoint.Compare([intermediate], [final]));
+	}
+
+	[Fact]
 	public void failed_save_leaves_the_aggregate_retryable() {
 		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
 		var account = _correlatedRepo.GetById<Account>(_accountId, source);
