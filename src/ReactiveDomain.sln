@@ -24,8 +24,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B11B7952-E722-4EDE-ADF9-9DBEA64E0FD5}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		build.props = build.props
-		ci.build.imports = ci.build.imports
+		Directory.Build.props = Directory.Build.props
 		..\tools\CreateDebugNuget.ps1 = ..\tools\CreateDebugNuget.ps1
 		..\tools\CreateNuget.ps1 = ..\tools\CreateNuget.ps1
 		nuget.config = nuget.config
