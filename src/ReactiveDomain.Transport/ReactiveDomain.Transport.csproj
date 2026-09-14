@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-		<IsPackable>false</IsPackable>
+		<IsPackable>true</IsPackable>
+		<Description>TCP transport for the ReactiveDomain message bus: TcpBus client and server sides over a framed, pooled socket stack with TLS.</Description>
+		<PackageTags>$(PackageTags) tcp transport</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\ReactiveDomain.Core\ReactiveDomain.Core.csproj" />

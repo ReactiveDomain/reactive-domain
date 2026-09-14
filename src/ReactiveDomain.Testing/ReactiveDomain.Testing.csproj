@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <IsPackable>True</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Description>Unit testing fixtures and extensions for use with ReactiveDomain.</Description>
+    <PackageTags>$(PackageTags) unit-tests xunit</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Domain\**" />

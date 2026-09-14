@@ -2,6 +2,11 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    <!-- Foundation's transitive closure is Core + Messaging + Persistence, which is exactly what the
+         umbrella package has always delivered, so it publishes under that id. The assembly is still
+         ReactiveDomain.Foundation; only the package id differs. Renaming either one breaks consumers. -->
+    <PackageId>ReactiveDomain</PackageId>
+    <Description>A toolkit for implementing CQRS-ES in a reactive system. Installs the ReactiveDomain core: repositories, read models, stream subscriptions and serialization.</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="StreamStore\EventStoreMessageLogger.cs" />

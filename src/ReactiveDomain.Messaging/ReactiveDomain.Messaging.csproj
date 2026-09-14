@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-		<IsPackable>false</IsPackable>
+		<IsPackable>true</IsPackable>
+		<Description>Messages, commands and events for ReactiveDomain, with the in-memory bus, queued handlers and message hierarchy that dispatch them.</Description>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
