@@ -16,7 +16,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj" />
 		<ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
-		<ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Policy.Core\ReactiveDomain.Policy.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Description>Event-sourced identity storage for ReactiveDomain: users, subjects and clients, with the read models over them.</Description>
+    <PackageTags>$(PackageTags) identity</PackageTags>
   </PropertyGroup>
    <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

@@ -40,7 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ReactiveDomain.Testing.nuspec = ReactiveDomain.Testing.nuspec
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy", "ReactiveDomain.Policy\ReactiveDomain.Policy.csproj", "{553DAE59-F925-4AD9-9E08-20DDB5069CCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy.Core", "ReactiveDomain.Policy.Core\ReactiveDomain.Policy.Core.csproj", "{553DAE59-F925-4AD9-9E08-20DDB5069CCA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.Policy.Tests", "ReactiveDomain.Policy.Tests\ReactiveDomain.Policy.Tests.csproj", "{B8982E2B-B65B-4F69-8244-90A5DD588852}"
 EndProject

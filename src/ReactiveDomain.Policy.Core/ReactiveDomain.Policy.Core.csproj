@@ -1,7 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-		<IsPackable>false</IsPackable>
+		<!-- The namespace stays ReactiveDomain.Policy while the assembly is ReactiveDomain.Policy.Core,
+		     so the project name must not be allowed to set it. -->
+		<RootNamespace>ReactiveDomain.Policy</RootNamespace>
+		<IsPackable>true</IsPackable>
+		<Description>Policies, roles and permissions for ReactiveDomain, with the dispatcher that authorizes a command against them.</Description>
+		<PackageTags>$(PackageTags) identity policy</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
