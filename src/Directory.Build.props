@@ -7,8 +7,6 @@
 	<PropertyGroup>
 		<IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
 		<IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
-		<DeployPackages Condition="$(CI) == 'false' and $(MSBuildRuntimeType) == 'Full' And $(OS) == 'WINDOWS_NT'">true</DeployPackages>
-		<DeployPackages Condition="$(CI) == 'true' and $(MSBuildRuntimeType) != 'Full' And $(OS) == 'WINDOWS_NT'">false</DeployPackages>
 	</PropertyGroup>
 	<PropertyGroup>
 		<PackageVersionPrefix>0.17.0</PackageVersionPrefix>
@@ -59,23 +57,8 @@
 		<OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
 	</PropertyGroup>
 	<PropertyGroup>
-		<NugetDownloadLocation>https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</NugetDownloadLocation>
-	</PropertyGroup>
-	<PropertyGroup>
 		<RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
 	</PropertyGroup>
-	<Choose>
-		<When Condition="$(OS) == 'Unix' Or $(OS) == 'OSX'">
-			<PropertyGroup>
-				<HomeDirectory>$(HOME)</HomeDirectory>
-			</PropertyGroup>
-		</When>
-		<When Condition=" $(OS) == 'WINDOWS_NT'">
-			<PropertyGroup>
-				<HomeDirectory>$(USERPROFILE)</HomeDirectory>
-			</PropertyGroup>
-		</When>
-	</Choose>
 	<PropertyGroup>
 		<LibTargetFrameworks>net8.0;net10.0</LibTargetFrameworks>
 		<TestTargetFrameworks>net8.0;net10.0</TestTargetFrameworks>
