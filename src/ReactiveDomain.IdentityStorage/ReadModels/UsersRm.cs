@@ -1,4 +1,4 @@
-﻿using DynamicData;
+using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
@@ -38,7 +38,7 @@ public class UsersRm :
 		return UserIdsBySubjectAtDomain.TryGetValue(subject, out userId);
 	}
 
-	public void Handle(UserMsgs.UserEvent @event) {
+	void IHandle<UserMsgs.UserEvent>.Handle(UserMsgs.UserEvent @event) {
 		if (UsersById.TryGetValue(@event.UserId, out var user)) {
 			user.Handle((dynamic)@event);
 		}

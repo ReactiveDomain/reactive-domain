@@ -1,4 +1,4 @@
-﻿using ReactiveDomain.Foundation;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
 
@@ -66,7 +66,7 @@ public class PolicyUserRm :
 		return false;
 	}
 
-	public void Handle(PolicyUserMsgs.PolicyUserAdded @event) {
+	void IHandle<PolicyUserMsgs.PolicyUserAdded>.Handle(PolicyUserMsgs.PolicyUserAdded @event) {
 		if (!PolicyUsersByUserId.TryGetValue(@event.UserId, out var policyUsers)) {
 			policyUsers = [];
 			PolicyUsersByUserId.Add(@event.UserId, policyUsers);
@@ -94,19 +94,19 @@ public class PolicyUserRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleAdded @event) {
+	void IHandle<PolicyUserMsgs.RoleAdded>.Handle(PolicyUserMsgs.RoleAdded @event) {
 		if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles)) {
 			roles.Add(@event.RoleName.Trim().ToLowerInvariant());
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleRemoved @event) {
+	void IHandle<PolicyUserMsgs.RoleRemoved>.Handle(PolicyUserMsgs.RoleRemoved @event) {
 		if (RolesByPolicyUser.TryGetValue(@event.PolicyUserId, out var roles)) {
 			roles.Remove(@event.RoleName.Trim().ToLowerInvariant());
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
+	void IHandle<PolicyUserMsgs.UserDeactivated>.Handle(PolicyUserMsgs.UserDeactivated @event) {
 		var userId = UserByPolicyUser[@event.PolicyUserId];
 		var policyId = _policyByPolicyUser[@event.PolicyUserId];
 
@@ -121,7 +121,7 @@ public class PolicyUserRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.UserReactivated @event) {
+	void IHandle<PolicyUserMsgs.UserReactivated>.Handle(PolicyUserMsgs.UserReactivated @event) {
 		var userId = UserByPolicyUser[@event.PolicyUserId];
 		var policyId = _policyByPolicyUser[@event.PolicyUserId];
 		if (UsersByPolicy.TryGetValue(policyId, out var users)) {

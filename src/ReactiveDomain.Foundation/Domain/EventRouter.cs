@@ -56,8 +56,24 @@ public class EventRouter {
 	public void Route(object @event) {
 		ArgumentNullException.ThrowIfNull(@event);
 
-		if (_routes.TryGetValue(@event.GetType(), out var route)) {
-			route(@event);
+		if (!_routes.TryGetValue(@event.GetType(), out var route)) {
+			if (ThrowOnUnrouted) {
+				throw new UnroutedEventException(@event.GetType());
+			}
+			return;
 		}
+		route(@event);
 	}
+
+	/// <summary>
+	/// The event types this router has a handler for.
+	/// </summary>
+	public IReadOnlyCollection<Type> RegisteredTypes => _routes.Keys;
+
+	/// <summary>
+	/// When true, <see cref="Route"/> throws if no handler is registered for the event's type.
+	/// When false, the event is ignored — persisted on raise, silently skipped on every replay.
+	/// Defaults to false.
+	/// </summary>
+	public bool ThrowOnUnrouted { get; set; }
 }

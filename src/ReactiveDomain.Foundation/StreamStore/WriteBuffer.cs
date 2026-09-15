@@ -31,10 +31,12 @@ public sealed class WriteBuffer<TKey, TModel> : IWriteBuffer where TKey : notnul
 	}
 
 	/// <summary>The rows to write, by key, in their final state.</summary>
-	public IReadOnlyDictionary<TKey, TModel> Upserts => _upserts;
+	/// <remarks>A copy, taken at the get: a caller that retains it still holds what it read.</remarks>
+	public IReadOnlyDictionary<TKey, TModel> Upserts => new Dictionary<TKey, TModel>(_upserts);
 
 	/// <summary>The keys to remove.</summary>
-	public IReadOnlySet<TKey> Deletes => _deletes;
+	/// <remarks>A copy, taken at the get.</remarks>
+	public IReadOnlySet<TKey> Deletes => new HashSet<TKey>(_deletes);
 
 	/// <summary>True while anything is waiting to be written.</summary>
 	public bool HasPending => _upserts.Count > 0 || _deletes.Count > 0;

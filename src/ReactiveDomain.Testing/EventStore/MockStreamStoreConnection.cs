@@ -33,6 +33,22 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 	private readonly SingleThreadedBus _inboundEventBus;
 	private readonly List<IDisposable> _subscriptions;
 	private bool _connected;
+	/// <summary>
+	/// Remaining <see cref="SubscribeToStreamFrom"/> calls that succeed. Zero makes the next one
+	/// throw, so a reconnect can be shown to fail.
+	/// </summary>
+	public int RemainingSuccessfulSubscribes { get; set; } = int.MaxValue;
+	/// <summary>
+	/// How many subscriptions are dropped during the subscribe call that creates them, before it
+	/// returns. Counts down; zero leaves the subscription live.
+	/// </summary>
+	/// <remarks>
+	/// A store that has lost its connection accepts a subscribe and drops what it just handed back,
+	/// so a listener reconnecting from a drop is dropped again from inside its own reconnect. Set
+	/// this to more than a listener's reconnect budget to hold every attempt in that state, which is
+	/// how the reconnect loop is shown to give up rather than recurse.
+	/// </remarks>
+	public int ImmediateDropsOnSubscribe { get; set; }
 	private bool _disposed;
 
 	public MockStreamStoreConnection(string name) {
@@ -58,6 +74,22 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 		lock (_readerWriterLock) {
 			_connected = false;
 			_subscriptions.ForEach(s => s.Dispose());
+		}
+	}
+
+	/// <summary>
+	/// Drops every live stream subscription as the store would — not a client dispose — so listeners
+	/// can reconnect.
+	/// </summary>
+	public void DropSubscriptions(
+		SubscriptionDropReason reason = SubscriptionDropReason.ConnectionClosed,
+		Exception? error = null) {
+		Subscription[] live;
+		lock (_readerWriterLock) {
+			live = _subscriptions.OfType<Subscription>().ToArray();
+		}
+		foreach (var subscription in live) {
+			subscription.Drop(reason, error);
 		}
 	}
 
@@ -333,12 +365,15 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			}
 		}
 		private bool _disposed;
-		public void Dispose() {
+		public void Dispose() => Drop(SubscriptionDropReason.UserInitiated);
+
+		/// <summary>Ends this subscription as the store would: the drop callback runs, no further events.</summary>
+		public void Drop(SubscriptionDropReason reason, Exception? error = null) {
 			if (_disposed)
 				return;
 			_disposed = true;
-			_subscriptionDropped?.Invoke(SubscriptionDropReason.UserInitiated, null);
 			BusSubscription?.Dispose();
+			_subscriptionDropped?.Invoke(reason, error);
 		}
 	}
 
@@ -379,7 +414,13 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			throw new InvalidOperationException("Not Connected");
 		if (_disposed)
 			throw new ObjectDisposedException(nameof(MockStreamStoreConnection));
+		if (RemainingSuccessfulSubscribes <= 0)
+			throw new IOException("SubscribeToStreamFrom failed");
+		if (RemainingSuccessfulSubscribes != int.MaxValue)
+			RemainingSuccessfulSubscribes--;
 
+		Subscription subscription;
+		var dropNow = false;
 		lock (_readerWriterLock) {
 			var start = (lastCheckpoint ?? -1) + 1;
 			RecordedEvent[] curEvents = [];
@@ -400,12 +441,18 @@ public sealed class MockStreamStoreConnection : IStreamStoreConnection {
 			}
 			//n.b. this leaves a possible gap in the events at switchover, #mock-life
 
-			var subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
+			subscription = new Subscription(stream, start - 1, subscriptionDropped, eventAppeared);
 			subscription.BusSubscription = _inboundEventBus.Subscribe(subscription);
 			_subscriptions.Add(subscription);
 			liveProcessingStarted?.Invoke(Unit.Default);
-			return subscription;
+			if (ImmediateDropsOnSubscribe > 0) {
+				ImmediateDropsOnSubscribe--;
+				dropNow = true;
+			}
 		}
+		if (dropNow)
+			subscription.Drop(SubscriptionDropReason.ConnectionClosed, new IOException("Subscribe dropped immediately"));
+		return subscription;
 	}
 
 

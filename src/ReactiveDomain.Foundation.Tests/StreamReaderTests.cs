@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging;
+﻿using System.Text;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using ReactiveDomain.Testing.EventStore;
@@ -382,6 +383,40 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 		}
 	}
 
+	[Fact]
+	public void a_resume_that_finds_nothing_new_reports_the_checkpoint() {
+		foreach (var conn in _stores) {
+			_count = 0;
+			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => {
+				if (evt is Event @event) { Handle(@event); }
+			});
+			var last = NumOfEvents - 1;
+			reader.Read(_streamName, () => true, checkpoint: last);
+			Assert.Equal(0, _count);
+			Assert.Equal(last, reader.Position);
+			Assert.Equal(last, reader.Checkpoint?.Version);
+			Assert.Equal(_streamName, reader.Checkpoint?.StreamName);
+		}
+	}
+
+	[Fact]
+	public void an_unknown_type_is_skipped_and_the_read_continues() {
+		foreach (var conn in _stores) {
+			var stream = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+			conn.AppendToStream(stream, ExpectedVersion.Any, null, _serializer.Serialize(new ReadTestEvent(0)));
+			conn.AppendToStream(stream, ExpectedVersion.Any, null, UnknownTypeEvent());
+			conn.AppendToStream(stream, ExpectedVersion.Any, null, _serializer.Serialize(new ReadTestEvent(2)));
+
+			_count = 0;
+			var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer, evt => {
+				if (evt is Event @event) { Handle(@event); }
+			});
+			Assert.True(reader.Read(stream, () => true));
+			Assert.Equal(2, _count);
+			Assert.Equal(2, reader.Position);
+		}
+	}
+
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Interface required for fixture.")]
 	public void Handle(Event message) {
 		_gotEvent?.Invoke(message);
@@ -389,4 +424,9 @@ public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, IH
 	}
 
 	public record ReadTestEvent(int MessageNumber) : Event;
+
+	private static EventData UnknownTypeEvent() {
+		var metadata = Encoding.UTF8.GetBytes("""{"EventClrQualifiedTypeName":"Nope.Missing,dne-assembly"}""");
+		return new EventData(Guid.NewGuid(), "Nope", true, "{}"u8.ToArray(), metadata);
+	}
 }

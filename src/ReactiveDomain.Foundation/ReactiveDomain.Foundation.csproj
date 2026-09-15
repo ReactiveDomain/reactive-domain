@@ -16,6 +16,22 @@
     <InternalsVisibleTo Include="ReactiveDomain.Testing.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Analyzers\ReactiveDomain.Analyzers.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer"
+                      PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- RD0001 reaches consumers only through this item, and it fails quietly both ways: the analyzer
+         builds to the shared bld directory Directory.Build.props points OutputPath at, not to its own
+         bin, and a backslash in the path resolves to nothing on the Linux runner that packs. A miss
+         here still produces a package, just one without the analyzer. -->
+    <None Include="$(MSBuildThisFileDirectory)../../bld/$(Configuration)/netstandard2.0/ReactiveDomain.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Reactive" Version="7.0.0" />
   </ItemGroup>

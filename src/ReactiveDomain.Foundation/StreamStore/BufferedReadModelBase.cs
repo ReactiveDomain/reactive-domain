@@ -1,3 +1,5 @@
+using ReactiveDomain.Logging;
+
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
@@ -17,15 +19,27 @@ namespace ReactiveDomain.Foundation;
 /// and after each event handled while no stream is reading that left something pending; never with
 /// nothing to write. It is skipped while a later-started stream is reading, so that stream's history
 /// is batched like the first was.</para>
-/// <para>A throw from the live-transition flush faults <see cref="ReadModelBase.IsLive"/> — and so
-/// <see cref="ReadModelBase.StartAllAsync"/> — rather than reporting live over a store that is not. A throw
-/// from a per-event flush is logged by the queue. In both cases the buffers keep what they held, and
-/// the next flush attempts to write it along with whatever has accumulated since.</para>
+/// <para>A throw from the live-transition flush leaves <see cref="ReadModelBase.IsLive"/> pending
+/// and retries that write on this model's queue three times, the same budget a dropped
+/// subscription uses. It does not wait for another stream event, and it does not report live over a
+/// store that is not live. A third failed retry faults <see cref="ReadModelBase.IsLive"/> with the last
+/// exception. A throw from a per-event flush is logged by the queue. In both cases the buffers keep
+/// what they held before the fault. Dispose cancels a transition that is still retrying.</para>
+/// <para><see cref="Flush"/> must finish the write before it returns. The buffers are cleared on
+/// return, and <see cref="WriteBuffer{TKey,TModel}.Upserts"/> / <see cref="WriteBuffer{TKey,TModel}.Deletes"/>
+/// are copies, so a flush that retains them still has what it wrote. An async or fire-and-forget
+/// flush that returns before the store has the rows persists nothing.</para>
 /// </remarks>
 public abstract class BufferedReadModelBase : ReadModelBase {
+	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private const int MaxTransitionRetries = 3;
+	private static readonly int[] RetryBackoffMs = [0, 50, 200];
+
 	private readonly List<IWriteBuffer> _buffers = [];
 	// Queue thread only: set in AtLiveTransition, read in AfterDispatch, both of which run there.
 	private bool _storeLive;
+	private int _retryQueued;
+	private int _retryCount;
 
 	/// <inheritdoc cref="ReadModelBase(string, IConfiguredConnection)"/>
 	protected BufferedReadModelBase(string name, IConfiguredConnection connection) : base(name, connection) { }
@@ -62,7 +76,8 @@ public abstract class BufferedReadModelBase : ReadModelBase {
 	/// </param>
 	/// <remarks>
 	/// Runs on the queue thread under <see cref="ReadModelBase.ReaderLock"/>, so it must not wait on
-	/// this model. The buffers are cleared after it returns; on a throw they are left as they were.
+	/// this model. The buffers are cleared after it returns; on a throw they are left as they were,
+	/// and the same rows are handed to the next attempt, so this write must be safe to repeat.
 	/// </remarks>
 	protected abstract void Flush(IReadOnlyList<StreamCheckpoint> checkpoints);
 
@@ -72,17 +87,85 @@ public abstract class BufferedReadModelBase : ReadModelBase {
 		FlushPending();
 	}
 
-	internal override void AfterDispatch() {
-		if (_storeLive && NoStreamsPending)
-			FlushPending();
+	internal override bool AdvanceLiveTransition() {
+		try {
+			AtLiveTransition();
+			_retryCount = 0;
+			return true;
+		} catch (Exception ex) {
+			OnTransitionFlushFailed(ex);
+			return false;
+		}
 	}
 
-	private void FlushPending() {
-		if (!HasPendingWrites)
+	internal override void RetryTransition() {
+		Interlocked.Exchange(ref _retryQueued, 0);
+		if (!NoStreamsPending || IsLive.IsCompleted)
 			return;
+		lock (ReaderLock) {
+			try {
+				if (!FlushPending())
+					return;
+			} catch (Exception ex) {
+				OnTransitionFlushFailed(ex);
+				return;
+			}
+		}
+		_retryCount = 0;
+		CompleteLiveTransition();
+	}
+
+	internal override void AfterDispatch() {
+		if (!_storeLive || !NoStreamsPending)
+			return;
+		try {
+			if (!FlushPending())
+				return;
+		} catch (Exception ex) {
+			if (!IsLive.IsCompleted)
+				OnTransitionFlushFailed(ex);
+			throw;
+		}
+		CompleteLiveTransition();
+	}
+
+	private void OnTransitionFlushFailed(Exception ex) {
+		Log.ErrorException(ex, "{0} live-transition flush failed ({1}/{2}).",
+			GetType().Name, _retryCount, MaxTransitionRetries);
+		if (_retryCount >= MaxTransitionRetries) {
+			_storeLive = false;
+			FailLiveTransition(ex);
+			return;
+		}
+		ScheduleTransitionRetry();
+	}
+
+	private void ScheduleTransitionRetry() {
+		if (Interlocked.CompareExchange(ref _retryQueued, 1, 0) != 0)
+			return;
+		var delay = RetryBackoffMs[Math.Min(_retryCount, RetryBackoffMs.Length - 1)];
+		_retryCount++;
+		if (delay == 0) {
+			EnqueueTransitionRetry();
+			return;
+		}
+		_ = Task.Run(async () => {
+			try {
+				await Task.Delay(delay).ConfigureAwait(false);
+				EnqueueTransitionRetry();
+			} catch {
+				Interlocked.Exchange(ref _retryQueued, 0);
+			}
+		});
+	}
+
+	private bool FlushPending() {
+		if (!HasPendingWrites)
+			return false;
 		Flush(AppliedCheckpoints);
 		lock (_buffers) {
 			_buffers.ForEach(b => b.Clear());
 		}
+		return true;
 	}
 }

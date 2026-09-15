@@ -1,4 +1,5 @@
 ﻿using System.Reactive;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
@@ -27,6 +28,15 @@ public class StreamListener : IListener {
 	protected readonly IEventSerializer Serializer;
 	private readonly Action<Unit>? _liveProcessingStarted;
 	private readonly Action<SubscriptionDropReason, Exception?>? _subscriptionDropped;
+	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+	private const int MaxReconnects = 3;
+	private int _replacing;
+	private volatile Exception? _replaceFailed;
+	private readonly TaskCompletionSource _subscriptionLost =
+		new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	/// <inheritdoc cref="IListener.SubscriptionLost"/>
+	public Task SubscriptionLost => _subscriptionLost.Task;
 	private readonly object _startLock = new();
 	private readonly ManualResetEventSlim _liveLock = new();
 	public bool IsLive => _liveLock.IsSet;
@@ -295,17 +305,7 @@ public class StreamListener : IListener {
 					streamName,
 					checkpoint,
 					eventAppeared: GotEvent,
-					liveProcessingStarted: () => {
-						// Under the delivery lock like an event, because it reaches subscribers the same
-						// way and is counted the same way. Published outside it, it could land in a
-						// subscriber's queue while a holder believed delivery was stopped — no checkpoint
-						// names it, so a model that handles it would hold state its checkpoints disown.
-						lock (DeliveryLock) {
-							Deliver(new StreamStoreMsgs.CatchupSubscriptionBecameLive(), Checkpoint);
-						}
-						_liveLock.Set();
-						_liveProcessingStarted?.Invoke(Unit.Default);
-					});
+					liveProcessingStarted: BecameLive);
 			_started = true;
 		}
 		if (blockUntilLive) {
@@ -339,9 +339,120 @@ public class StreamListener : IListener {
 
 		return new Disposer(() => { sub.Dispose(); return Unit.Default; });
 
-		void Dropped(SubscriptionDropReason r, Exception? e) {
-			_liveLock.Set();
-			(subscriptionDropped ?? _subscriptionDropped)?.Invoke(r, e);
+		void Dropped(SubscriptionDropReason r, Exception? e) => OnDropped(r, e);
+	}
+
+	private void BecameLive() {
+		PublishLive();
+		_liveLock.Set();
+		_liveProcessingStarted?.Invoke(Unit.Default);
+	}
+
+	/// <summary>
+	/// Publishes the live transition the same way an event is published, so a holder excludes it.
+	/// </summary>
+	/// <remarks>
+	/// A queued listener must not take <see cref="DeliveryLock"/> here: its <c>Handle</c> already
+	/// holds that lock for the subscriber, and this runs on the subscribe thread.
+	/// </remarks>
+	protected virtual void PublishLive() {
+		lock (DeliveryLock) {
+			Deliver(new StreamStoreMsgs.CatchupSubscriptionBecameLive(), Checkpoint);
+		}
+	}
+
+	private void OnDropped(SubscriptionDropReason reason, Exception? error) {
+		_liveLock.Set();
+		if (_stopped)
+			return;
+		var replacing = Volatile.Read(ref _replacing) != 0;
+		if (reason == SubscriptionDropReason.UserInitiated) {
+			// Our own swap of the subscription, or a real dispose. Dispose already cancelled
+			// SubscriptionLost; a swap must not look like a clean shutdown.
+			if (replacing || _stopped)
+				return;
+			_subscriptionDropped?.Invoke(reason, error);
+			return;
+		}
+		if (replacing) {
+			// The sub we just created dropped before Resubscribe returned. Fail that attempt so
+			// the loop retries, rather than nesting another reconnect on this stack.
+			_replaceFailed = error ?? new SubscriptionDroppedException(StreamName, reason);
+			return;
+		}
+
+		if (error is not null) {
+			Log.ErrorException(
+				error,
+				"Subscription to '{0}' dropped ({1}); reconnecting from {2}.",
+				StreamName, reason, _versioned ? StreamPosition.ToString() : "start");
+		} else {
+			Log.Error(
+				"Subscription to '{0}' dropped ({1}); reconnecting from {2}.",
+				StreamName, reason, _versioned ? StreamPosition.ToString() : "start");
+		}
+
+		Exception? last = error;
+		for (var attempt = 1; attempt <= MaxReconnects; attempt++) {
+			if (_stopped)
+				return;
+			try {
+				Resubscribe();
+				Log.Info("Subscription to '{0}' resumed after drop ({1}), attempt {2}.", StreamName, reason, attempt);
+				return;
+			} catch (Exception ex) {
+				last = ex;
+				Log.ErrorException(ex, "Reconnect {0}/{1} to '{2}' failed.", attempt, MaxReconnects, StreamName);
+			}
+		}
+
+		var dropped = new SubscriptionDroppedException(StreamName, reason, last);
+		_subscriptionLost.TrySetException(dropped);
+		_subscriptionDropped?.Invoke(reason, dropped);
+	}
+
+	/// <summary>
+	/// Where a reconnect should resume: the last event this listener has accepted from the store.
+	/// </summary>
+	protected virtual long? ReconnectFrom() =>
+		_versioned ? Interlocked.Read(ref StreamPosition) : null;
+
+	/// <summary>
+	/// True when <see cref="ReconnectFrom"/> must be read under <see cref="DeliveryLock"/> so an
+	/// in-flight <see cref="GotEvent"/> has both published and recorded. A queued listener records
+	/// acceptance at enqueue, so it must not take the lock — the queue thread holds it in Handle.
+	/// </summary>
+	protected virtual bool ReconnectFromUnderDeliveryLock => true;
+
+	private void Resubscribe() {
+		_replaceFailed = null;
+		Interlocked.Exchange(ref _replacing, 1);
+		try {
+			Interlocked.Exchange(ref _subscription, null)?.Dispose();
+			long? from;
+			if (ReconnectFromUnderDeliveryLock) {
+				lock (DeliveryLock) {
+					from = ReconnectFrom();
+				}
+			} else {
+				from = ReconnectFrom();
+			}
+			var next = SubscribeToStreamFrom(
+				StreamName,
+				from,
+				eventAppeared: GotEvent,
+				// Already live: do not publish CatchupSubscriptionBecameLive again.
+				liveProcessingStarted: () => {
+					_liveLock.Set();
+					_liveProcessingStarted?.Invoke(Unit.Default);
+				});
+			Interlocked.Exchange(ref _subscription, next);
+			if (_replaceFailed is { } failed) {
+				Interlocked.Exchange(ref _subscription, null)?.Dispose();
+				throw failed;
+			}
+		} finally {
+			Interlocked.Exchange(ref _replacing, 0);
 		}
 	}
 
@@ -357,9 +468,8 @@ public class StreamListener : IListener {
 
 	protected virtual void GotEvent(RecordedEvent recordedEvent) {
 		lock (DeliveryLock) {
-			if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
+			if (TryDeserialize(recordedEvent) is { } @event)
 				Deliver(@event, CheckpointOf(recordedEvent));
-			}
 			// After the publish, and under the same lock. The bus hands the event to the subscriber's
 			// queue synchronously, so once this runs the event is queued; recording first left a window
 			// where the checkpoint named an event that had not been handed on at all, and recording
@@ -368,25 +478,83 @@ public class StreamListener : IListener {
 		}
 	}
 
+	/// <summary>
+	/// Deserializes an event for delivery. A type that cannot be resolved, or that is not a message,
+	/// is logged and skipped — the checkpoint still advances, so a poison event cannot stall or loop
+	/// a reconnect.
+	/// </summary>
+	protected IMessage? TryDeserialize(RecordedEvent recordedEvent) {
+		object? deserialized;
+		try {
+			deserialized = Serializer.Deserialize(recordedEvent);
+		} catch (Exception ex) {
+			Log.ErrorException(
+				ex,
+				"Failed to deserialize {0} #{1} ({2}); skipping so the subscription can continue.",
+				StreamName, recordedEvent.EventNumber, recordedEvent.EventType);
+			return null;
+		}
+		if (deserialized is IMessage message)
+			return message;
+		if (deserialized is not null) {
+			Log.Error(
+				"Dropped {0} #{1} ({2}): deserialized to {3}, not IMessage.",
+				StreamName, recordedEvent.EventNumber, recordedEvent.EventType, deserialized.GetType().FullName);
+		}
+		return null;
+	}
+
 	#region Implementation of IDisposable
 
-	private volatile bool _disposed;
+	private volatile bool _stopped;
+	private int _disposed;
+
+	/// <summary>True once this listener has stopped taking events, by <see cref="StopListening"/> or by disposal.</summary>
+	/// <remarks>
+	/// Guards work that must not run against a listener that is finished; it says nothing about whether
+	/// a derived class has released its own resources, which is that class's to track.
+	/// </remarks>
+	protected bool Stopped => _stopped;
 
 	/// <inheritdoc cref="IListener.IsDisposed"/>
-	public bool IsDisposed => _disposed;
+	public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
+	/// <summary>Disposes this listener. Idempotent: the second call does nothing.</summary>
 	public void Dispose() {
+		// The whole chain runs once, so a derived Dispose(bool) that tears down its own resources
+		// cannot be re-entered by a second Dispose() and find them already gone.
+		if (Interlocked.Exchange(ref _disposed, 1) != 0)
+			return;
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
 
-	protected virtual void Dispose(bool disposing) {
-		if (_disposed)
-			return;
+	/// <summary>
+	/// Ends the store subscription so no further event reaches <see cref="GotEvent"/>. Idempotent.
+	/// Prefer <see cref="StopListening"/> from a derived dispose: that also stops reconnect.
+	/// </summary>
+	protected void StopSubscription() {
+		Interlocked.Exchange(ref _subscription, null)?.Dispose();
+	}
+
+	/// <summary>
+	/// Stops this listener taking events and ends the store subscription so a drop cannot reconnect.
+	/// Call before stopping a derived queue, then let <see cref="Dispose()"/> tear down the bus.
+	/// </summary>
+	protected void StopListening() {
+		_stopped = true;
 		_liveLock.Set();
-		_subscription?.Dispose();
-		Bus.Dispose();
-		_disposed = true;
+		_subscriptionLost.TrySetCanceled();
+		StopSubscription();
+	}
+
+	protected virtual void Dispose(bool disposing) {
+		if (disposing) {
+			StopListening();
+			Bus.Dispose();
+		} else {
+			_stopped = true;
+		}
 	}
 
 	#endregion

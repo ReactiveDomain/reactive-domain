@@ -1,4 +1,4 @@
-﻿using DynamicData;
+using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
@@ -85,7 +85,7 @@ public class ApplicationRm :
 	public bool ApplicationExists(string appName, Version securityModelVersion) =>
 		_appByName.Values.Any(x => x.Name == appName && x.SecurityModelVersion == securityModelVersion);
 
-	public void Handle(ApplicationMsgs.ApplicationCreated @event) {
+	void IHandle<ApplicationMsgs.ApplicationCreated>.Handle(ApplicationMsgs.ApplicationCreated @event) {
 		if (_appById.ContainsKey(@event.ApplicationId)) { return; }
 
 		var app = new ApplicationDTO(@event);
@@ -93,7 +93,7 @@ public class ApplicationRm :
 		_appByName[app.Name] = app; //only keep most recent
 	}
 
-	public void Handle(ApplicationMsgs.PolicyCreated @event) {
+	void IHandle<ApplicationMsgs.PolicyCreated>.Handle(ApplicationMsgs.PolicyCreated @event) {
 		if (_appById.ContainsKey(@event.ApplicationId)) {
 			//in filtered list
 			if (_policies.Keys.Contains(@event.PolicyId)) { return; }
@@ -102,7 +102,7 @@ public class ApplicationRm :
 		}
 	}
 
-	public void Handle(ApplicationMsgs.RoleCreated @event) {
+	void IHandle<ApplicationMsgs.RoleCreated>.Handle(ApplicationMsgs.RoleCreated @event) {
 		var policy = _policies.Lookup(@event.PolicyId);
 		if (policy.HasValue && !_roles.ContainsKey(@event.RoleId)) {
 			var role = new RoleDTO(@event);
@@ -111,7 +111,7 @@ public class ApplicationRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.PolicyUserAdded @event) {
+	void IHandle<PolicyUserMsgs.PolicyUserAdded>.Handle(PolicyUserMsgs.PolicyUserAdded @event) {
 		var policy = _policies.Lookup(@event.PolicyId);
 		if (policy.HasValue && !_policyUsers.ContainsKey(@event.PolicyUserId)) {
 			var policyUser = new PolicyUserDTO(@event);
@@ -120,7 +120,7 @@ public class ApplicationRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleAdded @event) {
+	void IHandle<PolicyUserMsgs.RoleAdded>.Handle(PolicyUserMsgs.RoleAdded @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
 			_roles.TryGetValue(@event.RoleId, out var role)) {
 			if (user.RolesCache.Keys.Contains(@event.RoleId)) { return; }
@@ -129,13 +129,13 @@ public class ApplicationRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleRemoved @event) {
+	void IHandle<PolicyUserMsgs.RoleRemoved>.Handle(PolicyUserMsgs.RoleRemoved @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			user.RemoveRole(@event.RoleId);
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
+	void IHandle<PolicyUserMsgs.UserDeactivated>.Handle(PolicyUserMsgs.UserDeactivated @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {
@@ -144,7 +144,7 @@ public class ApplicationRm :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.UserReactivated @event) {
+	void IHandle<PolicyUserMsgs.UserReactivated>.Handle(PolicyUserMsgs.UserReactivated @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {
