@@ -46,7 +46,10 @@ public sealed class when_reading_queued_subscriber_state_under_the_reader_lock {
 		public void Handle(ReaderLockTestEvent message) {
 			_first++;
 			_entered.Set();
-			_release.Wait(TestTimeouts.ThrottleWaitFor);
+			// A cap on a gate the test itself opens, not a wait budget: the handler holds ReaderLock
+			// while parked, and a park that expires releases it and hands the reader below the lock
+			// it is supposed to be blocked on.
+			_release.Wait(TimeSpan.FromMinutes(2));
 			_second++;
 		}
 
