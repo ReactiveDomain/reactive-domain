@@ -20,6 +20,11 @@ net10.0 alone and reports green; the net8.0 half fails as `Testhost process ... 
 You must install or update .NET to run this application` only if you ask for it by name. Check
 `dotnet --list-sdks` before trusting a green run.
 
+To run one framework, narrow the list: `-p:LibTargetFrameworks=net8.0 -p:TestTargetFrameworks=net8.0`,
+which is what CI does per job. **Not `-f`** — on a solution that imposes the framework on every
+project in it, and `ReactiveDomain.Analyzers` is `netstandard2.0`, so the build fails there with
+`NETSDK1005` before any test runs.
+
 ## Naming
 
 RD's own words are reserved. `ack` is `AckCommand`/`AckTimeout` — a handler has picked the command up —

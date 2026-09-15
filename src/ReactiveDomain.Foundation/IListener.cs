@@ -64,6 +64,16 @@ public interface IListener : IDisposable {
 	bool IsDisposed { get; }
 
 	/// <summary>
+	/// Faults when the live subscription drops and cannot be resumed. Completes when the listener is
+	/// disposed. A default implementation never faults: it has nothing to lose.
+	/// </summary>
+	/// <remarks>
+	/// Not <see cref="StreamListener.IsLive"/>: that is the read-to-live transition, and stays completed. This is
+	/// what happens to the subscription afterwards.
+	/// </remarks>
+	Task SubscriptionLost => Task.CompletedTask;
+
+	/// <summary>
 	/// Holds this listener's delivery, so that nothing is published to <see cref="EventStream"/> and
 	/// <see cref="Checkpoint"/> cannot move, until the returned handle is disposed.
 	/// </summary>

@@ -63,6 +63,34 @@ public sealed class when_tracking_applied_checkpoints : IClassFixture<StreamStor
 		Assert.Equal(CheckpointOrder.Equal, StreamCheckpoint.Compare(rm.Applied, rm.GetCheckpoint()));
 	}
 
+	/// <summary>
+	/// The read phase pairs like the live phase does, so a handler folding history is told the exact
+	/// event it is on — not where the stream stood before the read.
+	/// </summary>
+	[Fact]
+	public async Task a_handler_folding_history_is_told_the_event_it_is_applying() {
+		var stream = StreamFor(Guid.NewGuid());
+		AppendEvents(stream, 6, 1);
+		var rm = Track(new AppliedTestReadModel(_configured));
+
+		rm.StartAsync(stream);
+		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
+
+		Assert.Equal([0, 1, 2, 3, 4, 5], rm.SeenInHandler);
+	}
+
+	[Fact]
+	public void the_live_transition_marker_is_dispatched_but_not_counted() {
+		var stream = StreamFor(Guid.NewGuid());
+		AppendEvents(stream, 3, 1);
+		var rm = Track(new AppliedTestReadModel(_configured));
+
+		rm.Start(stream, blockUntilLive: true);
+
+		AssertEx.IsOrBecomesTrue(() => rm.Count == 3, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal(3, rm.Version);
+	}
+
 	[Fact]
 	public async Task once_the_read_drains_the_stream_is_reported_where_the_read_left_it() {
 		var stream = StreamFor(Guid.NewGuid());

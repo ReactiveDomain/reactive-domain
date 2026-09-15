@@ -18,7 +18,8 @@ public class JsonMessageSerializerSettings {
 	/// </summary>
 	public readonly Assembly? AssemblyOverride;
 	/// <summary>
-	/// Serializer throws an Invalid Operation Exception if a target type cannot be found, rather than the default of returning a JObject
+	/// Serializer throws if a target type cannot be found, rather than returning a JObject that every
+	/// listener then silently skips. Defaults to true: the silent path is opt-in for tooling.
 	/// </summary>
 	public readonly bool ThrowOnTypeNotFound;
 	/// <summary>
@@ -26,11 +27,11 @@ public class JsonMessageSerializerSettings {
 	/// </summary>
 	/// <param name="fullyQualify">N.B. Instructs the Serializer to write the fully qualified Assembly name and version. This can cause types and not to be found if the assembly version changes even if the type has not changed.</param>
 	/// <param name="assemblyOverride">Replaces the recorded assembly when deserializing</param>
-	/// <param name="throwOnTypeNotFound">Will throw an Invalid Operation Exception if a target type cannot be found, rather than returning a JObject</param>
+	/// <param name="throwOnTypeNotFound">Throws if a target type cannot be found, rather than returning a JObject. Defaults to true.</param>
 	public JsonMessageSerializerSettings(
 		bool fullyQualify = false,
 		Assembly? assemblyOverride = null,
-		bool throwOnTypeNotFound = false) {
+		bool throwOnTypeNotFound = true) {
 		FullyQualify = fullyQualify;
 		AssemblyOverride = assemblyOverride;
 		ThrowOnTypeNotFound = throwOnTypeNotFound;

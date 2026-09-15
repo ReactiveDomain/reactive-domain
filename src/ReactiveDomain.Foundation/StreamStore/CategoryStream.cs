@@ -1,6 +1,5 @@
 ﻿using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -87,10 +86,10 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 	/// persists for this source.
 	/// </summary>
 	/// <remarks>
-	/// <para><b>The stream is the position authority.</b> A relayed <see cref="IMessage"/> carries no
-	/// position, and stamping one onto it would change the delivered type and so change which handlers
-	/// dispatch. The stream therefore counts positions as it reads and publishes the one value a
-	/// subscriber needs.</para>
+	/// <para>Each relayed event is also handed to the target paired with its checkpoint, so
+	/// <see cref="ReadModelBase.AppliedCheckpoints"/> names this stream. This property is the catch-up
+	/// cut for <see cref="RelayTo"/>'s <c>fromPosition</c> — the last event before go-live, not where
+	/// a live subscriber has gotten to.</para>
 	/// <para><b>Subscribers checkpoint at the forwarded go-live, and only there.</b> At that moment a
 	/// subscriber has, by queue order, consumed exactly everything relayed before the go-live, so this
 	/// value is precisely its own position. Mid-live it is not: the subscriber's consumed position lags
@@ -192,7 +191,7 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 				// The reader's position is the event it is handing over, so the gate is evaluated where the
 				// position is known. Nothing is queued here that the reader must wait for — a relayed message
 				// is enqueued on the target's own queue synchronously — so the read needs no completion check.
-				reader.Handle = message => RelayRead(message, reader.Position);
+				reader.PairedHandle = RelayRead;
 				reader.Read<TAggregate>(() => true, checkpoint);
 				checkpoint = reader.Position ?? checkpoint;
 				_reader = null;
@@ -205,7 +204,7 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 
 			var listener = _connection.GetListener(_name);
 			_listener = listener;
-			_listenerSubscription = listener.EventStream.SubscribeToAll(new AdHocHandler<IMessage>(RelayLive));
+			_listenerSubscription = listener.SubscribeToDelivery(RelayLive);
 			listener.Start<TAggregate>(checkpoint, false, false, cancelWaitToken);
 		} catch {
 			// Every target is holding its liveness open for a source that will now never arrive. Release
@@ -273,23 +272,17 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 		return lowest;
 	}
 
-	private void RelayRead(IMessage message, long? position) {
+	private void RelayRead(IMessage message, StreamCheckpoint? checkpoint) {
 		if (_disposed)
 			return;
-		if (position is { } read)
+		if (checkpoint?.Version is { } read)
 			Interlocked.Exchange(ref _lastRelayedPosition, read);
 
-		foreach (var relay in CurrentRelays()) {
-			// Gated relays are the restored ones: they already folded everything up to their checkpoint.
-			// An unknown position delivers rather than drops — a duplicate an idempotent fold absorbs is
-			// the cheaper mistake of the two.
-			if (relay.FromPosition is { } gate && position is { } current && current <= gate)
-				continue;
-			relay.Target.Handle(message);
-		}
+		foreach (var relay in CurrentRelays())
+			relay.Forward(message, checkpoint, applyGate: true);
 	}
 
-	private void RelayLive(IMessage message) {
+	private void RelayLive(IMessage message, StreamCheckpoint? checkpoint) {
 		if (_disposed)
 			return;
 		if (message is StreamStoreMsgs.CatchupSubscriptionBecameLive) {
@@ -298,8 +291,8 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 			var position = Interlocked.Read(ref _lastRelayedPosition);
 			Interlocked.Exchange(ref _positionAtGoLive, position);
 			Log.Debug($"{_name} live at position {(position == NoPosition ? "none" : position.ToString())}.");
-		} else if (_listener is { } listener) {
-			Interlocked.Exchange(ref _lastRelayedPosition, listener.Position);
+		} else if (checkpoint?.Version is { } version) {
+			Interlocked.Exchange(ref _lastRelayedPosition, version);
 		}
 
 		// Live-phase events go to every relay unconditionally: the listener starts where the read stopped,
@@ -307,7 +300,7 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 		// a store that was since rebuilt or rewound is not honest, and no gate can rescue it.)
 		var live = message is StreamStoreMsgs.CatchupSubscriptionBecameLive;
 		foreach (var relay in CurrentRelays()) {
-			relay.Target.Handle(message);
+			relay.Forward(message, checkpoint, applyGate: false);
 			// Behind the go-live it has just been handed, so the target's queue drains the history first.
 			if (live)
 				relay.Drain();
@@ -337,11 +330,25 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 		ReadModelBase target,
 		long? fromPosition,
 		int generation) : IDisposable {
-		public ReadModelBase Target { get; } = target;
 		public long? FromPosition { get; } = fromPosition;
 
 		private int _disposed;
 		private int _drained;
+		private StreamCheckpoint? _lastForwarded;
+
+		/// <summary>
+		/// Hands the target this event when the gate allows, paired with the checkpoint for that event.
+		/// </summary>
+		public void Forward(IMessage message, StreamCheckpoint? checkpoint, bool applyGate) {
+			// The gate is the catch-up read only. Live events and the go-live are past every
+			// checkpoint a relay could honestly hold; the listener pairs go-live with the last
+			// event's checkpoint, so gating that would drop the live transition itself.
+			if (applyGate && FromPosition is { } gate && checkpoint?.Version is { } current && current <= gate)
+				return;
+			target.Handle(message, checkpoint);
+			if (checkpoint is not null)
+				_lastForwarded = checkpoint;
+		}
 
 		/// <summary>
 		/// Releases the target's registration for this source, once. Interlocked because the two callers
@@ -352,7 +359,10 @@ public sealed class CategoryStream<TAggregate> : IDisposable where TAggregate : 
 		public void Drain() {
 			if (Interlocked.Exchange(ref _drained, 1) != 0)
 				return;
-			Target.MarkExternalSourceDrained(generation);
+			// This relay's last handed event, not the source's: a gated relay that skipped the
+			// history another relay forced must not claim versions it never folded.
+			var read = _lastForwarded ?? new StreamCheckpoint(source.StreamName, FromPosition);
+			target.MarkExternalSourceDrained(generation, read);
 		}
 
 		/// <summary>

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using ReactiveDomain.Messaging;
+using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -51,6 +52,7 @@ public abstract class SnapshotReadModel : ReadModelBase {
 		// input from outside, it is the snapshot's own, and the checkpoints restored alongside it
 		// describe exactly that. Anything applied after this is unaccounted for again.
 		MarkInputReplayable();
+		RememberSaved(StartingState);
 		if (!startListeners || StartingState.Checkpoints == null)
 			return;
 
@@ -198,6 +200,115 @@ public abstract class SnapshotReadModel : ReadModelBase {
 	public override void Publish(IMessage message) {
 		HasUnreplayableInput = true;
 		base.Publish(message);
+	}
+
+	/// <summary>
+	/// Captures and persists a snapshot when the model has applied at least
+	/// <paramref name="minDistance"/> events across its streams since the last save (or restore).
+	/// </summary>
+	/// <param name="minDistance">Minimum total event distance; 0 saves every time the model is capturable.</param>
+	/// <param name="persist">Writes the snapshot. Storage is the caller's.</param>
+	/// <param name="cancellationToken">Cancels the capture or the persist.</param>
+	/// <returns>True when a snapshot was written.</returns>
+	/// <remarks>
+	/// <see cref="InvalidOperationException"/> from unreplayable input, and cancellation because the
+	/// model was disposed, are skipped — a later write point covers them. A cancel from
+	/// <paramref name="cancellationToken"/> is propagated.
+	/// </remarks>
+	protected async Task<bool> SaveIfFarEnough(
+		int minDistance,
+		Func<ReadModelState, CancellationToken, Task> persist,
+		CancellationToken cancellationToken = default) {
+		Ensure.Nonnegative(minDistance, nameof(minDistance));
+		Ensure.NotNull(persist, nameof(persist));
+		ReadModelState state;
+		try {
+			state = await CaptureConsistentState().WaitAsync(cancellationToken).ConfigureAwait(false);
+		} catch (InvalidOperationException) {
+			return false;
+		} catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
+			return false;
+		}
+		if (DistanceFromLastSave(state) < minDistance)
+			return false;
+		await persist(state, cancellationToken).ConfigureAwait(false);
+		RememberSaved(state);
+		return true;
+	}
+
+	/// <summary>
+	/// Writes a snapshot at dispose when the queue is idle and the distance gate is met.
+	/// </summary>
+	/// <remarks>
+	/// Listeners are already gone. This waits for the queue to go idle, then snapshots under
+	/// <see cref="ReadModelBase.ReaderLock"/>. A dispose from a handler skips the write — this
+	/// thread is why the queue is not idle.
+	/// </remarks>
+	/// <param name="persist">Writes the snapshot. Must not wait on this model.</param>
+	/// <param name="minDistance">Same gate as <see cref="SaveIfFarEnough"/>; 0 writes whenever idle.</param>
+	protected void SaveOnDispose(Action<ReadModelState> persist, int minDistance = 0) {
+		Ensure.NotNull(persist, nameof(persist));
+		Ensure.Nonnegative(minDistance, nameof(minDistance));
+		_disposeSave = persist;
+		_disposeMinDistance = minDistance;
+	}
+
+	private Action<ReadModelState>? _disposeSave;
+	private int _disposeMinDistance;
+	private List<StreamCheckpoint> _savedAt = [];
+
+	internal override void BeforeStopping() {
+		if (_disposeSave is null)
+			return;
+		// A handler already holds this lock; Idle cannot become true on this thread.
+		if (Monitor.IsEntered(ReaderLock))
+			return;
+		if (!Idle)
+			SpinWait.SpinUntil(() => Idle, QueuedHandler.DefaultStopWaitTimeout);
+		if (!Idle)
+			return;
+		lock (ReaderLock) {
+			if (!Idle)
+				return;
+			try {
+				var state = GetState();
+				if (DistanceFromLastSave(state) < _disposeMinDistance)
+					return;
+				_disposeSave(state);
+				RememberSaved(state);
+			} catch (InvalidOperationException) {
+				// Unreplayable — nothing consistent to save.
+			}
+		}
+	}
+
+	private void RememberSaved(ReadModelState state) {
+		_savedAt = Covered(state).ToList();
+	}
+
+	private long DistanceFromLastSave(ReadModelState state) {
+		var previous = CoveredList(_savedAt);
+		long distance = 0;
+		foreach (var checkpoint in Covered(state)) {
+			var now = checkpoint.Version ?? -1;
+			var then = previous.GetValueOrDefault(checkpoint.StreamName, -1);
+			distance += Math.Max(0, now - then);
+		}
+		return distance;
+	}
+
+	private static IEnumerable<StreamCheckpoint> Covered(ReadModelState state) =>
+		(state.Checkpoints ?? []).Concat(state.ExternalCheckpoints ?? []);
+
+	private static Dictionary<string, long> CoveredList(IEnumerable<StreamCheckpoint> checkpoints) {
+		var covered = new Dictionary<string, long>(StringComparer.Ordinal);
+		foreach (var checkpoint in checkpoints) {
+			var version = checkpoint.Version ?? -1;
+			covered[checkpoint.StreamName] = covered.TryGetValue(checkpoint.StreamName, out var seen)
+				? Math.Max(seen, version)
+				: version;
+		}
+		return covered;
 	}
 
 	private bool _disposed;

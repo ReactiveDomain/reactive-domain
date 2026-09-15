@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging;
+using System.Text;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Testing;
 using Xunit;
@@ -54,7 +55,7 @@ public sealed class when_using_read_model_base :
 		var s1 = _namer.GenerateForAggregate(typeof(TestAggregate), aggId);
 		AppendEvents(1, _conn, s1, 7);
 		Start<TestAggregate>(aggId);
-		AssertEx.AtLeastModelVersion(this, 2, TestTimeouts.ThrottleWaitFor, msg: $"Expected 2 got {Version}"); // 1 message + CatchupSubscriptionBecameLive
+		AssertEx.AtLeastModelVersion(this, 1, TestTimeouts.ThrottleWaitFor, msg: $"Expected 1 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 7, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
@@ -66,13 +67,13 @@ public sealed class when_using_read_model_base :
 		AppendEvents(1, _conn, s2, 5);
 		Start<ReadModelTestCategoryAggregate>(null, true);
 
-		AssertEx.AtLeastModelVersion(this, 3, TestTimeouts.ThrottleWaitFor, msg: $"Expected 3 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 2, TestTimeouts.ThrottleWaitFor, msg: $"Expected 2 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 12, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
 	public void can_read_one_stream() {
 		Start(_stream1);
-		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -82,7 +83,7 @@ public sealed class when_using_read_model_base :
 	public void can_read_two_streams() {
 		Start(_stream1);
 		Start(_stream2);
-		AssertEx.AtLeastModelVersion(this, 22, TestTimeouts.ThrottleWaitFor, msg: $"Expected 22 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -93,27 +94,27 @@ public sealed class when_using_read_model_base :
 	[Fact]
 	public void can_wait_for_one_stream_to_go_live() {
 		Start(_stream1, null, true);
-		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
 	public void can_wait_for_two_streams_to_go_live() {
 		Start(_stream1, null, true);
-		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 
 		Start(_stream2, null, true);
-		AssertEx.AtLeastModelVersion(this, 21, TestTimeouts.ThrottleWaitFor, msg: $"Expected 21 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 	}
 	[Fact]
 	public void can_listen_to_one_stream() {
 		Start(_stream1);
-		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.AtLeastModelVersion(this, 21, TestTimeouts.ThrottleWaitFor, msg: $"Expected 21 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -125,12 +126,12 @@ public sealed class when_using_read_model_base :
 	public void can_listen_to_two_streams() {
 		Start(_stream1);
 		Start(_stream2);
-		AssertEx.AtLeastModelVersion(this, 22, TestTimeouts.ThrottleWaitFor, msg: $"Expected 22 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 20, TestTimeouts.ThrottleWaitFor, msg: $"Expected 20 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
 		AppendEvents(10, _conn, _stream2, 7);
-		AssertEx.AtLeastModelVersion(this, 42, TestTimeouts.ThrottleWaitFor, msg: $"Expected 42 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 40, TestTimeouts.ThrottleWaitFor, msg: $"Expected 40 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -146,11 +147,11 @@ public sealed class when_using_read_model_base :
 		//start at the checkpoint
 		Start(_stream1, checkPoint);
 		//add the one recorded event
-		AssertEx.AtLeastModelVersion(this, 2, TestTimeouts.ThrottleWaitFor, msg: $"Expected 2 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 1, TestTimeouts.ThrottleWaitFor, msg: $"Expected 1 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 20, TestTimeouts.ThrottleWaitFor);
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
-		AssertEx.AtLeastModelVersion(this, 12, TestTimeouts.ThrottleWaitFor, msg: $"Expected 12 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 70, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -165,12 +166,12 @@ public sealed class when_using_read_model_base :
 		Start(_stream1, checkPoint1);
 		Start(_stream2, checkPoint2);
 		//add the recorded events 2 on stream 1 & 5 on stream 2
-		AssertEx.AtLeastModelVersion(this, 7, TestTimeouts.ThrottleWaitFor, msg: $"Expected 7 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 5, TestTimeouts.ThrottleWaitFor, msg: $"Expected 5 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 50, TestTimeouts.ThrottleWaitFor, msg: $"Expected 50 got {Sum}");
 		//add more messages
 		AppendEvents(10, _conn, _stream1, 5);
 		AppendEvents(10, _conn, _stream2, 7);
-		AssertEx.AtLeastModelVersion(this, 27, TestTimeouts.ThrottleWaitFor, msg: $"Expected 27 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 25, TestTimeouts.ThrottleWaitFor, msg: $"Expected 25 got {Version}");
 		AssertEx.IsOrBecomesTrue(() => Sum == 170, TestTimeouts.ThrottleWaitFor);
 		//confirm checkpoints
 		Assert.Equal(_stream1, GetCheckpoint()[0].StreamName);
@@ -182,7 +183,7 @@ public sealed class when_using_read_model_base :
 	public void cannot_listen_to_the_same_stream_twice() {
 		Assert.Equal(0, Version);
 		Start(_stream1);
-		AssertEx.AtLeastModelVersion(this, 11, TestTimeouts.ThrottleWaitFor, msg: $"Expected 11 got {Version}");
+		AssertEx.AtLeastModelVersion(this, 10, TestTimeouts.ThrottleWaitFor, msg: $"Expected 10 got {Version}");
 
 		Assert.Throws<InvalidOperationException>(() => Start(_stream1));
 
@@ -191,10 +192,44 @@ public sealed class when_using_read_model_base :
 		Assert.Single(GetCheckpoint());
 	}
 
+	[Fact]
+	public void going_live_does_not_count_as_a_version() {
+		// The transition arrives behind the history, so a count read as soon as the history is folded
+		// is read before the message under test: it reports 10 whether or not the transition counts.
+		// Waiting for the handler proves the message was dispatched; waiting for the queue to drain
+		// then leaves nothing that could still increment.
+		using var live = new ManualResetEventSlim(false);
+		EventStream.Subscribe(new AdHocHandler<StreamStoreMsgs.CatchupSubscriptionBecameLive>(_ => live.Set()));
+
+		Start(_stream1);
+
+		Assert.True(live.Wait(TestTimeouts.ThrottleWaitFor), "The subscription never reported going live.");
+		AssertEx.IsOrBecomesTrue(() => Idle, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal(10, Version);
+	}
+
+	[Fact]
+	public void an_unknown_type_in_history_is_skipped() {
+		var stream = _namer.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+		AppendEvents(2, _conn, stream, 1);
+		_conn.AppendToStream(stream, ExpectedVersion.Any, null, UnknownTypeEvent());
+		AppendEvents(2, _conn, stream, 1);
+
+		Start(stream);
+		AssertEx.IsOrBecomesTrue(() => Version == 4, TestTimeouts.ThrottleWaitFor, msg: $"Expected 4 got {Version}");
+		Assert.Equal(4, Version);
+		Assert.Equal(4, Sum);
+	}
+
 	public long Sum { get; private set; }
 	void IHandle<ReadModelTestEvent>.Handle(ReadModelTestEvent @event) {
 		Sum += @event.Value;
 	}
 	public record ReadModelTestEvent(int Number, int Value) : Event;
 	public class ReadModelTestCategoryAggregate : EventDrivenStateMachine;
+
+	private static EventData UnknownTypeEvent() {
+		var metadata = Encoding.UTF8.GetBytes("""{"EventClrQualifiedTypeName":"Nope.Missing,dne-assembly"}""");
+		return new EventData(Guid.NewGuid(), "Nope", true, "{}"u8.ToArray(), metadata);
+	}
 }

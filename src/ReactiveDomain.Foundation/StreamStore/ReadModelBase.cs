@@ -36,13 +36,21 @@ public abstract class ReadModelBase :
 	/// The version is incremented after all handlers have been processed.
 	/// The number of handlers (including none) will not impact the version.
 	/// This can be used to ensure read model state for tests. This is *not*
-	/// the same as the version of any particular stream being read. This can
-	/// include <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/>,
-	/// which may result in the Version being 1 greater than otherwise expected.
+	/// the same as the version of any particular stream being read.
+	/// <see cref="StreamStoreMsgs.CatchupSubscriptionBecameLive"/> is dispatched to handlers but not
+	/// counted: it is a listener's transition, not a message from a stream.
 	/// </summary>
 	public int Version { get; private set; }
 
 	private readonly object _liveLock = new();
+	private readonly TaskCompletionSource _subscriptionsLost =
+		new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	/// <summary>
+	/// Faults when a live subscription drops and cannot be resumed. Completes when the model is
+	/// disposed. Not <see cref="IsLive"/> — that is the read-to-live transition and stays completed.
+	/// </summary>
+	public Task Subscriptions => _subscriptionsLost.Task;
 	private int _pendingStreams;
 	private long _registrations;
 	private TaskCompletionSource _live = AlreadyLive();
@@ -73,17 +81,15 @@ public abstract class ReadModelBase :
 	/// <see cref="StartAllAsync"/> do the sequencing, which is what it is for.</para>
 	/// <para>Continuations run off the queue thread and race the next <c>Handle</c>. To run something
 	/// <i>at</i> the transition, sequenced with the handlers, use <see cref="OnceLive"/>.</para>
-	/// <para>The task faults if a start path throws before its listener is attached. It also faults if
-	/// the model's own transition throws — a <see cref="BufferedReadModelBase"/> whose first flush
-	/// fails.</para>
-	/// <para>It is cancelled if the model is disposed with streams still outstanding, so an awaiting
+	/// <para>The task faults if a start path throws before its listener is attached, or if the model's
+	/// own live transition fails — see <see cref="BufferedReadModelBase"/> for what that means there.
+	/// It is cancelled if the model is disposed with the transition still outstanding, so an awaiting
 	/// caller is never left on a stream that can no longer drain.</para>
 	/// <para><b>Out of scope — subscription lifecycle.</b> Nothing a subscription does can stall or
-	/// falsely complete this task; ordering rests on this model's own queue alone. A subscription
-	/// that drops is today neither reported nor retried
-	/// (<a href="https://github.com/ReactiveDomain/reactive-domain/issues/267">#267</a>: reconnect
-	/// from the listener's position, and throw if the reconnect fails). Do not read this task as a
-	/// health signal — it says the model went live, not that it still is.</para>
+	/// falsely complete this task; ordering rests on this model's own queue alone. A live subscription
+	/// that drops is resumed from the listener's last version; if the reconnect cannot be made,
+	/// <see cref="Subscriptions"/> faults. Do not read this task as a health signal — it says the
+	/// model <b>went</b> live, not that it <b>still is</b>.</para>
 	/// <para>A barrier over events committed after the read is
 	/// <see cref="CatchUpConnection.WaitForCatchUp"/>.</para>
 	/// </remarks>
@@ -124,7 +130,7 @@ public abstract class ReadModelBase :
 					"deliver events into the model ahead of the cut being captured, and no checkpoint " +
 					"would name them. Await the capture, then start the stream.");
 			}
-			if (_pendingStreams == 0)
+			if (_pendingStreams == 0 && _live.Task.IsCompleted)
 				_live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingStreams++;
 			_registrations++;
@@ -137,40 +143,31 @@ public abstract class ReadModelBase :
 	/// thread — the queue's — and then completes the armed task.
 	/// </summary>
 	private void RetireStream(int generation) {
-		TaskCompletionSource? drained = null;
-		List<LiveCallback>? callbacks = null;
 		lock (_liveLock) {
 			// A sentinel outlives the streams it was queued alongside when one of them fails, and the
 			// count it would decrement by then belongs to whatever started next. Stamping it keeps it
 			// from retiring a stream it never described.
 			if (generation != _generation || _pendingStreams == 0)
 				return;
-			if (--_pendingStreams == 0) {
-				drained = _live;
-				callbacks = TakeWaitingCallbacks();
-			}
+			if (--_pendingStreams != 0)
+				return;
 		}
-		if (drained is null)
-			return;
 		// Under ReaderLock and ahead of the next dequeue, so the transition is sequenced with the
-		// handlers exactly as an event is. A failure here faults the armed task rather than reporting
-		// live over a model whose own transition did not complete.
+		// handlers exactly as an event is. AdvanceLiveTransition returning false leaves the armed task
+		// pending — a buffered model whose flush missed retries without waiting for another event.
 		Exception? failure = null;
+		var complete = false;
 		lock (ReaderLock) {
 			try {
-				AtLiveTransition();
+				complete = AdvanceLiveTransition();
 			} catch (Exception ex) {
 				failure = ex;
 			}
-			foreach (var callback in callbacks!) {
-				callback.Run();
-			}
 		}
-		// Signalled outside the lock: an awaiter released here may take _liveLock.
-		if (failure is null)
-			drained.TrySetResult();
-		else
-			drained.TrySetException(failure);
+		if (failure is not null)
+			FailLiveTransition(failure);
+		else if (complete)
+			CompleteLiveTransition();
 	}
 
 	/// <summary>Removes and returns the callbacks still waiting for the transition. Call under <c>_liveLock</c>.</summary>
@@ -188,10 +185,73 @@ public abstract class ReadModelBase :
 	internal virtual void AtLiveTransition() { }
 
 	/// <summary>
+	/// Runs the live transition. True means <see cref="IsLive"/> can complete; false means the
+	/// transition is still in flight (a flush will be retried) and the armed task stays pending.
+	/// </summary>
+	/// <remarks>
+	/// The result says whether the transition finished, not whether it succeeded: a throw is a failed
+	/// transition and faults <see cref="IsLive"/>, which is what keeps a model from reporting live over
+	/// a store it could not write.
+	/// </remarks>
+	internal virtual bool AdvanceLiveTransition() {
+		AtLiveTransition();
+		return true;
+	}
+
+	/// <summary>
+	/// Another attempt at a transition that returned false. Queue-thread bookkeeping, not an event.
+	/// </summary>
+	internal virtual void RetryTransition() { }
+
+	/// <summary>Queues <see cref="RetryTransition"/> behind whatever is being handled now.</summary>
+	internal void EnqueueTransitionRetry() =>
+		((IHandle<IMessage>)_queue).Handle(new TransitionRetry());
+
+	private sealed record TransitionRetry : IMessage {
+		public Guid MsgId { get; } = Guid.NewGuid();
+	}
+
+	internal void CompleteLiveTransition() {
+		List<LiveCallback> callbacks;
+		TaskCompletionSource drained;
+		lock (_liveLock) {
+			if (_live.Task.IsCompleted || _pendingStreams != 0)
+				return;
+			drained = _live;
+			callbacks = TakeWaitingCallbacks();
+		}
+		lock (ReaderLock) {
+			foreach (var callback in callbacks)
+				callback.Run();
+		}
+		drained.TrySetResult();
+	}
+
+	internal void FailLiveTransition(Exception error) {
+		List<LiveCallback> callbacks;
+		TaskCompletionSource drained;
+		lock (_liveLock) {
+			if (_live.Task.IsCompleted)
+				return;
+			drained = _live;
+			callbacks = TakeWaitingCallbacks();
+		}
+		foreach (var callback in callbacks)
+			Abandon(callback, error);
+		drained.TrySetException(error);
+	}
+
+	/// <summary>
 	/// Runs on the queue thread, under <see cref="ReaderLock"/>, after each message has been through
 	/// the handlers.
 	/// </summary>
 	internal virtual void AfterDispatch() { }
+
+	/// <summary>
+	/// Runs after the listeners are disposed and the queue has drained, while the queue thread is
+	/// still running, so a snapshot can be taken against applied state before the pump is joined.
+	/// </summary>
+	internal virtual void BeforeStopping() { }
 
 	/// <summary>True while no started stream is still reading. Guarded by <c>_liveLock</c>.</summary>
 	internal bool NoStreamsPending {
@@ -212,7 +272,7 @@ public abstract class ReadModelBase :
 		TaskCompletionSource? armed = null;
 		List<LiveCallback>? callbacks = null;
 		lock (_liveLock) {
-			if (_pendingStreams == 0)
+			if (_pendingStreams == 0 && _live.Task.IsCompleted)
 				return;
 			_pendingStreams = 0;
 			_generation++; // sentinels already queued describe streams that are no longer outstanding
@@ -265,9 +325,8 @@ public abstract class ReadModelBase :
 	/// </summary>
 	/// <param name="generation">The value <see cref="RegisterStream"/> returned for this stream.</param>
 	/// <param name="read">
-	/// Where the read left the stream, so <see cref="AppliedCheckpoints"/> can take it up at the point
-	/// the read's events have all been applied. The read delivers bare messages, so nothing else
-	/// carries that position.
+	/// Where the read left the stream, so <see cref="AppliedCheckpoints"/> has an entry for a stream
+	/// whose read delivered nothing, which no later event would supply.
 	/// </param>
 	private void MarkReadDrained(int generation, StreamCheckpoint? read) =>
 		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation, read));
@@ -289,13 +348,19 @@ public abstract class ReadModelBase :
 	/// it and the target's queue folds that history first.
 	/// </summary>
 	/// <param name="generation">The value <see cref="RegisterExternalSource"/> returned.</param>
-	internal void MarkExternalSourceDrained(int generation) => MarkReadDrained(generation, null);
+	/// <param name="read">
+	/// Where this source left the stream — the last event this target was handed, or the resume point
+	/// when it was handed nothing — so <see cref="AppliedCheckpoints"/> has an entry for the stream
+	/// even when no event arrived on it.
+	/// </param>
+	internal void MarkExternalSourceDrained(int generation, StreamCheckpoint? read) =>
+		MarkReadDrained(generation, read);
 
 	private sealed record ReadDrained(int Generation, StreamCheckpoint? Read) : IMessage {
 		public Guid MsgId { get; } = Guid.NewGuid();
 	}
 
-	/// <summary>An event off a listener, with the checkpoint that names it — see <see cref="IListener.SubscribeToDelivery"/>.</summary>
+	/// <summary>An event off a listener, with that event's checkpoint — see <see cref="IListener.SubscribeToDelivery"/>.</summary>
 	private sealed record Delivered(IMessage Message, StreamCheckpoint? Checkpoint) : IMessage {
 		public Guid MsgId => Message.MsgId;
 	}
@@ -357,13 +422,19 @@ public abstract class ReadModelBase :
 	protected ReadModelBase(string name, IConfiguredConnection connection) {
 		Ensure.NotNull(connection, nameof(connection));
 		_namer = connection.StreamNamer;
-		_getReader = () => connection.GetReader(name, Handle);
-		_getListener = () => connection.GetListener(name);
 		_listeners = [];
 		_bus = new InMemoryBus($"{nameof(ReadModelBase)}:{name} bus", false);
 		_queue = new QueuedHandler(new AdHocHandler<IMessage>(DequeueMessage),
 			$"{nameof(ReadModelBase)}:{name} queue");
 		_queue.Start();
+		_getReader = () => {
+			// Paired like a listener's delivery, so AppliedCheckpoints is exact through the read too.
+			var reader = connection.GetReader(name, Handle);
+			var queue = (IHandle<IMessage>)_queue;
+			reader.PairedHandle = (message, checkpoint) => queue.Handle(new Delivered(message, checkpoint));
+			return reader;
+		};
+		_getListener = () => connection.GetListener(name);
 	}
 
 	/// <summary>
@@ -379,6 +450,9 @@ public abstract class ReadModelBase :
 					}
 				}
 				RetireStream(drained.Generation);
+				return;
+			case TransitionRetry:
+				RetryTransition();
 				return;
 			case CaptureBarrier barrier:
 				RunCapture(barrier);
@@ -401,7 +475,8 @@ public abstract class ReadModelBase :
 			if (checkpoint is not null)
 				Advance(checkpoint);
 			_bus.Handle(message);
-			Version++;
+			if (message is not StreamStoreMsgs.CatchupSubscriptionBecameLive)
+				Version++;
 			AfterDispatch();
 		}
 	}
@@ -429,9 +504,9 @@ public abstract class ReadModelBase :
 	/// exact only where it is read — on the queue thread: from a handler, an <see cref="OnceLive"/>
 	/// callback, or <see cref="BufferedReadModelBase.Flush"/>. Read from anywhere else it is a
 	/// snapshot the next dequeue may have moved past.</para>
-	/// <para>A stream still in its read phase is reported where it stood before the read: the read
-	/// delivers bare messages, and its entry catches up when the read drains. From that point, and for
-	/// every event the listener delivers after it, the entry is exact.</para>
+	/// <para>Exact through the read phase and the live phase alike: the reader and the listener both
+	/// hand each event over paired with that event's checkpoint. A stream that delivered nothing
+	/// appears once its read drains, with a null version.</para>
 	/// </remarks>
 	protected IReadOnlyList<StreamCheckpoint> AppliedCheckpoints {
 		get {
@@ -490,7 +565,11 @@ public abstract class ReadModelBase :
 		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		LiveCallback registered;
 		lock (_liveLock) {
-			registered = new LiveCallback { Callback = callback, Completion = completion, Queued = _pendingStreams == 0 };
+			registered = new LiveCallback {
+				Callback = callback,
+				Completion = completion,
+				Queued = _pendingStreams == 0 && _live.Task.IsCompletedSuccessfully
+			};
 			_liveCallbacks.Add(registered);
 		}
 		if (registered.Queued) {
@@ -734,10 +813,18 @@ public abstract class ReadModelBase :
 		}
 
 		l.SeedAllPosition(readAllPosition);
-		// Paired delivery rather than EventStream, so each event reaches the queue with the checkpoint
-		// that names it — what AppliedCheckpoints is built from.
+		// Paired delivery rather than EventStream, so each event reaches the queue with its own
+		// checkpoint — what AppliedCheckpoints is built from.
 		var queue = (IHandle<IMessage>)_queue;
 		l.SubscribeToDelivery((message, checkpoint) => queue.Handle(new Delivered(message, checkpoint)));
+		_ = l.SubscriptionLost.ContinueWith(
+			t => {
+				if (t.IsFaulted)
+					_subscriptionsLost.TrySetException(t.Exception!.InnerExceptions);
+			},
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
 		return l;
 	}
 
@@ -1037,7 +1124,8 @@ public abstract class ReadModelBase :
 		lock (_listeners) {
 			_listeners.ForEach(l => l.Dispose());
 		}
-
+		// Listeners first, so a snapshot taken next cannot see an event that arrives after the cut.
+		BeforeStopping();
 		_queue.Stop();
 		// The queue is stopped, so a sentinel still in it will never be dequeued; release anyone
 		// awaiting IsLive rather than leave them on a stream that can no longer drain.
@@ -1046,6 +1134,7 @@ public abstract class ReadModelBase :
 		// disposed, so a hold this releases cannot be retaken.
 		AbandonCaptures(null);
 		AbandonLiveCallbacks();
+		_subscriptionsLost.TrySetCanceled();
 	}
 
 	protected virtual void Dispose(bool disposing) {
@@ -1068,13 +1157,33 @@ public abstract class ReadModelBase :
 		DequeueMessage(message);
 	}
 
+	/// <summary>
+	/// Enqueues <paramref name="message"/> for the handlers — the way to inject a message from outside
+	/// the model's own listeners and still fold it on the queue.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="DirectApply"/> is the other way in, applying on the calling thread rather than the
+	/// queue; <c>ReactiveDomain.Testing</c>'s <c>UpdateFromAggregate</c> is built on it. Prefer this
+	/// one outside tests.
+	/// </remarks>
+	/// <remarks>
+	/// Do not add a public <c>Handle(T)</c> for a type the model implements <c>IHandle&lt;T&gt;</c>
+	/// for: a caller writing <c>model.Handle(evt)</c> then binds to that method, runs the handler on
+	/// the calling thread, and skips this queue. Implement the interface explicitly, and use
+	/// <see cref="Publish"/> or this method to inject.
+	/// </remarks>
 	public void Handle(Message message) {
 		((IHandle<IMessage>)_queue).Handle(message);
 	}
 
+	/// <inheritdoc cref="Handle(Message)"/>
 	public void Handle(IMessage message) {
 		((IHandle<IMessage>)_queue).Handle(message);
 	}
+
+	/// <summary>Enqueues <paramref name="message"/> paired with that message's checkpoint.</summary>
+	internal void Handle(IMessage message, StreamCheckpoint? checkpoint) =>
+		((IHandle<IMessage>)_queue).Handle(new Delivered(message, checkpoint));
 
 	/// <summary>
 	/// Publishes a message onto the read model's internal queue.

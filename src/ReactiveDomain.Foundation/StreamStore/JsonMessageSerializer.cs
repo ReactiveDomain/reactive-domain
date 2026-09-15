@@ -4,12 +4,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveDomain.Audit;
 using ReactiveDomain.Foundation.StreamStore;
+using ReactiveDomain.Logging;
 using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation;
 
 public class JsonMessageSerializer : IEventSerializer {
+	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
 
 	public static JsonSerializerSettings StandardSerializerSettings => Json.JsonSettings;
 
@@ -24,7 +26,12 @@ public class JsonMessageSerializer : IEventSerializer {
 
 	public bool FullyQualify { get; set; }
 	public Assembly? AssemblyOverride { get; set; }
-	public bool ThrowOnTypeNotFound { get; set; }
+	/// <summary>
+	/// Throws when a target type cannot be resolved, rather than returning a <c>JObject</c> that
+	/// every listener then silently skips. Defaults to true; set false for tooling that must
+	/// round-trip unknown types.
+	/// </summary>
+	public bool ThrowOnTypeNotFound { get; set; } = true;
 
 	/// <summary>
 	/// Creates a default instance of the JsonSerializer for serializing and Deserializing Events from
@@ -127,7 +134,12 @@ public class JsonMessageSerializer : IEventSerializer {
 
 	public object Deserialize(IEventData @event, string fullyQualifiedName) {
 		var type = FindType(fullyQualifiedName);
-		return type is not null ? Deserialize(@event, type) ?? new JObject() : new JObject();
+		if (type is not null)
+			return Deserialize(@event, type) ?? new JObject();
+		Log.Error(
+			"Event type '{0}' could not be resolved; returning an empty JObject. Set {1} to throw instead.",
+			fullyQualifiedName, nameof(ThrowOnTypeNotFound));
+		return new JObject();
 	}
 	public Type? FindType(string fullyQualifiedName) {
 		if (string.IsNullOrWhiteSpace(fullyQualifiedName)) {

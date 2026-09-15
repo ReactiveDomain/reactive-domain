@@ -1,4 +1,4 @@
-﻿using DynamicData;
+using DynamicData;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Messaging.Bus;
 using ReactiveDomain.Policy.Messages;
@@ -73,7 +73,7 @@ public class FilteredPoliciesRM :
 	/// <returns>True if an application exists that matches both name and version, otherwise false.</returns>
 	public bool ApplicationExists(string appName, Version securityModelVersion) => _applications.Values.Any(x => x.Name == appName && x.SecurityModelVersion == securityModelVersion);
 
-	public void Handle(ApplicationMsgs.ApplicationCreated @event) {
+	void IHandle<ApplicationMsgs.ApplicationCreated>.Handle(ApplicationMsgs.ApplicationCreated @event) {
 		if (_applications.ContainsKey(@event.ApplicationId)) { return; }
 		if (AllowedApplications.Count == 0 || //no filter
 			AllowedApplications.Contains(@event.Name, StringComparer.OrdinalIgnoreCase)) { //in filtered list
@@ -82,14 +82,14 @@ public class FilteredPoliciesRM :
 		//not in filtered list, ignore it
 	}
 
-	public void Handle(ApplicationMsgs.PolicyCreated @event) {
+	void IHandle<ApplicationMsgs.PolicyCreated>.Handle(ApplicationMsgs.PolicyCreated @event) {
 		if (_applications.ContainsKey(@event.ApplicationId)) { //in filtered list
 			if (_policies.Keys.Contains(@event.PolicyId)) { return; }
 			_policies.AddOrUpdate(new PolicyDTO(@event));
 		}
 	}
 
-	public void Handle(ApplicationMsgs.RoleCreated @event) {
+	void IHandle<ApplicationMsgs.RoleCreated>.Handle(ApplicationMsgs.RoleCreated @event) {
 		var policy = _policies.Lookup(@event.PolicyId);
 		if (policy.HasValue && !_roles.ContainsKey(@event.RoleId)) {
 			var role = new RoleDTO(@event);
@@ -98,7 +98,7 @@ public class FilteredPoliciesRM :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.PolicyUserAdded @event) {
+	void IHandle<PolicyUserMsgs.PolicyUserAdded>.Handle(PolicyUserMsgs.PolicyUserAdded @event) {
 		var policy = _policies.Lookup(@event.PolicyId);
 		if (policy.HasValue && !_policyUsers.ContainsKey(@event.PolicyUserId)) {
 			var policyUser = new PolicyUserDTO(@event);
@@ -107,7 +107,7 @@ public class FilteredPoliciesRM :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleAdded @event) {
+	void IHandle<PolicyUserMsgs.RoleAdded>.Handle(PolicyUserMsgs.RoleAdded @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user) &&
 			_roles.TryGetValue(@event.RoleId, out var role)) {
 			if (user.RolesCache.Keys.Contains(@event.RoleId)) { return; }
@@ -115,12 +115,12 @@ public class FilteredPoliciesRM :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.RoleRemoved @event) {
+	void IHandle<PolicyUserMsgs.RoleRemoved>.Handle(PolicyUserMsgs.RoleRemoved @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			user.RemoveRole(@event.RoleId);
 		}
 	}
-	public void Handle(PolicyUserMsgs.UserDeactivated @event) {
+	void IHandle<PolicyUserMsgs.UserDeactivated>.Handle(PolicyUserMsgs.UserDeactivated @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {
@@ -129,7 +129,7 @@ public class FilteredPoliciesRM :
 		}
 	}
 
-	public void Handle(PolicyUserMsgs.UserReactivated @event) {
+	void IHandle<PolicyUserMsgs.UserReactivated>.Handle(PolicyUserMsgs.UserReactivated @event) {
 		if (_policyUsers.TryGetValue(@event.PolicyUserId, out var user)) {
 			var policy = _policies.Lookup(user.PolicyId);
 			if (policy.HasValue) {

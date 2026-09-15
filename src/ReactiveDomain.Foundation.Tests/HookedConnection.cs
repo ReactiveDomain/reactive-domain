@@ -42,6 +42,7 @@ internal sealed class HookedConnection(
 		public StreamCheckpoint? Checkpoint => inner.Checkpoint;
 		public string StreamName => inner.StreamName;
 		public Action<IMessage> Handle { set => inner.Handle = value; }
+		public Action<IMessage, StreamCheckpoint?> PairedHandle { set => inner.PairedHandle = value; }
 
 		public bool Read(string stream, Func<bool> completionCheck, long? checkpoint = null, long? count = null,
 			bool readBackwards = false) {
