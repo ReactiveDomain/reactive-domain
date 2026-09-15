@@ -1,9 +1,9 @@
 # Assemblies and namespaces
 
 In ReactiveDomain an assembly name does not tell you the namespace, and a namespace does not tell you
-the assembly. All of these ship in the one `ReactiveDomain` NuGet package, so a consumer never sees the
-seam — but a contributor moving a type does, and the rules below are what keeps a move from breaking a
-build it cannot see.
+the assembly. Each assembly is its own NuGet package, so the seam a contributor crosses when moving a
+type is also a seam a consumer references by name. The rules below are what keeps a move from breaking
+a build it cannot see.
 
 ## The rule for new and moved types
 
@@ -28,7 +28,7 @@ signal the placement is wrong.
 | `ReactiveDomain.Messaging` | Core, Messaging |
 | `ReactiveDomain.Util`, `ReactiveDomain.Logging` | Core |
 | `ReactiveDomain.EventStore`, `ReactiveDomain.Grpc` | Persistence |
-| `ReactiveDomain.Policy` | Policy, PolicyStorage |
+| `ReactiveDomain.Policy` | Policy.Core, PolicyStorage |
 | `PolicyTool` | ReactiveDomain.PolicyTool |
 
 None of these are mistakes to clean up on sight. A namespace split across assemblies is how a lower
@@ -46,3 +46,7 @@ Keep the namespace and add `[assembly: TypeForwardedTo(...)]` in the assembly th
 A forward only works while the namespace and type name are unchanged. **Renaming the namespace is a
 breaking change that no forward can soften** — every consumer recompiles, and anything not recompiled
 fails at load. That is a release-note change, not a cleanup.
+
+A forward keeps an already-compiled consumer resolving the type, but the assembly it moved to arrives
+from a different package. A consumer that references only the package it left needs the new reference
+before it can recompile, so a move across a package boundary is also a release-note change.

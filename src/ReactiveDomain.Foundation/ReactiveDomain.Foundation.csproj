@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    <!-- Foundation's transitive closure is Core + Messaging + Persistence, which is exactly what the
+         umbrella package has always delivered, so it publishes under that id. The assembly is still
+         ReactiveDomain.Foundation; only the package id differs. Renaming either one breaks consumers. -->
+    <PackageId>ReactiveDomain</PackageId>
+    <Description>A toolkit for implementing CQRS-ES in a reactive system. Installs the ReactiveDomain core: repositories, read models, stream subscriptions and serialization.</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="StreamStore\EventStoreMessageLogger.cs" />
@@ -18,7 +22,11 @@
                       PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\ReactiveDomain.Analyzers\bin\$(Configuration)\netstandard2.0\ReactiveDomain.Analyzers.dll"
+    <!-- RD0001 reaches consumers only through this item, and it fails quietly both ways: the analyzer
+         builds to the shared bld directory Directory.Build.props points OutputPath at, not to its own
+         bin, and a backslash in the path resolves to nothing on the Linux runner that packs. A miss
+         here still produces a package, just one without the analyzer. -->
+    <None Include="$(MSBuildThisFileDirectory)../../bld/$(Configuration)/netstandard2.0/ReactiveDomain.Analyzers.dll"
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
           Visible="false" />

@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="../ci.build.imports" />
 	<PropertyGroup>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
 		<RootNamespace>ReactiveDomain</RootNamespace>
-		<IsPackable>false</IsPackable>
+		<IsPackable>true</IsPackable>
+		<Description>Stream store connection for ReactiveDomain: the IStreamStoreConnection contract over EventStore and KurrentDB, with catch-up subscriptions and event data.</Description>
 	</PropertyGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="ReactiveDomain.Testing.Tests" />

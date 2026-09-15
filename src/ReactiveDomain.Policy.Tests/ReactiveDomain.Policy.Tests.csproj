@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="../ci.build.imports" />
 	<PropertyGroup>
 		<TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
 		<IsPackable>false</IsPackable>
@@ -24,7 +23,7 @@
 		<DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Policy.Core\ReactiveDomain.Policy.Core.csproj" />
 		<ProjectReference Include="..\ReactiveDomain.Testing\ReactiveDomain.Testing.csproj" />
 	</ItemGroup>
 </Project>

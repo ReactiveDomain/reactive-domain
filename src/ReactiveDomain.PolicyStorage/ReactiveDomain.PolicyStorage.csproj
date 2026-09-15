@@ -1,9 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="../ci.build.imports" />
 	<PropertyGroup>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-		<IsPackable>false</IsPackable>
+		<IsPackable>true</IsPackable>
 		<RootNamespace>ReactiveDomain.Policy</RootNamespace>
+		<!-- PolicyStorage's closure is Policy.Core plus IdentityStorage, which is what the Policy package
+		     has always delivered, so it publishes under that id. The assembly keeps its own name. -->
+		<PackageId>ReactiveDomain.Policy</PackageId>
+		<Description>ReactiveDomain Identity and Policy assemblies. Event-sourced applications, roles and user policies, with the read models over them.</Description>
+		<PackageTags>$(PackageTags) identity policy</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="DynamicData" Version="9.4.33" />
@@ -19,7 +23,7 @@
 		                  ReferenceOutputAssembly="false"
 		                  OutputItemType="Analyzer"
 		                  PrivateAssets="all" />
-		<ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Policy.Core\ReactiveDomain.Policy.Core.csproj" />
 		<ProjectReference Include="..\ReactiveDomain.Messaging\ReactiveDomain.Messaging.csproj" />
 		<ProjectReference Include="..\ReactiveDomain.Persistence\ReactiveDomain.Persistence.csproj" />
 	</ItemGroup>

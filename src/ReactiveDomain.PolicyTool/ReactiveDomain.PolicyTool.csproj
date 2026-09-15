@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="../ci.build.imports" />
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
 		<IsPackable>true</IsPackable>
 		<StartupObject>PolicyTool.Program</StartupObject>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>policytool</ToolCommandName>
+		<Description>Command-line tool for administering ReactiveDomain identity and policy streams. Install with dotnet tool install and invoke as policytool.</Description>
+		<PackageTags>$(PackageTags) identity policy dotnet-tool</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -17,7 +19,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\ReactiveDomain.IdentityStorage\ReactiveDomain.IdentityStorage.csproj" />
 		<ProjectReference Include="..\ReactiveDomain.PolicyStorage\ReactiveDomain.PolicyStorage.csproj" />
-		<ProjectReference Include="..\ReactiveDomain.Policy\ReactiveDomain.Policy.csproj" />
+		<ProjectReference Include="..\ReactiveDomain.Policy.Core\ReactiveDomain.Policy.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
