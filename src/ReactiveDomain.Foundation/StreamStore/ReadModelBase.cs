@@ -121,21 +121,42 @@ public abstract class ReadModelBase :
 	/// Called synchronously from every Start overload, so a caller that reads
 	/// <see cref="IsLive"/> after starting cannot see the previous, completed task.
 	/// </summary>
+	/// <param name="externalSource">True when the registration is for a source attached with <see cref="RelayTo"/>, false when it is for a stream this model reads.</param>
 	/// <exception cref="InvalidOperationException">A capture is in flight.</exception>
-	private int RegisterStream() {
+	/// <exception cref="ObjectDisposedException">The model is closing or closed.</exception>
+	private int RegisterStream(bool externalSource = false) {
+		int generation;
+		ModelRelay[]? awaiting = null;
 		lock (_liveLock) {
+			// Under the lock, against the flag StopMessagePump sets before it retires what is
+			// outstanding: a registration made after that retire would arm a task nothing completes.
+			ObjectDisposedException.ThrowIf(_closing, this);
 			if (_capturing > 0) {
-				throw new InvalidOperationException(
-					$"{GetType().Name} is being captured, so a stream cannot be started: its read would " +
-					"deliver events into the model ahead of the cut being captured, and no checkpoint " +
-					"would name them. Await the capture, then start the stream.");
+				throw new InvalidOperationException(externalSource
+					? $"{GetType().Name} is being captured, so a source cannot be attached: what it hands over " +
+					  "would reach the model ahead of the cut being captured, and no checkpoint would name " +
+					  "it. Await the capture, then attach."
+					: $"{GetType().Name} is being captured, so a stream cannot be started: its read would " +
+					  "deliver events into the model ahead of the cut being captured, and no checkpoint " +
+					  "would name them. Await the capture, then start the stream.");
 			}
 			if (_pendingStreams == 0 && _live.Task.IsCompleted)
 				_live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingStreams++;
 			_registrations++;
-			return _generation;
+			generation = _generation;
+			if (_relaysAwaitingStart.Count > 0) {
+				awaiting = _relaysAwaitingStart.ToArray();
+				_relaysAwaitingStart.Clear();
+			}
 		}
+		// Outside the lock, and with this registration counted, so the release each relay arms waits
+		// for the transition rather than being queued as if nothing were outstanding.
+		if (awaiting is not null) {
+			foreach (var relay in awaiting)
+				ArmRelease(relay);
+		}
+		return generation;
 	}
 
 	/// <summary>
@@ -204,8 +225,7 @@ public abstract class ReadModelBase :
 	internal virtual void RetryTransition() { }
 
 	/// <summary>Queues <see cref="RetryTransition"/> behind whatever is being handled now.</summary>
-	internal void EnqueueTransitionRetry() =>
-		((IHandle<IMessage>)_queue).Handle(new TransitionRetry());
+	internal void EnqueueTransitionRetry() => Enqueue(new TransitionRetry());
 
 	private sealed record TransitionRetry : IMessage {
 		public Guid MsgId { get; } = Guid.NewGuid();
@@ -329,7 +349,7 @@ public abstract class ReadModelBase :
 	/// whose read delivered nothing, which no later event would supply.
 	/// </param>
 	private void MarkReadDrained(int generation, StreamCheckpoint? read) =>
-		((IHandle<IMessage>)_queue).Handle(new ReadDrained(generation, read));
+		Enqueue(new ReadDrained(generation, read));
 
 	/// <summary>
 	/// Records that something else will feed this model a stream it does not read itself, so
@@ -340,7 +360,8 @@ public abstract class ReadModelBase :
 	/// late release from retiring a source registered after this one was abandoned.
 	/// </returns>
 	/// <exception cref="InvalidOperationException">A capture is in flight.</exception>
-	internal int RegisterExternalSource() => RegisterStream();
+	/// <exception cref="ObjectDisposedException">The model is closing or closed.</exception>
+	internal int RegisterExternalSource() => RegisterStream(externalSource: true);
 
 	/// <summary>
 	/// Queues the sentinel retiring a source registered by <see cref="RegisterExternalSource"/>. Call
@@ -363,6 +384,21 @@ public abstract class ReadModelBase :
 	/// <summary>An event off a listener, with that event's checkpoint — see <see cref="IListener.SubscribeToDelivery"/>.</summary>
 	private sealed record Delivered(IMessage Message, StreamCheckpoint? Checkpoint) : IMessage {
 		public Guid MsgId => Message.MsgId;
+	}
+
+	/// <summary>A change a source model emitted, with that model's applied checkpoints at the emit — see <see cref="RelayTo"/>.</summary>
+	private sealed record Relayed(IMessage Change, IReadOnlyList<StreamCheckpoint> Applied, ModelRelay Source) : IMessage {
+		public Guid MsgId => Change.MsgId;
+	}
+
+	/// <summary>Retires a model relay's registration, carrying where its source stood when it released.</summary>
+	private sealed record SourceDrained(int Generation, IReadOnlyList<StreamCheckpoint> Applied, ModelRelay Source) : IMessage {
+		public Guid MsgId { get; } = Guid.NewGuid();
+	}
+
+	/// <summary>A model relay has been disposed: its source no longer bounds the streams it fed.</summary>
+	private sealed record SourceDetached(ModelRelay Source) : IMessage {
+		public Guid MsgId { get; } = Guid.NewGuid();
 	}
 
 	/// <summary>A callback registered through <see cref="OnceLive"/>.</summary>
@@ -437,16 +473,30 @@ public abstract class ReadModelBase :
 		_getListener = () => connection.GetListener(name);
 	}
 
+	// The model whose queue is being drained on this thread, for as long as it is: what Emit checks.
+	// A thread-static rather than the queue's thread id, since DirectApply dequeues on the caller's.
+	[ThreadStatic] private static ReadModelBase? _dequeuing;
+
 	/// <summary>
 	/// Every message handled by the read model will pass through here.
 	/// </summary>
 	private void DequeueMessage(IMessage message) {
-		// The first four are this model's own bookkeeping, not events: not published, not counted.
+		var outer = _dequeuing;
+		_dequeuing = this;
+		try {
+			Route(message);
+		} finally {
+			_dequeuing = outer;
+		}
+	}
+
+	private void Route(IMessage message) {
+		// Everything ahead of Relayed is this model's own bookkeeping, not events: not published, not counted.
 		switch (message) {
 			case ReadDrained drained:
 				if (drained.Read is not null) {
 					lock (ReaderLock) {
-						Advance(drained.Read);
+						Advance(drained.Read, OwnDelivery);
 					}
 				}
 				RetireStream(drained.Generation);
@@ -459,6 +509,21 @@ public abstract class ReadModelBase :
 				return;
 			case LiveCallback callback:
 				RunLiveCallback(callback);
+				return;
+			case SourceDrained drained:
+				lock (ReaderLock) {
+					foreach (var checkpoint in drained.Applied)
+						Advance(checkpoint, drained.Source);
+				}
+				RetireStream(drained.Generation);
+				return;
+			case SourceDetached detached:
+				lock (ReaderLock) {
+					Forget(detached.Source);
+				}
+				return;
+			case Relayed relayed:
+				DispatchRelayed(relayed);
 				return;
 			case Delivered delivered:
 				Dispatch(delivered.Message, delivered.Checkpoint);
@@ -473,26 +538,75 @@ public abstract class ReadModelBase :
 		lock (ReaderLock) {
 			// Before the handlers, so a handler asking where it stands is told the event it is applying.
 			if (checkpoint is not null)
-				Advance(checkpoint);
-			_bus.Handle(message);
-			if (message is not StreamStoreMsgs.CatchupSubscriptionBecameLive)
-				Version++;
-			AfterDispatch();
+				Advance(checkpoint, OwnDelivery);
+			DispatchToHandlers(message);
 		}
 	}
 
-	// Written on the queue thread only, under ReaderLock, so a handler reads it consistently with
-	// the state it sits beside.
+	private void DispatchRelayed(Relayed relayed) {
+		lock (ReaderLock) {
+			foreach (var checkpoint in relayed.Applied)
+				Advance(checkpoint, relayed.Source);
+			DispatchToHandlers(relayed.Change);
+		}
+	}
+
+	/// <summary>Call under <see cref="ReaderLock"/>, with the checkpoints already advanced.</summary>
+	private void DispatchToHandlers(IMessage message) {
+		_bus.Handle(message);
+		if (message is not StreamStoreMsgs.CatchupSubscriptionBecameLive)
+			Version++;
+		AfterDispatch();
+	}
+
+	// The source identity of everything that delivers a stream's own events — this model's readers
+	// and listeners, and a CategoryStream relay — as against a model relay, which is its own.
+	private static readonly object OwnDelivery = new();
+
+	// Both written on the queue thread only, under ReaderLock, so a handler reads them consistently
+	// with the state they sit beside. Per stream, what each source has delivered; and the reported
+	// view, the least of those.
+	private readonly Dictionary<string, Dictionary<object, StreamCheckpoint>> _appliedBySource = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, StreamCheckpoint> _applied = new(StringComparer.Ordinal);
 
-	/// <summary>Moves a stream's applied checkpoint forward, never back. Call under <see cref="ReaderLock"/>.</summary>
-	private void Advance(StreamCheckpoint checkpoint) {
+	/// <summary>Moves a source's applied checkpoint for a stream forward, never back. Call under <see cref="ReaderLock"/>.</summary>
+	/// <remarks>
+	/// The stream's reported checkpoint is then re-read as the least across its sources: a model fed
+	/// the same stream by two sources reflects it only as far as the slower one has said, and
+	/// reporting further would name events its state lacks.
+	/// </remarks>
+	private void Advance(StreamCheckpoint checkpoint, object source) {
+		if (!_appliedBySource.TryGetValue(checkpoint.StreamName, out var bySource)) {
+			bySource = new Dictionary<object, StreamCheckpoint>(ReferenceEqualityComparer.Instance);
+			_appliedBySource.Add(checkpoint.StreamName, bySource);
+		}
 		// A seed from a read arrives behind live events the listener queued before the sentinel, and
 		// must not undo them; -1 orders "nothing yet" before version 0.
-		if (_applied.TryGetValue(checkpoint.StreamName, out var current) && (current.Version ?? -1) > (checkpoint.Version ?? -1))
+		if (bySource.TryGetValue(source, out var current) && VersionOrNone(current) > VersionOrNone(checkpoint))
 			return;
-		_applied[checkpoint.StreamName] = checkpoint;
+		bySource[source] = checkpoint;
+		_applied[checkpoint.StreamName] = Least(bySource.Values);
 	}
+
+	/// <summary>
+	/// Drops a source's entries, so the streams it fed are reported from what remains. Call under
+	/// <see cref="ReaderLock"/>.
+	/// </summary>
+	/// <remarks>
+	/// A stream left with no source keeps its last reading: the state still reflects what that
+	/// source delivered, and the stream is still named in a cut until something feeds it again.
+	/// </remarks>
+	private void Forget(object source) {
+		foreach (var bySource in _appliedBySource) {
+			if (bySource.Value.Remove(source) && bySource.Value.Count > 0)
+				_applied[bySource.Key] = Least(bySource.Value.Values);
+		}
+	}
+
+	private static StreamCheckpoint Least(IEnumerable<StreamCheckpoint> delivered) =>
+		delivered.MinBy(VersionOrNone)!;
+
+	private static long VersionOrNone(StreamCheckpoint checkpoint) => checkpoint.Version ?? -1;
 
 	/// <summary>
 	/// How far each stream has been <b>applied</b>: one checkpoint per stream, naming the last event
@@ -507,6 +621,14 @@ public abstract class ReadModelBase :
 	/// <para>Exact through the read phase and the live phase alike: the reader and the listener both
 	/// hand each event over paired with that event's checkpoint. A stream that delivered nothing
 	/// appears once its read drains, with a null version.</para>
+	/// <para>A stream fed by a model relay (<see cref="RelayTo"/>) is named at the source's position
+	/// when it emitted the last change this model applied. Where two sources fold the same stream, or
+	/// a source folds one this model also reads, the entry is the <b>least</b> of their positions:
+	/// this model's state reflects that stream only as far as the slowest of them has said, and any
+	/// further reading would name events the state lacks. Per source the entry only ever moves
+	/// forward; a source whose relay is disposed stops counting, and a stream left with no source
+	/// keeps its last reading. Such an entry is not a position this model can resume the stream from
+	/// — it does not read that stream; see <see cref="RelayTo"/>.</para>
 	/// </remarks>
 	protected IReadOnlyList<StreamCheckpoint> AppliedCheckpoints {
 		get {
@@ -572,12 +694,12 @@ public abstract class ReadModelBase :
 			};
 			_liveCallbacks.Add(registered);
 		}
-		if (registered.Queued) {
-			((IHandle<IMessage>)_queue).Handle(registered);
-			// A queue already stopped, or on its way there, will never dequeue it.
-			if (_closing)
-				AbandonLiveCallbacks();
-		}
+		if (registered.Queued)
+			Enqueue(registered);
+		// A queue already stopped, or on its way there, will never dequeue it — nor reach the
+		// transition it would otherwise wait for, once StopMessagePump has retired the streams.
+		if (_closing)
+			AbandonLiveCallbacks();
 		return completion.Task;
 	}
 
@@ -645,6 +767,266 @@ public abstract class ReadModelBase :
 		}
 	}
 
+	private readonly List<ModelRelay> _relays = [];
+
+	/// <summary>
+	/// Makes this model a source for <paramref name="target"/>: every change this model
+	/// <see cref="Emit"/>s is handed to the target's queue paired with this model's applied
+	/// checkpoints, for as long as the returned subscription is held.
+	/// </summary>
+	/// <param name="target">The read model that derives from this one's state.</param>
+	/// <returns>A subscription; disposing it detaches the relay.</returns>
+	/// <exception cref="ArgumentException"><paramref name="target"/> is this model.</exception>
+	/// <exception cref="InvalidOperationException">
+	/// The target is being captured, or this model has folded something and the call is off its queue thread.
+	/// </exception>
+	/// <exception cref="ObjectDisposedException">This model or <paramref name="target"/> has been disposed.</exception>
+	/// <remarks>
+	/// <para><b>When to use this rather than <see cref="CategoryStream{TAggregate}.RelayTo"/>.</b> That
+	/// relays a category's <i>events</i>, and the target folds them itself. This relays what this model
+	/// makes of its events: a change it raises from a handler, carrying the checkpoints of exactly what
+	/// it had applied when it raised it. Choose it where the target derives from this model's state —
+	/// an enrichment, a join resolved here — so the fold happens once, here, and not again in every
+	/// dependent model.</para>
+	/// <para><b>Attach before anything is folded, or from this model's queue thread.</b> A change
+	/// reaches only the relays attached when it is raised. A relay attached while this model's
+	/// <see cref="Version"/> is still zero — before its first <c>Start</c>, in practice — is handed
+	/// everything this model folds. Once anything has been folded, attach only from a handler or an
+	/// <see cref="OnceLive"/> callback — where <see cref="Emit"/> is allowed — and <see cref="Emit"/>
+	/// what the target lacks, a snapshot of this model's state, before returning: the release hands the
+	/// target this model's whole position, and a target attached late reflects that position only if
+	/// it was handed the state the position names. Nothing can be folded between the attach and that
+	/// emit. Off the queue thread a late attach is refused.</para>
+	/// <para><b>Liveness.</b> The target counts this model as a source until this model's live
+	/// transition, so the target's <see cref="IsLive"/> and <see cref="OnceLive"/> wait for this
+	/// model's history and for every change raised while folding it — the same as for a stream the
+	/// target read itself. Anything that ends this source without a transition — disposing the
+	/// subscription, disposing this model, a start that fails — releases the target rather than
+	/// faulting it, and the failure is reported on this model's <see cref="IsLive"/>.</para>
+	/// <para><b>Checkpoints.</b> Each change advances the target's <see cref="AppliedCheckpoints"/>
+	/// for the streams this model folds, and the release at the transition seeds them for a source
+	/// that raised nothing.</para>
+	/// <para><b>Not a resume point.</b> The target does not read the streams this relay names, and
+	/// this relay takes no position, so the target cannot resume them from a checkpoint it persisted.
+	/// A target restarted is rebuilt through its source: attach before the source's first start, or
+	/// attach late with a snapshot as above. What its checkpoints are good for is
+	/// <see cref="StreamCheckpoint.BoundedBy(StreamCheckpoint?)"/> — bounding another model's resume
+	/// by where this target's state stood.</para>
+	/// <para><b>Nothing runs across the two models.</b> The forward happens on this model's queue
+	/// thread and only enqueues on the target's, so no lock is held on both at once.</para>
+	/// <para>A target disposed while attached detaches this relay the next time this model emits; the
+	/// subscription may still be disposed.</para>
+	/// <para>A relay that would close a cycle — the target already relays to this model, directly or
+	/// through others — is refused: every model in the cycle would wait for a transition another
+	/// holds open, and none would go live. Checked against the relays attached when this is called.</para>
+	/// </remarks>
+	public IDisposable RelayTo(ReadModelBase target) {
+		Ensure.NotNull(target, nameof(target));
+		if (Reaches(target, this)) {
+			throw new ArgumentException(ReferenceEquals(target, this)
+				? $"{GetType().Name} cannot relay to itself: the registration it would make is released at " +
+				  "its own live transition, which that registration holds open."
+				: $"{GetType().Name} cannot relay to {target.GetType().Name}, which already relays to it: each " +
+				  "would hold the other's live transition open, and neither would go live.", nameof(target));
+		}
+		ObjectDisposedException.ThrowIf(_closing, this);
+		ModelRelay relay;
+		// Under the lock the handlers fold under, so nothing can be folded between the check and the
+		// attach: a relay attached here is handed every change from the next dispatch on.
+		lock (ReaderLock) {
+			if (Version != 0 && !ReferenceEquals(_dequeuing, this)) {
+				throw new InvalidOperationException(
+					$"{GetType().Name} has already folded something, so a relay attached here would be released " +
+					"at this model's whole position over a target holding none of it. Attach every relay before " +
+					$"the first start, or attach from a handler or an {nameof(OnceLive)} callback and " +
+					$"{nameof(Emit)} the state the target lacks before returning.");
+			}
+			// The target does not read this model's streams, so nothing else would hold its IsLive
+			// open until this model has handed over what it raised while folding its history. Its own
+			// registration refuses a closed target, whose stopped queue would never dequeue the release.
+			relay = new ModelRelay(this, target, target.RegisterExternalSource());
+			lock (_relays) {
+				_relays.Add(relay);
+			}
+		}
+		bool closing, awaitStart;
+		lock (_liveLock) {
+			// Decided under the lock against the flag StopMessagePump sets before it drains the
+			// awaiting list, so a relay added here is either drained there or refused here.
+			closing = _closing;
+			// A model that has started nothing is vacuously live, and a release armed now would be
+			// queued at once — over a target holding none of what this model is about to fold. It
+			// waits for the first start instead; nothing this model raises can precede that.
+			awaitStart = !closing && _registrations == 0;
+			if (awaitStart)
+				_relaysAwaitingStart.Add(relay);
+		}
+		if (closing) {
+			relay.Dispose();
+			throw new ObjectDisposedException(GetType().Name);
+		}
+		if (!awaitStart)
+			ArmRelease(relay);
+		return relay;
+	}
+
+	// Relays attached before anything was started, to be armed by the first registration. Guarded by
+	// _liveLock, with _registrations: whether a relay waits here is decided against that count.
+	private readonly List<ModelRelay> _relaysAwaitingStart = [];
+
+	/// <summary>Whether a chain of relays leads from <paramref name="from"/> to <paramref name="to"/>.</summary>
+	private static bool Reaches(ReadModelBase from, ReadModelBase to) {
+		var seen = new HashSet<ReadModelBase>(ReferenceEqualityComparer.Instance);
+		var pending = new Stack<ReadModelBase>();
+		pending.Push(from);
+		while (pending.Count > 0) {
+			var model = pending.Pop();
+			if (ReferenceEquals(model, to))
+				return true;
+			if (!seen.Add(model))
+				continue;
+			ModelRelay[] relays;
+			lock (model._relays) {
+				relays = model._relays.ToArray();
+			}
+			foreach (var relay in relays)
+				pending.Push(relay.Target);
+		}
+		return false;
+	}
+
+	/// <summary>Releases the relay's target at this model's transition, behind every change forwarded before it.</summary>
+	/// <remarks>
+	/// Runs on this queue thread under <see cref="ReaderLock"/>, so the checkpoints it carries are
+	/// exact. Armed while already live, the release goes on the queue behind what is there.
+	/// </remarks>
+	private void ArmRelease(ModelRelay relay) {
+		_ = OnceLive(() => relay.Drain(AppliedCheckpoints)).ContinueWith(
+			t => {
+				// Cancelled or faulted: this model will not make the transition the release was
+				// waiting for, and the target must not wait for it either.
+				relay.Drain();
+				_ = t.Exception;
+			},
+			CancellationToken.None,
+			TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	/// <summary>Releases the targets of relays still waiting for a first start that will not come.</summary>
+	private void ReleaseRelaysAwaitingStart() {
+		ModelRelay[] awaiting;
+		lock (_liveLock) {
+			awaiting = _relaysAwaitingStart.ToArray();
+			_relaysAwaitingStart.Clear();
+		}
+		foreach (var relay in awaiting)
+			relay.Drain();
+	}
+
+	/// <summary>
+	/// One <see cref="RelayTo"/> subscription: forwards onto the target's queue, and releases the
+	/// target's registration once.
+	/// </summary>
+	private sealed class ModelRelay(ReadModelBase source, ReadModelBase target, int generation) : IDisposable {
+		private int _disposed;
+		private int _drained;
+		// What this relay last handed over: the honest position for a release made off the source's
+		// queue thread, where the source's own checkpoints are already a snapshot.
+		private volatile IReadOnlyList<StreamCheckpoint> _forwarded = [];
+
+		public ReadModelBase Target => target;
+
+		/// <summary>Enqueues <paramref name="change"/> on the target with the source's reading at the emit.</summary>
+		/// <remarks>A target that has closed has stopped its queue; forwarding into it would only grow it, so the relay detaches instead.</remarks>
+		public void Forward(IMessage change, IReadOnlyList<StreamCheckpoint> applied) {
+			if (Volatile.Read(ref _disposed) != 0)
+				return;
+			if (target._closing) {
+				Dispose();
+				return;
+			}
+			_forwarded = applied;
+			target.Enqueue(new Relayed(change, applied, this));
+		}
+
+		/// <summary>Releases the target's registration for this source, once.</summary>
+		/// <remarks>
+		/// Carries <paramref name="applied"/>, or what was last forwarded when the caller has no exact
+		/// reading. Interlocked because the transition releases from the source's queue thread while a
+		/// consumer may be disposing the same relay. A closed target has retired everything outstanding
+		/// and dequeues nothing, so it is not told.
+		/// </remarks>
+		public void Drain(IReadOnlyList<StreamCheckpoint>? applied = null) {
+			if (Interlocked.Exchange(ref _drained, 1) != 0)
+				return;
+			if (target._closing)
+				return;
+			target.Enqueue(new SourceDrained(generation, applied ?? _forwarded, this));
+		}
+
+		/// <summary>Detaches from the source, releases the target, and stops bounding the target's streams.</summary>
+		/// <remarks>
+		/// Detaching before the transition still releases: the target is no longer fed this source, so
+		/// leaving its registration open would hang anyone awaiting its IsLive with nothing to arrive.
+		/// </remarks>
+		public void Dispose() {
+			if (Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+			source.Detach(this);
+			Drain();
+			if (!target._closing)
+				target.Enqueue(new SourceDetached(this));
+		}
+	}
+
+	/// <summary>
+	/// Hands <paramref name="change"/> to every model this one relays to, paired with this model's
+	/// <see cref="AppliedCheckpoints"/> as they stand now.
+	/// </summary>
+	/// <param name="change">
+	/// What changed, in this model's terms — not the event being folded. The target is told what this
+	/// model made of the event, which is what <see cref="RelayTo"/> is for.
+	/// </param>
+	/// <exception cref="InvalidOperationException">Called off this model's queue thread.</exception>
+	/// <remarks>
+	/// <para>Call it from a handler, an <see cref="OnceLive"/> callback or a
+	/// <see cref="BufferedReadModelBase.Flush"/>: the places where <see cref="AppliedCheckpoints"/> is
+	/// exact. Anywhere else the checkpoints are a snapshot the next dequeue may have moved past, and a
+	/// change paired with them would overstate what its targets reflect — so this throws rather than
+	/// pair them.</para>
+	/// <para>Enqueues on each target and returns; no target's handler runs here. With no relay
+	/// attached it does nothing.</para>
+	/// </remarks>
+	protected void Emit(IMessage change) {
+		Ensure.NotNull(change, nameof(change));
+		if (!ReferenceEquals(_dequeuing, this)) {
+			throw new InvalidOperationException(
+				$"{GetType().Name}.{nameof(Emit)} must be called on the model's queue thread — from a handler, " +
+				$"an {nameof(OnceLive)} callback or a flush. {nameof(AppliedCheckpoints)} is exact only there, and " +
+				"a change paired with a stale checkpoint would overstate what its targets reflect.");
+		}
+		ModelRelay[] relays;
+		lock (_relays) {
+			relays = _relays.ToArray();
+		}
+		if (relays.Length == 0)
+			return;
+		// One reading for every target: what this model has applied at this point, exactly.
+		var applied = AppliedCheckpoints;
+		foreach (var relay in relays)
+			relay.Forward(change, applied);
+	}
+
+	private void Detach(ModelRelay relay) {
+		lock (_relays) {
+			_relays.Remove(relay);
+		}
+		lock (_liveLock) {
+			_relaysAwaitingStart.Remove(relay);
+		}
+	}
+
 	private readonly List<CaptureBarrier> _captures = [];
 
 	/// <summary>
@@ -680,7 +1062,13 @@ public abstract class ReadModelBase :
 	/// <para>Starting a stream is refused while a cut is being taken, and taking one is refused while
 	/// a stream is still reading: a read in flight publishes through this model's own
 	/// <see cref="Handle(IMessage)"/> rather than through a listener, so its events would be in the
-	/// state with no checkpoint naming them.</para>
+	/// state with no checkpoint naming them. A source attached with <see cref="RelayTo"/> that has not
+	/// yet released this model counts as still reading.</para>
+	/// <para>A stream a model relay feeds is named in the cut from <see cref="AppliedCheckpoints"/>,
+	/// which is exact where the barrier is reached, and at the least-of-sources reading described
+	/// there. A model with no streams of its own therefore captures its sources' streams. A stream a
+	/// <see cref="CategoryStream{TAggregate}"/> relays is not named: that read is owned elsewhere, and
+	/// its position is the stream's <see cref="CategoryStream{TAggregate}.PositionAtGoLive"/>.</para>
 	/// </remarks>
 	protected Task<T> ReadAtConsistentCut<T>(Func<IReadOnlyList<StreamCheckpoint>, T> read) {
 		Ensure.NotNull(read, nameof(read));
@@ -719,7 +1107,7 @@ public abstract class ReadModelBase :
 			lock (_captures) {
 				_captures.Add(pending = barrier);
 			}
-			((IHandle<IMessage>)_queue).Handle(barrier);
+			Enqueue(barrier);
 		} catch {
 			// Exactly one path releases the capture, and it is whoever takes the barrier off the list.
 			// Nothing can have taken it if it never went on.
@@ -757,11 +1145,32 @@ public abstract class ReadModelBase :
 		ReleaseCapture();
 		try {
 			lock (ReaderLock) {
-				barrier.Complete(barrier.Checkpoints);
+				barrier.Complete(WithRelayedStreams(barrier.Checkpoints));
 			}
 		} catch (Exception ex) {
 			barrier.Abandon(ex);
 		}
+	}
+
+	/// <summary>
+	/// The cut's checkpoints: <paramref name="sampled"/> from the listeners, with every stream a model
+	/// relay feeds named from <see cref="AppliedCheckpoints"/> instead. Call under <see cref="ReaderLock"/> at the barrier.
+	/// </summary>
+	/// <remarks>
+	/// Exact there for relay-fed streams: relayed changes reach this queue paired and in order, so what
+	/// has been applied of them when the barrier is dequeued is precisely what the cut covers. A stream
+	/// only this model's own delivery feeds is left as sampled.
+	/// </remarks>
+	private IReadOnlyList<StreamCheckpoint> WithRelayedStreams(IReadOnlyList<StreamCheckpoint> sampled) {
+		List<StreamCheckpoint>? cut = null;
+		foreach (var (stream, bySource) in _appliedBySource) {
+			if (bySource.Count == 1 && bySource.ContainsKey(OwnDelivery))
+				continue;
+			cut ??= sampled.ToList();
+			cut.RemoveAll(c => string.Equals(c.StreamName, stream, StringComparison.Ordinal));
+			cut.Add(_applied[stream]);
+		}
+		return cut ?? sampled;
 	}
 
 	private void AbandonCaptures(Exception? error) {
@@ -1134,6 +1543,7 @@ public abstract class ReadModelBase :
 		// disposed, so a hold this releases cannot be retaken.
 		AbandonCaptures(null);
 		AbandonLiveCallbacks();
+		ReleaseRelaysAwaitingStart();
 		_subscriptionsLost.TrySetCanceled();
 	}
 
@@ -1172,18 +1582,16 @@ public abstract class ReadModelBase :
 	/// the calling thread, and skips this queue. Implement the interface explicitly, and use
 	/// <see cref="Publish"/> or this method to inject.
 	/// </remarks>
-	public void Handle(Message message) {
-		((IHandle<IMessage>)_queue).Handle(message);
-	}
+	public void Handle(Message message) => Enqueue(message);
 
 	/// <inheritdoc cref="Handle(Message)"/>
-	public void Handle(IMessage message) {
-		((IHandle<IMessage>)_queue).Handle(message);
-	}
+	public void Handle(IMessage message) => Enqueue(message);
 
 	/// <summary>Enqueues <paramref name="message"/> paired with that message's checkpoint.</summary>
 	internal void Handle(IMessage message, StreamCheckpoint? checkpoint) =>
-		((IHandle<IMessage>)_queue).Handle(new Delivered(message, checkpoint));
+		Enqueue(new Delivered(message, checkpoint));
+
+	private void Enqueue(IMessage message) => ((IHandle<IMessage>)_queue).Handle(message);
 
 	/// <summary>
 	/// Publishes a message onto the read model's internal queue.
