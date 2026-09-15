@@ -4,7 +4,10 @@
 		<TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
 		<IsPackable>true</IsPackable>
 		<StartupObject>PolicyTool.Program</StartupObject>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>policytool</ToolCommandName>
+		<Description>Command-line tool for administering ReactiveDomain identity and policy streams. Install with dotnet tool install and invoke as policytool.</Description>
+		<PackageTags>$(PackageTags) identity policy dotnet-tool</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
