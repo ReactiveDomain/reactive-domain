@@ -158,6 +158,28 @@ public sealed class when_running_code_once_live : IClassFixture<StreamStoreConne
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => once.WaitAsync(TestTimeouts.ThrottleWaitFor));
 	}
 
+	/// <summary>
+	/// Registered after the dispose has retired the outstanding start, so there is no transition
+	/// left to wait for and nothing else to abandon it.
+	/// </summary>
+	[Fact]
+	public async Task is_cancelled_when_registered_after_dispose_with_a_start_outstanding() {
+		var stream = NewStream();
+		AppendEvents(stream, 2, 1);
+		using var readGate = new ManualResetEventSlim(false);
+		var connection = new HookedConnection(_configured, beforeRead: s => {
+			if (s == stream) { readGate.Wait(TestTimeouts.ThrottleWaitFor); }
+		});
+		var rm = new OnceLiveTestReadModel(connection);
+		rm.StartAsync(stream);
+		rm.Dispose();
+
+		var once = rm.OnceLive(() => { });
+		readGate.Set();
+
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => once.WaitAsync(TestTimeouts.ThrottleWaitFor));
+	}
+
 	[Fact]
 	public async Task faults_with_the_start_failure_when_a_read_fails_before_the_transition() {
 		var stream = NewStream();

@@ -66,6 +66,15 @@ public sealed class when_disposing_read_model_base {
 	}
 
 	[Fact]
+	public void starting_a_stream_after_dispose_is_refused() {
+		var rm = new DerivedStateReadModel(NewConnection());
+		rm.Dispose();
+
+		Assert.Throws<ObjectDisposedException>(() => rm.StartAsync("any-stream"));
+		Assert.True(rm.IsLive.IsCompleted);
+	}
+
+	[Fact]
 	public void dispose_while_draining_returns_promptly() {
 		var rm = new DerivedStateReadModel(NewConnection());
 		for (var i = 0; i < 500; i++)
