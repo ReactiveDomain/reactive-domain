@@ -94,3 +94,27 @@ jobs:
     - name: Check Formatting
       working-directory: src
       run: dotnet format ReactiveDomain.sln --verify-no-changes --no-restore
+
+  # Packaging is only exercised by a tag push, so without this a change that breaks pack is found
+  # while cutting a release rather than on the PR that caused it.
+  pack:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        # MinVer walks back to the nearest tag to work out the version.
+        fetch-depth: 0
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0
+          10.0
+
+    - name: Pack
+      working-directory: src
+      run: dotnet pack ReactiveDomain.sln -c Release
