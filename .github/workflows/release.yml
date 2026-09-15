@@ -1,0 +1,78 @@
+name: Release
+
+# Pushing a v* tag publishes that version to nuget.org. MinVer reads the version off the tag, so the
+# tag is the only place a release number is written.
+#
+# The API key is minted per run by exchanging a GitHub OIDC token, which requires a trusted publisher
+# policy on nuget.org for every package id this ships. Until every id has one, a manual run with
+# break_glass set pushes with the stored NUGET_API_KEY instead.
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      break_glass:
+        description: 'Push with the stored NUGET_API_KEY instead of trusted publishing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        # MinVer walks back to the nearest tag, so a shallow clone would version the build wrong.
+        fetch-depth: 0
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0
+          10.0
+
+    - name: Build
+      working-directory: src
+      run: dotnet build ReactiveDomain.sln -c Release
+
+    - name: Test
+      working-directory: src
+      # Matches pr-checks.yml: a hosted runner reports 4 shared cores and runs every test assembly at
+      # once, so the budget is stated rather than inferred.
+      env:
+        REACTIVEDOMAIN_TEST_CAPACITY: Small
+      run: dotnet test ReactiveDomain.sln -c Release -p:ParallelizeTestCollections=false --no-build
+
+    - name: Pack
+      working-directory: src
+      run: dotnet pack ReactiveDomain.sln -c Release --no-build
+
+    - name: Exchange OIDC token for a short-lived NuGet key
+      if: ${{ !inputs.break_glass }}
+      id: nuget-login
+      uses: NuGet/login@v1
+      with:
+        user: ${{ vars.NUGET_USER }}
+
+    - name: Push packages
+      env:
+        NUGET_API_KEY: ${{ inputs.break_glass && secrets.NUGET_API_KEY || steps.nuget-login.outputs.NUGET_API_KEY }}
+      # Symbol packages ride along with the .nupkg of the same name; --skip-duplicate makes a re-run
+      # after a partial push succeed.
+      run: >
+        dotnet nuget push "packages/*.nupkg"
+        --source https://api.nuget.org/v3/index.json
+        --api-key "$NUGET_API_KEY"
+        --skip-duplicate

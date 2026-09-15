@@ -5,23 +5,21 @@
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 	<PropertyGroup>
-		<IsCIBuild Condition="$(CI) != 'true'">true</IsCIBuild>
-		<IsCIBuild Condition="$(CI) == ''">false</IsCIBuild>
-	</PropertyGroup>
-	<PropertyGroup>
-		<PackageVersionPrefix>0.17.0</PackageVersionPrefix>
-		<PackageVersionSuffix Condition="$(IsCIBuild) == false">-dev</PackageVersionSuffix>
-		<PackageVersionSuffix Condition="$(IsCIBuild) == true">-build</PackageVersionSuffix>
 		<PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
-		<NoPackageAnalysis Condition="$(IsCIBuild) == false">True</NoPackageAnalysis>
 	</PropertyGroup>
+	<!-- The git tag is the only version source. An untagged commit builds as a prerelease off the
+	     nearest tag, so a working tree needs no version edit to produce a package. -->
+	<PropertyGroup>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+	</ItemGroup>
 	<PropertyGroup>
 		<Prefer32Bit>false</Prefer32Bit>
 		<Platforms>AnyCPU</Platforms>
 		<Authors>Reactive Domain Group</Authors>
 		<Copyright>Copyright © 2026 Reactive Domain Group</Copyright>
-		<AssemblyVersion>0.17.0</AssemblyVersion>
-		<FileVersion>0.17.0</FileVersion>
 		<NeutralLanguage />
 		<DebugSymbols>true</DebugSymbols>
 		<!-- Portable is what nuget.org accepts in a .snupkg; a full PDB gets the symbol package rejected. -->

@@ -1,0 +1,11 @@
+<Project>
+	<!-- MinVer's own default pins AssemblyVersion to {Major}.0.0.0, which for a 0.x line gives every
+	     release the identity 0.0.0.0. Each tag keeps the distinct assembly identity it has always
+	     shipped. Revisit at 1.0, where the default's binding stability is worth having. -->
+	<Target Name="SetVersionsFromTag" AfterTargets="MinVer">
+		<PropertyGroup>
+			<AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</AssemblyVersion>
+			<FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</FileVersion>
+		</PropertyGroup>
+	</Target>
+</Project>
