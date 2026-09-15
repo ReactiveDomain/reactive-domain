@@ -106,6 +106,30 @@ public abstract class EventDrivenStateMachine : IEventSource {
 	protected void Register(Type typeOfEvent, Action<object> route) {
 		Router.RegisterRoute(typeOfEvent, route);
 	}
+
+	/// <summary>
+	/// Registers <typeparamref name="TEvent"/> as a type this instance persists and never folds.
+	/// </summary>
+	/// <remarks>
+	/// Use this instead of omitting <see cref="Register{TEvent}"/>: an unregistered raise is persisted
+	/// and then silently skipped on every replay. This makes that choice visible at the registration
+	/// site, and keeps <see cref="ThrowOnUnrouted"/> from firing for it.
+	/// </remarks>
+	protected void RegisterPassThrough<TEvent>() => Register<TEvent>(_ => { });
+
+	/// <summary>
+	/// When true, <see cref="Raise"/> and replay throw if no handler is registered for the event's type.
+	/// Defaults to false: pass-through provenance raises are a legitimate pattern, and those sites
+	/// should <see cref="RegisterPassThrough{TEvent}"/> rather than leave the type unregistered.
+	/// </summary>
+	protected bool ThrowOnUnrouted {
+		get => Router.ThrowOnUnrouted;
+		set => Router.ThrowOnUnrouted = value;
+	}
+
+	/// <summary>The event types this instance has a handler for, including pass-throughs.</summary>
+	public IReadOnlyCollection<Type> RegisteredEventTypes => Router.RegisteredTypes;
+
 	protected virtual void OnEventRaised(object @event) { }
 	/// <summary>
 	/// Raises the specified <paramref name="event"/> - applies it to this instance and records it in its history.

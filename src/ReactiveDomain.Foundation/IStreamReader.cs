@@ -4,15 +4,16 @@ namespace ReactiveDomain.Foundation;
 
 public interface IStreamReader : IDisposable {
 	/// <summary>
-	/// The ending position of the stream after the read is complete
+	/// Where this read left the stream: the last event actually read, or the checkpoint it was asked
+	/// to resume after when nothing newer existed. Null before the first <c>Read</c>, and after a
+	/// <c>Read</c> from the beginning of a stream that is empty.
 	/// </summary>
 	long? Position { get; }
 	/// <summary>
 	/// Where this read left off: the stream, its version, and the <c>$all</c> position of the last
-	/// event read. Null when nothing was read — a reader reports no checkpoint at all rather than one
-	/// with no version, since a read that reached nothing has no stream to resume either. This is what
-	/// lets a listener resuming from the read report a checkpoint covering the history the reader
-	/// already applied.
+	/// event read. After a resume that found nothing newer, the version is the checkpoint it was
+	/// asked to start from — not null, which would send a listener back to the beginning of the stream.
+	/// Null only before the first <c>Read</c>, or after a <c>Read</c> of a stream that does not exist.
 	/// </summary>
 	/// <remarks>
 	/// Read together deliberately — see <see cref="IListener.Checkpoint"/> for why the two clocks must
@@ -29,6 +30,19 @@ public interface IStreamReader : IDisposable {
 	/// If set replaces the existing target/handle.
 	/// </summary>
 	Action<IMessage> Handle { set; }
+
+	/// <summary>
+	/// Replaces the handle with one that receives each event paired with the checkpoint this reader
+	/// stands at once that event is read — the read-phase counterpart of
+	/// <see cref="IListener.SubscribeToDelivery"/>.
+	/// </summary>
+	/// <remarks>
+	/// The default cannot pair and routes through <see cref="Handle"/> with a null checkpoint;
+	/// implementations that know each event's position should override it.
+	/// </remarks>
+	Action<IMessage, StreamCheckpoint?> PairedHandle {
+		set => Handle = message => value(message, null);
+	}
 
 	/// <summary>
 	/// Reads the events on a named stream

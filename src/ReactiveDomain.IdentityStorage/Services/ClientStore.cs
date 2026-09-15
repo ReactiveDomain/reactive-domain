@@ -57,7 +57,7 @@ public class ClientStore :
 		return client;
 	}
 	public IReadOnlyList<Client> Clients => _clientsByClientName.Values.ToList().AsReadOnly();
-	public void Handle(ClientMsgs.ClientCreated @event) {
+	void IHandle<ClientMsgs.ClientCreated>.Handle(ClientMsgs.ClientCreated @event) {
 		var client =
 			new Client {
 				ClientId = @event.ClientId.ToString("N"),
@@ -78,14 +78,14 @@ public class ClientStore :
 		_clientSecretsByClientId.Add(@event.ClientId, new List<string>());
 	}
 
-	public void Handle(ClientMsgs.ClientSecretAdded @event) {
+	void IHandle<ClientMsgs.ClientSecretAdded>.Handle(ClientMsgs.ClientSecretAdded @event) {
 		if (_clientNameById.TryGetValue(@event.ClientId, out var name)) {
 			_clientsByClientName[name].ClientSecrets.Add(new Secret(@event.EncryptedClientSecret.ToSha256()));
 		}
 		_clientSecretsByClientId[@event.ClientId].Add(@event.EncryptedClientSecret);
 	}
 
-	public void Handle(ClientMsgs.ClientSecretRemoved @event) {
+	void IHandle<ClientMsgs.ClientSecretRemoved>.Handle(ClientMsgs.ClientSecretRemoved @event) {
 		if (_clientNameById.TryGetValue(@event.ClientId, out var name)) {
 			_clientsByClientName[name].ClientSecrets.Remove(new Secret(@event.EncryptedClientSecret.ToSha256()));
 		}

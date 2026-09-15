@@ -120,21 +120,63 @@ public sealed class when_buffering_writes_until_live : IClassFixture<StreamStore
 	}
 
 	[Fact]
-	public async Task a_failing_transition_flush_faults_is_live_and_the_next_event_writes_everything() {
+	public async Task a_failing_transition_flush_retries_without_another_event() {
 		var stream = NewStream();
 		Append(stream, Rows(0, 3));
 		var rm = Track(new BufferedTestReadModel(_configured) { FailNextFlush = true });
 
 		rm.StartAsync(stream);
-		var thrown = await Assert.ThrowsAsync<IOException>(() => rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor));
+		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
+
+		var flush = Assert.Single(rm.Flushes);
+		Assert.Equal([0, 1, 2], flush.Rows.Keys.Order());
+		Assert.Equal(2, flush.Checkpoints.Single().Version);
+	}
+
+	[Fact]
+	public async Task once_live_waits_until_the_transition_flush_lands() {
+		var stream = NewStream();
+		Append(stream, Rows(0, 3));
+		var rm = Track(new BufferedTestReadModel(_configured) { FailNextFlush = true });
+		var ran = false;
+		var once = rm.OnceLive(() => ran = true);
+
+		rm.StartAsync(stream);
+		await once.WaitAsync(TestTimeouts.ThrottleWaitFor);
+		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
+
+		Assert.True(ran);
+		Assert.Single(rm.Flushes);
+	}
+
+	[Fact]
+	public async Task dispose_cancels_a_transition_that_is_still_retrying() {
+		var stream = NewStream();
+		Append(stream, Rows(0, 3));
+		var rm = new BufferedTestReadModel(_configured) { FailEveryFlush = true };
+		rm.StartAsync(stream);
+
+		AssertEx.IsOrBecomesTrue(() => rm.FlushAttempts > 0, TestTimeouts.ThrottleWaitFor);
+		Assert.False(rm.IsLive.IsCompletedSuccessfully);
+
+		rm.Dispose();
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(
+			() => rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor));
+	}
+
+	[Fact]
+	public async Task a_transition_flush_that_never_lands_faults_is_live() {
+		var stream = NewStream();
+		Append(stream, Rows(0, 3));
+		var rm = Track(new BufferedTestReadModel(_configured) { FailEveryFlush = true });
+		rm.StartAsync(stream);
+		var once = rm.OnceLive(() => { });
+		var thrown = await Assert.ThrowsAsync<IOException>(
+			() => rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor));
 		Assert.Equal("store down", thrown.Message);
+		await Assert.ThrowsAsync<IOException>(() => once.WaitAsync(TestTimeouts.ThrottleWaitFor));
+		Assert.Equal(4, rm.FlushAttempts);
 		Assert.Empty(rm.Flushes);
-
-		Append(stream, new RowChanged(3, "row 3"));
-		AssertEx.IsOrBecomesTrue(() => rm.Flushes.Count == 1, TestTimeouts.ThrottleWaitFor);
-
-		Assert.Equal([0, 1, 2, 3], rm.Flushes[0].Rows.Keys.Order());
-		Assert.Equal(3, rm.Flushes[0].Checkpoints.Single().Version);
 	}
 
 	[Fact]
@@ -152,6 +194,44 @@ public sealed class when_buffering_writes_until_live : IClassFixture<StreamStore
 		var flush = Assert.Single(rm.Flushes);
 		Assert.Equal([1], flush.Deletes);
 		Assert.Equal(new Dictionary<int, string> { [2] = "second", [3] = "second" }, flush.Rows);
+	}
+
+	[Fact]
+	public async Task a_category_fed_flush_includes_the_category_stream() {
+		// Own namer: this class's other tests write TestAggregate streams into a shared category.
+		var namer = new PrefixedCamelCaseStreamNameBuilder(Guid.NewGuid().ToString("N"));
+		var configured = new ConfiguredConnection(_conn, namer, _serializer);
+		var id = Guid.NewGuid();
+		var aggregate = namer.GenerateForAggregate(typeof(TestAggregate), id);
+		var category = namer.GenerateForCategory(typeof(TestAggregate));
+		foreach (var row in Rows(0, 5)) {
+			_conn.AppendToStream(aggregate, ExpectedVersion.Any, null, _serializer.Serialize(row));
+		}
+		Assert.True(_conn.TryConfirmStream(category, 5));
+		var source = Track(new CategoryStream<TestAggregate>(configured));
+		var rm = Track(new BufferedTestReadModel(configured));
+		source.RelayTo(rm);
+		source.Start();
+		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
+
+		var flush = Assert.Single(rm.Flushes);
+		Assert.Equal(5, flush.Rows.Count);
+		var applied = Assert.Single(flush.Checkpoints);
+		Assert.Equal(category, applied.StreamName);
+		Assert.Equal(4, applied.Version);
+	}
+
+	[Fact]
+	public async Task flush_retains_the_rows_it_saw_after_the_buffers_clear() {
+		var stream = NewStream();
+		Append(stream, Rows(0, 3));
+		var rm = Track(new BufferedTestReadModel(_configured));
+		rm.StartAsync(stream);
+		await rm.IsLive.WaitAsync(TestTimeouts.ThrottleWaitFor);
+
+		Assert.NotNull(rm.RetainedUpserts);
+		Assert.Equal(3, rm.RetainedUpserts.Count);
+		Assert.False(rm.BufferStillPending);
 	}
 
 	[Fact]
@@ -208,6 +288,10 @@ public sealed class when_buffering_writes_until_live : IClassFixture<StreamStore
 		public int Handled { get; private set; }
 		public int HandledBeforeFirstFlush { get; private set; } = -1;
 		public bool FailNextFlush { get; set; }
+		public bool FailEveryFlush { get; set; }
+		public int FlushAttempts { get; private set; }
+		public IReadOnlyDictionary<int, string>? RetainedUpserts { get; private set; }
+		public bool BufferStillPending => HasPendingWrites;
 		public readonly ManualResetEventSlim Parked = new(false);
 
 		public void Handle(RowChanged @event) {
@@ -235,12 +319,14 @@ public sealed class when_buffering_writes_until_live : IClassFixture<StreamStore
 		public void Handle(NothingChanged @event) => Handled++;
 
 		protected override void Flush(IReadOnlyList<StreamCheckpoint> checkpoints) {
-			if (FailNextFlush) {
+			FlushAttempts++;
+			if (FailEveryFlush || FailNextFlush) {
 				FailNextFlush = false;
 				throw new IOException("store down");
 			}
 			if (HandledBeforeFirstFlush < 0)
 				HandledBeforeFirstFlush = Handled;
+			RetainedUpserts = _rows.Upserts;
 			Flushes.Add(new Flushed(
 				new Dictionary<int, string>(_rows.Upserts),
 				[.. _rows.Deletes],

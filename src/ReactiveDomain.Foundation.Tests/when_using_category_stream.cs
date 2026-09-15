@@ -148,6 +148,89 @@ public sealed class when_using_category_stream : IClassFixture<StreamStoreConnec
 	}
 
 	[Fact]
+	public void applied_checkpoints_include_the_category_after_the_history() {
+		AppendEvents(6);
+		var subscriber = NewSubscriber();
+		var source = NewStream();
+		source.RelayTo(subscriber);
+
+		source.Start();
+
+		WaitForGoLive(subscriber);
+		AssertEx.IsOrBecomesTrue(() => subscriber.Idle, TestTimeouts.ThrottleWaitFor);
+		var applied = Assert.Single(subscriber.Applied);
+		Assert.Equal(_categoryStream, applied.StreamName);
+		Assert.Equal(5, applied.Version);
+	}
+
+	[Fact]
+	public void a_category_that_delivered_nothing_is_applied_at_a_null_version() {
+		var subscriber = NewSubscriber();
+		var source = NewStream();
+		source.RelayTo(subscriber);
+
+		source.Start();
+
+		WaitForGoLive(subscriber);
+		AssertEx.IsOrBecomesTrue(() => subscriber.Idle, TestTimeouts.ThrottleWaitFor);
+		var applied = Assert.Single(subscriber.Applied);
+		Assert.Equal(_categoryStream, applied.StreamName);
+		Assert.Null(applied.Version);
+	}
+
+	[Fact]
+	public void a_gated_relay_is_applied_through_what_it_folded_not_the_source_read() {
+		AppendEvents(6);
+		var restored = NewSubscriber();
+		var fromScratch = NewSubscriber();
+		var source = NewStream();
+		source.RelayTo(restored, fromPosition: 2);
+		source.RelayTo(fromScratch);
+
+		source.Start();
+
+		WaitForGoLive(restored, fromScratch);
+		AssertEx.IsOrBecomesTrue(() => restored.Idle && fromScratch.Idle, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal([3, 4, 5], restored.Received);
+		Assert.Equal(5, Assert.Single(restored.Applied).Version);
+		Assert.Equal(5, Assert.Single(fromScratch.Applied).Version);
+	}
+
+	[Fact]
+	public void a_gated_relay_that_received_nothing_stays_at_its_resume_point() {
+		AppendEvents(6);
+		var restored = NewSubscriber();
+		var source = NewStream();
+		source.RelayTo(restored, fromPosition: 5);
+
+		source.Start();
+
+		WaitForGoLive(restored);
+		AssertEx.IsOrBecomesTrue(() => restored.Idle, TestTimeouts.ThrottleWaitFor);
+		Assert.Empty(restored.Received);
+		var applied = Assert.Single(restored.Applied);
+		Assert.Equal(_categoryStream, applied.StreamName);
+		Assert.Equal(5, applied.Version);
+	}
+
+	[Fact]
+	public void live_events_advance_the_applied_category_checkpoint() {
+		AppendEvents(4);
+		var subscriber = NewSubscriber();
+		var source = NewStream();
+		source.RelayTo(subscriber);
+		source.Start();
+		WaitForGoLive(subscriber);
+		AssertEx.IsOrBecomesTrue(() => subscriber.Idle, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal(3, Assert.Single(subscriber.Applied).Version);
+
+		AppendEvents(2, firstValue: 100);
+
+		AssertEx.IsOrBecomesTrue(() => subscriber.Applied.Single().Version == 5, TestTimeouts.ThrottleWaitFor);
+		Assert.Equal(_categoryStream, subscriber.Applied.Single().StreamName);
+	}
+
+	[Fact]
 	public void position_at_go_live_is_the_last_position_read() {
 		AppendEvents(6);
 		var subscriber = NewSubscriber();
@@ -546,6 +629,14 @@ public sealed class when_using_category_stream : IClassFixture<StreamStoreConnec
 			get {
 				lock (ReaderLock) {
 					return _eventsBeforeFirstGoLive;
+				}
+			}
+		}
+
+		public IReadOnlyList<StreamCheckpoint> Applied {
+			get {
+				lock (ReaderLock) {
+					return AppliedCheckpoints;
 				}
 			}
 		}

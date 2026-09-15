@@ -24,6 +24,7 @@ When submitting a Pull Request, keep these rules in mind:
 - Any new code must be covered by at least one unit test
 - All public methods must be documented with XML comments, following the [documentation guidelines](#docs) below
 - Framework words carry their framework meaning, in code and in prose, following the [naming guidelines](#naming) below
+- Read-model `IHandle<T>` implementations must be explicit; the analyzer **RD0001** enforces it
 
 ### <a href="naming"></a>Naming Guidelines
 RD gives ordinary English words specific meanings. Once a word names a type in the framework, it stops
@@ -47,6 +48,7 @@ everyday word.
 
 This applies to test names as much as production code. A test named for the wrong concept is read by
 whoever is deciding what is already covered.
+
 
 ### <a href="docs"></a>Documentation Guidelines
 RD ships its XML docs in its NuGet packages. They are what a consumer sees in Intellisense, so

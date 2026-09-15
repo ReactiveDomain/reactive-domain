@@ -189,25 +189,31 @@ public sealed class when_serializing_with_json_message_serializer {
 	}
 
 	[Fact]
-	public void can_throw_if_type_not_found() {
+	public void type_not_found_throws_by_default() {
 		var serializer = new JsonMessageSerializer();
-
-		//n.b. setting header to non-existent assembly
 		var headerName = serializer.EventClrQualifiedTypeHeader;
 		var headerData = $"{typeof(TestObject2).FullName},dne-assembly";
 		var headers = new Dictionary<string, object> { { headerName, headerData } };
 		var eventData = serializer.Serialize(_testObject, headers);
-		//confirm type not found
-		var deserialized = serializer.Deserialize(eventData);
-		Assert.IsType<JObject>(deserialized);
-		//request throw on type not found
-		serializer.ThrowOnTypeNotFound = true;
+
 		Assert.Throws<InvalidOperationException>(() => serializer.Deserialize(eventData));
 	}
 
 	[Fact]
-	public void can_override_target_assembly() {
+	public void type_not_found_can_return_a_jobject_when_asked() {
 		var serializer = new JsonMessageSerializer();
+		serializer.ThrowOnTypeNotFound = false;
+		var headerName = serializer.EventClrQualifiedTypeHeader;
+		var headerData = $"{typeof(TestObject2).FullName},dne-assembly";
+		var headers = new Dictionary<string, object> { { headerName, headerData } };
+		var eventData = serializer.Serialize(_testObject, headers);
+
+		Assert.IsType<JObject>(serializer.Deserialize(eventData));
+	}
+
+	[Fact]
+	public void can_override_target_assembly() {
+		var serializer = new JsonMessageSerializer { ThrowOnTypeNotFound = false };
 
 		//n.b. setting header to non-existent assembly
 		var headerName = serializer.EventClrQualifiedTypeHeader;

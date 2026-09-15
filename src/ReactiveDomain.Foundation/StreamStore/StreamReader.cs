@@ -1,4 +1,5 @@
-﻿using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Logging;
+using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
 
 // ReSharper disable once CheckNamespace
@@ -16,7 +17,18 @@ public class StreamReader : IStreamReader {
 	private readonly IStreamStoreConnection _streamStoreConnection;
 	protected long StreamPosition;
 	protected bool FirstEventRead;
-	public long? Position => FirstEventRead ? StreamPosition : null;
+	private bool _hasRead;
+	private long? _resumeAt;
+	private static readonly ILogger Log = LogManager.GetLogger("ReactiveDomain");
+
+	/// <inheritdoc cref="IStreamReader.Position"/>
+	public long? Position {
+		get {
+			if (!_hasRead)
+				return null;
+			return FirstEventRead ? StreamPosition : _resumeAt;
+		}
+	}
 
 	private readonly object _checkpointLock = new();
 	private Position? _allPosition;
@@ -25,13 +37,32 @@ public class StreamReader : IStreamReader {
 	public StreamCheckpoint? Checkpoint {
 		get {
 			lock (_checkpointLock) {
-				return FirstEventRead && !string.IsNullOrEmpty(StreamName)
-					? new StreamCheckpoint(StreamName, Interlocked.Read(ref StreamPosition), _allPosition)
-					: null;
+				if (!_hasRead || string.IsNullOrEmpty(StreamName))
+					return null;
+				return new StreamCheckpoint(
+					StreamName,
+					FirstEventRead ? Interlocked.Read(ref StreamPosition) : _resumeAt,
+					FirstEventRead ? _allPosition : null);
 			}
 		}
 	}
-	public Action<IMessage> Handle { get; set; }
+	private Action<IMessage> _handle;
+	private Action<IMessage, StreamCheckpoint?>? _pairedHandle;
+
+	/// <summary>The target for read events. Setting it replaces a <see cref="PairedHandle"/> as well.</summary>
+	public Action<IMessage> Handle {
+		get => _handle;
+		set {
+			_handle = value;
+			_pairedHandle = null;
+		}
+	}
+
+	/// <inheritdoc cref="IStreamReader.PairedHandle"/>
+	public Action<IMessage, StreamCheckpoint?> PairedHandle {
+		set => _pairedHandle = value;
+	}
+
 	public string StreamName { get; private set; } = string.Empty;
 	private const int ReadPageSize = 500;
 
@@ -55,7 +86,7 @@ public class StreamReader : IStreamReader {
 		_streamStoreConnection = streamStoreConnection ?? throw new ArgumentNullException(nameof(streamStoreConnection));
 		_streamNameBuilder = streamNameBuilder ?? throw new ArgumentNullException(nameof(streamNameBuilder));
 		Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-		Handle = handle;
+		_handle = handle;
 	}
 
 	/// <summary>
@@ -161,6 +192,8 @@ public class StreamReader : IStreamReader {
 
 		_cancelled = false;
 		FirstEventRead = false;
+		_resumeAt = checkpoint;
+		_hasRead = true;
 		StreamName = streamName;
 		long sliceStart;
 		if (checkpoint is null)
@@ -218,9 +251,33 @@ public class StreamReader : IStreamReader {
 			FirstEventRead = true;
 		}
 
-		if (Serializer.Deserialize(recordedEvent) is IMessage @event) {
-			Handle(@event);
+		if (TryDeserialize(recordedEvent) is not { } @event)
+			return;
+		if (_pairedHandle is { } paired)
+			paired(@event, new StreamCheckpoint(StreamName, recordedEvent.EventNumber, recordedEvent.Position));
+		else
+			_handle(@event);
+	}
+
+	private IMessage? TryDeserialize(RecordedEvent recordedEvent) {
+		object? deserialized;
+		try {
+			deserialized = Serializer.Deserialize(recordedEvent);
+		} catch (Exception ex) {
+			Log.ErrorException(
+				ex,
+				"Failed to deserialize {0} #{1} ({2}); skipping so the read can continue.",
+				StreamName, recordedEvent.EventNumber, recordedEvent.EventType);
+			return null;
 		}
+		if (deserialized is IMessage message)
+			return message;
+		if (deserialized is not null) {
+			Log.Error(
+				"Dropped {0} #{1} ({2}): deserialized to {3}, not IMessage.",
+				StreamName, recordedEvent.EventNumber, recordedEvent.EventType, deserialized.GetType().FullName);
+		}
+		return null;
 	}
 
 	/// <summary>

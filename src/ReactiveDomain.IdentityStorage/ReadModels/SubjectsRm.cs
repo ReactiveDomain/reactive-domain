@@ -1,4 +1,4 @@
-﻿using ReactiveDomain.Foundation;
+using ReactiveDomain.Foundation;
 using ReactiveDomain.IdentityStorage.Domain;
 using ReactiveDomain.IdentityStorage.Messages;
 using ReactiveDomain.Messaging.Bus;
@@ -53,7 +53,7 @@ public class SubjectsRm :
 	internal readonly Dictionary<string, Dictionary<Guid, Guid>> SubjectsByUserId = [];
 	//{domainCategory-{sid-subjectId}}
 	internal readonly Dictionary<string, Dictionary<string, Guid>> SubjectsBySubClaim = [];
-	public void Handle(SubjectMsgs.SubjectCreated @event) {
+	void IHandle<SubjectMsgs.SubjectCreated>.Handle(SubjectMsgs.SubjectCreated @event) {
 		if (!SubjectsByUserId.TryGetValue(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), out var subList)) {
 			subList = new Dictionary<Guid, Guid>();
 			SubjectsByUserId.Add(GetDomainCategory(@event.AuthProvider, @event.AuthDomain), subList);
