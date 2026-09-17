@@ -12,7 +12,9 @@ namespace ReactiveDomain.Foundation;
 /// writing. <see cref="Flush"/> is called with the checkpoints of exactly what has been applied, so a
 /// store that commits the rows and the checkpoints in one transaction is never ahead of or behind
 /// itself — which is what makes the checkpoints it saves safe to resume from, and safe for another
-/// model to bound its own resume by (<see cref="StreamCheckpoint.BoundedBy(StreamCheckpoint?)"/>).</para>
+/// model to bound its own resume by (<see cref="StreamCheckpoint.BoundedBy(StreamCheckpoint?)"/>).
+/// A checkpoint for a stream fed through <see cref="ReadModelBase.RelayTo"/> is safe to bound by
+/// but not to resume from: this model does not read that stream, and is rebuilt through its source.</para>
 /// <para>Hydrating the store's contents into memory before starting, and the writes themselves, stay
 /// with the derived class: which tables and what shape are its business.</para>
 /// <para>Flush runs on the queue thread. It runs at the live transition when anything is pending,
