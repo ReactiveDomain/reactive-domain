@@ -29,6 +29,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    # Publishing to nuget.org cannot be undone, only unlisted, so this job waits on the release
+    # environment's reviewers before it pushes. The name is also a claim in the OIDC token, and the
+    # nuget.org trusted publisher policy is set to require it: change one and the exchange fails.
+    environment: release
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
