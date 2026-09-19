@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <IsPackable>true</IsPackable>
-    <Description>Event-sourced identity storage for ReactiveDomain: users, subjects and clients, with the read models over them.</Description>
+    <Description>Event-sourced identity storage for ReactiveDomain: users, subjects and clients, with associated read models.</Description>
     <PackageTags>$(PackageTags) identity</PackageTags>
   </PropertyGroup>
    <ItemGroup>

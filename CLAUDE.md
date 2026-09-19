@@ -35,6 +35,9 @@ or folder name — check `PackageId` before assuming.
 The version comes from the nearest `v` tag via MinVer and is written nowhere else. Pushing a `v*`
 tag runs `.github/workflows/release.yml`, which packs and publishes to nuget.org.
 
+**Never create or push a `v*` tag.** Releasing is a human decision, and the tag is what triggers the
+publish. Prepare the release and say it is ready; the tag is someone else's to push.
+
 `Docs/publishing/publishing-modernization-options.md` holds why the packaging is shaped this way
 and which alternatives were set aside.
 

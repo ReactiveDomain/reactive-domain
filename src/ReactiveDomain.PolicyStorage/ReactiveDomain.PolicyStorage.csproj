@@ -6,7 +6,7 @@
 		<!-- PolicyStorage's closure is Policy.Core plus IdentityStorage, which is what the Policy package
 		     has always delivered, so it publishes under that id. The assembly keeps its own name. -->
 		<PackageId>ReactiveDomain.Policy</PackageId>
-		<Description>ReactiveDomain Identity and Policy assemblies. Event-sourced applications, roles and user policies, with the read models over them.</Description>
+		<Description>ReactiveDomain Identity and Policy assemblies. Event-sourced applications, roles and user policies, with associated read models.</Description>
 		<PackageTags>$(PackageTags) identity policy</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>

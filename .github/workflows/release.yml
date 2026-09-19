@@ -43,17 +43,11 @@ jobs:
           8.0
           10.0
 
+    # No -f: every project builds the frameworks its own TargetFrameworks names, which for the
+    # libraries is both net8.0 and net10.0. Narrowing here would ship a package missing a framework.
     - name: Build
       working-directory: src
       run: dotnet build ReactiveDomain.sln -c Release
-
-    - name: Test
-      working-directory: src
-      # Matches pr-checks.yml: a hosted runner reports 4 shared cores and runs every test assembly at
-      # once, so the budget is stated rather than inferred.
-      env:
-        REACTIVEDOMAIN_TEST_CAPACITY: Small
-      run: dotnet test ReactiveDomain.sln -c Release -p:ParallelizeTestCollections=false --no-build
 
     - name: Pack
       working-directory: src

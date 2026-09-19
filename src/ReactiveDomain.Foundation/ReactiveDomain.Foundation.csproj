@@ -22,10 +22,10 @@
                       PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <!-- RD0001 reaches consumers only through this item, and it fails quietly both ways: the analyzer
-         builds to the shared bld directory Directory.Build.props points OutputPath at, not to its own
-         bin, and a backslash in the path resolves to nothing on the Linux runner that packs. A miss
-         here still produces a package, just one without the analyzer. -->
+    <!-- RD0001 reaches consumers only through this item. The path must point at the shared bld
+         directory Directory.Build.props sets OutputPath to, and must use forward slashes to resolve
+         on the Linux runner that packs. A path that matches nothing still produces a package, just
+         one without the analyzer in it. -->
     <None Include="$(MSBuildThisFileDirectory)../../bld/$(Configuration)/netstandard2.0/ReactiveDomain.Analyzers.dll"
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
