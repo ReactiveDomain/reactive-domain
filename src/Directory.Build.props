@@ -1,0 +1,64 @@
+<Project>
+	<PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+	<PropertyGroup>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)..\packages\</PackageOutputPath>
+	</PropertyGroup>
+	<!-- The git tag is the only version source. An untagged commit builds as a prerelease off the
+	     nearest tag, so a working tree needs no version edit to produce a package. -->
+	<PropertyGroup>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+	</ItemGroup>
+	<PropertyGroup>
+		<Prefer32Bit>false</Prefer32Bit>
+		<Platforms>AnyCPU</Platforms>
+		<Authors>Reactive Domain Group</Authors>
+		<Copyright>Copyright © 2026 Reactive Domain Group</Copyright>
+		<NeutralLanguage />
+		<DebugSymbols>true</DebugSymbols>
+		<!-- Portable is what nuget.org accepts in a .snupkg; a full PDB gets the symbol package rejected. -->
+		<DebugType>portable</DebugType>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- CS1591 (missing XML comment) is not a build signal: it fires thousands of times and buries
+		     the malformed-doc warnings that are worth acting on. Documentation coverage is enforced by
+		     review, per CONTRIBUTING.md. -->
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+	</PropertyGroup>
+	<!-- Package metadata shared by every published package. Per-package Description, PackageId and
+	     PackageTags live in the csproj that produces the package. -->
+	<PropertyGroup>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/ReactiveDomain/reactive-domain</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>CQRS ES event-sourcing messaging</PackageTags>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/ReactiveDomain/reactive-domain</RepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="$(CI) == 'true'">true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- PackageReadmeFile names a file that must be in the package, so every project carries it;
+		     a non-packable project ignores Pack metadata. -->
+		<None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="true" PackagePath="\" Visible="false" />
+	</ItemGroup>
+	<PropertyGroup>
+		<OutputPath>$(MSBuildThisFileDirectory)..\bld\$(Configuration)</OutputPath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<RestorePackagesPath>$(MSBuildThisFileDirectory)..\dependencies\</RestorePackagesPath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<LibTargetFrameworks>net8.0;net10.0</LibTargetFrameworks>
+		<TestTargetFrameworks>net8.0;net10.0</TestTargetFrameworks>
+	</PropertyGroup>
+</Project>

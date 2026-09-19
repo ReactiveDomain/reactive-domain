@@ -1,10 +1,23 @@
 # Publishing Modernization — Options for Evaluation
 
-**Status:** Decisions selected (alternatives retained in Notes) · **Author:** design exploration · **Target:** post-0.15.3
+**Status:** Implemented in 0.19.0 (alternatives retained in Notes) · **Author:** design exploration
 
-This is a **decision document**, not an implementation. It records the selected approach per goal with
-its migration path; the alternatives weighed are kept in [Notes](#notes) for the record. Nothing in
-the build/packaging is changed by this PR.
+This is a **decision document**. It records the selected approach per goal with its migration path;
+the alternatives weighed are kept in [Notes](#notes) for the record, and remain the answer to "why
+not X".
+
+The shipped mechanism is `src/Directory.Build.props`, the `IsPackable` and `PackageId` properties in
+each csproj, and `.github/workflows/release.yml`. Section 1 below describes the nuget.exe and nuspec
+path those replaced; read it as background, not as a description of the tree. What a consumer has to
+change is `Docs/0.19.0-migration.md`.
+
+Two decisions were settled by evidence rather than assumed:
+
+- The `ReactiveDomain.Policy` assembly holds no concrete event, message or aggregate type, so its
+  rename needs no `AssemblyOverride` and replay is unaffected.
+- The hand-maintained `.Debug` nuspecs are gone rather than synced with their release counterparts
+  (#287). `dotnet pack -c Debug` produces a debug package from the same csproj that produces the
+  release one, so there is no second description of a package to drift.
 
 ReactiveDomain is a **published library with external consumers**, so consumer/back-compat impact is
 called out for each decision.

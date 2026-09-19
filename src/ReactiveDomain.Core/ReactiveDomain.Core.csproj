@@ -1,10 +1,10 @@
 ﻿
 <Project Sdk="Microsoft.NET.Sdk">  
-  <Import Project="../ci.build.imports" />
   <PropertyGroup>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
     <RootNamespace>ReactiveDomain</RootNamespace>
-		<IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Description>Core primitives shared by every ReactiveDomain assembly: event sources, stream positions and checkpoints, metadata, logging and utilities.</Description>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ReactiveDomain.Persistence" />

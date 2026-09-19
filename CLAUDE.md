@@ -14,7 +14,7 @@ dotnet format src/ReactiveDomain.sln --verify-no-changes --no-restore
 All three are CI gates. The format check is the one most easily forgotten and it fails the build
 like any other.
 
-Libraries and tests multi-target `net8.0;net10.0` (`src/build.props`). Both must pass — see
+Libraries and tests multi-target `net8.0;net10.0` (`src/Directory.Build.props`). Both must pass — see
 `CONTRIBUTING.md`. **Install both SDKs.** With only .NET 10 present, `dotnet test` silently runs
 net10.0 alone and reports green; the net8.0 half fails as `Testhost process ... exited with error:
 You must install or update .NET to run this application` only if you ask for it by name. Check
@@ -24,6 +24,22 @@ To run one framework, narrow the list: `-p:LibTargetFrameworks=net8.0 -p:TestTar
 which is what CI does per job. **Not `-f`** — on a solution that imposes the framework on every
 project in it, and `ReactiveDomain.Analyzers` is `netstandard2.0`, so the build fails there with
 `NETSDK1005` before any test runs.
+
+## Packaging
+
+Each library is its own NuGet package, described by its own csproj; `src/Directory.Build.props`
+carries what they share. `ReactiveDomain` is the package id of the Foundation project and
+`ReactiveDomain.Policy` of the PolicyStorage project, so those two ids do not match the assembly
+or folder name — check `PackageId` before assuming.
+
+The version comes from the nearest `v` tag via MinVer and is written nowhere else. Pushing a `v*`
+tag runs `.github/workflows/release.yml`, which packs and publishes to nuget.org.
+
+**Never create or push a `v*` tag.** Releasing is a human decision, and the tag is what triggers the
+publish. Prepare the release and say it is ready; the tag is someone else's to push.
+
+`Docs/publishing/publishing-modernization-options.md` holds why the packaging is shaped this way
+and which alternatives were set aside.
 
 ## Naming
 
