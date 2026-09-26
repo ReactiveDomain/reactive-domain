@@ -1,7 +1,7 @@
 name: Release
 
-# Pushing a v* tag publishes that version to nuget.org. MinVer reads the version off the tag, so the
-# tag is the only place a release number is written.
+# Pushing a v* tag publishes that version to nuget.org and creates its GitHub Release. MinVer reads
+# the version off the tag, so the tag is the only place a release number is written.
 #
 # The API key is minted per run by exchanging a GitHub OIDC token, which requires a trusted publisher
 # policy on nuget.org for every package id this ships. Until every id has one, a manual run with
@@ -18,7 +18,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write  # the GitHub Release
   id-token: write
 
 concurrency:
@@ -75,3 +75,13 @@ jobs:
         --source https://api.nuget.org/v3/index.json
         --api-key "$NUGET_API_KEY"
         --skip-duplicate
+
+    # A tag with a suffix (v0.19.0-rc.1) is a pre-release, and must not become the repo's latest.
+    # A manual run from a branch has no tag to release, so it stops at the push.
+    - name: Create GitHub Release
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      uses: softprops/action-gh-release@v3
+      with:
+        generate_release_notes: true
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        make_latest: ${{ !contains(github.ref_name, '-') }}
