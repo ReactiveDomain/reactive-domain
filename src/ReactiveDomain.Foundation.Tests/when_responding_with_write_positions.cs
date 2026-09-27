@@ -15,7 +15,8 @@ public sealed class when_responding_with_write_positions : IClassFixture<StreamS
 	private readonly IConfiguredConnection _configured;
 	private readonly IStreamNameBuilder _namer =
 		new PrefixedCamelCaseStreamNameBuilder(nameof(when_responding_with_write_positions));
-	private readonly Dispatcher _bus = new(nameof(when_responding_with_write_positions));
+	private readonly Dispatcher _bus = new(nameof(when_responding_with_write_positions),
+		defaultAckTimeout: TestTimeouts.CommandTimeout, defaultResponseTimeout: TestTimeouts.CommandTimeout);
 	private readonly List<IDisposable> _disposables = [];
 
 	public when_responding_with_write_positions(StreamStoreConnectionFixture fixture) {
