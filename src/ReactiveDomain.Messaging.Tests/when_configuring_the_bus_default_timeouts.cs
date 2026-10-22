@@ -39,8 +39,7 @@ public sealed class when_configuring_the_bus_default_timeouts {
 	// outer send cannot time out first and mask what the nested send did.
 	private static readonly TimeSpan OuterSendTimeout = TimeSpan.FromSeconds(20);
 
-	// Three queues, matching the existing chained-command tests: a nested send needs a queue
-	// thread other than the one its blocked caller is running on.
+	// Three queues, matching the existing chained-command tests.
 	private const uint QueueCount = 3;
 
 	public record SlowCommand : Command;

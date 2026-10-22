@@ -6,6 +6,8 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	private readonly MultiQueuedHandler? _publishQueue;
 	private readonly LaterService _laterService;
 	private readonly InMemoryBus _timeoutBus;
+	// The publisher whose queue thread this is, while that thread hands a message to the bus.
+	[ThreadStatic] private static MultiQueuedPublisher? _handlingOn;
 	public bool Idle => _publishQueue?.Idle ?? true;
 	/// <summary>
 	/// Creates a publisher that publishes to <paramref name="bus"/>, and sends commands with the
@@ -14,7 +16,10 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	/// <param name="bus">The bus messages are published on.</param>
 	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread. With
 	/// queues, handlers run on the publisher's own threads: ambient <see cref="AsyncLocal{T}"/> state set by
-	/// the sender does not cross the queue, so anything a handler needs travels on the message.</param>
+	/// the sender does not cross the queue, so anything a handler needs travels on the message. A command
+	/// sent from a handler on one of these threads runs inline on it rather than queueing behind its sender;
+	/// a handler hosted on its own queue (a <see cref="QueuedSubscriber"/>) is not on one of these threads,
+	/// and a command it sends to itself still waits behind it.</param>
 	/// <param name="slowMsgThreshold">Diagnostic only: a publish-queue message that takes longer than
 	/// this is logged as slow. It is not a timeout and has no bearing on when a command fails.</param>
 	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
@@ -50,10 +55,19 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			_publishQueue = new MultiQueuedHandler(
 				(int)queueCount,
 				_ => new QueuedHandler(
-					new AdHocHandler<IMessage>(bus.Publish),
+					new AdHocHandler<IMessage>(HandleFromQueue),
 					nameof(MultiQueuedPublisher),
 					slowMsgThreshold: slowMsgThreshold));
 			_publishQueue.Start();
+		}
+	}
+
+	private void HandleFromQueue(IMessage message) {
+		_handlingOn = this;
+		try {
+			_bus.Publish(message);
+		} finally {
+			_handlingOn = null;
 		}
 	}
 
@@ -203,7 +217,12 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			//n.b. if this does not throw result will be set asynchronously 
 			//in the registered handler in the _manager 
 
-			Publish(command);
+			// On one of this publisher's own queue threads the sender is a handler waiting for this
+			// command; queued, it could land behind that handler and only time out.
+			if (ReferenceEquals(_handlingOn, this))
+				_bus.Publish(command);
+			else
+				Publish(command);
 		} catch (Exception ex) {
 			tcs.SetResult(command.Fail(ex));
 			throw;
