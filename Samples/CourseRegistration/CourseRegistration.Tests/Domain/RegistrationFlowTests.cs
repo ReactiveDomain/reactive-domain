@@ -12,6 +12,20 @@ public sealed class RegistrationFlowTests : IDisposable {
 
 	public void Dispose() => _h.Dispose();
 
+	/// <summary>
+	/// The read side keeps a unique index on the catalog name. The domain refuses the duplicate
+	/// first, so the index never meets a row it would reject.
+	/// </summary>
+	[Fact]
+	public void a_section_cannot_be_offered_twice_under_any_casing() {
+		var chem = _h.Offer("CHEM 101", 1);
+
+		var refused = Assert.ThrowsAny<Exception>(() => _h.Send(new OfferSection("2026FA", "chem 101", 1, "Again", 4, 30, Times.Fri15)));
+
+		Assert.Contains("already offered", refused.ToString());
+		Assert.Equal(30, _h.Section(chem).Capacity);
+	}
+
 	[Fact]
 	public void a_requested_course_is_reserved_then_added() {
 		var chem = _h.Offer();
@@ -206,9 +220,91 @@ public sealed class RegistrationFlowTests : IDisposable {
 		Assert.Equal((0, 0, 0), _h.Process!.Open);
 	}
 
+	[Fact]
+	public void a_command_lost_while_live_is_sent_again_without_a_restart() {
+		var chem = _h.Offer();
+		var schedule = _h.Open();
+		var lossy = new LossyBus(_h.Bus, losses: 3);
+		_h.StartProcess(lossy);
+
+		_h.Send(new RequestCourse(schedule, chem));
+		_h.Settle();
+
+		Assert.Equal([chem], _h.Schedule(schedule).Sections);
+		Assert.Equal(3, lossy.Lost);
+	}
+
+	[Fact]
+	public void the_process_forgets_finished_pairs_and_keeps_enrolled_ones() {
+		var chem = _h.Offer();
+		var bio = _h.Offer("BIO 110", meetings: Times.TueThu13);
+		var schedule = _h.Open();
+		_h.Send(new RequestCourse(schedule, chem));
+		_h.Send(new RequestCourse(schedule, bio));
+		_h.Settle();
+		_h.Send(new DropCourse(schedule, chem));
+		_h.Settle();
+
+		Assert.Equal(1, _h.Process!.Tracked);
+		_h.StartProcess();
+		Assert.Equal(1, _h.Process!.Tracked);
+	}
+
+	/// <summary>Sends do not wait for the handler: one that hangs holds up neither the live transition nor later events.</summary>
+	[Fact]
+	public void a_hung_handler_does_not_hold_up_the_live_transition_or_later_events() {
+		var chem = _h.Offer();
+		var bio = _h.Offer("BIO 110", meetings: Times.TueThu13);
+		var first = _h.Open();
+		var second = _h.Open();
+		_h.StartProcess(new DroppingBus());
+		_h.Send(new RequestCourse(first, chem));
+		Harness.Eventually(() => _h.Process!.Open == (1, 0, 0), "the reservation was not seen");
+		using var gate = new ManualResetEventSlim(false);
+		using var hungBus = new Dispatcher("hung", queueCount: 1);
+		var handler = new HungHandler(gate);
+		using var subscription = hungBus.Subscribe<AddReservedCourse>(handler);
+
+		var process = _h.StartProcess(hungBus);
+		Harness.Eventually(() => handler.Entered, "the resend was not attempted");
+		_h.Send(new RequestCourse(second, bio));
+
+		Harness.Eventually(() => process.Open == (2, 0, 0), "an event behind the hung handler was not handled");
+		gate.Set();
+	}
+
 	private List<T> Events<T>(string stream) {
 		var slice = _h.Store.ReadStreamForward(stream, 0, 100);
 		return slice.Events.Select(e => _h.Connection.Serializer.Deserialize(e)).OfType<T>().ToList();
+	}
+
+	/// <summary>Loses the first commands without a trace, then passes the rest through.</summary>
+	private sealed class LossyBus(ICommandPublisher inner, int losses) : ICommandPublisher {
+		private int _sent;
+
+		public int Lost => Math.Min(Volatile.Read(ref _sent), losses);
+
+		public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>
+			inner.Send(command, exceptionMsg, responseTimeout, ackTimeout);
+
+		public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>
+			inner.TrySend(command, out response, responseTimeout, ackTimeout);
+
+		public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>
+			Interlocked.Increment(ref _sent) <= losses || inner.TrySendAsync(command, responseTimeout, ackTimeout);
+	}
+
+	/// <summary>Blocks until the gate opens.</summary>
+	private sealed class HungHandler(ManualResetEventSlim gate) : IHandleCommand<AddReservedCourse> {
+		private volatile bool _entered;
+
+		public bool Entered => _entered;
+
+		public CommandResponse Handle(AddReservedCourse command) {
+			_entered = true;
+			gate.Wait(ReactiveDomain.Testing.TestTimeouts.ThrottleWaitFor);
+			return command.Fail();
+		}
 	}
 
 	/// <summary>A bus that loses every command, standing in for a process that dies before it sends.</summary>

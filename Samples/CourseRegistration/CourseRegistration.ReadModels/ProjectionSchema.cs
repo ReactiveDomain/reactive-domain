@@ -87,6 +87,7 @@ public static class ProjectionSchema {
 			window_start TIMESTAMPTZ NOT NULL,
 			claimed_by   TEXT        NOT NULL,
 			claimed_at   TIMESTAMPTZ NOT NULL,
+			lease_until  TIMESTAMPTZ NOT NULL,
 			completed_at TIMESTAMPTZ,
 			PRIMARY KEY (job_name, window_start)
 		);

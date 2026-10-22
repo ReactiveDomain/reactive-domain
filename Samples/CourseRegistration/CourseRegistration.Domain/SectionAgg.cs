@@ -1,3 +1,4 @@
+using System.Text;
 using ReactiveDomain;
 using ReactiveDomain.Messaging;
 using ReactiveDomain.Util;
@@ -9,10 +10,14 @@ namespace CourseRegistration.Domain;
 /// held than the section has.
 /// </summary>
 /// <remarks>
-/// A seat is held by a schedule id. Whether that student is enrolled is the schedule's business, so
-/// there is no held/taken distinction here: a reservation is the seat.
+/// <para>The id is derived from the catalog name (<see cref="IdFor"/>), so a section can be offered
+/// only once: a second offer under any casing lands on the same stream and is refused.</para>
+/// <para>A seat is held by a schedule id. Whether that student is enrolled is the schedule's business, so
+/// there is no held/taken distinction here: a reservation is the seat.</para>
 /// </remarks>
 public sealed class SectionAgg : AggregateRoot {
+	private static readonly NameBasedGuidGenerator Ids = new(new Guid("6f1d2c1e-8a43-4f0e-9b57-2a8f3c9d4e10"));
+
 	private readonly HashSet<Guid> _holders = [];
 	private string _term = string.Empty;
 	private string _courseCode = string.Empty;
@@ -30,9 +35,13 @@ public sealed class SectionAgg : AggregateRoot {
 		RegisterEvents();
 	}
 
-	/// <summary>Offers a new section.</summary>
+	/// <summary>The id of the section with this catalog name, ignoring case and surrounding space.</summary>
+	public static Guid IdFor(string term, string courseCode, int sectionNumber) =>
+		Ids.Create(Encoding.UTF8.GetBytes(
+			$"{Text.Required(term, nameof(term)).ToUpperInvariant()}|{Text.Required(courseCode, nameof(courseCode)).ToUpperInvariant()}|{sectionNumber}"));
+
+	/// <summary>Offers a new section, with the id <see cref="IdFor"/> gives its catalog name.</summary>
 	public SectionAgg(
-		Guid id,
 		string term,
 		string courseCode,
 		int sectionNumber,
@@ -41,7 +50,6 @@ public sealed class SectionAgg : AggregateRoot {
 		int capacity,
 		Meeting[] meetings,
 		ICorrelatedMessage source) : this() {
-		Ensure.NotEmptyGuid(id, nameof(id));
 		term = Text.Required(term, nameof(term));
 		courseCode = Text.Required(courseCode, nameof(courseCode));
 		title = Text.Required(title, nameof(title));
@@ -50,7 +58,7 @@ public sealed class SectionAgg : AggregateRoot {
 		Ensure.Nonnegative(capacity, nameof(capacity));
 		Ensure.NotNull(meetings, nameof(meetings));
 		Source = source;
-		Raise(new SectionOffered(id, term, courseCode, sectionNumber, title, credits, capacity, meetings));
+		Raise(new SectionOffered(IdFor(term, courseCode, sectionNumber), term, courseCode, sectionNumber, title, credits, capacity, meetings));
 	}
 
 	private void RegisterEvents() {

@@ -81,8 +81,8 @@ public sealed record AddDropClosed(Guid ScheduleId) : Event;
 
 // ── Commands a client sends ─────────────────────────────────────────────────
 
+/// <summary>Offers a section; its id is <see cref="SectionAgg.IdFor"/> of the catalog name.</summary>
 public sealed record OfferSection(
-	Guid SectionId,
 	string Term,
 	string CourseCode,
 	int SectionNumber,

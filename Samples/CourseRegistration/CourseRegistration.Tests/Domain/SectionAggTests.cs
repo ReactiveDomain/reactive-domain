@@ -6,8 +6,8 @@ namespace CourseRegistration.Tests.Domain;
 public sealed class SectionAggTests {
 	[Fact]
 	public void offering_a_section_raises_one_event_carrying_everything_offered() {
-		var id = Guid.NewGuid();
-		var section = new SectionAgg(id, " 2026FA ", "CHEM 101", 2, "General Chemistry", 4, 30, Times.MonWed9, Source());
+		var id = SectionAgg.IdFor("2026FA", "CHEM 101", 2);
+		var section = new SectionAgg(" 2026FA ", "CHEM 101", 2, "General Chemistry", 4, 30, Times.MonWed9, Source());
 
 		Assert.Collection(section.TakeEvents(), e => {
 			var offered = Assert.IsType<SectionOffered>(e);
@@ -20,19 +20,25 @@ public sealed class SectionAggTests {
 		Assert.Equal(id, section.Id);
 	}
 
-	public static TheoryData<Guid, string, string, int, int, int, Type> BadOffers => new() {
-		{ Guid.Empty, "2026FA", "CHEM 101", 1, 4, 30, typeof(ArgumentException) },
-		{ Guid.NewGuid(), " ", "CHEM 101", 1, 4, 30, typeof(ArgumentException) },
-		{ Guid.NewGuid(), "2026FA", "", 1, 4, 30, typeof(ArgumentException) },
-		{ Guid.NewGuid(), "2026FA", "CHEM 101", 0, 4, 30, typeof(ArgumentOutOfRangeException) },
-		{ Guid.NewGuid(), "2026FA", "CHEM 101", 1, 0, 30, typeof(ArgumentOutOfRangeException) },
-		{ Guid.NewGuid(), "2026FA", "CHEM 101", 1, 4, -1, typeof(ArgumentOutOfRangeException) }
+	public static TheoryData<string, string, int, int, int, Type> BadOffers => new() {
+		{ " ", "CHEM 101", 1, 4, 30, typeof(ArgumentException) },
+		{ "2026FA", "", 1, 4, 30, typeof(ArgumentException) },
+		{ "2026FA", "CHEM 101", 0, 4, 30, typeof(ArgumentOutOfRangeException) },
+		{ "2026FA", "CHEM 101", 1, 0, 30, typeof(ArgumentOutOfRangeException) },
+		{ "2026FA", "CHEM 101", 1, 4, -1, typeof(ArgumentOutOfRangeException) }
 	};
 
 	[Theory]
 	[MemberData(nameof(BadOffers))]
-	public void an_invalid_offer_is_refused(Guid id, string term, string course, int number, int credits, int capacity, Type expected) =>
-		Assert.Throws(expected, () => new SectionAgg(id, term, course, number, "Title", credits, capacity, Times.MonWed9, Source()));
+	public void an_invalid_offer_is_refused(string term, string course, int number, int credits, int capacity, Type expected) =>
+		Assert.Throws(expected, () => new SectionAgg(term, course, number, "Title", credits, capacity, Times.MonWed9, Source()));
+
+	[Fact]
+	public void a_section_id_is_its_catalog_name_ignoring_case_and_space() {
+		Assert.Equal(SectionAgg.IdFor("2026FA", "CHEM 101", 1), SectionAgg.IdFor(" 2026fa", "chem 101 ", 1));
+		Assert.NotEqual(SectionAgg.IdFor("2026FA", "CHEM 101", 1), SectionAgg.IdFor("2026FA", "CHEM 101", 2));
+		Assert.NotEqual(SectionAgg.IdFor("2026FA", "CHEM 101", 1), SectionAgg.IdFor("2027SP", "CHEM 101", 1));
+	}
 
 	[Fact]
 	public void a_reservation_carries_what_the_schedule_needs_to_check_it() {

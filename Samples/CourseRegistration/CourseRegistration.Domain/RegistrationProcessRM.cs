@@ -13,15 +13,20 @@ namespace CourseRegistration.Domain;
 /// </summary>
 /// <remarks>
 /// <para>State is rebuilt from both categories on every start; nothing is persisted. While catching up
-/// it sends nothing (<see cref="NullBus"/>), because the commands it would send were sent the first
-/// time. What it learns instead is which steps are still open, and once live it sends exactly those
-/// again. Every command it sends is idempotent, so a step that had in fact completed changes
-/// nothing.</para>
+/// it sends nothing, because the commands it would send were sent the first time. What it learns
+/// instead is which steps are still open, and once live it sends exactly those again. Every command it
+/// sends is idempotent, so a step that had in fact completed changes nothing.</para>
 /// <para>The two categories are read side by side, so catching up, a schedule's answer can arrive
 /// before the reservation it answers. Open steps are therefore counted, not sequenced: each seat
 /// reserved is answered by exactly one add, swap or rejection, and each seat given up by exactly one
 /// release, so a step is open while one side has counted more than the other, whichever arrived
-/// first.</para>
+/// first. A pair whose counts balance, and that is not enrolled, is forgotten.</para>
+/// <para>Commands are sent with <see cref="ICommandPublisher.TrySendAsync"/>, and no send result is awaited.
+/// Give it a <see cref="Dispatcher"/> with at least one publish queue: with none, RD runs the handler
+/// on the sending thread, which here is the queue thread, so a slow handler would hold up the events
+/// behind it. A step is done when the event that closes it
+/// arrives, whatever happened to the command: one that failed, timed out or was lost leaves its step
+/// open, and every step open longer than the retry delay is sent again until it closes.</para>
 /// </remarks>
 public sealed class RegistrationProcessRM :
 	ReadModelBase,
@@ -32,20 +37,30 @@ public sealed class RegistrationProcessRM :
 	IHandle<CourseSwapped>,
 	IHandle<CourseAddRejected>,
 	IHandle<CourseDropped>,
-	IHandle<CourseCancelled> {
+	IHandle<CourseCancelled>,
+	IHandle<RegistrationProcessRM.RetryOpenSteps> {
 	private static readonly ILogger Log = LogManager.GetLogger(typeof(RegistrationProcessRM).FullName!);
-	private static readonly NullBus ReplayBus = new();
 
-	private readonly ICommandPublisher _liveBus;
-	private ICommandPublisher _bus = ReplayBus;
+	private readonly ICommandPublisher _bus;
+	private readonly TimeSpan _retryDelay;
+	private Timer? _retryTimer;
+	private bool _live;
+	private volatile bool _anyOpen;
 
 	private readonly Dictionary<(Guid SectionId, Guid ScheduleId), Slot> _slots = [];
 	private readonly HashSet<Guid> _cancelled = [];
 
+	/// <summary>Asks the process manager to resend the steps open longer than the retry delay. Its timer sends this while any step is open.</summary>
+	public sealed record RetryOpenSteps : Message;
+
 	/// <summary>Creates the process manager; nothing is read or sent until <see cref="StartAsync"/>.</summary>
-	public RegistrationProcessRM(IConfiguredConnection connection, ICommandPublisher bus)
+	/// <param name="connection">Where the section and schedule categories are read from.</param>
+	/// <param name="bus">Where commands are sent once live; a <see cref="Dispatcher"/> with at least one publish queue.</param>
+	/// <param name="retryDelay">How long a step may stay open before it is sent again; 5 seconds when null.</param>
+	public RegistrationProcessRM(IConfiguredConnection connection, ICommandPublisher bus, TimeSpan? retryDelay = null)
 		: base(nameof(RegistrationProcessRM), connection) {
-		_liveBus = bus;
+		_bus = bus;
+		_retryDelay = retryDelay ?? TimeSpan.FromSeconds(5);
 		EventStream.Subscribe<SeatReserved>(this);
 		EventStream.Subscribe<SeatReleased>(this);
 		EventStream.Subscribe<SectionCancelled>(this);
@@ -54,9 +69,10 @@ public sealed class RegistrationProcessRM :
 		EventStream.Subscribe<CourseAddRejected>(this);
 		EventStream.Subscribe<CourseDropped>(this);
 		EventStream.Subscribe<CourseCancelled>(this);
+		EventStream.Subscribe<RetryOpenSteps>(this);
 	}
 
-	/// <summary>Reads both categories, then resends every step left open. Completes once that is done.</summary>
+	/// <summary>Reads both categories, then sends every step left open. Completes once live.</summary>
 	public Task StartAsync() =>
 		StartAllAsync(
 			[StreamStarter.ForCategory<SectionAgg>(), StreamStarter.ForCategory<TermScheduleAgg>()],
@@ -71,18 +87,49 @@ public sealed class RegistrationProcessRM :
 		}
 	}
 
+	/// <summary>How many section/schedule pairs are remembered: those with a step open, or enrolled.</summary>
+	public int Tracked {
+		get {
+			lock (ReaderLock) {
+				return _slots.Count;
+			}
+		}
+	}
+
 	private void GoLive() {
-		_bus = _liveBus;
+		_live = true;
+		Resend(olderThan: TimeSpan.Zero);
+		_retryTimer = new Timer(_ => {
+			if (!_anyOpen)
+				return;
+			try {
+				Publish(new RetryOpenSteps());
+			} catch (ObjectDisposedException) {
+				// A tick that raced Dispose.
+			}
+		}, null, _retryDelay, _retryDelay);
+	}
+
+	void IHandle<RetryOpenSteps>.Handle(RetryOpenSteps message) => Resend(olderThan: _retryDelay);
+
+	private void Resend(TimeSpan olderThan) {
+		var due = DateTime.UtcNow - olderThan;
+		var anyOpen = false;
 		foreach (var slot in _slots.Values.ToList()) {
-			// Resent after a restart: the original cause is not kept, so each resend starts its own trace.
+			var open = AwaitingSchedule(slot) || AwaitingRelease(slot) || AwaitingRemoval(slot);
+			anyOpen |= open;
+			if (!open || slot.SentAt > due)
+				continue;
+			// The original cause is not kept, so a resend starts its own trace.
 			var source = new CorrelationSource(Guid.NewGuid(), Guid.Empty, Guid.NewGuid());
 			if (AwaitingSchedule(slot))
 				SendAdd(slot);
 			if (AwaitingRelease(slot))
-				Send(source, new ReleaseSeat(slot.SectionId, slot.ScheduleId));
+				Send(slot, source, new ReleaseSeat(slot.SectionId, slot.ScheduleId));
 			if (AwaitingRemoval(slot))
-				Send(source, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
+				Send(slot, source, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
 		}
+		_anyOpen = anyOpen;
 	}
 
 	void IHandle<SeatReserved>.Handle(SeatReserved e) {
@@ -91,15 +138,21 @@ public sealed class RegistrationProcessRM :
 		slot.LastReservation = e;
 		if (AwaitingSchedule(slot))
 			SendAdd(slot);
+		Forget(slot);
 	}
 
-	void IHandle<SeatReleased>.Handle(SeatReleased e) => At(e.SectionId, e.ScheduleId).Released++;
+	void IHandle<SeatReleased>.Handle(SeatReleased e) {
+		var slot = At(e.SectionId, e.ScheduleId);
+		slot.Released++;
+		Forget(slot);
+	}
 
 	void IHandle<SectionCancelled>.Handle(SectionCancelled e) {
 		_cancelled.Add(e.SectionId);
 		foreach (var slot in _slots.Values.Where(s => s.SectionId == e.SectionId).ToList()) {
 			if (AwaitingRemoval(slot))
-				Send(e, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
+				Send(slot, e, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
+			Forget(slot);
 		}
 	}
 
@@ -118,21 +171,26 @@ public sealed class RegistrationProcessRM :
 
 	void IHandle<CourseDropped>.Handle(CourseDropped e) => GaveUp(At(e.SectionId, e.ScheduleId), e, enrolled: false);
 
-	void IHandle<CourseCancelled>.Handle(CourseCancelled e) => At(e.SectionId, e.ScheduleId).Enrolled = false;
+	void IHandle<CourseCancelled>.Handle(CourseCancelled e) {
+		var slot = At(e.SectionId, e.ScheduleId);
+		slot.Enrolled = false;
+		Forget(slot);
+	}
 
 	private void Enrolled(Slot slot, ICorrelatedMessage cause) {
 		slot.Answered++;
 		slot.Enrolled = true;
 		// The add raced the cancel and won; take it back off.
 		if (AwaitingRemoval(slot))
-			Send(cause, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
+			Send(slot, cause, new RemoveCancelledCourse(slot.ScheduleId, slot.SectionId));
 	}
 
 	private void GaveUp(Slot slot, ICorrelatedMessage cause, bool enrolled) {
 		slot.Enrolled = enrolled;
 		slot.ReleasesAsked++;
 		if (AwaitingRelease(slot))
-			Send(cause, new ReleaseSeat(slot.SectionId, slot.ScheduleId));
+			Send(slot, cause, new ReleaseSeat(slot.SectionId, slot.ScheduleId));
+		Forget(slot);
 	}
 
 	// A cancelled section answers nothing and releases nothing more: the cancel released every seat.
@@ -142,21 +200,40 @@ public sealed class RegistrationProcessRM :
 
 	private bool AwaitingRemoval(Slot slot) => slot.Enrolled && _cancelled.Contains(slot.SectionId);
 
+	// Only differences between the counts matter, so a pair that balances can start again from zero.
+	private void Forget(Slot slot) {
+		if (slot.Enrolled)
+			return;
+		var balanced = slot.Reserved == slot.Answered && slot.ReleasesAsked == slot.Released;
+		if (balanced || _cancelled.Contains(slot.SectionId))
+			_slots.Remove((slot.SectionId, slot.ScheduleId));
+	}
+
 	private void SendAdd(Slot slot) {
 		var e = slot.LastReservation!;
 		Command command = e.ReplacesSectionId is { } drop
 			? new SwapReservedCourse(e.ScheduleId, drop, e.SectionId, e.Term, e.CourseCode, e.Credits, e.Meetings)
 			: new AddReservedCourse(e.ScheduleId, e.SectionId, e.Term, e.CourseCode, e.Credits, e.Meetings);
-		Send(e, command);
+		Send(slot, e, command);
 	}
 
-	// A failed send stays open and is sent again on the next start.
-	private void Send(ICorrelatedMessage cause, Command command) {
+	// Catching up, nothing is sent: the steps still open are sent once, at the live transition.
+	private void Send(Slot slot, ICorrelatedMessage cause, Command command) {
+		if (!_live)
+			return;
 		command.CorrelationId = cause.CorrelationId;
 		command.CausationId = cause.MsgId;
-		if (!_bus.TrySend(command, out var response))
-			Log.Error("{0} failed and stays open until the next start: {1}", command.GetType().Name,
-				(response as Fail)?.Exception?.Message ?? "no response");
+		slot.SentAt = DateTime.UtcNow;
+		_anyOpen = true;
+		if (!_bus.TrySendAsync(command))
+			Log.Error("{0} was not dispatched; it is sent again while its step stays open", command.GetType().Name);
+	}
+
+	/// <inheritdoc/>
+	protected override void Dispose(bool disposing) {
+		if (disposing)
+			_retryTimer?.Dispose();
+		base.Dispose(disposing);
 	}
 
 	private Slot At(Guid sectionId, Guid scheduleId) {
@@ -175,5 +252,6 @@ public sealed class RegistrationProcessRM :
 		public int Released { get; set; }
 		public bool Enrolled { get; set; }
 		public SeatReserved? LastReservation { get; set; }
+		public DateTime SentAt { get; set; }
 	}
 }

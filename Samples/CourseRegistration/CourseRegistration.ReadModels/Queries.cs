@@ -41,10 +41,11 @@ public sealed class SectionQueries {
 			r => r.Term == search.Term && !r.IsCancelled);
 
 		if (search.Department is { } department) {
-			// Course codes are "DEPT NNN"; the department is everything before the space.
+			// Course codes are "DEPT NNN"; the department is everything before the space. Escaped, so a
+			// % or _ in it is a literal character, as it is to StartsWith.
 			filter = filter.And(new RowFilter<SectionRow>(
-				"UPPER(course_code) LIKE UPPER(@Department) || ' %'",
-				new Dictionary<string, object?> { ["Department"] = department },
+				@"UPPER(course_code) LIKE UPPER(@Department) || ' %' ESCAPE '\'",
+				new Dictionary<string, object?> { ["Department"] = LikeLiteral(department) },
 				r => r.CourseCode.StartsWith(department + " ", StringComparison.OrdinalIgnoreCase)));
 		}
 
@@ -65,6 +66,9 @@ public sealed class SectionQueries {
 
 		return filter;
 	}
+
+	private static string LikeLiteral(string value) =>
+		value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 }
 
 /// <summary>Reads for a student's timetable and a section's roster.</summary>

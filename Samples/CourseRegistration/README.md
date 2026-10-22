@@ -14,7 +14,7 @@ credit limit, no time conflicts and no course twice. Each has one owner.
 
 | Aggregate | Owns |
 |---|---|
-| `SectionAgg` | Capacity. A seat is held by a schedule id; a reservation *is* the seat. |
+| `SectionAgg` | Capacity. A seat is held by a schedule id; a reservation *is* the seat. Its id comes from its catalog name, so a section is offered once. |
 | `TermScheduleAgg` | One student's term: credit limit, time conflicts, no duplicate course, the add/drop window. |
 
 The schedule sits between the student and the course. A course is added in two steps, chained by
@@ -30,8 +30,11 @@ once it holds the new one. Cancelling a section releases every seat and takes th
 schedule.
 
 Both rules hold at all times. The only gap is a seat reserved before the schedule has answered, which
-is never a broken rule. The process manager always closes it, including after a restart: it replays
-with a `NullBus` and resends whatever is still open.
+is never a broken rule. The process manager always closes it. It sends without waiting for the handler,
+and a step stays open until the event that closes it arrives, so any step open longer than the retry
+delay is sent again, whatever happened to the command. Give it a dispatcher with at least one publish
+queue; with none, RD runs the handler on the sending thread. After a restart it replays without
+sending anything, then resends whatever is still open.
 
 ## Where each Dapper usage is
 
@@ -47,10 +50,10 @@ with a `NullBus` and resends whatever is still open.
 | Ownership: an `IRowStore` only for owned tables; queries take `IReadOnlyRowStore` | `Stores.cs`, `Queries.cs` | (compile time) |
 | Natural keys: case-insensitive lookup served by a `UNIQUE (UPPER(col))` index; `FindOne` throws on two matches | `ProjectionSchema.cs`, `SectionQueries.Find` | `the_natural_key_index_refuses_…`, `two_rows_on_one_natural_key_…` |
 | `= ANY(@Values)` with a typed array | `PostgresRowStore.FindIn` | `finding_by_many_values_…` |
-| One filter written as SQL plus a matching predicate, paged with a stable order (`COLLATE "C"`, key last) | `RowFilter`, `SectionQueries.Filter` | `SectionQueriesContract` (both stores), `a_page_sorts_text_by_code_point_…` |
+| One filter written as SQL plus a matching predicate, paged with a stable order (`COLLATE "C"`, key last); user text escaped in `LIKE` | `RowFilter`, `SectionQueries.Filter` | `SectionQueriesContract` (both stores), `a_page_sorts_text_by_code_point_…`, `like_wildcards_…` |
 | Idempotent ledgers: `INSERT … ON CONFLICT DO NOTHING` decides alone (no check-then-insert) | `ReminderLedger`, `CommandAuditLog` | `racing_recorders_send_one_reminder`, `the_audit_log_traces_…` |
-| Command audit with correlation and causation, `jsonb` body | `CommandAuditLog`, `AuditingCommandPublisher` | `the_audit_log_traces_…` |
-| One instance per scheduled window, claimed by primary key | `JobClaims`, `AddDropJobs` | `one_instance_claims_each_window_…`, `the_deadline_jobs_…` |
+| Command audit with correlation and causation, `jsonb` body; an audit outage does not stop commands | `CommandAuditLog`, `AuditingCommandPublisher` | `the_audit_log_traces_…`, `a_command_is_sent_even_when_the_audit_…` |
+| One instance per scheduled window, claimed by primary key with a lease; a window is completed only when every step succeeded | `JobClaims`, `AddDropJobs` | `one_instance_claims_each_window_…`, `an_unfinished_claim_is_taken_over_…`, `a_close_job_with_failures_…` |
 | The same test class against both stores; a Postgres schema per test | `Persistence/Backends.cs` | every `InMemory…`/`Postgres…` pair |
 
 ## Running it

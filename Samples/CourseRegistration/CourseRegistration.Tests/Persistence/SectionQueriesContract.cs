@@ -66,6 +66,15 @@ public abstract class SectionQueriesContract {
 		Assert.Equal(["bio-pm"], Names(queries.Search(new SectionSearch("2026FA", Department: "BIO"), 0, 10)));
 	}
 
+	[Fact]
+	public void like_wildcards_in_a_department_are_literal_characters() {
+		var queries = Seed();
+
+		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: "C_EM"), 0, 10).Items);
+		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: "%"), 0, 10).Items);
+		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: @"CHEM\"), 0, 10).Items);
+	}
+
 	/// <summary>The SQL half reads the meetings out of the jsonb column; the predicate half reads the deserialized array.</summary>
 	[Fact]
 	public void a_start_time_keeps_sections_whose_every_meeting_starts_at_or_after_it() {

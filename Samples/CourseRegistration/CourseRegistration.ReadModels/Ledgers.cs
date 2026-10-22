@@ -81,27 +81,42 @@ public sealed class CommandAuditLog {
 /// <summary>One claimed run of a job.</summary>
 public sealed record JobRun(string ClaimedBy, bool Completed);
 
-/// <summary>Runs of scheduled jobs. One instance wins each window, however many try.</summary>
+/// <summary>
+/// Runs of scheduled jobs. One instance holds each window at a time, however many try; a claim that
+/// is not completed within its lease can be taken over, so a crashed instance does not lose the window.
+/// </summary>
 public sealed class JobClaims {
 	private readonly NpgsqlDataSource _dataSource;
 
 	/// <summary>Writes through <paramref name="dataSource"/>.</summary>
 	public JobClaims(NpgsqlDataSource dataSource) => _dataSource = dataSource;
 
-	/// <summary>Claims <paramref name="job"/>'s run for <paramref name="windowStart"/>.</summary>
-	/// <returns>True for the one caller that claimed it; every other caller, then or later, gets false.</returns>
-	/// <remarks>The primary key decides: the insert that lands first owns the window.</remarks>
-	public bool TryClaim(string job, DateTimeOffset windowStart, string instance) {
+	/// <summary>Claims <paramref name="job"/>'s run for <paramref name="windowStart"/> for <paramref name="lease"/>.</summary>
+	/// <returns>
+	/// True for the one caller that now holds the window. False while another holds an unexpired lease
+	/// on it, and once it is completed.
+	/// </returns>
+	/// <remarks>
+	/// One statement decides: the insert that lands first owns the window, and a takeover updates the row
+	/// only while its lease has lapsed, which Postgres re-checks under the row lock, so two takers cannot
+	/// both win. A lease should outlast a normal run; a run that takes longer can be repeated by a taker,
+	/// so the job's steps must be idempotent.
+	/// </remarks>
+	public bool TryClaim(string job, DateTimeOffset windowStart, string instance, TimeSpan lease) {
 		using var connection = _dataSource.OpenConnection();
 		return connection.Execute("""
-			INSERT INTO job_runs (job_name, window_start, claimed_by, claimed_at)
-			VALUES (@job, @windowStart, @instance, now())
-			ON CONFLICT (job_name, window_start) DO NOTHING
-			""", new { job, windowStart, instance }) == 1;
+			INSERT INTO job_runs (job_name, window_start, claimed_by, claimed_at, lease_until)
+			VALUES (@job, @windowStart, @instance, clock_timestamp(), clock_timestamp() + @lease)
+			ON CONFLICT (job_name, window_start) DO UPDATE SET
+				claimed_by = EXCLUDED.claimed_by,
+				claimed_at = EXCLUDED.claimed_at,
+				lease_until = EXCLUDED.lease_until
+			WHERE job_runs.completed_at IS NULL AND job_runs.lease_until < clock_timestamp()
+			""", new { job, windowStart, instance, lease }) == 1;
 	}
 
-	/// <summary>Marks the run finished. Only the instance that claimed it can.</summary>
-	/// <returns>False when <paramref name="instance"/> does not hold the claim.</returns>
+	/// <summary>Marks the run finished. Only the instance holding the claim can.</summary>
+	/// <returns>False when <paramref name="instance"/> does not hold the claim, including when it was taken over.</returns>
 	public bool Complete(string job, DateTimeOffset windowStart, string instance) {
 		using var connection = _dataSource.OpenConnection();
 		return connection.Execute("""

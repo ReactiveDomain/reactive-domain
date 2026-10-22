@@ -37,6 +37,7 @@ public sealed class StudentTimetableRM :
 	private readonly Dictionary<Guid, ScheduleRow> _schedules = [];
 	private readonly Dictionary<Guid, TimetableEntryRow> _entries = [];
 	private readonly Dictionary<Guid, HashSet<Guid>> _entriesBySection = [];
+	private readonly Dictionary<Guid, HashSet<Guid>> _entriesBySchedule = [];
 
 	/// <summary>Creates the projection; call <see cref="ProjectionRM.StartAsync"/> to run it.</summary>
 	public StudentTimetableRM(IConfiguredConnection connection, IProjectionDb db)
@@ -87,8 +88,8 @@ public sealed class StudentTimetableRM :
 		row.Term = e.Term;
 		_scheduleWrites.Upsert(row.ScheduleId, row);
 		// Entries recorded before the schedule's own first event was read get their student now.
-		foreach (var entry in _entries.Values.Where(x => x.ScheduleId == e.ScheduleId))
-			Write(entry, x => {
+		foreach (var id in EntriesOf(_entriesBySchedule, e.ScheduleId))
+			Write(_entries[id], x => {
 				x.StudentId = e.StudentId;
 				x.Term = e.Term;
 			});
@@ -118,7 +119,7 @@ public sealed class StudentTimetableRM :
 		change(section);
 		_sectionWrites.Upsert(sectionId, section);
 		// The fan-out: one section event, every entry for that section, one transaction.
-		foreach (var id in _entriesBySection.GetValueOrDefault(sectionId) ?? [])
+		foreach (var id in EntriesOf(_entriesBySection, sectionId))
 			Write(_entries[id], entry => Describe(entry, section));
 	}
 
@@ -146,12 +147,13 @@ public sealed class StudentTimetableRM :
 		if (!_entries.Remove(id))
 			return;
 		_entriesBySection[sectionId].Remove(id);
+		_entriesBySchedule[scheduleId].Remove(id);
 		_entryWrites.Delete(id);
 		Recount(Schedule(scheduleId));
 	}
 
 	private void Recount(ScheduleRow schedule) {
-		schedule.Credits = _entries.Values.Where(e => e.ScheduleId == schedule.ScheduleId).Sum(e => e.Credits);
+		schedule.Credits = EntriesOf(_entriesBySchedule, schedule.ScheduleId).Sum(id => _entries[id].Credits);
 		_scheduleWrites.Upsert(schedule.ScheduleId, schedule);
 	}
 
@@ -178,8 +180,16 @@ public sealed class StudentTimetableRM :
 
 	private void Index(TimetableEntryRow entry) {
 		_entries[entry.Id] = entry;
-		if (!_entriesBySection.TryGetValue(entry.SectionId, out var ids))
-			_entriesBySection[entry.SectionId] = ids = [];
-		ids.Add(entry.Id);
+		Add(_entriesBySection, entry.SectionId, entry.Id);
+		Add(_entriesBySchedule, entry.ScheduleId, entry.Id);
+
+		static void Add(Dictionary<Guid, HashSet<Guid>> index, Guid key, Guid id) {
+			if (!index.TryGetValue(key, out var ids))
+				index[key] = ids = [];
+			ids.Add(id);
+		}
 	}
+
+	private static IEnumerable<Guid> EntriesOf(Dictionary<Guid, HashSet<Guid>> index, Guid key) =>
+		index.TryGetValue(key, out var ids) ? ids : [];
 }

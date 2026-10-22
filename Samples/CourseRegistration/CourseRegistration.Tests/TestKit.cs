@@ -34,8 +34,8 @@ internal static class Aggregates {
 		return aggregate;
 	}
 
-	public static SectionAgg Section(int capacity = 30, Meeting[]? meetings = null, string course = "CHEM 101", int credits = 4, Guid? id = null) =>
-		new(id ?? Guid.NewGuid(), "2026FA", course, 1, "General Chemistry", credits, capacity, meetings ?? Times.MonWed9, Source());
+	public static SectionAgg Section(int capacity = 30, Meeting[]? meetings = null, string course = "CHEM 101", int credits = 4) =>
+		new("2026FA", course, 1, "General Chemistry", credits, capacity, meetings ?? Times.MonWed9, Source());
 
 	public static TermScheduleAgg Schedule(int maxCredits = 18, string term = "2026FA") =>
 		new(Guid.NewGuid(), Guid.NewGuid(), term, maxCredits, Source());
@@ -60,7 +60,7 @@ internal sealed class Harness : IDisposable {
 		Store.Connect();
 		Connection = new ConfiguredConnection(Store, new PrefixedCamelCaseStreamNameBuilder("reg"), new JsonMessageSerializer());
 		Repository = new CorrelatedStreamStoreRepository(Connection.StreamNamer, Store, Connection.Serializer);
-		Bus = Own(new Dispatcher(nameof(Harness), defaultAckTimeout: TestTimeouts.CommandTimeout, defaultResponseTimeout: TestTimeouts.CommandTimeout));
+		Bus = Own(new Dispatcher(nameof(Harness), queueCount: 1, defaultAckTimeout: TestTimeouts.CommandTimeout, defaultResponseTimeout: TestTimeouts.CommandTimeout));
 		Own(new RegistrationSvc(Repository).SubscribeTo(Bus));
 		Db = db ?? new InMemoryProjectionDb();
 		if (withProcess)
@@ -70,7 +70,7 @@ internal sealed class Harness : IDisposable {
 	/// <summary>Starts a process manager, as an instance does on boot. A restart is a second call.</summary>
 	public RegistrationProcessRM StartProcess(ICommandPublisher? bus = null) {
 		Process?.Dispose();
-		Process = new RegistrationProcessRM(Connection, bus ?? Bus);
+		Process = new RegistrationProcessRM(Connection, bus ?? Bus, retryDelay: TimeSpan.FromMilliseconds(50));
 		Wait(Process.StartAsync());
 		return Process;
 	}
@@ -88,9 +88,8 @@ internal sealed class Harness : IDisposable {
 
 	public Guid Offer(string course = "CHEM 101", int number = 1, int capacity = 30, int credits = 4, Meeting[]? meetings = null,
 		string term = "2026FA", string title = "General Chemistry") {
-		var id = Guid.NewGuid();
-		Send(new OfferSection(id, term, course, number, title, credits, capacity, meetings ?? Times.MonWed9));
-		return id;
+		Send(new OfferSection(term, course, number, title, credits, capacity, meetings ?? Times.MonWed9));
+		return SectionAgg.IdFor(term, course, number);
 	}
 
 	public Guid Open(int maxCredits = 18, string term = "2026FA", Guid? studentId = null) {
