@@ -33,7 +33,9 @@ public class Dispatcher : IDispatcher {
 	/// timeouts supplied here.
 	/// </summary>
 	/// <param name="name">The name of the underlying bus.</param>
-	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
+	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread. With
+	/// queues, handlers run on the dispatcher's own threads: ambient <see cref="AsyncLocal{T}"/> state set by
+	/// the sender does not cross the queue, so anything a handler needs travels on the message.</param>
 	/// <param name="watchSlowMsg">Log messages that take longer than <paramref name="slowMsgThreshold"/>.</param>
 	/// <param name="slowMsgThreshold">Diagnostic only: a message that takes longer than this to handle is
 	/// logged as slow. It is not a timeout and has no bearing on when a command fails — set
@@ -105,6 +107,13 @@ public class Dispatcher : IDispatcher {
 		TimeSpan? responseTimeout = null,
 		TimeSpan? ackTimeout = null)
 		=> _queuedPublisher.TrySendAsync(command, responseTimeout, ackTimeout);
+
+	/// <inheritdoc cref="MultiQueuedPublisher.SendAsync"/>
+	public Task<CommandResponse> SendAsync(
+		ICommand command,
+		TimeSpan? responseTimeout = null,
+		TimeSpan? ackTimeout = null)
+		=> _queuedPublisher.SendAsync(command, responseTimeout, ackTimeout);
 
 	public IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand {
 		if (HasSubscriberFor<T>())

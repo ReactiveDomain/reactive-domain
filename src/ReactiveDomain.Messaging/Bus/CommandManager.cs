@@ -138,7 +138,9 @@ public class CommandManager :
 		if (_pendingCommands.ContainsKey(command.MsgId))
 			throw new CommandException($"Command tracker already registered for this Command {command.GetType().Name} Id {command.MsgId}.", command);
 
-		var tcs = new TaskCompletionSource<CommandResponse>();
+		// Completed on this subscriber's queue thread, which pumps every in-flight command's ack and
+		// response; a continuation run inline here would stall all of them.
+		var tcs = new TaskCompletionSource<CommandResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
 		var tracker = new CommandTracker(
 			command,
 			tcs,

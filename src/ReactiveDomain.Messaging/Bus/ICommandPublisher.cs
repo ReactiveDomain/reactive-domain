@@ -38,4 +38,24 @@ public interface ICommandPublisher {
 	/// <param name="ackTimeout">How long to wait for processing to start before throwing a timeout exception and sending a cancel</param>
 	/// <returns>Returns true if the command was successfully published. N.B. this does not indicate if the command was processed or succeeded!</returns>
 	bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null);
+	/// <summary>
+	/// Sends a command and returns a task that completes with its response. Never throws for a failed
+	/// command: check whether the response is <see cref="Success"/>.
+	/// </summary>
+	/// <remarks>
+	/// <para>Registration, timeouts and cancellation are those of <see cref="TrySend"/>: an ack or response
+	/// timeout completes the task with a <see cref="Fail"/> carrying the timeout exception, and a command
+	/// whose token is already canceled completes it with <see cref="Canceled"/> without being published.</para>
+	/// <para>Whether the caller is released while the handler runs depends on the publisher. A publisher with
+	/// queues returns once the command is enqueued; one without runs the handler on the calling thread
+	/// before returning. The continuation never runs on a publisher thread.</para>
+	/// <para>This default blocks on <see cref="TrySend"/>; publishers that can release the caller override it.</para>
+	/// </remarks>
+	/// <param name="command">the command to send</param>
+	/// <param name="responseTimeout">How long to wait for completion before failing the command and sending a cancel</param>
+	/// <param name="ackTimeout">How long to wait for processing to start before failing the command and sending a cancel</param>
+	Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		TrySend(command, out var response, responseTimeout, ackTimeout);
+		return Task.FromResult(response);
+	}
 }

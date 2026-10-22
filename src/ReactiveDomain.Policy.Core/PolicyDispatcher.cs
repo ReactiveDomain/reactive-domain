@@ -36,6 +36,14 @@ public class PolicyDispatcher : IDispatcher {
 		return _getPolicy().HasPermission(command.GetType()) &&
 			   _dispatcher.TrySendAsync(command, responseTimeout, ackTimeout);
 	}
+	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
+	/// <remarks>A command the current policy does not permit completes with a <see cref="Fail"/> carrying an <see cref="AuthorizationException"/>.</remarks>
+	public Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		if (_getPolicy().HasPermission(command.GetType())) {
+			return _dispatcher.SendAsync(command, responseTimeout, ackTimeout);
+		}
+		return Task.FromResult(command.Fail(new AuthorizationException(command.GetType(), null)));
+	}
 	public bool TrySendAsync(ICommand command, [NotNullWhen(false)] out AuthorizationException? exception, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		if (_getPolicy().HasPermission(command.GetType())) {
 			exception = null;

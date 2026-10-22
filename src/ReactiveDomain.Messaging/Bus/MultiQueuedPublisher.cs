@@ -12,7 +12,9 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	/// default timeouts supplied here.
 	/// </summary>
 	/// <param name="bus">The bus messages are published on.</param>
-	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread.</param>
+	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread. With
+	/// queues, handlers run on the publisher's own threads: ambient <see cref="AsyncLocal{T}"/> state set by
+	/// the sender does not cross the queue, so anything a handler needs travels on the message.</param>
 	/// <param name="slowMsgThreshold">Diagnostic only: a publish-queue message that takes longer than
 	/// this is logged as slow. It is not a timeout and has no bearing on when a command fails.</param>
 	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
@@ -127,12 +129,62 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 
 	}
 
+	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
+	/// <remarks>
+	/// With queues the caller is released as soon as the command is enqueued and resumes when the response
+	/// arrives. With <c>queueCount == 0</c> the handler runs on the calling thread before this returns.
+	/// </remarks>
+	public Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		TaskCompletionSource<CommandResponse> tcs;
+		try {
+			if (command.IsCanceled) {
+				var response = command.Canceled();
+				Publish(response);
+				return Task.FromResult(response);
+			}
+			tcs = Dispatch(command, responseTimeout, ackTimeout);
+		} catch (Exception ex) {
+			return Task.FromResult(command.Fail(ex));
+		}
+		return AwaitResponse(command, tcs.Task);
+	}
+
+	/// <summary>Maps a faulted or canceled tracker task to the <see cref="Fail"/> that <see cref="TrySend"/> would return.</summary>
+	private static async Task<CommandResponse> AwaitResponse(ICommand command, Task<CommandResponse> response) {
+		try {
+			return await response.ConfigureAwait(false);
+		} catch (Exception ex) {
+			return command.Fail(ex);
+		}
+	}
+
 	private void Execute(
 		ICommand command,
 		out CommandResponse? response,
 		bool blocking = true,
 		TimeSpan? responseTimeout = null,
 		TimeSpan? ackTimeout = null) {
+		var tcs = Dispatch(command, responseTimeout, ackTimeout);
+		if (!blocking) {
+			response = null;
+			return;
+		}
+		try {
+			//blocking caller until result is set 
+			response = tcs.Task.Result;
+		} catch (AggregateException aggEx) {
+			if (aggEx.InnerException != null) {
+				throw aggEx.InnerException;
+			}
+			throw;
+		}
+	}
+
+	/// <summary>Registers the command's tracker and publishes the command; the returned source completes with the response.</summary>
+	private TaskCompletionSource<CommandResponse> Dispatch(
+		ICommand command,
+		TimeSpan? responseTimeout,
+		TimeSpan? ackTimeout) {
 
 		TaskCompletionSource<CommandResponse>? tcs = null;
 		try {
@@ -156,20 +208,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			tcs.SetResult(command.Fail(ex));
 			throw;
 		}
-
-		if (!blocking) {
-			response = null;
-			return;
-		}
-		try {
-			//blocking caller until result is set 
-			response = tcs.Task.Result;
-		} catch (AggregateException aggEx) {
-			if (aggEx.InnerException != null) {
-				throw aggEx.InnerException;
-			}
-			throw;
-		}
+		return tcs;
 	}
 
 	protected virtual void Dispose(bool disposing) {

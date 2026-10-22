@@ -47,6 +47,13 @@ public class NullableBus : IDispatcher {
 		return _target?.TrySendAsync(command, responseTimeout, ackTimeout) ?? false;
 	}
 
+	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
+	public Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		if (RedirectToNull || _target == null)
+			return Task.FromResult(command.Succeed());
+		return _target.SendAsync(command, responseTimeout, ackTimeout);
+	}
+
 	#endregion
 
 	#region Implementation of ICommandSubscriber
