@@ -202,6 +202,16 @@ namespace ReactiveDomain.Policy.Tests
             Assert.False(((PolicyDispatcher)dispatcher).TrySendAsync(new OtherCmd(), out AuthException));
             Assert.NotNull(AuthException);
 
+            //SendAsync
+            Assert.IsType<Success>(dispatcher.SendAsync(new AddItem()).GetAwaiter().GetResult());
+            Assert.IsType<Success>(dispatcher.SendAsync(new DisplayItem()).GetAwaiter().GetResult());
+            var denied = dispatcher.SendAsync(new DeleteItem()).GetAwaiter().GetResult();
+            Assert.IsType<Fail>(denied);
+            Assert.IsType<AuthorizationException>(((Fail)denied).Exception);
+            denied = dispatcher.SendAsync(new OtherCmd()).GetAwaiter().GetResult();
+            Assert.IsType<Fail>(denied);
+            Assert.IsType<AuthorizationException>(((Fail)denied).Exception);
+
             dispatcher.Publish(new OtherMsg());
 
             Assert.Equal(4, Interlocked.Exchange(ref _addItem, 0));

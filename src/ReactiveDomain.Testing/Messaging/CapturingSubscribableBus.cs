@@ -165,6 +165,13 @@ public sealed class CapturingSubscribableBus : IDispatcher {
 		return response is Success;
 	}
 
+	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
+	/// <remarks>Runs the handler before returning, as <see cref="TrySend"/> does; the returned task is already complete.</remarks>
+	public Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+		TrySend(command, out var response, responseTimeout, ackTimeout);
+		return Task.FromResult(response);
+	}
+
 	public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		_sentCommands.Add(command);
 		_allMessages.Add(command);

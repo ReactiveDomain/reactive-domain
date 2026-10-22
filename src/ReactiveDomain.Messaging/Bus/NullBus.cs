@@ -38,6 +38,10 @@ public class NullBus : IDispatcher {
 		return true;
 	}
 
+	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
+	public virtual Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null)
+		=> Task.FromResult(command.Succeed());
+
 	public virtual IDisposable Subscribe<T>(IHandleCommand<T> handler) where T : class, ICommand
 		=> Disposable.Empty;
 
