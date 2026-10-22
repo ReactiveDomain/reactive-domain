@@ -1,0 +1,13 @@
+<Project>
+	<!-- The sample builds against this repo's own projects, so it always tracks master. It does not
+	     inherit src/Directory.Build.props: that one is for the published packages. -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<IsPackable>false</IsPackable>
+		<RdSrc>$(MSBuildThisFileDirectory)../../src/</RdSrc>
+	</PropertyGroup>
+</Project>
