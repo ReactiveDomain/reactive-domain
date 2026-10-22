@@ -6,8 +6,8 @@ namespace CourseRegistration.ReadModels;
 
 /// <summary>Records every command in a <see cref="CommandAuditLog"/> before sending it on.</summary>
 /// <remarks>
-/// Recorded before the send, so a command that fails is still in the trace. A failed recording is
-/// logged and the command is sent anyway: the audit lives in the read-side database, and its outage
+/// Recorded before the send, so a command the handler rejects is still in the trace. A recording that
+/// throws is logged and the command is sent anyway: the audit lives in the read-side database, and its outage
 /// must not stop the write side.
 /// </remarks>
 public sealed class AuditingCommandPublisher : ICommandPublisher {

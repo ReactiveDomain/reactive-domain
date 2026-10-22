@@ -5,7 +5,8 @@ using ReactiveDomain.Messaging;
 
 namespace CourseRegistration.Tests.Persistence;
 
-public sealed class AuditingCommandPublisherTests {
+// ReSharper disable once InconsistentNaming
+public sealed class when_auditing_commands {
 	/// <summary>The audit is in the read-side database; with it unreachable, commands still reach the write side.</summary>
 	[Fact]
 	public void a_command_is_sent_even_when_the_audit_cannot_be_written() {

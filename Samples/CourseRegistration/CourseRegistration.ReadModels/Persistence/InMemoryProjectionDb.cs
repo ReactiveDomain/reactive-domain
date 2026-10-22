@@ -76,7 +76,7 @@ public sealed class InMemoryRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 
 	/// <inheritdoc/>
 	public IReadOnlyList<TRow> FindBy(params Match[] matches) {
-		// Resolved before any row is read, so an unknown column fails on an empty table too, as SQL does.
+		// Resolved before any row is read, so an unknown column throws on an empty table too, as SQL does.
 		foreach (var match in matches)
 			RowMap<TRow>.Column(match.Column);
 		return Where(row => matches.All(m => Matches(row, m)));

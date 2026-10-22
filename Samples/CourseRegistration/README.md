@@ -40,21 +40,21 @@ sending anything, then resends whatever is still open.
 
 | Usage | Code | Tests |
 |---|---|---|
-| Rows mapped by `[Table]`/`[Column]`/`[Key]`/`[NotMapped]`; `col AS Prop` select lists; `ON CONFLICT` upsert and insert | `Persistence/RowMap.cs`, `Persistence/PostgresProjectionDb.cs` | `RowStoreContract` |
+| Rows mapped by `[Table]`/`[Column]`/`[Key]`/`[NotMapped]`; `col AS Prop` select lists; `ON CONFLICT` upsert and insert | `Persistence/RowMap.cs`, `Persistence/PostgresProjectionDb.cs` | `when_storing_rows` |
 | `jsonb` columns: `@Prop::jsonb` on write, queried with `jsonb_array_elements` | `Rows.cs`, `Queries.cs` | `a_jsonb_column_round_trips`, `a_start_time_keeps_…` |
 | Every write in a transaction scope; work that throws keeps nothing | `IProjectionDb.InTransaction` | `a_transaction_that_throws_keeps_none_…` |
-| Rows and checkpoints in one transaction, through RD's `BufferedReadModelBase`/`WriteBuffer` | `ProjectionRM.cs` | `ProjectionContracts` |
+| Rows and checkpoints in one transaction, through RD's `BufferedReadModelBase`/`WriteBuffer` | `ProjectionRM.cs` | `when_projecting_registrations` |
 | Resuming from saved checkpoints with no double count; checkpoints that never move back and skip unapplied streams | `ProjectionRM.StartAsync`, `PostgresCheckpointStore` | `a_restarted_catalog_resumes_…`, `checkpoints_are_kept_per_stream_…` |
-| A failed write: nothing committed, retried by the next flush, replayed after a restart | `ProjectionRM.Flush` | `a_failed_write_saves_neither_…`, `a_restart_after_a_failed_write_…` |
+| A write that throws: nothing committed, retried by the next flush, replayed after a restart | `ProjectionRM.Flush` | `a_write_that_throws_saves_neither_…`, `a_restart_after_a_write_that_threw_…` |
 | Multi-stream projection: one checkpoint per category, no cross-stream ordering assumed, one-to-many fan-out | `StudentTimetableRM.cs` | `the_timetable_saves_a_checkpoint_…`, `caught_up_from_scratch_…`, `rescheduling_a_section_…` |
 | Ownership: an `IRowStore` only for owned tables; queries take `IReadOnlyRowStore` | `Stores.cs`, `Queries.cs` | (compile time) |
 | Natural keys: case-insensitive lookup served by a `UNIQUE (UPPER(col))` index; `FindOne` throws on two matches | `ProjectionSchema.cs`, `SectionQueries.Find` | `the_natural_key_index_refuses_…`, `two_rows_on_one_natural_key_…` |
 | `= ANY(@Values)` with a typed array | `PostgresRowStore.FindIn` | `finding_by_many_values_…` |
-| One filter written as SQL plus a matching predicate, paged with a stable order (`COLLATE "C"`, key last); user text escaped in `LIKE` | `RowFilter`, `SectionQueries.Filter` | `SectionQueriesContract` (both stores), `a_page_sorts_text_by_code_point_…`, `like_wildcards_…` |
+| One filter written as SQL plus a matching predicate, paged with a stable order (`COLLATE "C"`, key last); user text escaped in `LIKE` | `RowFilter`, `SectionQueries.Filter` | `when_searching_sections` (both stores), `a_page_sorts_text_by_code_point_…`, `like_wildcards_…` |
 | Idempotent ledgers: `INSERT … ON CONFLICT DO NOTHING` decides alone (no check-then-insert) | `ReminderLedger`, `CommandAuditLog` | `racing_recorders_send_one_reminder`, `the_audit_log_traces_…` |
 | Command audit with correlation and causation, `jsonb` body; an audit outage does not stop commands | `CommandAuditLog`, `AuditingCommandPublisher` | `the_audit_log_traces_…`, `a_command_is_sent_even_when_the_audit_…` |
-| One instance per scheduled window, claimed by primary key with a lease; a window is completed only when every step succeeded | `JobClaims`, `AddDropJobs` | `one_instance_claims_each_window_…`, `an_unfinished_claim_is_taken_over_…`, `a_close_job_with_failures_…` |
-| The same test class against both stores; a Postgres schema per test | `Persistence/Backends.cs` | every `InMemory…`/`Postgres…` pair |
+| One instance per scheduled window, claimed by primary key with a lease; a window is completed only when every step succeeded | `JobClaims`, `AddDropJobs` | `one_instance_claims_each_window_…`, `an_unfinished_claim_is_taken_over_…`, `a_close_job_with_unsent_closes_…` |
+| The same test class against both stores; a Postgres schema per test | `Persistence/Backends.cs` | every `…_in_memory`/`…_in_postgres` pair |
 
 ## Running it
 
@@ -62,7 +62,7 @@ sending anything, then resends whatever is still open.
 dotnet test Samples/CourseRegistration/CourseRegistration.sln
 ```
 
-The `Postgres…` test classes start `postgres:16-alpine` with Testcontainers, so they need a reachable
+The `…_in_postgres` test classes start `postgres:16-alpine` with Testcontainers, so they need a reachable
 Docker-API socket. With Podman, point Testcontainers at the machine's socket and turn off its reaper
 container:
 
@@ -82,7 +82,7 @@ export COURSE_REGISTRATION_POSTGRES="Host=127.0.0.1;Port=5432;Database=course_re
 Every other test runs in memory and needs nothing:
 
 ```bash
-dotnet test Samples/CourseRegistration/CourseRegistration.sln --filter "FullyQualifiedName!~Postgres"
+dotnet test Samples/CourseRegistration/CourseRegistration.sln --filter "FullyQualifiedName!~_in_postgres"
 ```
 
 ## What a store in memory cannot show

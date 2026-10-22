@@ -3,7 +3,8 @@ using static CourseRegistration.Tests.Aggregates;
 
 namespace CourseRegistration.Tests.Domain;
 
-public sealed class SectionAggTests {
+// ReSharper disable once InconsistentNaming
+public sealed class when_managing_section_seats {
 	[Fact]
 	public void offering_a_section_raises_one_event_carrying_everything_offered() {
 		var id = SectionAgg.IdFor("2026FA", "CHEM 101", 2);

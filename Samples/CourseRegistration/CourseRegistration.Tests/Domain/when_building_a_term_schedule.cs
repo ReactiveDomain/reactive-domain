@@ -3,7 +3,8 @@ using static CourseRegistration.Tests.Aggregates;
 
 namespace CourseRegistration.Tests.Domain;
 
-public sealed class TermScheduleAggTests {
+// ReSharper disable once InconsistentNaming
+public sealed class when_building_a_term_schedule {
 	private static readonly Guid Chem = Guid.NewGuid();
 	private static readonly Guid Bio = Guid.NewGuid();
 	private static readonly Guid Hist = Guid.NewGuid();

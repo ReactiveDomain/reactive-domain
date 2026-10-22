@@ -71,11 +71,11 @@ public sealed class TermScheduleAgg : AggregateRoot {
 		Raise(new CourseAdded(Id, sectionId, courseCode, credits, meetings));
 	}
 
-	/// <summary>
-	/// Replaces <paramref name="dropSectionId"/> with a section whose seat is already reserved, as one
-	/// change: the student never holds neither, and keeps the old one if the new one is turned down.
-	/// </summary>
-	/// <remarks>Idempotent: once the swap has happened, repeating it raises nothing.</remarks>
+	/// <summary>Replaces <paramref name="dropSectionId"/> with a section whose seat is already reserved, in one change.</summary>
+	/// <remarks>
+	/// The student always holds one of the two: if the new section is turned down, the old one stays.
+	/// Idempotent: once the swap has happened, repeating it raises nothing.
+	/// </remarks>
 	public void Swap(Guid dropSectionId, Guid addSectionId, string term, string courseCode, int credits, Meeting[] meetings) {
 		Ensure.NotEmptyGuid(dropSectionId, nameof(dropSectionId));
 		Ensure.NotEmptyGuid(addSectionId, nameof(addSectionId));

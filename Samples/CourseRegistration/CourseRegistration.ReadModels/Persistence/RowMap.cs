@@ -21,7 +21,7 @@ public sealed record RowColumn(PropertyInfo Property, string Name, bool IsJson) 
 /// makes a filter that passes in an in-memory test name the same column in SQL.
 /// </remarks>
 public static class RowMap<TRow> {
-	/// <summary>The table the rows live in.</summary>
+	/// <summary>The table the rows are stored in.</summary>
 	public static string Table { get; } =
 		typeof(TRow).GetCustomAttribute<TableAttribute>()?.Name
 		?? throw new InvalidOperationException($"{typeof(TRow).Name} has no [Table] attribute.");
@@ -49,7 +49,7 @@ public static class RowMap<TRow> {
 		Columns.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>The column named <paramref name="name"/>.</summary>
-	/// <exception cref="ArgumentException">No such column: a typo fails in an in-memory test rather than against Postgres.</exception>
+	/// <exception cref="ArgumentException">No such column: a typo is caught by an in-memory test rather than by Postgres.</exception>
 	public static RowColumn Column(string name) =>
 		ByName.TryGetValue(name, out var column)
 			? column

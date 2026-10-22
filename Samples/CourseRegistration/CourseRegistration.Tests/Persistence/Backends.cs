@@ -63,13 +63,13 @@ public sealed class PostgresCollection : ICollectionFixture<PostgresFixture> {
 	public const string Name = "postgres";
 }
 
-/// <summary>Fails the next transactions it is told to, after their work has run, so nothing they wrote is kept.</summary>
+/// <summary>Throws before committing the next transactions it is told to, after their work has run, so nothing they wrote is kept.</summary>
 internal sealed class FaultyDb(IProjectionDb inner) : IProjectionDb {
-	private int _failures;
+	private int _throwsLeft;
 
 	public int Commits { get; private set; }
 
-	public void FailNext(int count = 1) => Interlocked.Exchange(ref _failures, count);
+	public void ThrowBeforeNextCommit(int count = 1) => Interlocked.Exchange(ref _throwsLeft, count);
 
 	public IRowStore<TKey, TRow> Rows<TKey, TRow>() where TKey : notnull where TRow : class, new() => inner.Rows<TKey, TRow>();
 
@@ -78,9 +78,9 @@ internal sealed class FaultyDb(IProjectionDb inner) : IProjectionDb {
 	public void InTransaction(Action<IWriteScope> work) {
 		inner.InTransaction(scope => {
 			work(scope);
-			if (Interlocked.Decrement(ref _failures) >= 0)
-				throw new InvalidOperationException("injected failure before commit");
-			Interlocked.Exchange(ref _failures, 0);
+			if (Interlocked.Decrement(ref _throwsLeft) >= 0)
+				throw new InvalidOperationException("thrown before commit");
+			Interlocked.Exchange(ref _throwsLeft, 0);
 		});
 		Commits++;
 	}

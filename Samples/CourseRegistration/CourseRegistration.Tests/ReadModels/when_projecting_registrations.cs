@@ -9,11 +9,12 @@ namespace CourseRegistration.Tests.ReadModels;
 /// The read models end to end, against each database: events through RD's in-memory store, rows and
 /// checkpoints into the database, and restarts that resume from what was saved.
 /// </summary>
-public abstract class ProjectionContracts : IDisposable {
+// ReSharper disable once InconsistentNaming
+public abstract class when_projecting_registrations : IDisposable {
 	private readonly Func<IProjectionDb> _newDb;
 	private readonly Harness _h;
 
-	protected ProjectionContracts(Func<IProjectionDb> newDb) {
+	protected when_projecting_registrations(Func<IProjectionDb> newDb) {
 		_newDb = newDb;
 		_h = new Harness(newDb());
 	}
@@ -88,13 +89,13 @@ public abstract class ProjectionContracts : IDisposable {
 
 	/// <summary>The rows and the checkpoint commit together or not at all; the buffered change is written by the next flush.</summary>
 	[Fact]
-	public void a_failed_write_saves_neither_rows_nor_checkpoint_and_the_next_write_saves_both() {
+	public void a_write_that_throws_saves_neither_rows_nor_checkpoint_and_the_next_write_saves_both() {
 		var faulty = new FaultyDb(_h.Db);
 		var chem = _h.Offer();
 		var catalog = _h.StartCatalog(faulty);
 		var before = Saved(catalog.Name, typeof(SectionAgg));
 
-		faulty.FailNext();
+		faulty.ThrowBeforeNextCommit();
 		Enrol(_h.Open(), chem);
 		Harness.Eventually(() => catalog.Idle && catalog.Version >= 2, "the reservation was not handled");
 		Assert.Equal(0, _h.Sections().Get(chem)!.SeatsHeld);
@@ -108,11 +109,11 @@ public abstract class ProjectionContracts : IDisposable {
 	}
 
 	[Fact]
-	public void a_restart_after_a_failed_write_replays_the_event_it_lost() {
+	public void a_restart_after_a_write_that_threw_replays_the_event_it_lost() {
 		var faulty = new FaultyDb(_h.Db);
 		var chem = _h.Offer();
 		var first = _h.StartCatalog(faulty);
-		faulty.FailNext();
+		faulty.ThrowBeforeNextCommit();
 		Enrol(_h.Open(), chem);
 		Harness.Eventually(() => first.Idle && first.Version >= 2, "the reservation was not handled");
 		first.Dispose();
@@ -243,7 +244,9 @@ public abstract class ProjectionContracts : IDisposable {
 	}
 }
 
-public sealed class InMemoryProjectionTests() : ProjectionContracts(() => new InMemoryProjectionDb());
+// ReSharper disable once InconsistentNaming
+public sealed class when_projecting_registrations_in_memory() : when_projecting_registrations(() => new InMemoryProjectionDb());
 
 [Collection(PostgresCollection.Name)]
-public sealed class PostgresProjectionTests(PostgresFixture postgres) : ProjectionContracts(() => new PostgresProjectionDb(postgres.NewDatabase()));
+// ReSharper disable once InconsistentNaming
+public sealed class when_projecting_registrations_in_postgres(PostgresFixture postgres) : when_projecting_registrations(() => new PostgresProjectionDb(postgres.NewDatabase()));

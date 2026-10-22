@@ -10,8 +10,8 @@ public interface IReminderSender {
 	string Send(Guid studentId, string term, string kind);
 }
 
-/// <summary>What a job run did. A run with failures is left unfinished, so a later run takes it over.</summary>
-public sealed record JobResult(bool Claimed, int Done, int Failed = 0);
+/// <summary>What a job run did. A run with steps left unsent is left unfinished, so a later run takes it over.</summary>
+public sealed record JobResult(bool Claimed, int Done, int Unsent = 0);
 
 /// <summary>
 /// The add/drop deadline jobs. Every instance runs them on the same schedule; the window claim makes
@@ -73,17 +73,17 @@ public sealed class AddDropJobs {
 	public JobResult CloseAddDrop(string term, DateTimeOffset window) {
 		if (!_claims.TryClaim($"close-add-drop:{term}", window, _instance, _lease))
 			return new JobResult(false, 0);
-		int closed = 0, failed = 0;
+		int closed = 0, unsent = 0;
 		var source = new CorrelationSource(Guid.NewGuid(), Guid.Empty, Guid.NewGuid());
 		foreach (var schedule in _timetables.OpenSchedules(term)) {
 			var command = MessageBuilder.From(source).Build(() => new CloseAddDrop(schedule.ScheduleId));
 			if (_bus.TrySend(command, out _))
 				closed++;
 			else
-				failed++;
+				unsent++;
 		}
-		if (failed == 0)
+		if (unsent == 0)
 			_claims.Complete($"close-add-drop:{term}", window, _instance);
-		return new JobResult(true, closed, failed);
+		return new JobResult(true, closed, unsent);
 	}
 }

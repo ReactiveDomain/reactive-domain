@@ -8,7 +8,8 @@ namespace CourseRegistration.Tests.Persistence;
 /// The search filter is written twice, as SQL and as a predicate. These run each case against both
 /// stores and expect the same answer from each, so the two halves cannot drift apart.
 /// </summary>
-public abstract class SectionQueriesContract {
+// ReSharper disable once InconsistentNaming
+public abstract class when_searching_sections {
 	protected abstract IProjectionDb NewDb();
 
 	private readonly Dictionary<string, Guid> _ids = [];
@@ -108,11 +109,13 @@ public abstract class SectionQueriesContract {
 	}
 }
 
-public sealed class InMemorySectionQueriesTests : SectionQueriesContract {
+// ReSharper disable once InconsistentNaming
+public sealed class when_searching_sections_in_memory : when_searching_sections {
 	protected override IProjectionDb NewDb() => new InMemoryProjectionDb();
 }
 
 [Collection(PostgresCollection.Name)]
-public sealed class PostgresSectionQueriesTests(PostgresFixture postgres) : SectionQueriesContract {
+// ReSharper disable once InconsistentNaming
+public sealed class when_searching_sections_in_postgres(PostgresFixture postgres) : when_searching_sections {
 	protected override IProjectionDb NewDb() => new PostgresProjectionDb(postgres.NewDatabase());
 }

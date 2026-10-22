@@ -8,7 +8,8 @@ namespace CourseRegistration.Tests.Persistence;
 
 /// <summary>The tables written directly rather than projected. They rely on Postgres keys, so they run only there.</summary>
 [Collection(PostgresCollection.Name)]
-public sealed class PostgresLedgerTests(PostgresFixture postgres) {
+// ReSharper disable once InconsistentNaming
+public sealed class when_writing_ledgers_in_postgres(PostgresFixture postgres) {
 	[Fact]
 	public void a_reminder_is_recorded_once_however_often_it_is_tried() {
 		var ledger = new ReminderLedger(postgres.NewDatabase());
@@ -98,26 +99,26 @@ public sealed class PostgresLedgerTests(PostgresFixture postgres) {
 		Assert.Single(results, r => r);
 	}
 
-	/// <summary>A close that fails leaves the window unfinished; the next run, after the lease, closes what is left.</summary>
+	/// <summary>A close left unsent leaves the window unfinished; the next run, after the lease, closes what is left.</summary>
 	[Fact]
-	public void a_close_job_with_failures_stays_unfinished_until_a_later_run_completes_it() {
+	public void a_close_job_with_unsent_closes_stays_unfinished_until_a_later_run_completes_it() {
 		var data = postgres.NewDatabase();
 		using var h = new Harness(new PostgresProjectionDb(data));
 		var timetable = h.StartTimetable();
 		var schedules = new[] { h.Open(), h.Open(), h.Open() };
 		h.CatchUp(timetable);
 		var window = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
-		var failOne = new FailFirstBus(h.Bus);
+		var refuseOne = new RefuseFirstBus(h.Bus);
 		var claims = new JobClaims(data);
 
-		var first = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), failOne, new RecordingSender(), "a", TimeSpan.Zero)
+		var first = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), refuseOne, new RecordingSender(), "a", TimeSpan.Zero)
 			.CloseAddDrop("2026FA", window);
 		h.CatchUp(timetable);
 		var second = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), h.Bus, new RecordingSender(), "b", TimeSpan.Zero)
 			.CloseAddDrop("2026FA", window);
 
-		Assert.Equal((true, 2, 1), (first.Claimed, first.Done, first.Failed));
-		Assert.Equal((true, 1, 0), (second.Claimed, second.Done, second.Failed));
+		Assert.Equal((true, 2, 1), (first.Claimed, first.Done, first.Unsent));
+		Assert.Equal((true, 1, 0), (second.Claimed, second.Done, second.Unsent));
 		Assert.Equal(new JobRun("b", true), claims.Run("close-add-drop:2026FA", window));
 		Assert.All(schedules, s => Assert.True(h.Schedule(s).IsClosed));
 	}
@@ -153,7 +154,8 @@ public sealed class PostgresLedgerTests(PostgresFixture postgres) {
 		Assert.Empty(h.Timetables().OpenSchedules("2026FA"));
 	}
 
-	private sealed class FailFirstBus(ICommandPublisher inner) : ICommandPublisher {
+	/// <summary>Refuses the first command, then passes the rest through.</summary>
+	private sealed class RefuseFirstBus(ICommandPublisher inner) : ICommandPublisher {
 		private int _sent;
 
 		public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>

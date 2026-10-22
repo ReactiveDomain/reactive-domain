@@ -90,8 +90,8 @@ public sealed class RegistrationSvc :
 		Change<SectionAgg>(cmd, cmd.SectionId, s => s.Cancel());
 
 	/// <summary>Asks the section for a seat; the process manager adds the course once it is reserved.</summary>
-	// The schedule is read only to prove it exists; the reservation is the section's decision.
 	public CommandResponse Handle(RequestCourse cmd) {
+		// The schedule is read only to prove it exists; the reservation is the section's decision.
 		if (!_repository.TryGetById<TermScheduleAgg>(cmd.ScheduleId, out _, cmd))
 			return cmd.Fail(new AggregateNotFoundException(cmd.ScheduleId, typeof(TermScheduleAgg)));
 		return Change<SectionAgg>(cmd, cmd.SectionId, s => s.Reserve(cmd.ScheduleId));

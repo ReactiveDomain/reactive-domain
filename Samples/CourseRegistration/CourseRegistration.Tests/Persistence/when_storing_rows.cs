@@ -5,10 +5,11 @@ using ReactiveDomain;
 namespace CourseRegistration.Tests.Persistence;
 
 /// <summary>
-/// What every <see cref="IProjectionDb"/> must do, run against each one. A behaviour that passes
-/// in memory and fails in Postgres, or the reverse, fails here rather than in production.
+/// What every <see cref="IProjectionDb"/> must do, run against each one. A behaviour that differs
+/// between memory and Postgres is caught here rather than in production.
 /// </summary>
-public abstract class RowStoreContract {
+// ReSharper disable once InconsistentNaming
+public abstract class when_storing_rows {
 	protected abstract IProjectionDb NewDb();
 
 	private static SectionRow Row(string course = "CHEM 101", int number = 1, string term = "2026FA", int capacity = 30, int held = 0) => new() {
@@ -117,7 +118,7 @@ public abstract class RowStoreContract {
 	}
 
 	[Fact]
-	public void naming_a_column_the_row_does_not_have_fails_before_any_sql() {
+	public void naming_a_column_the_row_does_not_have_throws_before_any_sql() {
 		var store = NewDb().Rows<Guid, SectionRow>();
 
 		Assert.Throws<ArgumentException>(() => store.FindBy(Match.Eq("course", "CHEM 101")));
@@ -178,7 +179,8 @@ public abstract class RowStoreContract {
 	}
 }
 
-public sealed class InMemoryRowStoreTests : RowStoreContract {
+// ReSharper disable once InconsistentNaming
+public sealed class when_storing_rows_in_memory : when_storing_rows {
 	protected override IProjectionDb NewDb() => new InMemoryProjectionDb();
 
 	[Fact]
@@ -196,7 +198,8 @@ public sealed class InMemoryRowStoreTests : RowStoreContract {
 }
 
 [Collection(PostgresCollection.Name)]
-public sealed class PostgresRowStoreTests(PostgresFixture postgres) : RowStoreContract {
+// ReSharper disable once InconsistentNaming
+public sealed class when_storing_rows_in_postgres(PostgresFixture postgres) : when_storing_rows {
 	protected override IProjectionDb NewDb() => new PostgresProjectionDb(postgres.NewDatabase());
 
 	/// <summary>Postgres does not let the duplicate in: the expression index is the natural key, case and all.</summary>

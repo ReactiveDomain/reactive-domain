@@ -5,8 +5,6 @@ namespace CourseRegistration.Domain;
 // Events and commands are defined together. None of them names a parameter CorrelationId,
 // CausationId or MsgId: those are on the base records, and a parameter would hide them.
 
-// ── Section ─────────────────────────────────────────────────────────────────
-
 public sealed record SectionOffered(
 	Guid SectionId,
 	string Term,
@@ -40,8 +38,6 @@ public sealed record SectionCapacityChanged(Guid SectionId, int Capacity) : Even
 
 /// <summary>Every seat is released with the section; <see cref="HeldBy"/> names the schedules that held one.</summary>
 public sealed record SectionCancelled(Guid SectionId, Guid[] HeldBy) : Event;
-
-// ── Term schedule ───────────────────────────────────────────────────────────
 
 public sealed record TermScheduleOpened(Guid ScheduleId, Guid StudentId, string Term, int MaxCredits) : Event;
 
@@ -79,8 +75,6 @@ public sealed record CourseCancelled(Guid ScheduleId, Guid SectionId) : Event;
 
 public sealed record AddDropClosed(Guid ScheduleId) : Event;
 
-// ── Commands a client sends ─────────────────────────────────────────────────
-
 /// <summary>Offers a section; its id is <see cref="SectionAgg.IdFor"/> of the catalog name.</summary>
 public sealed record OfferSection(
 	string Term,
@@ -108,8 +102,6 @@ public sealed record RequestSwap(Guid ScheduleId, Guid DropSectionId, Guid AddSe
 public sealed record DropCourse(Guid ScheduleId, Guid SectionId) : Command;
 
 public sealed record CloseAddDrop(Guid ScheduleId) : Command;
-
-// ── Commands the process manager sends ──────────────────────────────────────
 
 public sealed record AddReservedCourse(
 	Guid ScheduleId,

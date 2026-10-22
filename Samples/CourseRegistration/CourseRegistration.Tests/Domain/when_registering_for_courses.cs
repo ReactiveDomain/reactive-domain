@@ -7,7 +7,8 @@ using static CourseRegistration.Tests.Aggregates;
 namespace CourseRegistration.Tests.Domain;
 
 /// <summary>Registration end to end: the service, the process manager and both aggregates on RD's in-memory store.</summary>
-public sealed class RegistrationFlowTests : IDisposable {
+// ReSharper disable once InconsistentNaming
+public sealed class when_registering_for_courses : IDisposable {
 	private readonly Harness _h = new();
 
 	public void Dispose() => _h.Dispose();
