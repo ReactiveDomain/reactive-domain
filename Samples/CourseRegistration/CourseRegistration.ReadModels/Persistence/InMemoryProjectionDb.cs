@@ -4,7 +4,9 @@ namespace CourseRegistration.ReadModels.Persistence;
 
 /// <summary>
 /// The read-side database held in memory, for tests. It keeps the Postgres store's contract,
-/// transactions included: work that throws leaves nothing behind.
+/// transactions included: writes land only when the work returns, so work that throws leaves nothing
+/// behind, and no read sees an uncommitted write — as in Postgres, where a read opens its own
+/// connection — except a scoped read, which sees its own transaction's.
 /// </summary>
 /// <remarks>
 /// Filters run their predicate half and ignore the SQL, and no unique index is enforced. Run the same
@@ -40,23 +42,28 @@ public sealed class InMemoryProjectionDb : IProjectionDb {
 	public void InTransaction(Action<IWriteScope> work) {
 		lock (_gate) {
 			var scope = new Scope();
-			try {
-				work(scope);
-			} catch {
-				scope.Rollback();
-				throw;
-			}
+			work(scope);
+			scope.Commit();
 		}
 	}
 
+	/// <summary>Holds each store's pending writes until the work returns; a throw discards them all.</summary>
 	internal sealed class Scope : IWriteScope {
-		private readonly Stack<Action> _undo = new();
+		private readonly Dictionary<object, object> _pending = [];
+		private readonly List<Action> _commits = [];
 
-		public void OnRollback(Action undo) => _undo.Push(undo);
+		public TPending PendingFor<TPending>(object store, Action<TPending> commit) where TPending : class, new() {
+			if (_pending.TryGetValue(store, out var existing))
+				return (TPending)existing;
+			var pending = new TPending();
+			_pending[store] = pending;
+			_commits.Add(() => commit(pending));
+			return pending;
+		}
 
-		public void Rollback() {
-			while (_undo.Count > 0)
-				_undo.Pop()();
+		public void Commit() {
+			foreach (var commit in _commits)
+				commit();
 		}
 	}
 
@@ -75,6 +82,15 @@ public sealed class InMemoryRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	public TRow? Get(TKey key) {
 		lock (_gate)
 			return _rows.TryGetValue(key, out var row) ? RowMap<TRow>.Copy(row) : null;
+	}
+
+	/// <inheritdoc/>
+	public TRow? Get(IWriteScope scope, TKey key) {
+		lock (_gate) {
+			if (Pending(scope).TryGetValue(key, out var pending))
+				return pending is null ? null : RowMap<TRow>.Copy(pending);
+			return Get(key);
+		}
 	}
 
 	/// <inheritdoc/>
@@ -116,38 +132,39 @@ public sealed class InMemoryRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 
 	/// <inheritdoc/>
 	public void Upsert(IWriteScope scope, TRow row) {
-		var s = InMemoryProjectionDb.Of(scope);
-		var key = KeyOf(row);
-		lock (_gate) {
-			var had = _rows.TryGetValue(key, out var previous);
-			s.OnRollback(() => {
-				if (had)
-					_rows[key] = previous!;
-				else
-					_rows.Remove(key);
-			});
-			_rows[key] = RowMap<TRow>.Copy(row);
-		}
+		lock (_gate)
+			Pending(scope)[KeyOf(row)] = RowMap<TRow>.Copy(row);
 	}
 
 	/// <inheritdoc/>
 	public bool Insert(IWriteScope scope, TRow row) {
-		var s = InMemoryProjectionDb.Of(scope);
 		var key = KeyOf(row);
 		lock (_gate) {
-			if (!_rows.TryAdd(key, RowMap<TRow>.Copy(row)))
+			var pending = Pending(scope);
+			var taken = pending.TryGetValue(key, out var p) ? p is not null : _rows.ContainsKey(key);
+			if (taken)
 				return false;
-			s.OnRollback(() => _rows.Remove(key));
+			pending[key] = RowMap<TRow>.Copy(row);
 			return true;
 		}
 	}
 
 	/// <inheritdoc/>
 	public void Delete(IWriteScope scope, TKey key) {
-		var s = InMemoryProjectionDb.Of(scope);
-		lock (_gate) {
-			if (_rows.Remove(key, out var previous))
-				s.OnRollback(() => _rows[key] = previous);
+		lock (_gate)
+			Pending(scope)[key] = null;
+	}
+
+	// A null row is a delete. The pending writes land in Apply when the transaction commits.
+	private Dictionary<TKey, TRow?> Pending(IWriteScope scope) =>
+		InMemoryProjectionDb.Of(scope).PendingFor<Dictionary<TKey, TRow?>>(this, Apply);
+
+	private void Apply(Dictionary<TKey, TRow?> pending) {
+		foreach (var (key, row) in pending) {
+			if (row is null)
+				_rows.Remove(key);
+			else
+				_rows[key] = row;
 		}
 	}
 
@@ -198,23 +215,22 @@ internal sealed class InMemoryCheckpointStore(object gate) : ICheckpointStore {
 	}
 
 	public void Save(IWriteScope scope, string projection, IEnumerable<StreamCheckpoint> checkpoints) {
-		var s = InMemoryProjectionDb.Of(scope);
+		var pending = InMemoryProjectionDb.Of(scope).PendingFor<Dictionary<(string, string), long>>(this, Apply);
 		lock (gate) {
 			foreach (var checkpoint in checkpoints) {
 				if (checkpoint.Version is not { } version)
 					continue;
 				var key = (projection, checkpoint.StreamName);
-				var had = _versions.TryGetValue(key, out var previous);
-				if (had && previous >= version)
-					continue;
-				s.OnRollback(() => {
-					if (had)
-						_versions[key] = previous;
-					else
-						_versions.Remove(key);
-				});
-				_versions[key] = version;
+				var current = pending.TryGetValue(key, out var p) ? p : _versions.TryGetValue(key, out var v) ? v : -1;
+				if (current < version)
+					pending[key] = version;
 			}
 		}
+	}
+
+	private void Apply(Dictionary<(string, string), long> pending) {
+		foreach (var (key, version) in pending)
+			if (!_versions.TryGetValue(key, out var current) || current < version)
+				_versions[key] = version;
 	}
 }

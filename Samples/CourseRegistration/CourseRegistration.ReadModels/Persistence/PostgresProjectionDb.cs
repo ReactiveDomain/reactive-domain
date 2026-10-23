@@ -45,21 +45,21 @@ public sealed class PostgresProjectionDb : IProjectionDb {
 /// description; the DDL in <see cref="ProjectionSchema"/> must agree with it.
 /// </remarks>
 public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where TKey : notnull where TRow : class, new() {
-	private static readonly string Select = $"SELECT {RowMap<TRow>.SelectList} FROM {RowMap<TRow>.Table}";
-	private static readonly string ColumnList = string.Join(", ", RowMap<TRow>.Columns.Select(c => c.Name));
+	private static readonly string Select = $"SELECT {RowMap<TRow>.SelectList} FROM {RowMap<TRow>.QuotedTable}";
+	private static readonly string ColumnList = string.Join(", ", RowMap<TRow>.Columns.Select(c => c.Quoted));
 	private static readonly string ValueList = string.Join(", ", RowMap<TRow>.Columns.Select(c => c.Parameter));
 
 	private static readonly string InsertSql = $"""
-		INSERT INTO {RowMap<TRow>.Table} ({ColumnList})
+		INSERT INTO {RowMap<TRow>.QuotedTable} ({ColumnList})
 		VALUES ({ValueList})
-		ON CONFLICT ({RowMap<TRow>.Key.Name}) DO NOTHING
+		ON CONFLICT ({RowMap<TRow>.Key.Quoted}) DO NOTHING
 		""";
 
 	private static readonly string UpsertSql = $"""
-		INSERT INTO {RowMap<TRow>.Table} ({ColumnList})
+		INSERT INTO {RowMap<TRow>.QuotedTable} ({ColumnList})
 		VALUES ({ValueList})
-		ON CONFLICT ({RowMap<TRow>.Key.Name}) DO UPDATE SET
-		{string.Join(",\n", RowMap<TRow>.Columns.Where(c => c != RowMap<TRow>.Key).Select(c => $"{c.Name} = EXCLUDED.{c.Name}"))}
+		ON CONFLICT ({RowMap<TRow>.Key.Quoted}) DO UPDATE SET
+		{string.Join(",\n", RowMap<TRow>.Columns.Where(c => c != RowMap<TRow>.Key).Select(c => $"{c.Quoted} = EXCLUDED.{c.Quoted}"))}
 		""";
 
 	private readonly NpgsqlDataSource _dataSource;
@@ -70,7 +70,13 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	/// <inheritdoc/>
 	public TRow? Get(TKey key) {
 		using var connection = _dataSource.OpenConnection();
-		return connection.QuerySingleOrDefault<TRow>($"{Select} WHERE {RowMap<TRow>.Key.Name} = @Key", new { Key = key });
+		return connection.QuerySingleOrDefault<TRow>($"{Select} WHERE {RowMap<TRow>.Key.Quoted} = @Key", new { Key = key });
+	}
+
+	/// <inheritdoc/>
+	public TRow? Get(IWriteScope scope, TKey key) {
+		var s = PostgresProjectionDb.Of(scope);
+		return s.Connection.QuerySingleOrDefault<TRow>($"{Select} WHERE {RowMap<TRow>.Key.Quoted} = @Key", new { Key = key }, s.Transaction);
 	}
 
 	/// <inheritdoc/>
@@ -85,7 +91,7 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 			return All();
 		var parameters = new DynamicParameters();
 		var clauses = matches.Select((m, i) => {
-			var column = RowMap<TRow>.Column(m.Column).Name;
+			var column = RowMap<TRow>.Column(m.Column).Quoted;
 			parameters.Add($"p{i}", m.Value);
 			// UPPER on both sides, so the UNIQUE (UPPER(column)) index serves it. Writing
 			// "column = UPPER(@p)" would scan the table and still compare case-sensitively.
@@ -104,7 +110,7 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 			return [];
 		using var connection = _dataSource.OpenConnection();
 		return connection.Query<TRow>(
-			$"{Select} WHERE {RowMap<TRow>.Column(column).Name} = ANY(@Values)",
+			$"{Select} WHERE {RowMap<TRow>.Column(column).Quoted} = ANY(@Values)",
 			new { Values = values.ToArray() }).AsList();
 	}
 
@@ -122,7 +128,7 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 		parameters.Add("Limit", limit);
 
 		using var connection = _dataSource.OpenConnection();
-		var total = connection.ExecuteScalar<int>($"SELECT COUNT(*) FROM {RowMap<TRow>.Table} {where}", parameters);
+		var total = connection.ExecuteScalar<int>($"SELECT COUNT(*) FROM {RowMap<TRow>.QuotedTable} {where}", parameters);
 		var items = connection.Query<TRow>(
 			$"{Select} {where} ORDER BY {OrderSql(order)} OFFSET @Offset LIMIT @Limit", parameters).AsList();
 		return new Page<TRow>(items, total);
@@ -143,7 +149,7 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	/// <inheritdoc/>
 	public void Delete(IWriteScope scope, TKey key) {
 		var s = PostgresProjectionDb.Of(scope);
-		s.Connection.Execute($"DELETE FROM {RowMap<TRow>.Table} WHERE {RowMap<TRow>.Key.Name} = @Key", new { Key = key }, s.Transaction);
+		s.Connection.Execute($"DELETE FROM {RowMap<TRow>.QuotedTable} WHERE {RowMap<TRow>.Key.Quoted} = @Key", new { Key = key }, s.Transaction);
 	}
 
 	// Arrays (int[], Guid[]) go through as Postgres arrays: Dapper passes them whole to Npgsql rather
@@ -161,7 +167,7 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 		string.Join(", ", RowStoreRules.WithKeyLast<TRow>(order).Select(o => {
 			var column = RowMap<TRow>.Column(o.Column);
 			var collate = column.Property.PropertyType == typeof(string) ? " COLLATE \"C\"" : "";
-			return $"{column.Name}{collate} {(o.Descending ? "DESC" : "ASC")}";
+			return $"{column.Quoted}{collate} {(o.Descending ? "DESC" : "ASC")}";
 		}));
 }
 

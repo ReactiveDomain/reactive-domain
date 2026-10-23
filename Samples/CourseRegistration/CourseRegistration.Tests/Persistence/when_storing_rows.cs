@@ -50,6 +50,47 @@ public abstract class when_storing_rows {
 		Assert.Single(store.All());
 	}
 
+	/// <summary>
+	/// A plain read sees committed rows only — in Postgres it runs on its own connection — while the
+	/// scoped read sees the transaction's own writes. Pinned here because an in-memory store that let
+	/// plain reads see uncommitted writes would pass tests that then read stale rows in Postgres.
+	/// </summary>
+	[Fact]
+	public void a_plain_read_sees_committed_rows_and_a_scoped_read_sees_the_transactions_own() {
+		var db = NewDb();
+		var store = db.Rows<Guid, SectionRow>();
+		var row = Row();
+		Write(db, row);
+		var changed = Row();
+		changed.Id = row.Id;
+		changed.SeatsHeld = 5;
+
+		db.InTransaction(scope => {
+			store.Upsert(scope, changed);
+			Assert.Equal(0, store.Get(row.Id)!.SeatsHeld);
+			Assert.Equal(5, store.Get(scope, row.Id)!.SeatsHeld);
+		});
+
+		Assert.Equal(5, store.Get(row.Id)!.SeatsHeld);
+	}
+
+	[Fact]
+	public void a_scoped_read_sees_the_transactions_own_delete_and_insert() {
+		var db = NewDb();
+		var store = db.Rows<Guid, SectionRow>();
+		var row = Row();
+		Write(db, row);
+
+		db.InTransaction(scope => {
+			store.Delete(scope, row.Id);
+			Assert.Null(store.Get(scope, row.Id));
+			Assert.NotNull(store.Get(row.Id));
+			Assert.True(store.Insert(scope, row));
+		});
+
+		Assert.NotNull(store.Get(row.Id));
+	}
+
 	[Fact]
 	public void a_fenced_writers_transaction_keeps_neither_rows_nor_checkpoint() {
 		var db = NewDb();

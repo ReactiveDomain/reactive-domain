@@ -41,6 +41,7 @@ public sealed record OrderBy(string Column, bool Descending = false) {
 public sealed record Page<TRow>(IReadOnlyList<TRow> Items, int Total);
 
 /// <summary>Reads one table. A read model takes this for any table it does not write.</summary>
+/// <remarks>Reads see committed rows only, in both stores: a write is visible once its transaction commits, never before. Inside a write scope, <see cref="IRowStore{TKey,TRow}.Get(IWriteScope,TKey)"/> reads the scope's own writes.</remarks>
 public interface IReadOnlyRowStore<TKey, TRow> where TKey : notnull where TRow : class, new() {
 	/// <summary>The row with <paramref name="key"/>, or null.</summary>
 	TRow? Get(TKey key);
@@ -69,6 +70,9 @@ public interface IReadOnlyRowStore<TKey, TRow> where TKey : notnull where TRow :
 
 /// <summary>Reads and writes one table. Only the read model that owns the table takes this.</summary>
 public interface IRowStore<TKey, TRow> : IReadOnlyRowStore<TKey, TRow> where TKey : notnull where TRow : class, new() {
+	/// <summary>The row with <paramref name="key"/> as <paramref name="scope"/>'s transaction sees it, its own writes included.</summary>
+	TRow? Get(IWriteScope scope, TKey key);
+
 	/// <summary>Writes <paramref name="row"/>, replacing any row with its key.</summary>
 	void Upsert(IWriteScope scope, TRow row);
 
