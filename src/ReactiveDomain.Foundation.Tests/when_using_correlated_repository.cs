@@ -7,6 +7,7 @@ namespace ReactiveDomain.Foundation.Tests;
 
 // ReSharper disable once InconsistentNaming
 public sealed class when_using_correlated_repository {
+	private readonly StreamStoreRepository _plainRepo;
 	private readonly CorrelatedStreamStoreRepository _correlatedRepo;
 	private readonly Guid _accountId = Guid.NewGuid();
 	private readonly MockStreamStoreConnection _mockStore;
@@ -18,14 +19,14 @@ public sealed class when_using_correlated_repository {
 		_mockStore.Connect();
 		var namer = new PrefixedCamelCaseStreamNameBuilder();
 		_streamName = namer.GenerateForAggregate(typeof(Account), _accountId);
-		var repo = new StreamStoreRepository(namer, _mockStore, _serializer);
-		_correlatedRepo = new CorrelatedStreamStoreRepository(repo);
+		_plainRepo = new StreamStoreRepository(namer, _mockStore, _serializer);
+		_correlatedRepo = new CorrelatedStreamStoreRepository(_plainRepo);
 		var source = MessageBuilder.New(() => new CreateAccount(_accountId));
 		var account = new Account(_accountId, source);
 		account.Credit(7);
 		account.Credit(13);
 		account.Credit(31);
-		repo.Save(account);
+		_plainRepo.Save(account);
 	}
 
 	[Fact]
@@ -84,6 +85,33 @@ public sealed class when_using_correlated_repository {
 		Assert.Null(retrievedAccount);
 
 	}
+	[Fact]
+	public void try_get_returns_false_for_a_deleted_aggregate() {
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+		var account = _correlatedRepo.GetById<Account>(_accountId, source);
+		_correlatedRepo.Delete(account);
+
+		Assert.False(_correlatedRepo.TryGetById<Account>(_accountId, out var retrieved, source));
+		Assert.Null(retrieved);
+		Assert.False(_plainRepo.TryGetById<Account>(_accountId, out _));
+	}
+
+	/// <summary>
+	/// A fault is not "does not exist": swallowed into false, a store outage or an event that no
+	/// longer deserializes feeds every try-then-create path a phantom aggregate.
+	/// </summary>
+	[Fact]
+	public void try_get_propagates_a_load_fault_instead_of_returning_false() {
+		var shaped = _serializer.Serialize(MessageBuilder.New(() => new CreateAccount(_accountId)));
+		_mockStore.AppendToStream(_streamName, ExpectedVersion.Any, null,
+			new EventData(Guid.NewGuid(), shaped.EventType, true, "not json"u8.ToArray(), shaped.Metadata));
+		var source = MessageBuilder.New(() => new CreditAccount(_accountId, 50));
+
+		Assert.ThrowsAny<Exception>(() => _correlatedRepo.TryGetById<Account>(_accountId, out _, source));
+		Assert.ThrowsAny<Exception>(() => _plainRepo.TryGetById<Account>(_accountId, out _));
+		Assert.ThrowsAny<Exception>(() => new StreamStore.ReadThroughAggregateCache(_plainRepo).TryGetById<Account>(_accountId, out _));
+	}
+
 	[Fact]
 	public void invalid_get_rethrows() {
 		var badId = Guid.NewGuid();
