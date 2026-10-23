@@ -35,10 +35,13 @@ public class Dispatcher : IDispatcher {
 	/// <param name="name">The name of the underlying bus.</param>
 	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread. With
 	/// queues, handlers run on the dispatcher's own threads: ambient <see cref="AsyncLocal{T}"/> state set by
-	/// the sender does not cross the queue, so anything a handler needs travels on the message. A command
-	/// sent from a handler on one of these threads runs inline on it rather than queueing behind its sender;
-	/// a handler hosted on its own queue (a <see cref="QueuedSubscriber"/>) is not on one of these threads,
-	/// and a command it sends to itself still waits behind it.</param>
+	/// the sender does not cross the queue, so anything a handler needs travels on the message. A command a
+	/// handler sends from one of these threads with <see cref="Send"/>, <see cref="TrySend"/> or
+	/// <see cref="SendAsync"/> runs inline on it rather than queueing behind its sender — so it runs before
+	/// anything the handler has already published — while <see cref="TrySendAsync"/> still enqueues, and a
+	/// queue-affine command always goes to its own queue. A handler hosted on its own queue (a
+	/// <see cref="QueuedSubscriber"/>) is not on one of these threads, and a command it sends to itself
+	/// still waits behind it.</param>
 	/// <param name="watchSlowMsg">Log messages that take longer than <paramref name="slowMsgThreshold"/>.</param>
 	/// <param name="slowMsgThreshold">Diagnostic only: a message that takes longer than this to handle is
 	/// logged as slow. It is not a timeout and has no bearing on when a command fails — set

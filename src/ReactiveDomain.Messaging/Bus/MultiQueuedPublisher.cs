@@ -16,10 +16,13 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	/// <param name="bus">The bus messages are published on.</param>
 	/// <param name="queueCount">The number of publish queues; zero publishes on the calling thread. With
 	/// queues, handlers run on the publisher's own threads: ambient <see cref="AsyncLocal{T}"/> state set by
-	/// the sender does not cross the queue, so anything a handler needs travels on the message. A command
-	/// sent from a handler on one of these threads runs inline on it rather than queueing behind its sender;
-	/// a handler hosted on its own queue (a <see cref="QueuedSubscriber"/>) is not on one of these threads,
-	/// and a command it sends to itself still waits behind it.</param>
+	/// the sender does not cross the queue, so anything a handler needs travels on the message. A command a
+	/// handler sends from one of these threads with <see cref="Send"/>, <see cref="TrySend"/> or
+	/// <see cref="SendAsync"/> runs inline on it rather than queueing behind its sender — so it runs before
+	/// anything the handler has already published — while <see cref="TrySendAsync"/> still enqueues, and a
+	/// queue-affine command always goes to its own queue. A handler hosted on its own queue (a
+	/// <see cref="QueuedSubscriber"/>) is not on one of these threads, and a command it sends to itself
+	/// still waits behind it.</param>
 	/// <param name="slowMsgThreshold">Diagnostic only: a publish-queue message that takes longer than
 	/// this is logged as slow. It is not a timeout and has no bearing on when a command fails.</param>
 	/// <param name="slowCmdThreshold">Diagnostic only: a command whose round trip exceeds this is logged
@@ -146,7 +149,10 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	/// <inheritdoc cref="ICommandPublisher.SendAsync"/>
 	/// <remarks>
 	/// With queues the caller is released as soon as the command is enqueued and resumes when the response
-	/// arrives. With <c>queueCount == 0</c> the handler runs on the calling thread before this returns.
+	/// arrives — except on one of the publisher's own queue threads, where the handler runs inline before
+	/// this returns, so a handler that blocks on the task cannot wait behind itself. To fire and forget from
+	/// a handler, use <see cref="TrySendAsync"/>, which always enqueues. With <c>queueCount == 0</c> the
+	/// handler runs on the calling thread before this returns.
 	/// </remarks>
 	public Task<CommandResponse> SendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
 		TaskCompletionSource<CommandResponse> tcs;
@@ -156,7 +162,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 				Publish(response);
 				return Task.FromResult(response);
 			}
-			tcs = Dispatch(command, responseTimeout, ackTimeout);
+			tcs = Dispatch(command, responseTimeout, ackTimeout, inline: true);
 		} catch (Exception ex) {
 			return Task.FromResult(command.Fail(ex));
 		}
@@ -178,7 +184,7 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 		bool blocking = true,
 		TimeSpan? responseTimeout = null,
 		TimeSpan? ackTimeout = null) {
-		var tcs = Dispatch(command, responseTimeout, ackTimeout);
+		var tcs = Dispatch(command, responseTimeout, ackTimeout, inline: blocking);
 		if (!blocking) {
 			response = null;
 			return;
@@ -195,10 +201,12 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 	}
 
 	/// <summary>Registers the command's tracker and publishes the command; the returned source completes with the response.</summary>
+	/// <param name="inline">Whether the send may run the handler inline on this thread, where this is one of the publisher's own queue threads: true for the sends whose caller consumes the response, false for fire-and-forget.</param>
 	private TaskCompletionSource<CommandResponse> Dispatch(
 		ICommand command,
 		TimeSpan? responseTimeout,
-		TimeSpan? ackTimeout) {
+		TimeSpan? ackTimeout,
+		bool inline) {
 
 		TaskCompletionSource<CommandResponse>? tcs = null;
 		try {
@@ -217,9 +225,14 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 			//n.b. if this does not throw result will be set asynchronously 
 			//in the registered handler in the _manager 
 
-			// On one of this publisher's own queue threads the sender is a handler waiting for this
-			// command; queued, it could land behind that handler and only time out.
-			if (ReferenceEquals(_handlingOn, this))
+			// On one of this publisher's own queue threads the sender is a handler, and a response is
+			// consumed by blocking that thread: queued, the command could land behind its own sender
+			// and only time out. So response-bearing sends run inline there — and only those: a
+			// fire-and-forget TrySendAsync keeps its enqueue-and-return contract (running the handler
+			// before returning would add the child's whole duration to the sender's round trip), and
+			// a queue-affine command always goes through the queues that serialize its key, even
+			// though a blocking nested send of one can then wait behind its own sender.
+			if (inline && ReferenceEquals(_handlingOn, this) && command is not IQueueAffineMessage)
 				_bus.Publish(command);
 			else
 				Publish(command);
