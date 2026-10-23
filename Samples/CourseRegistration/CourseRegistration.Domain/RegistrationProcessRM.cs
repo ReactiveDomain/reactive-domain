@@ -18,9 +18,10 @@ namespace CourseRegistration.Domain;
 /// sends is idempotent, so a step that had in fact completed changes nothing.</para>
 /// <para>The two categories are read side by side, so catching up, a schedule's answer can arrive
 /// before the reservation it answers. Open steps are therefore counted, not sequenced: each seat
-/// reserved is answered by exactly one add, swap or rejection, and each seat given up by exactly one
-/// release, so a step is open while one side has counted more than the other, whichever arrived
-/// first. A pair whose counts balance, and that is not enrolled, is forgotten.</para>
+/// reserved is answered by exactly one add, swap or rejection — the schedule answers each
+/// reservation id once, so even a resent command cannot answer twice — and each seat given up by
+/// exactly one release, so a step is open while one side has counted more than the other, whichever
+/// arrived first. A pair whose counts balance, and that is not enrolled, is forgotten.</para>
 /// <para>Commands are sent with <see cref="ICommandPublisher.TrySendAsync"/>, and no send result is awaited.
 /// Give it a <see cref="Dispatcher"/> with at least one publish queue: with none, RD runs the handler
 /// on the sending thread, which here is the queue thread, so a slow handler would hold up the events
@@ -212,8 +213,8 @@ public sealed class RegistrationProcessRM :
 	private void SendAdd(Slot slot) {
 		var e = slot.LastReservation!;
 		Command command = e.ReplacesSectionId is { } drop
-			? new SwapReservedCourse(e.ScheduleId, drop, e.SectionId, e.Term, e.CourseCode, e.Credits, e.Meetings)
-			: new AddReservedCourse(e.ScheduleId, e.SectionId, e.Term, e.CourseCode, e.Credits, e.Meetings);
+			? new SwapReservedCourse(e.ScheduleId, drop, e.SectionId, e.ReservationId, e.Term, e.CourseCode, e.Credits, e.Meetings)
+			: new AddReservedCourse(e.ScheduleId, e.SectionId, e.ReservationId, e.Term, e.CourseCode, e.Credits, e.Meetings);
 		Send(slot, e, command);
 	}
 

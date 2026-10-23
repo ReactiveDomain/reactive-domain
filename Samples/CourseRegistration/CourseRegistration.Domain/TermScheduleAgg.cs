@@ -16,6 +16,7 @@ namespace CourseRegistration.Domain;
 /// </remarks>
 public sealed class TermScheduleAgg : AggregateRoot {
 	private readonly Dictionary<Guid, Entry> _entries = [];
+	private readonly HashSet<Guid> _answered = [];
 	private int _maxCredits;
 
 	/// <summary>The student the schedule belongs to.</summary>
@@ -54,31 +55,40 @@ public sealed class TermScheduleAgg : AggregateRoot {
 		Register<CourseDropped>(e => _entries.Remove(e.SectionId));
 		Register<CourseCancelled>(e => _entries.Remove(e.SectionId));
 		Register<AddDropClosed>(_ => IsClosed = true);
-		RegisterPassThrough<CourseAddRejected>();
+		Register<CourseAddRejected>(e => _answered.Add(e.ReservationId));
 	}
 
 	/// <summary>Adds a section whose seat is already reserved, or records why the student cannot take it.</summary>
-	/// <remarks>Idempotent: a section already on the schedule raises nothing.</remarks>
-	public void Add(Guid sectionId, string term, string courseCode, int credits, Meeting[] meetings) {
+	/// <remarks>Idempotent: a reservation already answered, or a section already on the schedule, raises nothing.</remarks>
+	public void Add(Guid reservationId, Guid sectionId, string term, string courseCode, int credits, Meeting[] meetings) {
+		Ensure.NotEmptyGuid(reservationId, nameof(reservationId));
 		Ensure.NotEmptyGuid(sectionId, nameof(sectionId));
-		if (_entries.ContainsKey(sectionId))
+		// Each reservation is answered once, whatever the answer was: a resent command must not raise
+		// a second rejection (the process manager counts answers) or re-add a course dropped since.
+		if (_answered.Contains(reservationId) || _entries.ContainsKey(sectionId))
 			return;
 		var entry = new Entry(courseCode, credits, meetings);
 		if (Check(term, entry, replacing: null) is { } reason) {
-			Raise(new CourseAddRejected(Id, sectionId, reason));
+			Raise(new CourseAddRejected(Id, sectionId, reservationId, reason));
 			return;
 		}
-		Raise(new CourseAdded(Id, sectionId, courseCode, credits, meetings));
+		Raise(new CourseAdded(Id, sectionId, reservationId, courseCode, credits, meetings));
 	}
 
 	/// <summary>Replaces <paramref name="dropSectionId"/> with a section whose seat is already reserved, in one change.</summary>
 	/// <remarks>
 	/// The student always holds one of the two: if the new section is turned down, the old one stays.
-	/// Idempotent: once the swap has happened, repeating it raises nothing.
+	/// Idempotent: a reservation already answered raises nothing.
 	/// </remarks>
-	public void Swap(Guid dropSectionId, Guid addSectionId, string term, string courseCode, int credits, Meeting[] meetings) {
+	public void Swap(Guid reservationId, Guid dropSectionId, Guid addSectionId, string term, string courseCode, int credits, Meeting[] meetings) {
+		Ensure.NotEmptyGuid(reservationId, nameof(reservationId));
 		Ensure.NotEmptyGuid(dropSectionId, nameof(dropSectionId));
 		Ensure.NotEmptyGuid(addSectionId, nameof(addSectionId));
+		// The answered check must come first: after the swap and later changes, the entries alone
+		// cannot tell a resend from a fresh request, and judging a resend against the current entries
+		// would reject — and so release the seat of — a course the student holds.
+		if (_answered.Contains(reservationId))
+			return;
 		if (_entries.ContainsKey(addSectionId) && !_entries.ContainsKey(dropSectionId))
 			return;
 		var entry = new Entry(courseCode, credits, meetings);
@@ -86,10 +96,10 @@ public sealed class TermScheduleAgg : AggregateRoot {
 			? Check(term, entry, replacing: dropSectionId)
 			: IsClosed ? AddRejection.AddDropClosed : AddRejection.NotEnrolledInDroppedSection;
 		if (reason is not null) {
-			Raise(new CourseAddRejected(Id, addSectionId, reason.Value));
+			Raise(new CourseAddRejected(Id, addSectionId, reservationId, reason.Value));
 			return;
 		}
-		Raise(new CourseSwapped(Id, dropSectionId, addSectionId, courseCode, credits, meetings));
+		Raise(new CourseSwapped(Id, dropSectionId, addSectionId, reservationId, courseCode, credits, meetings));
 	}
 
 	/// <summary>Drops a section the student is enrolled in.</summary>
@@ -139,11 +149,15 @@ public sealed class TermScheduleAgg : AggregateRoot {
 		_maxCredits = e.MaxCredits;
 	}
 
-	private void Apply(CourseAdded e) => _entries[e.SectionId] = new Entry(e.CourseCode, e.Credits, e.Meetings);
+	private void Apply(CourseAdded e) {
+		_entries[e.SectionId] = new Entry(e.CourseCode, e.Credits, e.Meetings);
+		_answered.Add(e.ReservationId);
+	}
 
 	private void Apply(CourseSwapped e) {
 		_entries.Remove(e.DroppedSectionId);
 		_entries[e.AddedSectionId] = new Entry(e.CourseCode, e.Credits, e.Meetings);
+		_answered.Add(e.ReservationId);
 	}
 
 	private sealed record Entry(string CourseCode, int Credits, Meeting[] Meetings);

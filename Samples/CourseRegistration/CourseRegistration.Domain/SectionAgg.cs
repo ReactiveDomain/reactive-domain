@@ -86,7 +86,7 @@ public sealed class SectionAgg : AggregateRoot {
 			Raise(new SeatRefused(Id, scheduleId));
 			return;
 		}
-		Raise(new SeatReserved(Id, scheduleId, _term, _courseCode, _credits, _meetings, replacesSectionId));
+		Raise(new SeatReserved(Guid.NewGuid(), Id, scheduleId, _term, _courseCode, _credits, _meetings, replacesSectionId));
 	}
 
 	/// <summary>Gives up the seat <paramref name="scheduleId"/> holds.</summary>

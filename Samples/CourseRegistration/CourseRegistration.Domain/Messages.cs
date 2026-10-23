@@ -17,9 +17,11 @@ public sealed record SectionOffered(
 
 /// <summary>
 /// The seat is held for the schedule. Carries what the schedule needs to check it, so the process
-/// manager can pass it on without reading the section.
+/// manager can pass it on without reading the section. <see cref="ReservationId"/> names this hold:
+/// the schedule answers each reservation exactly once, so a resent command cannot answer twice.
 /// </summary>
 public sealed record SeatReserved(
+	Guid ReservationId,
 	Guid SectionId,
 	Guid ScheduleId,
 	string Term,
@@ -44,6 +46,7 @@ public sealed record TermScheduleOpened(Guid ScheduleId, Guid StudentId, string 
 public sealed record CourseAdded(
 	Guid ScheduleId,
 	Guid SectionId,
+	Guid ReservationId,
 	string CourseCode,
 	int Credits,
 	Meeting[] Meetings) : Event;
@@ -52,6 +55,7 @@ public sealed record CourseSwapped(
 	Guid ScheduleId,
 	Guid DroppedSectionId,
 	Guid AddedSectionId,
+	Guid ReservationId,
 	string CourseCode,
 	int Credits,
 	Meeting[] Meetings) : Event;
@@ -66,7 +70,7 @@ public enum AddRejection {
 }
 
 /// <summary>The schedule turned down a seat the section had already reserved; the seat must be released.</summary>
-public sealed record CourseAddRejected(Guid ScheduleId, Guid SectionId, AddRejection Reason) : Event;
+public sealed record CourseAddRejected(Guid ScheduleId, Guid SectionId, Guid ReservationId, AddRejection Reason) : Event;
 
 public sealed record CourseDropped(Guid ScheduleId, Guid SectionId) : Event;
 
@@ -106,6 +110,7 @@ public sealed record CloseAddDrop(Guid ScheduleId) : Command;
 public sealed record AddReservedCourse(
 	Guid ScheduleId,
 	Guid SectionId,
+	Guid ReservationId,
 	string Term,
 	string CourseCode,
 	int Credits,
@@ -115,6 +120,7 @@ public sealed record SwapReservedCourse(
 	Guid ScheduleId,
 	Guid DropSectionId,
 	Guid AddSectionId,
+	Guid ReservationId,
 	string Term,
 	string CourseCode,
 	int Credits,

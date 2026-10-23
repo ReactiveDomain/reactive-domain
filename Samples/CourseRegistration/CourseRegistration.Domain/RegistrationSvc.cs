@@ -115,12 +115,12 @@ public sealed class RegistrationSvc :
 	/// <summary>Adds a course whose seat is reserved, or records why the schedule turns it down.</summary>
 	public CommandResponse Handle(AddReservedCourse cmd) =>
 		Change<TermScheduleAgg>(cmd, cmd.ScheduleId,
-			s => s.Add(cmd.SectionId, cmd.Term, cmd.CourseCode, cmd.Credits, cmd.Meetings));
+			s => s.Add(cmd.ReservationId, cmd.SectionId, cmd.Term, cmd.CourseCode, cmd.Credits, cmd.Meetings));
 
 	/// <summary>Swaps in a course whose seat is reserved, or records why the schedule turns it down.</summary>
 	public CommandResponse Handle(SwapReservedCourse cmd) =>
 		Change<TermScheduleAgg>(cmd, cmd.ScheduleId,
-			s => s.Swap(cmd.DropSectionId, cmd.AddSectionId, cmd.Term, cmd.CourseCode, cmd.Credits, cmd.Meetings));
+			s => s.Swap(cmd.ReservationId, cmd.DropSectionId, cmd.AddSectionId, cmd.Term, cmd.CourseCode, cmd.Credits, cmd.Meetings));
 
 	/// <summary>Gives a seat back to its section.</summary>
 	public CommandResponse Handle(ReleaseSeat cmd) =>

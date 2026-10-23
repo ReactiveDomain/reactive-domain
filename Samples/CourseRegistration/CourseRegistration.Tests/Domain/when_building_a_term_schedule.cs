@@ -11,7 +11,7 @@ public sealed class when_building_a_term_schedule {
 
 	private static TermScheduleAgg WithChem(int maxCredits = 18) {
 		var schedule = Schedule(maxCredits);
-		schedule.Add(Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
+		schedule.Add(Guid.NewGuid(), Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
 		schedule.Take();
 		return schedule;
 	}
@@ -43,7 +43,7 @@ public sealed class when_building_a_term_schedule {
 	public void a_reserved_course_that_fits_is_added() {
 		var schedule = WithChem();
 
-		schedule.Add(Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
+		schedule.Add(Guid.NewGuid(), Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
 
 		var added = Assert.IsType<CourseAdded>(Assert.Single(schedule.TakeEvents()));
 		Assert.Equal(Bio, added.SectionId);
@@ -63,7 +63,7 @@ public sealed class when_building_a_term_schedule {
 	public void a_course_that_breaks_a_rule_is_rejected_not_thrown(string term, string course, int credits, Meeting[] meetings, AddRejection reason) {
 		var schedule = WithChem(maxCredits: 8);
 
-		schedule.Add(Bio, term, course, credits, meetings);
+		schedule.Add(Guid.NewGuid(), Bio, term, course, credits, meetings);
 
 		var rejected = Assert.IsType<CourseAddRejected>(Assert.Single(schedule.TakeEvents()));
 		Assert.Equal((Bio, reason), (rejected.SectionId, rejected.Reason));
@@ -74,7 +74,7 @@ public sealed class when_building_a_term_schedule {
 	public void adding_a_section_already_on_the_schedule_raises_nothing() {
 		var schedule = WithChem();
 
-		schedule.Add(Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
+		schedule.Add(Guid.NewGuid(), Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
 
 		Assert.Empty(schedule.TakeEvents());
 	}
@@ -83,13 +83,14 @@ public sealed class when_building_a_term_schedule {
 	public void a_swap_judges_the_new_course_as_if_the_old_one_were_gone() {
 		// Same course, same time, more credits than the limit allows alongside the old one: only a swap fits.
 		var schedule = WithChem(maxCredits: 5);
+		var reservation = Guid.NewGuid();
 
-		schedule.Swap(Chem, Hist, "2026FA", "CHEM 101", 5, Times.MonWed9);
+		schedule.Swap(reservation, Chem, Hist, "2026FA", "CHEM 101", 5, Times.MonWed9);
 
 		var swapped = Assert.IsType<CourseSwapped>(Assert.Single(schedule.Take()));
 		Assert.Equal((Chem, Hist), (swapped.DroppedSectionId, swapped.AddedSectionId));
 		Assert.Equal([Hist], schedule.Sections);
-		schedule.Swap(Chem, Hist, "2026FA", "CHEM 101", 5, Times.MonWed9);
+		schedule.Swap(reservation, Chem, Hist, "2026FA", "CHEM 101", 5, Times.MonWed9);
 		Assert.Empty(schedule.TakeEvents());
 	}
 
@@ -97,7 +98,7 @@ public sealed class when_building_a_term_schedule {
 	public void a_rejected_swap_keeps_the_old_course() {
 		var schedule = WithChem(maxCredits: 5);
 
-		schedule.Swap(Chem, Hist, "2026FA", "HIST 200", 6, Times.Fri15);
+		schedule.Swap(Guid.NewGuid(), Chem, Hist, "2026FA", "HIST 200", 6, Times.Fri15);
 
 		var rejected = Assert.IsType<CourseAddRejected>(Assert.Single(schedule.TakeEvents()));
 		Assert.Equal((Hist, AddRejection.CreditLimit), (rejected.SectionId, rejected.Reason));
@@ -108,7 +109,7 @@ public sealed class when_building_a_term_schedule {
 	public void swapping_out_a_section_the_student_does_not_have_is_rejected() {
 		var schedule = WithChem();
 
-		schedule.Swap(Bio, Hist, "2026FA", "HIST 200", 3, Times.Fri15);
+		schedule.Swap(Guid.NewGuid(), Bio, Hist, "2026FA", "HIST 200", 3, Times.Fri15);
 
 		var rejected = Assert.IsType<CourseAddRejected>(Assert.Single(schedule.TakeEvents()));
 		Assert.Equal(AddRejection.NotEnrolledInDroppedSection, rejected.Reason);
@@ -133,9 +134,9 @@ public sealed class when_building_a_term_schedule {
 		schedule.Close();
 		Assert.IsType<AddDropClosed>(Assert.Single(schedule.Take()));
 
-		schedule.Add(Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
+		schedule.Add(Guid.NewGuid(), Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
 		Assert.Equal(AddRejection.AddDropClosed, Assert.IsType<CourseAddRejected>(Assert.Single(schedule.Take())).Reason);
-		schedule.Swap(Chem, Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
+		schedule.Swap(Guid.NewGuid(), Chem, Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
 		Assert.Equal(AddRejection.AddDropClosed, Assert.IsType<CourseAddRejected>(Assert.Single(schedule.Take())).Reason);
 		Assert.Throws<InvalidOperationException>(() => schedule.Drop(Chem));
 
@@ -147,10 +148,10 @@ public sealed class when_building_a_term_schedule {
 	[Fact]
 	public void a_schedule_restored_from_its_events_enforces_the_same_rules() {
 		var schedule = Schedule(maxCredits: 8);
-		schedule.Add(Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
-		schedule.Add(Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
-		schedule.Swap(Bio, Hist, "2026FA", "HIST 200", 3, Times.Fri15);
-		schedule.Add(Bio, "2026FA", "BIO 110", 4, Times.TueThu13); // rejected: 11 credits
+		schedule.Add(Guid.NewGuid(), Chem, "2026FA", "CHEM 101", 4, Times.MonWed9);
+		schedule.Add(Guid.NewGuid(), Bio, "2026FA", "BIO 110", 4, Times.TueThu13);
+		schedule.Swap(Guid.NewGuid(), Bio, Hist, "2026FA", "HIST 200", 3, Times.Fri15);
+		schedule.Add(Guid.NewGuid(), Bio, "2026FA", "BIO 110", 4, Times.TueThu13); // rejected: 11 credits
 		schedule.Close();
 
 		var restored = Rehydrate<TermScheduleAgg>(schedule.TakeEvents());
@@ -160,7 +161,7 @@ public sealed class when_building_a_term_schedule {
 		Assert.Equal(new[] { Chem, Hist }.Order(), restored.Sections.Order());
 		Assert.Equal(7, restored.Credits);
 		Assert.True(restored.IsClosed);
-		restored.Add(Bio, "2026FA", "BIO 110", 1, Times.TueThu13);
+		restored.Add(Guid.NewGuid(), Bio, "2026FA", "BIO 110", 1, Times.TueThu13);
 		Assert.Equal(AddRejection.AddDropClosed, Assert.IsType<CourseAddRejected>(Assert.Single(restored.TakeEvents())).Reason);
 	}
 }

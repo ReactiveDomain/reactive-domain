@@ -235,6 +235,30 @@ public sealed class when_registering_for_courses : IDisposable {
 		Assert.Equal(3, lossy.Lost);
 	}
 
+	/// <summary>
+	/// The retry delivers commands at least once, so the schedule can see the same add twice — here,
+	/// one the schedule turns down. Each reservation is answered once: the duplicate must not raise a
+	/// second rejection, which would leave the process asking for a release no seat is left to give.
+	/// </summary>
+	[Fact]
+	public void an_add_delivered_twice_is_answered_once() {
+		var chem = _h.Offer(meetings: Times.MonWed9);
+		var bio = _h.Offer("BIO 110", meetings: Times.MonWed930);
+		var schedule = _h.Open();
+		_h.Send(new RequestCourse(schedule, chem));
+		_h.Settle();
+		var doubling = new DoublingBus(_h.Bus);
+		_h.StartProcess(doubling);
+
+		_h.Send(new RequestCourse(schedule, bio));
+		_h.Settle();
+
+		Assert.True(doubling.Doubled > 0);
+		Assert.Equal([chem], _h.Schedule(schedule).Sections);
+		Assert.Equal(0, _h.Section(bio).SeatsHeld);
+		Assert.Single(Events<CourseAddRejected>(_h.Connection.StreamNamer.GenerateForAggregate(typeof(TermScheduleAgg), schedule)));
+	}
+
 	[Fact]
 	public void the_process_forgets_finished_pairs_and_keeps_enrolled_ones() {
 		var chem = _h.Offer();
@@ -305,6 +329,32 @@ public sealed class when_registering_for_courses : IDisposable {
 			_entered = true;
 			gate.Wait(ReactiveDomain.Testing.TestTimeouts.ThrottleWaitFor);
 			return command.Fail();
+		}
+	}
+
+	/// <summary>Delivers every add twice, the second built the way the process manager builds a resend.</summary>
+	private sealed class DoublingBus(ICommandPublisher inner) : ICommandPublisher {
+		private int _doubled;
+
+		public int Doubled => Volatile.Read(ref _doubled);
+
+		public void Send(ICommand command, string? exceptionMsg = null, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>
+			inner.Send(command, exceptionMsg, responseTimeout, ackTimeout);
+
+		public bool TrySend(ICommand command, out CommandResponse response, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) =>
+			inner.TrySend(command, out response, responseTimeout, ackTimeout);
+
+		public bool TrySendAsync(ICommand command, TimeSpan? responseTimeout = null, TimeSpan? ackTimeout = null) {
+			var sent = inner.TrySendAsync(command, responseTimeout, ackTimeout);
+			if (command is AddReservedCourse a) {
+				var again = new AddReservedCourse(a.ScheduleId, a.SectionId, a.ReservationId, a.Term, a.CourseCode, a.Credits, a.Meetings) {
+					CorrelationId = a.CorrelationId,
+					CausationId = a.MsgId
+				};
+				Interlocked.Increment(ref _doubled);
+				inner.TrySendAsync(again, responseTimeout, ackTimeout);
+			}
+			return sent;
 		}
 	}
 
