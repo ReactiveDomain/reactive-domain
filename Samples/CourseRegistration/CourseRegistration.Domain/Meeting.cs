@@ -1,7 +1,29 @@
 namespace CourseRegistration.Domain;
 
 /// <summary>One weekly class meeting, in minutes from midnight.</summary>
-public sealed record Meeting(DayOfWeek Day, int StartMinute, int EndMinute) {
+public sealed record Meeting {
+	private const int MinutesPerDay = 24 * 60;
+
+	/// <summary>The weekday the meeting falls on.</summary>
+	public DayOfWeek Day { get; init; }
+
+	/// <summary>When the meeting starts, in minutes from midnight.</summary>
+	public int StartMinute { get; init; }
+
+	/// <summary>When the meeting ends, in minutes from midnight.</summary>
+	public int EndMinute { get; init; }
+
+	/// <summary>A meeting from <paramref name="startMinute"/> to <paramref name="endMinute"/>, which must end after it starts and within the day.</summary>
+	/// <exception cref="ArgumentOutOfRangeException">The times run backwards or outside the day. A meeting that ends before it starts would overlap nothing, slipping past every time-conflict check.</exception>
+	public Meeting(DayOfWeek day, int startMinute, int endMinute) {
+		ArgumentOutOfRangeException.ThrowIfNegative(startMinute);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(endMinute, startMinute);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(endMinute, MinutesPerDay);
+		Day = day;
+		StartMinute = startMinute;
+		EndMinute = endMinute;
+	}
+
 	/// <summary>True when the two meetings share any minute on the same day.</summary>
 	public bool Overlaps(Meeting other) =>
 		Day == other.Day && StartMinute < other.EndMinute && other.StartMinute < EndMinute;
