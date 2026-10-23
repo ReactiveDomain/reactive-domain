@@ -6,9 +6,10 @@ using Xunit;
 namespace ReactiveDomain.Messaging.Tests;
 
 /// <summary>
-/// A command sent from inside a handler on one of the publisher's queue threads runs inline on that
-/// thread. Queued, it could land on the queue its blocked sender occupies and sit there until the ack
-/// timeout failed it; with one queue it always did.
+/// A response-bearing command sent from inside a handler on one of the publisher's queue threads runs
+/// inline on that thread. Queued, it could land on the queue its blocked sender occupies and sit there
+/// until the ack timeout failed it; with one queue it always did. Fire-and-forget and queue-affine
+/// sends keep their queued semantics.
 /// </summary>
 // ReSharper disable once InconsistentNaming
 public sealed class when_sending_nested_commands : IDisposable {
@@ -121,6 +122,45 @@ public sealed class when_sending_nested_commands : IDisposable {
 		Assert.NotEqual(Environment.CurrentManagedThreadId, handlers.ParentThreadId);
 	}
 
+	/// <summary>
+	/// TrySendAsync promises to enqueue and return. Run inline instead, the child's whole duration
+	/// would land inside the sender's round trip, and a child that blocks on state its sender releases
+	/// after the call would hang the queue thread.
+	/// </summary>
+	[Fact]
+	public void a_nested_fire_and_forget_returns_before_the_child_runs() {
+		var dispatcher = NewDispatcher(1);
+		var handlers = new NestedHandlers(dispatcher, d => {
+			d.TrySendAsync(new TestCommands.Command2());
+			return null;
+		});
+
+		dispatcher.TrySend(new TestCommands.Command1(), out var response);
+
+		Assert.IsType<Success>(response);
+		Assert.False(handlers.ChildRanDuringParent);
+		AssertEx.IsOrBecomesTrue(() => handlers.ChildThreadId != 0, ResponseTimeout, "the child was never handled");
+	}
+
+	/// <summary>
+	/// The queues are what serialize a queue-affine command against its key, so a nested one is never
+	/// pulled inline; with one queue that means it waits behind its blocked sender and the send fails.
+	/// Affinity is preserved over liveness.
+	/// </summary>
+	[Fact]
+	public void a_nested_blocking_send_of_a_queue_affine_command_stays_on_its_queue() {
+		var dispatcher = NewDispatcher(1);
+		var handlers = new NestedHandlers(dispatcher, d => {
+			d.TrySend(new AffineCommand(), out var childResponse);
+			return childResponse;
+		});
+
+		dispatcher.TrySend(new TestCommands.Command1(), out var response);
+
+		Assert.IsType<Fail>(response);
+		Assert.False(handlers.ChildRanDuringParent);
+	}
+
 	[Fact]
 	public void without_queues_parent_and_child_run_on_the_caller() {
 		var dispatcher = NewDispatcher(0);
@@ -136,5 +176,45 @@ public sealed class when_sending_nested_commands : IDisposable {
 	public void Dispose() {
 		foreach (var disposable in _disposables)
 			disposable.Dispose();
+	}
+
+	private sealed record AffineCommand : Command, IQueueAffineMessage {
+		public int QueueId => 0;
+	}
+
+	/// <summary>Handles the parent by running <paramref name="sendChild"/>, recording whether the child had already run when it returned.</summary>
+	private sealed class NestedHandlers : IHandleCommand<TestCommands.Command1>, IHandleCommand<TestCommands.Command2>, IHandleCommand<AffineCommand> {
+		private readonly IDispatcher _dispatcher;
+		private readonly Func<IDispatcher, CommandResponse?> _sendChild;
+		private int _childThreadId;
+
+		public NestedHandlers(IDispatcher dispatcher, Func<IDispatcher, CommandResponse?> sendChild) {
+			_dispatcher = dispatcher;
+			_sendChild = sendChild;
+			dispatcher.Subscribe<TestCommands.Command1>(this);
+			dispatcher.Subscribe<TestCommands.Command2>(this);
+			dispatcher.Subscribe<AffineCommand>(this);
+		}
+
+		public int ChildThreadId => Volatile.Read(ref _childThreadId);
+
+		public bool ChildRanDuringParent { get; private set; }
+
+		public CommandResponse Handle(TestCommands.Command1 parent) {
+			var childResponse = _sendChild(_dispatcher);
+			ChildRanDuringParent = ChildThreadId != 0;
+			return childResponse is null or Success
+				? parent.Succeed()
+				: parent.Fail((childResponse as Fail)?.Exception);
+		}
+
+		public CommandResponse Handle(TestCommands.Command2 child) => Counted(child);
+
+		public CommandResponse Handle(AffineCommand child) => Counted(child);
+
+		private CommandResponse Counted(Command child) {
+			Volatile.Write(ref _childThreadId, Environment.CurrentManagedThreadId);
+			return child.Succeed();
+		}
 	}
 }
