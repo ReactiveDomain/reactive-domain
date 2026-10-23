@@ -105,11 +105,15 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	}
 
 	/// <inheritdoc/>
+	public IReadOnlyList<TRow> Find(RowFilter<TRow> filter) {
+		using var connection = _dataSource.OpenConnection();
+		return connection.Query<TRow>($"{Select} WHERE {filter.Sql}", Parameters(filter)).AsList();
+	}
+
+	/// <inheritdoc/>
 	public Page<TRow> Page(RowFilter<TRow>? filter, IReadOnlyList<OrderBy> order, int offset, int limit) {
 		var where = filter is null ? "" : $"WHERE {filter.Sql}";
-		var parameters = new DynamicParameters();
-		foreach (var (name, value) in filter?.Parameters ?? new Dictionary<string, object?>())
-			parameters.Add(name, value);
+		var parameters = Parameters(filter);
 		parameters.Add("Offset", offset);
 		parameters.Add("Limit", limit);
 
@@ -136,6 +140,15 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	public void Delete(IWriteScope scope, TKey key) {
 		var s = PostgresProjectionDb.Of(scope);
 		s.Connection.Execute($"DELETE FROM {RowMap<TRow>.Table} WHERE {RowMap<TRow>.Key.Name} = @Key", new { Key = key }, s.Transaction);
+	}
+
+	// Arrays (int[], Guid[]) go through as Postgres arrays: Dapper passes them whole to Npgsql rather
+	// than expanding them into a list.
+	private static DynamicParameters Parameters(RowFilter<TRow>? filter) {
+		var parameters = new DynamicParameters();
+		foreach (var (name, value) in filter?.Parameters ?? new Dictionary<string, object?>())
+			parameters.Add(name, value);
+		return parameters;
 	}
 
 	// COLLATE "C" sorts text by code point, as the in-memory store does; the database's default

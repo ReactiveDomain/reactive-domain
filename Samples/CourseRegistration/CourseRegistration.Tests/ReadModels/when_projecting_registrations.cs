@@ -124,6 +124,63 @@ public abstract class when_projecting_registrations : IDisposable {
 		Assert.Equal(1, _h.Sections().Get(chem)!.SeatsHeld);
 	}
 
+	/// <summary>
+	/// The queue would log the throw and apply the next event, whose flush would checkpoint past the
+	/// one never applied. The projection stops instead, and its checkpoint stays put.
+	/// </summary>
+	[Fact]
+	public void a_handler_that_throws_while_live_stops_the_projection_at_its_last_written_event() {
+		var exploding = _h.Start(new ExplodingCatalogRM(_h.Connection, _h.Db, explodeOn: "boom"));
+		var first = _h.Offer("CHEM 101", title: "General Chemistry");
+		_h.CatchUp(exploding);
+		var checkpoint = Saved(exploding.Name, typeof(SectionAgg));
+
+		_h.Offer("BIO 110", title: "boom");
+		_h.Offer("HIST 200", title: "Survey");
+		_h.CatchUp(exploding);
+
+		Assert.IsType<InvalidOperationException>(exploding.Fault);
+		Assert.Equal([first], _h.Db.Rows<Guid, SectionRow>().All().Select(r => r.Id));
+		Assert.Equal(checkpoint, Saved(exploding.Name, typeof(SectionAgg)));
+	}
+
+	[Fact]
+	public void a_handler_that_throws_while_catching_up_writes_nothing_and_a_restart_replays_it_all() {
+		_h.Offer("CHEM 101", title: "General Chemistry");
+		_h.Offer("BIO 110", title: "boom");
+		_h.Offer("HIST 200", title: "Survey");
+
+		var exploding = _h.Start(new ExplodingCatalogRM(_h.Connection, _h.Db, explodeOn: "boom"));
+
+		Assert.NotNull(exploding.Fault);
+		Assert.Empty(_h.Db.Rows<Guid, SectionRow>().All());
+		Assert.Null(Saved(exploding.Name, typeof(SectionAgg)));
+		exploding.Dispose();
+		var fixedModel = _h.Start(new ExplodingCatalogRM(_h.Connection, _h.Db, explodeOn: null));
+		Assert.Null(fixedModel.Fault);
+		Assert.Equal(3, _h.Db.Rows<Guid, SectionRow>().All().Count);
+	}
+
+	[Fact]
+	public void the_schedules_with_a_section_are_found_through_their_array_column() {
+		var timetable = _h.StartTimetable();
+		var chem = _h.Offer();
+		var bio = _h.Offer("BIO 110", meetings: Times.TueThu13);
+		var first = _h.Open();
+		var second = _h.Open();
+		Enrol(first, chem);
+		Enrol(second, chem);
+		Enrol(second, bio);
+		_h.Send(new DropCourse(first, chem));
+		_h.Settle();
+		_h.CatchUp(timetable);
+
+		var queries = _h.Timetables();
+		Assert.Equal([second], queries.SchedulesWith(chem).Select(s => s.ScheduleId));
+		Assert.Equal(new[] { chem, bio }.Order(), queries.Schedule(second)!.SectionIds);
+		Assert.Empty(queries.Schedule(first)!.SectionIds);
+	}
+
 	// ── Timetable: two categories, one checkpoint each, fan-out ─────────────
 
 	[Fact]
@@ -250,3 +307,27 @@ public sealed class when_projecting_registrations_in_memory() : when_projecting_
 [Collection(PostgresCollection.Name)]
 // ReSharper disable once InconsistentNaming
 public sealed class when_projecting_registrations_in_postgres(PostgresFixture postgres) : when_projecting_registrations(() => new PostgresProjectionDb(postgres.NewDatabase()));
+
+/// <summary>A catalog whose handler throws on one title, standing in for a projection bug.</summary>
+[OwnedTables(typeof(SectionRow))]
+internal sealed class ExplodingCatalogRM : ProjectionRM, ReactiveDomain.Messaging.Bus.IHandle<SectionOffered> {
+	private readonly string? _explodeOn;
+	private readonly ReactiveDomain.Foundation.WriteBuffer<Guid, SectionRow> _sections;
+
+	public ExplodingCatalogRM(ReactiveDomain.Foundation.IConfiguredConnection connection, IProjectionDb db, string? explodeOn)
+		: base(nameof(ExplodingCatalogRM), connection, db) {
+		_explodeOn = explodeOn;
+		_sections = OwnTable(db.Rows<Guid, SectionRow>());
+		EventStream.Subscribe<SectionOffered>(this);
+	}
+
+	protected override void Load() { }
+
+	protected override IReadOnlyList<ReactiveDomain.Foundation.StreamStarter> Streams() => [Category<SectionAgg>()];
+
+	void ReactiveDomain.Messaging.Bus.IHandle<SectionOffered>.Handle(SectionOffered e) {
+		_sections.Upsert(e.SectionId, new SectionRow { Id = e.SectionId, Term = e.Term, CourseCode = e.CourseCode, SectionNumber = e.SectionNumber, Title = e.Title });
+		if (e.Title == _explodeOn)
+			throw new InvalidOperationException($"cannot project {e.Title}");
+	}
+}

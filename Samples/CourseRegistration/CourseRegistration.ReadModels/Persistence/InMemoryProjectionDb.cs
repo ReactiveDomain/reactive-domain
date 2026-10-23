@@ -93,6 +93,9 @@ public sealed class InMemoryRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 	}
 
 	/// <inheritdoc/>
+	public IReadOnlyList<TRow> Find(RowFilter<TRow> filter) => Where(filter.Predicate);
+
+	/// <inheritdoc/>
 	public Page<TRow> Page(RowFilter<TRow>? filter, IReadOnlyList<OrderBy> order, int offset, int limit) {
 		var kept = Where(filter?.Predicate ?? (_ => true));
 		IOrderedEnumerable<TRow>? sorted = null;

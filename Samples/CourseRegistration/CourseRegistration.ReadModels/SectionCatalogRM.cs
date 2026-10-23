@@ -9,6 +9,7 @@ namespace CourseRegistration.ReadModels;
 /// Projects every section into <c>sections</c>, including how many seats are held: a counter, so it
 /// is only right if each reservation and release is applied exactly once.
 /// </summary>
+[OwnedTables(typeof(SectionRow))]
 public sealed class SectionCatalogRM :
 	ProjectionRM,
 	IHandle<SectionOffered>,
@@ -48,6 +49,7 @@ public sealed class SectionCatalogRM :
 			Id = e.SectionId,
 			Term = e.Term,
 			CourseCode = e.CourseCode,
+			Department = SectionRow.DepartmentOf(e.CourseCode),
 			SectionNumber = e.SectionNumber,
 			Title = e.Title,
 			Credits = e.Credits,

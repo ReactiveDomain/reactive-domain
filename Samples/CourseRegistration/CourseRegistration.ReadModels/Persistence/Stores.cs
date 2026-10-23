@@ -59,6 +59,9 @@ public interface IReadOnlyRowStore<TKey, TRow> where TKey : notnull where TRow :
 	/// <remarks>Keep <typeparamref name="TValue"/> the column's own type, so Postgres can type the array parameter.</remarks>
 	IReadOnlyList<TRow> FindIn<TValue>(string column, IReadOnlyCollection<TValue> values);
 
+	/// <summary>Every row <paramref name="filter"/> keeps, in no particular order.</summary>
+	IReadOnlyList<TRow> Find(RowFilter<TRow> filter);
+
 	/// <summary>One page of the rows <paramref name="filter"/> keeps, and how many it keeps in all.</summary>
 	/// <remarks>The key always breaks ties last, so a page boundary never splits rows that sort alike.</remarks>
 	Page<TRow> Page(RowFilter<TRow>? filter, IReadOnlyList<OrderBy> order, int offset, int limit);

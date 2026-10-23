@@ -59,10 +59,13 @@ public static class RowMap<TRow> {
 	public static object? Value(TRow row, string column) => Column(column).Property.GetValue(row);
 
 	/// <summary>A copy holding the same column values, so a stored row is never shared with a caller.</summary>
+	/// <remarks>Array columns are copied too: an array is the one mutable value a row holds.</remarks>
 	public static TRow Copy(TRow row) {
 		var copy = Activator.CreateInstance<TRow>();
-		foreach (var column in Columns)
-			column.Property.SetValue(copy, column.Property.GetValue(row));
+		foreach (var column in Columns) {
+			var value = column.Property.GetValue(row);
+			column.Property.SetValue(copy, value is Array array ? array.Clone() : value);
+		}
 		return copy;
 	}
 

@@ -134,7 +134,8 @@ internal sealed class Harness : IDisposable {
 
 	public static void Wait(Task task) => Assert.True(task.Wait(TestTimeouts.ThrottleWaitFor), "timed out starting");
 
-	private T Start<T>(T model) where T : ProjectionRM {
+	/// <summary>Starts <paramref name="model"/>, owned by the harness, and waits until it is live.</summary>
+	public T Start<T>(T model) where T : ProjectionRM {
 		Own(model);
 		Wait(model.StartAsync());
 		return model;

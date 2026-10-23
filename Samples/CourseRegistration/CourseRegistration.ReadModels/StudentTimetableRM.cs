@@ -16,6 +16,7 @@ namespace CourseRegistration.ReadModels;
 /// section's own stream, which is ordered, has the last word on what the section is.</para>
 /// <para>A rescheduled section rewrites every timetable entry for it in one flush.</para>
 /// </remarks>
+[OwnedTables(typeof(TimetableSectionRow), typeof(ScheduleRow), typeof(TimetableEntryRow))]
 public sealed class StudentTimetableRM :
 	ProjectionRM,
 	IHandle<SectionOffered>,
@@ -153,7 +154,9 @@ public sealed class StudentTimetableRM :
 	}
 
 	private void Recount(ScheduleRow schedule) {
-		schedule.Credits = EntriesOf(_entriesBySchedule, schedule.ScheduleId).Sum(id => _entries[id].Credits);
+		var entries = EntriesOf(_entriesBySchedule, schedule.ScheduleId).Select(id => _entries[id]).ToList();
+		schedule.Credits = entries.Sum(e => e.Credits);
+		schedule.SectionIds = entries.Select(e => e.SectionId).Order().ToArray();
 		_scheduleWrites.Upsert(schedule.ScheduleId, schedule);
 	}
 

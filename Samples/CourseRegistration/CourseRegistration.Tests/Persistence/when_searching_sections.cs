@@ -28,7 +28,7 @@ public abstract class when_searching_sections {
 
 			void Add(string name, string course, int number, Meeting[] meetings, int held = 0, bool cancelled = false, string term = "2026FA") {
 				var row = new SectionRow {
-					Id = Guid.NewGuid(), Term = term, CourseCode = course, SectionNumber = number, Title = name,
+					Id = Guid.NewGuid(), Term = term, CourseCode = course, Department = SectionRow.DepartmentOf(course), SectionNumber = number, Title = name,
 					Credits = 4, Capacity = 30, SeatsHeld = held, IsCancelled = cancelled, Meetings = meetings
 				};
 				_ids[name] = row.Id;
@@ -68,12 +68,21 @@ public abstract class when_searching_sections {
 	}
 
 	[Fact]
-	public void like_wildcards_in_a_department_are_literal_characters() {
+	public void wildcard_characters_in_a_department_match_nothing() {
 		var queries = Seed();
 
 		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: "C_EM"), 0, 10).Items);
 		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: "%"), 0, 10).Items);
 		Assert.Empty(queries.Search(new SectionSearch("2026FA", Department: @"CHEM\"), 0, 10).Items);
+	}
+
+	/// <summary>The SQL half tests overlap with the <c>INTEGER[]</c> column; the predicate half intersects the array.</summary>
+	[Fact]
+	public void avoided_days_drop_every_section_that_meets_on_any_of_them() {
+		var queries = Seed();
+
+		Assert.Equal(["bio-pm", "chem-am", "chem-pm"], Names(queries.Search(new SectionSearch("2026FA", AvoidDays: [DayOfWeek.Friday]), 0, 10)));
+		Assert.Equal(["chemistry-lab"], Names(queries.Search(new SectionSearch("2026FA", AvoidDays: [DayOfWeek.Monday, DayOfWeek.Tuesday]), 0, 10)));
 	}
 
 	/// <summary>The SQL half reads the meetings out of the jsonb column; the predicate half reads the deserialized array.</summary>

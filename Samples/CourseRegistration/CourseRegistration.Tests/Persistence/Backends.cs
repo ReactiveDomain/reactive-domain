@@ -29,15 +29,21 @@ public sealed class PostgresFixture : IAsyncLifetime {
 
 	public Task InitializeAsync() => _container?.StartAsync() ?? Task.CompletedTask;
 
-	/// <summary>A data source on a new, empty schema with every table created.</summary>
+	/// <summary>A data source on a new schema with every table created.</summary>
 	public NpgsqlDataSource NewDatabase() {
+		var dataSource = NewEmptyDatabase();
+		ProjectionSchema.Create(dataSource);
+		return dataSource;
+	}
+
+	/// <summary>A data source on a new schema with no tables in it.</summary>
+	public NpgsqlDataSource NewEmptyDatabase() {
 		var schema = $"t_{Guid.NewGuid():N}";
 		Execute($"CREATE SCHEMA {schema}");
 		var builder = new NpgsqlConnectionStringBuilder(ConnectionString) { SearchPath = schema };
 		var dataSource = NpgsqlDataSource.Create(builder.ConnectionString);
 		lock (_databases)
 			_databases.Add((schema, dataSource));
-		ProjectionSchema.Create(dataSource);
 		return dataSource;
 	}
 

@@ -22,6 +22,7 @@ public sealed class SectionRow {
 	[Key] public Guid Id { get; set; }
 	public string Term { get; set; } = string.Empty;
 	public string CourseCode { get; set; } = string.Empty;
+	public string Department { get; set; } = string.Empty;
 	public int SectionNumber { get; set; }
 	public string Title { get; set; } = string.Empty;
 	public int Credits { get; set; }
@@ -29,8 +30,21 @@ public sealed class SectionRow {
 	public int SeatsHeld { get; set; }
 	public bool IsCancelled { get; set; }
 	[Column("meetings", TypeName = "jsonb")] public string MeetingsJson { get; set; } = "[]";
+	/// <summary>The days the section meets, as <see cref="DayOfWeek"/> numbers in ascending order; an <c>INTEGER[]</c> column.</summary>
+	public int[] MeetingDays { get; set; } = [];
 
-	[NotMapped] public Meeting[] Meetings { get => MeetingJson.Read(MeetingsJson); set => MeetingsJson = MeetingJson.Write(value); }
+	/// <summary>The meetings; setting them also sets <see cref="MeetingDays"/>.</summary>
+	[NotMapped]
+	public Meeting[] Meetings {
+		get => MeetingJson.Read(MeetingsJson);
+		set {
+			MeetingsJson = MeetingJson.Write(value);
+			MeetingDays = value.Select(m => (int)m.Day).Distinct().Order().ToArray();
+		}
+	}
+
+	/// <summary>The department of a course code: everything before the space, upper case.</summary>
+	public static string DepartmentOf(string courseCode) => courseCode.Split(' ', 2)[0].ToUpperInvariant();
 	[NotMapped] public int SeatsOpen => Math.Max(0, Capacity - SeatsHeld);
 }
 
@@ -56,6 +70,8 @@ public sealed class ScheduleRow {
 	public string Term { get; set; } = string.Empty;
 	public int Credits { get; set; }
 	public bool IsClosed { get; set; }
+	/// <summary>The sections on the schedule, in ascending order; a <c>UUID[]</c> column.</summary>
+	public Guid[] SectionIds { get; set; } = [];
 }
 
 /// <summary>One course on a student's timetable. Owned by <see cref="StudentTimetableRM"/>.</summary>

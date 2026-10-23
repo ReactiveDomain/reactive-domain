@@ -92,6 +92,25 @@ public abstract class when_storing_rows {
 	}
 
 	[Fact]
+	public void array_columns_round_trip_and_a_read_never_shares_one() {
+		var db = NewDb();
+		var sections = db.Rows<Guid, SectionRow>();
+		var schedules = db.Rows<Guid, ScheduleRow>();
+		var section = Row();
+		section.Meetings = [.. Times.TueThu13, .. Times.Fri15];
+		var schedule = new ScheduleRow { ScheduleId = Guid.NewGuid(), StudentId = Guid.NewGuid(), Term = "2026FA", SectionIds = [Guid.NewGuid(), Guid.NewGuid()] };
+		db.InTransaction(scope => {
+			sections.Upsert(scope, section);
+			schedules.Upsert(scope, schedule);
+		});
+
+		Assert.Equal([2, 4, 5], sections.Get(section.Id)!.MeetingDays);
+		Assert.Equal(schedule.SectionIds, schedules.Get(schedule.ScheduleId)!.SectionIds);
+		schedules.Get(schedule.ScheduleId)!.SectionIds[0] = Guid.Empty;
+		Assert.Equal(schedule.SectionIds, schedules.Get(schedule.ScheduleId)!.SectionIds);
+	}
+
+	[Fact]
 	public void a_case_insensitive_match_finds_display_cased_values() {
 		var db = NewDb();
 		var row = Row(course: "Chem 101");

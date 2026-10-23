@@ -7,6 +7,7 @@ public sealed record SectionSearch(
 	string Term,
 	string? Department = null,
 	int? StartsAtOrAfterMinute = null,
+	DayOfWeek[]? AvoidDays = null,
 	bool OpenOnly = true);
 
 /// <summary>Reads for the course picker. Takes read-only stores: a query never writes.</summary>
@@ -41,12 +42,10 @@ public sealed class SectionQueries {
 			r => r.Term == search.Term && !r.IsCancelled);
 
 		if (search.Department is { } department) {
-			// Course codes are "DEPT NNN"; the department is everything before the space. Escaped, so a
-			// % or _ in it is a literal character, as it is to StartsWith.
 			filter = filter.And(new RowFilter<SectionRow>(
-				@"UPPER(course_code) LIKE UPPER(@Department) || ' %' ESCAPE '\'",
-				new Dictionary<string, object?> { ["Department"] = LikeLiteral(department) },
-				r => r.CourseCode.StartsWith(department + " ", StringComparison.OrdinalIgnoreCase)));
+				"department = @Department",
+				new Dictionary<string, object?> { ["Department"] = department.Trim().ToUpperInvariant() },
+				r => r.Department == department.Trim().ToUpperInvariant()));
 		}
 
 		if (search.StartsAtOrAfterMinute is { } minute) {
@@ -55,6 +54,15 @@ public sealed class SectionQueries {
 				"NOT EXISTS (SELECT 1 FROM jsonb_array_elements(meetings) m WHERE (m->>'StartMinute')::int < @Minute)",
 				new Dictionary<string, object?> { ["Minute"] = minute },
 				r => r.Meetings.All(m => m.StartMinute >= minute)));
+		}
+
+		if (search.AvoidDays is { Length: > 0 } avoid) {
+			// && is array overlap; the GIN index on meeting_days serves it.
+			var days = avoid.Select(d => (int)d).ToArray();
+			filter = filter.And(new RowFilter<SectionRow>(
+				"NOT (meeting_days && @AvoidDays)",
+				new Dictionary<string, object?> { ["AvoidDays"] = days },
+				r => !r.MeetingDays.Intersect(days).Any()));
 		}
 
 		if (search.OpenOnly) {
@@ -66,9 +74,6 @@ public sealed class SectionQueries {
 
 		return filter;
 	}
-
-	private static string LikeLiteral(string value) =>
-		value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 }
 
 /// <summary>Reads for a student's timetable and a section's roster.</summary>
@@ -92,6 +97,13 @@ public sealed class TimetableQueries {
 	/// <summary>The students enrolled in a section.</summary>
 	public IReadOnlyList<Guid> Roster(Guid sectionId) =>
 		_entries.FindBy(Match.Eq("section_id", sectionId)).Select(e => e.StudentId).ToList();
+
+	/// <summary>The schedules that include <paramref name="sectionId"/>, read from the schedules' own array column.</summary>
+	public IReadOnlyList<ScheduleRow> SchedulesWith(Guid sectionId) =>
+		_schedules.Find(new RowFilter<ScheduleRow>(
+			"@Section = ANY(section_ids)",
+			new Dictionary<string, object?> { ["Section"] = sectionId },
+			r => r.SectionIds.Contains(sectionId)));
 
 	/// <summary>The schedules in a term whose add/drop is still open.</summary>
 	public IReadOnlyList<ScheduleRow> OpenSchedules(string term) =>
