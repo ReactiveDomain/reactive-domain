@@ -55,6 +55,18 @@ public abstract class ReadModelBase :
 	private long _registrations;
 	private TaskCompletionSource _live = AlreadyLive();
 
+	// The armed task CompleteLiveTransition has claimed but not yet signalled: as good as completed
+	// to anyone deciding under _liveLock. Without it, a Start or OnceLive landing between the claim
+	// and the signal is counted against a task about to complete — IsLive then completes with that
+	// stream's history still queued, and the callback is never run. Guarded by _liveLock.
+	private TaskCompletionSource? _completing;
+
+	// FailLiveTransition's claim, kept apart from _completing with the error it carries: a callback
+	// registered in its window is abandoned with that error, not queued as if the model were live.
+	// Guarded by _liveLock; cleared once the task is signalled.
+	private TaskCompletionSource? _failing;
+	private Exception? _failingWith;
+
 	// Callbacks waiting for the live transition (Queued false) or already on the queue (Queued
 	// true). Guarded by _liveLock, with _pendingStreams: which of the two a registration becomes is
 	// decided against the count, so it must be decided under the same lock.
@@ -140,7 +152,7 @@ public abstract class ReadModelBase :
 					  "deliver events into the model ahead of the cut being captured, and no checkpoint " +
 					  "would name them. Await the capture, then start the stream.");
 			}
-			if (_pendingStreams == 0 && _live.Task.IsCompleted)
+			if (_pendingStreams == 0 && (_live.Task.IsCompleted || ReferenceEquals(_live, _completing) || ReferenceEquals(_live, _failing)))
 				_live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingStreams++;
 			_registrations++;
@@ -235,9 +247,10 @@ public abstract class ReadModelBase :
 		List<LiveCallback> callbacks;
 		TaskCompletionSource drained;
 		lock (_liveLock) {
-			if (_live.Task.IsCompleted || _pendingStreams != 0)
+			if (_live.Task.IsCompleted || ReferenceEquals(_live, _completing) || _pendingStreams != 0)
 				return;
 			drained = _live;
+			_completing = drained;
 			callbacks = TakeWaitingCallbacks();
 		}
 		lock (ReaderLock) {
@@ -251,14 +264,24 @@ public abstract class ReadModelBase :
 		List<LiveCallback> callbacks;
 		TaskCompletionSource drained;
 		lock (_liveLock) {
-			if (_live.Task.IsCompleted)
+			if (_live.Task.IsCompleted || ReferenceEquals(_live, _failing))
 				return;
 			drained = _live;
+			_failing = drained;
+			_failingWith = error;
 			callbacks = TakeWaitingCallbacks();
 		}
 		foreach (var callback in callbacks)
 			Abandon(callback, error);
 		drained.TrySetException(error);
+		lock (_liveLock) {
+			// Cleared once signalled, so a registration after the failure waits for a restart, as it
+			// always has, rather than reading the stale claim as a failure still in progress.
+			if (ReferenceEquals(_failing, drained)) {
+				_failing = null;
+				_failingWith = null;
+			}
+		}
 	}
 
 	/// <summary>
@@ -686,13 +709,24 @@ public abstract class ReadModelBase :
 		Ensure.NotNull(callback, nameof(callback));
 		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		LiveCallback registered;
+		Exception? failing = null;
 		lock (_liveLock) {
 			registered = new LiveCallback {
 				Callback = callback,
 				Completion = completion,
-				Queued = _pendingStreams == 0 && _live.Task.IsCompletedSuccessfully
+				// A task CompleteLiveTransition has claimed counts as completed: registered between the
+				// claim and the signal, the callback would otherwise be left waiting for a transition
+				// that has already taken its callbacks and will never come back for it.
+				Queued = _pendingStreams == 0 && (_live.Task.IsCompletedSuccessfully || ReferenceEquals(_live, _completing))
 			};
-			_liveCallbacks.Add(registered);
+			if (ReferenceEquals(_live, _failing))
+				failing = _failingWith;
+			else
+				_liveCallbacks.Add(registered);
+		}
+		if (failing is not null) {
+			Abandon(registered, failing);
+			return completion.Task;
 		}
 		if (registered.Queued)
 			Enqueue(registered);
