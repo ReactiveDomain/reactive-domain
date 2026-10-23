@@ -182,7 +182,7 @@ public sealed class when_sending_nested_commands : IDisposable {
 		public int QueueId => 0;
 	}
 
-	/// <summary>Handles the parent by running <paramref name="sendChild"/>, recording whether the child had already run when it returned.</summary>
+	/// <summary>Handles the parent by running the child send it was built with, recording whether the child had already run when it returned.</summary>
 	private sealed class NestedHandlers : IHandleCommand<TestCommands.Command1>, IHandleCommand<TestCommands.Command2>, IHandleCommand<AffineCommand> {
 		private readonly IDispatcher _dispatcher;
 		private readonly Func<IDispatcher, CommandResponse?> _sendChild;

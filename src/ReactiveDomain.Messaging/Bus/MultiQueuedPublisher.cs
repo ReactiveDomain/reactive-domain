@@ -200,8 +200,12 @@ public class MultiQueuedPublisher : ICommandPublisher, IPublisher, IDisposable {
 		}
 	}
 
-	/// <summary>Registers the command's tracker and publishes the command; the returned source completes with the response.</summary>
-	/// <param name="inline">Whether the send may run the handler inline on this thread, where this is one of the publisher's own queue threads: true for the sends whose caller consumes the response, false for fire-and-forget.</param>
+	/// <summary>
+	/// Registers the command's tracker and publishes the command; the returned source completes with the
+	/// response. <paramref name="inline"/> is true for the sends whose caller consumes the response, which
+	/// may run the handler on this thread when it is one of the publisher's own queue threads, and false
+	/// for fire-and-forget.
+	/// </summary>
 	private TaskCompletionSource<CommandResponse> Dispatch(
 		ICommand command,
 		TimeSpan? responseTimeout,
