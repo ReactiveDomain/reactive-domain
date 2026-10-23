@@ -110,11 +110,12 @@ public sealed class when_writing_ledgers_in_postgres(PostgresFixture postgres) {
 		var window = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
 		var refuseOne = new RefuseFirstBus(h.Bus);
 		var claims = new JobClaims(data);
+		var freshness = new ProjectionFreshness(h.Connection, h.Db);
 
-		var first = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), refuseOne, new RecordingSender(), "a", TimeSpan.Zero)
+		var first = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), freshness, refuseOne, new RecordingSender(), "a", TimeSpan.Zero)
 			.CloseAddDrop("2026FA", window);
 		h.CatchUp(timetable);
-		var second = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), h.Bus, new RecordingSender(), "b", TimeSpan.Zero)
+		var second = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(), freshness, h.Bus, new RecordingSender(), "b", TimeSpan.Zero)
 			.CloseAddDrop("2026FA", window);
 
 		Assert.Equal((true, 2, 1), (first.Claimed, first.Done, first.Unsent));
@@ -132,8 +133,9 @@ public sealed class when_writing_ledgers_in_postgres(PostgresFixture postgres) {
 		var otherTerm = h.Open(term: "2027SP");
 		h.CatchUp(timetable);
 		var sender = new RecordingSender();
+		var freshness = new ProjectionFreshness(h.Connection, h.Db);
 		AddDropJobs Instance(string name) =>
-			new(new JobClaims(data), new ReminderLedger(data), h.Timetables(), h.Bus, sender, name, TimeSpan.FromHours(1));
+			new(new JobClaims(data), new ReminderLedger(data), h.Timetables(), freshness, h.Bus, sender, name, TimeSpan.FromHours(1));
 		var window = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
 
 		var a = Instance("a").RemindClosing("2026FA", window);
@@ -146,12 +148,45 @@ public sealed class when_writing_ledgers_in_postgres(PostgresFixture postgres) {
 		Assert.Equal(2, sender.Sent.Count);
 
 		var closed = Instance("a").CloseAddDrop("2026FA", window);
+		h.CatchUp(timetable); // so the next run is refused for the claim, not skipped as stale
 		Assert.False(Instance("b").CloseAddDrop("2026FA", window).Claimed);
 		Assert.Equal(2, closed.Done);
 		Assert.All(open, s => Assert.True(h.Schedule(s).IsClosed));
 		Assert.False(h.Schedule(otherTerm).IsClosed);
 		h.CatchUp(timetable);
 		Assert.Empty(h.Timetables().OpenSchedules("2026FA"));
+	}
+
+	/// <summary>
+	/// A schedule committed before the window's cut but not yet projected is invisible to the job, and
+	/// no later run repeats a completed window. Behind the streams, a run claims nothing; the next one,
+	/// on the caught-up rows, does all the work.
+	/// </summary>
+	[Fact]
+	public void a_job_on_rows_still_catching_up_claims_nothing_until_they_are_current() {
+		var data = postgres.NewDatabase();
+		using var h = new Harness(new PostgresProjectionDb(data));
+		var timetable = h.StartTimetable();
+		h.Open();
+		h.CatchUp(timetable);
+		timetable.Dispose();
+		h.Open(); // committed, but no projection is running to write its row
+		var window = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
+		var sender = new RecordingSender();
+		var claims = new JobClaims(data);
+		var jobs = new AddDropJobs(claims, new ReminderLedger(data), h.Timetables(),
+			new ProjectionFreshness(h.Connection, h.Db), h.Bus, sender, "a", TimeSpan.FromHours(1));
+
+		var behind = jobs.RemindClosing("2026FA", window);
+
+		Assert.Equal((false, true, 0), (behind.Claimed, behind.Stale, behind.Done));
+		Assert.Null(claims.Run("remind-closing:2026FA", window));
+
+		h.CatchUp(h.StartTimetable());
+		var current = jobs.RemindClosing("2026FA", window);
+
+		Assert.Equal((true, false, 2), (current.Claimed, current.Stale, current.Done));
+		Assert.Equal(2, sender.Sent.Count);
 	}
 
 	/// <summary>Refuses the first command, then passes the rest through.</summary>

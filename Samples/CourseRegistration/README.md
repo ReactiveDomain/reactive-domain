@@ -64,6 +64,7 @@ raises neither a second add nor a second rejection.
 | Idempotent ledgers: `INSERT … ON CONFLICT DO NOTHING` decides alone (no check-then-insert) | `ReminderLedger`, `CommandAuditLog` | `racing_recorders_send_one_reminder`, `the_audit_log_traces_…` |
 | Command audit with correlation and causation, `jsonb` body; an audit outage does not stop commands | `CommandAuditLog`, `AuditingCommandPublisher` | `the_audit_log_traces_…`, `a_command_is_sent_even_when_the_audit_…` |
 | One instance per scheduled window, claimed by primary key with a lease; a window is completed only when every step succeeded | `JobClaims`, `AddDropJobs` | `one_instance_claims_each_window_…`, `an_unfinished_claim_is_taken_over_…`, `a_close_job_with_unsent_closes_…` |
+| A job gated on its projection's checkpoints against the streams: behind, it claims nothing, so a window never completes against rows missing a committed schedule | `ProjectionFreshness`, `AddDropJobs` | `a_job_on_rows_still_catching_up_…` |
 | The same test class against both stores; a Postgres schema per test | `Persistence/Backends.cs` | every `…_in_memory`/`…_in_postgres` pair |
 
 ## Running it
