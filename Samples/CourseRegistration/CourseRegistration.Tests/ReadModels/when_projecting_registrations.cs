@@ -161,6 +161,27 @@ public abstract class when_projecting_registrations : IDisposable {
 		Assert.Equal(3, _h.Db.Rows<Guid, SectionRow>().All().Count);
 	}
 
+	/// <summary>
+	/// A rolling deploy runs two instances of one projection for a while. Starting the newer one claims
+	/// the writer fence, so the older one's next flush keeps nothing — its rows could be behind the
+	/// newer instance's — and it stops, while the claim holder carries on alone.
+	/// </summary>
+	[Fact]
+	public void a_catalog_that_lost_its_claim_keeps_nothing_more_and_its_replacement_carries_on() {
+		var chem = _h.Offer();
+		var old = _h.StartCatalog();
+		_h.CatchUp(old);
+
+		var replacement = _h.StartCatalog();
+		Enrol(_h.Open(), chem);
+
+		Harness.Eventually(() => old.Fault is FencedWriterException, "the old catalog was not fenced");
+		_h.CatchUp(replacement);
+		Assert.Null(replacement.Fault);
+		Assert.Equal(1, _h.Sections().Get(chem)!.SeatsHeld);
+		Assert.Equal(LastEventIn(typeof(SectionAgg)), Saved(replacement.Name, typeof(SectionAgg)));
+	}
+
 	[Fact]
 	public void the_schedules_with_a_section_are_found_through_their_array_column() {
 		var timetable = _h.StartTimetable();

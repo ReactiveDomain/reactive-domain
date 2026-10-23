@@ -34,7 +34,9 @@ is never a broken rule. The process manager always closes it. It sends without w
 and a step stays open until the event that closes it arrives, so any step open longer than the retry
 delay is sent again, whatever happened to the command. Give it a dispatcher with at least one publish
 queue; with none, RD runs the handler on the sending thread. After a restart it replays without
-sending anything, then resends whatever is still open.
+sending anything, then resends whatever is still open. Resending means a command can reach the
+schedule twice, so each reservation carries an id the schedule answers at most once: a duplicate
+raises neither a second add nor a second rejection.
 
 ## Where each Dapper usage is
 
@@ -45,6 +47,7 @@ sending anything, then resends whatever is still open.
 | Every write in a transaction scope; work that throws keeps nothing | `IProjectionDb.InTransaction` | `a_transaction_that_throws_keeps_none_…` |
 | Rows and checkpoints in one transaction, through RD's `BufferedReadModelBase`/`WriteBuffer` | `ProjectionRM.cs` | `when_projecting_registrations` |
 | Resuming from saved checkpoints with no double count; checkpoints that never move back and skip unapplied streams | `ProjectionRM.StartAsync`, `PostgresCheckpointStore` | `a_restarted_catalog_resumes_…`, `checkpoints_are_kept_per_stream_…` |
+| One writer per projection: starting claims a fence, every flush asserts it in the rows' transaction, so a stale instance's late flush — a rolling deploy — keeps nothing | `IProjectionWriters`, `ProjectionRM.Flush` | `a_catalog_that_lost_its_claim_…`, `a_fenced_writers_transaction_…` |
 | A write that throws: nothing committed, retried by the next flush, replayed after a restart | `ProjectionRM.Flush` | `a_write_that_throws_saves_neither_…`, `a_restart_after_a_write_that_threw_…` |
 | A handler that throws stops the projection: its buffered work is dropped, nothing later is applied, and the checkpoint stays at the last written event | `ProjectionRM` (`EventStream`, `Fault`) | `a_handler_that_throws_while_live_…`, `a_handler_that_throws_while_catching_up_…` |
 | Multi-stream projection: one checkpoint per category, no cross-stream ordering assumed, one-to-many fan-out | `StudentTimetableRM.cs` | `the_timetable_saves_a_checkpoint_…`, `caught_up_from_scratch_…`, `rescheduling_a_section_…` |

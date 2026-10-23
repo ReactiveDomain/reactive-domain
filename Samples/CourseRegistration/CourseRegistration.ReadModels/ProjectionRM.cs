@@ -26,6 +26,10 @@ namespace CourseRegistration.ReadModels;
 /// that was never applied, losing it for good. Instead, everything still buffered is dropped, no later
 /// event is applied, and nothing more is written, so the saved checkpoint stays at the last event whose
 /// rows were written. <see cref="Fault"/> holds the exception; a restart replays from there.</para>
+/// <para>One instance writes at a time. Starting claims the projection's writer fence, and every flush
+/// asserts the claim in the rows' own transaction, so when a newer instance takes over — a rolling
+/// deploy — the older one's late flush keeps nothing and it stops with <see cref="Fault"/> set,
+/// instead of writing the older state it knew over newer rows.</para>
 /// <para>The tables a projection writes are declared with <see cref="OwnedTablesAttribute"/> and the
 /// ones it reads with <see cref="ReadsTablesAttribute"/>; <see cref="ProjectionStartup"/> uses them to
 /// start owners first.</para>
@@ -38,6 +42,7 @@ public abstract class ProjectionRM : BufferedReadModelBase {
 	private readonly GuardedStream _eventStream;
 	private readonly List<Action> _clearBuffers = [];
 	private readonly List<Action<IWriteScope>> _tableWriters = [];
+	private readonly Guid _writer = Guid.NewGuid();
 	private Dictionary<string, long> _saved = [];
 	private volatile Exception? _fault;
 
@@ -92,6 +97,9 @@ public abstract class ProjectionRM : BufferedReadModelBase {
 	/// </summary>
 	/// <remarks>Check <see cref="Fault"/> after it completes: a projection stopped by a handler still goes live, writing nothing.</remarks>
 	public Task StartAsync() {
+		// Claimed before anything is read: the claim waits out any older writer's in-flight flush and
+		// fences the rest, so the checkpoints and rows read below cannot change under this instance.
+		_db.Writers.Claim(Name, _writer);
 		_saved = _db.Checkpoints.Load(Name)
 			.Where(c => c.Version is not null)
 			.ToDictionary(c => c.StreamName, c => c.Version!.Value);
@@ -115,11 +123,21 @@ public abstract class ProjectionRM : BufferedReadModelBase {
 	protected sealed override void Flush(IReadOnlyList<StreamCheckpoint> checkpoints) {
 		if (_fault is not null)
 			return;
-		_db.InTransaction(scope => {
-			foreach (var write in _tableWriters)
-				write(scope);
-			_db.Checkpoints.Save(scope, Name, checkpoints);
-		});
+		try {
+			_db.InTransaction(scope => {
+				_db.Writers.Assert(scope, Name, _writer);
+				foreach (var write in _tableWriters)
+					write(scope);
+				_db.Checkpoints.Save(scope, Name, checkpoints);
+			});
+		} catch (FencedWriterException ex) {
+			// Not left to the ordinary retry: the fence is permanent for this instance, and the new
+			// writer resumed from the saved checkpoints, so nothing here is owed to the database.
+			_fault = ex;
+			foreach (var clear in _clearBuffers)
+				clear();
+			Log.ErrorException(ex, "{0} lost its writer fence; it applies nothing more, and the instance that claimed it carries on.", Name);
+		}
 	}
 
 	private void Stop(IMessage message, Exception ex) {

@@ -81,6 +81,8 @@ internal sealed class FaultyDb(IProjectionDb inner) : IProjectionDb {
 
 	public ICheckpointStore Checkpoints => inner.Checkpoints;
 
+	public IProjectionWriters Writers => inner.Writers;
+
 	public void InTransaction(Action<IWriteScope> work) {
 		inner.InTransaction(scope => {
 			work(scope);

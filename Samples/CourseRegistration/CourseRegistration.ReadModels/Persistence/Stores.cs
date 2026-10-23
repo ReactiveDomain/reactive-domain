@@ -93,6 +93,26 @@ public interface ICheckpointStore {
 	void Save(IWriteScope scope, string projection, IEnumerable<StreamCheckpoint> checkpoints);
 }
 
+/// <summary>
+/// One writer per projection. A projection's checkpoints never move backwards, but its rows would: an
+/// older instance flushing late would write the state it knew over newer rows, under a checkpoint
+/// that says otherwise. So each instance claims the projection on start, and every flush asserts the
+/// claim in the rows' own transaction; losing it keeps the whole flush out.
+/// </summary>
+public interface IProjectionWriters {
+	/// <summary>Makes <paramref name="writer"/> the projection's writer. The latest claim wins.</summary>
+	/// <remarks>Returns only once no earlier writer's flush is still committing, so what the caller reads next is final.</remarks>
+	void Claim(string projection, Guid writer);
+
+	/// <summary>Holds the claim for <paramref name="scope"/>'s transaction.</summary>
+	/// <exception cref="FencedWriterException"><paramref name="writer"/> no longer holds the projection; the transaction must keep nothing.</exception>
+	void Assert(IWriteScope scope, string projection, Guid writer);
+}
+
+/// <summary>The projection was claimed by another writer; see <see cref="IProjectionWriters"/>.</summary>
+public sealed class FencedWriterException(string projection)
+	: InvalidOperationException($"Another instance claimed {projection}; this writer keeps nothing more.");
+
 /// <summary>The read-side database: its tables, its checkpoints, and transactions over both.</summary>
 public interface IProjectionDb {
 	/// <summary>The store for <typeparamref name="TRow"/>'s table.</summary>
@@ -100,6 +120,9 @@ public interface IProjectionDb {
 
 	/// <summary>The projection checkpoints.</summary>
 	ICheckpointStore Checkpoints { get; }
+
+	/// <summary>The projection writer fences.</summary>
+	IProjectionWriters Writers { get; }
 
 	/// <summary>Runs <paramref name="work"/> in one transaction: it commits if the work returns, and nothing is kept if it throws.</summary>
 	void InTransaction(Action<IWriteScope> work);

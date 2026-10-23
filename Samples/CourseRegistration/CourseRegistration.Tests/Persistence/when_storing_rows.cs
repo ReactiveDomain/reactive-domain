@@ -51,6 +51,33 @@ public abstract class when_storing_rows {
 	}
 
 	[Fact]
+	public void a_fenced_writers_transaction_keeps_neither_rows_nor_checkpoint() {
+		var db = NewDb();
+		var store = db.Rows<Guid, SectionRow>();
+		var old = Guid.NewGuid();
+		db.Writers.Claim("catalog", old);
+		var row = Row();
+		db.InTransaction(scope => {
+			db.Writers.Assert(scope, "catalog", old);
+			store.Upsert(scope, row);
+		});
+
+		db.Writers.Claim("catalog", Guid.NewGuid());
+
+		var late = Row();
+		late.Id = row.Id;
+		late.SeatsHeld = 9;
+		// The assert comes last here: the fence voids the whole transaction, not just what follows it.
+		Assert.Throws<FencedWriterException>(() => db.InTransaction(scope => {
+			store.Upsert(scope, late);
+			db.Checkpoints.Save(scope, "catalog", [new StreamCheckpoint("stream", 5)]);
+			db.Writers.Assert(scope, "catalog", old);
+		}));
+		Assert.Equal(0, store.Get(row.Id)!.SeatsHeld);
+		Assert.Empty(db.Checkpoints.Load("catalog"));
+	}
+
+	[Fact]
 	public void an_insert_never_overwrites_and_says_whether_it_wrote() {
 		var db = NewDb();
 		var store = db.Rows<Guid, SectionRow>();

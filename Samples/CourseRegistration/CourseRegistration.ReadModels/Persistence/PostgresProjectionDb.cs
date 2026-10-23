@@ -12,10 +12,14 @@ public sealed class PostgresProjectionDb : IProjectionDb {
 	public PostgresProjectionDb(NpgsqlDataSource dataSource) {
 		_dataSource = dataSource;
 		Checkpoints = new PostgresCheckpointStore(dataSource);
+		Writers = new PostgresProjectionWriters(dataSource);
 	}
 
 	/// <inheritdoc/>
 	public ICheckpointStore Checkpoints { get; }
+
+	/// <inheritdoc/>
+	public IProjectionWriters Writers { get; }
 
 	/// <inheritdoc/>
 	public IRowStore<TKey, TRow> Rows<TKey, TRow>() where TKey : notnull where TRow : class, new() =>
@@ -192,6 +196,38 @@ public sealed class PostgresCheckpointStore : ICheckpointStore {
 					saved_at = EXCLUDED.saved_at
 				""", new { projection, stream = checkpoint.StreamName, version }, s.Transaction);
 		}
+	}
+}
+
+/// <summary>Writer fences in the <c>projection_writers</c> table.</summary>
+public sealed class PostgresProjectionWriters : IProjectionWriters {
+	private readonly NpgsqlDataSource _dataSource;
+
+	/// <summary>Claims through <paramref name="dataSource"/>; asserts go through the caller's scope.</summary>
+	public PostgresProjectionWriters(NpgsqlDataSource dataSource) => _dataSource = dataSource;
+
+	/// <inheritdoc/>
+	public void Claim(string projection, Guid writer) {
+		// A flush holding the row's lock (see Assert) makes this wait for its commit, which is the
+		// contract: once the claim returns, no earlier writer commits anything more.
+		using var connection = _dataSource.OpenConnection();
+		connection.Execute("""
+			INSERT INTO projection_writers (projection, writer, claimed_at)
+			VALUES (@projection, @writer, now())
+			ON CONFLICT (projection) DO UPDATE SET writer = EXCLUDED.writer, claimed_at = EXCLUDED.claimed_at
+			""", new { projection, writer });
+	}
+
+	/// <inheritdoc/>
+	public void Assert(IWriteScope scope, string projection, Guid writer) {
+		var s = PostgresProjectionDb.Of(scope);
+		// The UPDATE re-reads the row under its lock and holds the lock to commit: a newer claim
+		// either waits for this transaction, or got there first and this matches no row.
+		var held = s.Connection.Execute(
+			"UPDATE projection_writers SET writer = writer WHERE projection = @projection AND writer = @writer",
+			new { projection, writer }, s.Transaction) == 1;
+		if (!held)
+			throw new FencedWriterException(projection);
 	}
 }
 

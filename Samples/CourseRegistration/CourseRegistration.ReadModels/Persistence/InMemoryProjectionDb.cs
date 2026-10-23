@@ -16,10 +16,16 @@ public sealed class InMemoryProjectionDb : IProjectionDb {
 	private readonly InMemoryCheckpointStore _checkpoints;
 
 	/// <summary>Creates an empty database.</summary>
-	public InMemoryProjectionDb() => _checkpoints = new InMemoryCheckpointStore(_gate);
+	public InMemoryProjectionDb() {
+		_checkpoints = new InMemoryCheckpointStore(_gate);
+		Writers = new InMemoryProjectionWriters(_gate);
+	}
 
 	/// <inheritdoc/>
 	public ICheckpointStore Checkpoints => _checkpoints;
+
+	/// <inheritdoc/>
+	public IProjectionWriters Writers { get; }
 
 	/// <inheritdoc/>
 	public IRowStore<TKey, TRow> Rows<TKey, TRow>() where TKey : notnull where TRow : class, new() {
@@ -161,6 +167,24 @@ public sealed class InMemoryRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 
 	private static readonly IComparer<object?> Comparer = Comparer<object?>.Create((a, b) =>
 		a is string x && b is string y ? string.CompareOrdinal(x, y) : Comparer<object?>.Default.Compare(a, b));
+}
+
+// The gate serializes claims against whole transactions, as the row lock does in Postgres.
+internal sealed class InMemoryProjectionWriters(object gate) : IProjectionWriters {
+	private readonly Dictionary<string, Guid> _writers = [];
+
+	public void Claim(string projection, Guid writer) {
+		lock (gate)
+			_writers[projection] = writer;
+	}
+
+	public void Assert(IWriteScope scope, string projection, Guid writer) {
+		InMemoryProjectionDb.Of(scope);
+		lock (gate) {
+			if (!_writers.TryGetValue(projection, out var current) || current != writer)
+				throw new FencedWriterException(projection);
+		}
+	}
 }
 
 internal sealed class InMemoryCheckpointStore(object gate) : ICheckpointStore {

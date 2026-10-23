@@ -19,6 +19,12 @@ public static class ProjectionSchema {
 			PRIMARY KEY (projection, stream_name)
 		);
 
+		CREATE TABLE IF NOT EXISTS projection_writers (
+			projection TEXT        PRIMARY KEY,
+			writer     UUID        NOT NULL,
+			claimed_at TIMESTAMPTZ NOT NULL
+		);
+
 		CREATE TABLE IF NOT EXISTS sections (
 			id             UUID    PRIMARY KEY,
 			term           TEXT    NOT NULL,
