@@ -9,6 +9,9 @@ namespace CourseRegistration.ReadModels.Persistence;
 public sealed record RowColumn(PropertyInfo Property, string Name, bool IsJson) {
 	/// <summary>The SQL that writes this column's parameter, cast to <c>jsonb</c> where the column is one.</summary>
 	public string Parameter => IsJson ? $"@{Property.Name}::jsonb" : $"@{Property.Name}";
+
+	/// <summary>The column as generated SQL names it: quoted, so a name like <c>order</c> or <c>user</c> is a column, not a keyword.</summary>
+	public string Quoted => $"\"{Name}\"";
 }
 
 /// <summary>
@@ -26,6 +29,9 @@ public static class RowMap<TRow> {
 		typeof(TRow).GetCustomAttribute<TableAttribute>()?.Name
 		?? throw new InvalidOperationException($"{typeof(TRow).Name} has no [Table] attribute.");
 
+	/// <summary>The table as generated SQL names it: quoted, like <see cref="RowColumn.Quoted"/>.</summary>
+	public static string QuotedTable { get; } = $"\"{Table}\"";
+
 	/// <summary>Every mapped column, in declaration order.</summary>
 	public static IReadOnlyList<RowColumn> Columns { get; } = typeof(TRow)
 		.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -42,8 +48,8 @@ public static class RowMap<TRow> {
 		Columns.SingleOrDefault(c => c.Property.GetCustomAttribute<KeyAttribute>() is not null)
 		?? throw new InvalidOperationException($"{typeof(TRow).Name} needs exactly one [Key] property.");
 
-	/// <summary><c>column AS Property</c> for every column, so Dapper maps snake_case onto the properties.</summary>
-	public static string SelectList { get; } = string.Join(", ", Columns.Select(c => $"{c.Name} AS {c.Property.Name}"));
+	/// <summary><c>"column" AS "Property"</c> for every column, so Dapper maps snake_case onto the properties.</summary>
+	public static string SelectList { get; } = string.Join(", ", Columns.Select(c => $"{c.Quoted} AS \"{c.Property.Name}\""));
 
 	private static readonly Dictionary<string, RowColumn> ByName =
 		Columns.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
@@ -69,9 +75,12 @@ public static class RowMap<TRow> {
 		return copy;
 	}
 
+	// A word boundary sits before an upper following a lower, or starting an acronym's last word:
+	// SeatsHeld -> seats_held, URL -> url, SectionURL -> section_url, URLPath -> url_path.
 	private static string SnakeCase(string name) =>
-		string.Concat(name.Select((c, i) =>
-			i > 0 && char.IsUpper(c)
-				? "_" + char.ToLower(c, CultureInfo.InvariantCulture)
-				: char.ToLower(c, CultureInfo.InvariantCulture).ToString()));
+		string.Concat(name.Select((c, i) => {
+			var boundary = i > 0 && char.IsUpper(c)
+				&& (!char.IsUpper(name[i - 1]) || (i + 1 < name.Length && char.IsLower(name[i + 1])));
+			return (boundary ? "_" : "") + char.ToLower(c, CultureInfo.InvariantCulture);
+		}));
 }

@@ -58,6 +58,7 @@ public static class ProjectionReset {
 	}
 
 	private static string TableOf(Type row) =>
-		row.GetCustomAttribute<TableAttribute>()?.Name
-		?? throw new InvalidOperationException($"{row.Name} has no [Table] attribute.");
+		row.GetCustomAttribute<TableAttribute>() is { Name: var table }
+			? $"\"{table}\""
+			: throw new InvalidOperationException($"{row.Name} has no [Table] attribute.");
 }
