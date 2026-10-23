@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <PackageId>ReactiveDomain.ReadModels.Dapper</PackageId>
+    <Description>Postgres persistence for ReactiveDomain read models, through Dapper: rows and checkpoints committed in one transaction, one fenced writer per projection, declared table ownership, and an in-memory store that keeps the same contract for tests.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Analyzers\ReactiveDomain.Analyzers.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer"
+                      PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Npgsql" Version="10.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReactiveDomain.Foundation\ReactiveDomain.Foundation.csproj" />
+  </ItemGroup>
+</Project>
