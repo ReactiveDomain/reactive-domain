@@ -180,6 +180,20 @@ public abstract class when_storing_rows {
 		Assert.Null(store.FindOne(Match.IgnoringCase("user", "Alex")));
 	}
 
+	/// <summary><c>= NULL</c> is never true in SQL, so the null match must become <c>IS NULL</c> to find what the in-memory store finds.</summary>
+	[SkippableFact]
+	public void matching_a_null_value_finds_the_rows_holding_null() {
+		var db = NewDb();
+		var store = db.Rows<Guid, OrderRow>();
+		var blank = Row();
+		var noted = Row();
+		noted.Note = "paid";
+		Write(db, blank, noted);
+
+		Assert.Equal([blank.Id], store.FindBy(Match.Eq("note", null)).Select(r => r.Id));
+		Assert.Throws<ArgumentNullException>(() => Match.IgnoringCase("note", null!));
+	}
+
 	[SkippableFact]
 	public void finding_by_many_values_matches_any_and_no_values_match_nothing() {
 		var db = NewDb();

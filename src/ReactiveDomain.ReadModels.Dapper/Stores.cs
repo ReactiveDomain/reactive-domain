@@ -5,11 +5,16 @@ public interface IWriteScope { }
 
 /// <summary>An equality condition on one column, optionally ignoring case.</summary>
 public readonly record struct Match(string Column, object? Value, bool IgnoreCase = false) {
-	/// <summary><c>column = value</c>.</summary>
+	/// <summary><c>column = value</c>; a null value matches the rows holding null.</summary>
 	public static Match Eq(string column, object? value) => new(column, value);
 
 	/// <summary><c>UPPER(column) = UPPER(value)</c>, which a matching expression index serves.</summary>
-	public static Match IgnoringCase(string column, string value) => new(column, value, IgnoreCase: true);
+	/// <remarks>The stores agree for ASCII only: the in-memory store compares ordinally while Postgres upcases under the database's locale, so characters like <c>ß</c> or a dotless I can match in one store and not the other.</remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="value"/> is null; match null with <see cref="Eq"/>.</exception>
+	public static Match IgnoringCase(string column, string value) {
+		ArgumentNullException.ThrowIfNull(value);
+		return new(column, value, IgnoreCase: true);
+	}
 }
 
 /// <summary>

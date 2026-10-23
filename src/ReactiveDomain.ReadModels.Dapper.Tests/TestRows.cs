@@ -13,6 +13,7 @@ public sealed class OrderRow {
 	public string User { get; set; } = string.Empty;
 	public string URL { get; set; } = string.Empty;
 	public int Credit { get; set; }
+	public string? Note { get; set; }
 	[Column("tags", TypeName = "jsonb")] public string TagsJson { get; set; } = "[]";
 	public int[] Sizes { get; set; } = [];
 }

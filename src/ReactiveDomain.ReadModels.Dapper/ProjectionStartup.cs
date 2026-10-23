@@ -7,6 +7,9 @@ namespace ReactiveDomain.ReadModels;
 /// it to go live means the table holds at least everything written before the reader started.</para>
 /// <para>That bounds catch-up only. Once both are live, they apply events independently, so a reader
 /// must not depend on the owner having applied an event from the same moment.</para>
+/// <para>An owner that stops instead of catching up — its <see cref="ProjectionReadModelBase.Fault"/>
+/// set — fails its readers' start for the same reason: its table holds a partial history, and a
+/// reader that loaded it would bake that history into rows its own checkpoints then stand behind.</para>
 /// <para>Projections with no dependency between them start together.</para>
 /// </remarks>
 public static class ProjectionStartup {
@@ -24,8 +27,9 @@ public static class ProjectionStartup {
 		Task Start(ProjectionReadModelBase projection) {
 			if (started.TryGetValue(projection, out var task))
 				return task;
-			var waitFor = dependencies[projection].Select(Start).ToArray();
-			task = StartAfter(waitFor, projection);
+			var owners = dependencies[projection];
+			var waitFor = owners.Select(Start).ToArray();
+			task = StartAfter(owners, waitFor, projection);
 			started[projection] = task;
 			return task;
 		}
@@ -47,8 +51,16 @@ public static class ProjectionStartup {
 		return owners;
 	}
 
-	private static async Task StartAfter(Task[] owners, ProjectionReadModelBase projection) {
-		await Task.WhenAll(owners).ConfigureAwait(false);
+	private static async Task StartAfter(
+		IReadOnlyList<ProjectionReadModelBase> owners, Task[] waitFor, ProjectionReadModelBase projection) {
+		await Task.WhenAll(waitFor).ConfigureAwait(false);
+		// StartAsync completes even when the projection stopped, so going live is not enough: an owner
+		// that faulted mid-catch-up left a partial table, which a reader must not load.
+		foreach (var owner in owners) {
+			if (owner.Fault is { } fault)
+				throw new InvalidOperationException(
+					$"{projection.Name} reads tables of {owner.Name}, which stopped instead of catching up.", fault);
+		}
 		await projection.StartAsync().ConfigureAwait(false);
 	}
 

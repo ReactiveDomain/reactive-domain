@@ -48,7 +48,8 @@ public static class ProjectionReset {
 		transaction.Commit();
 	}
 
-	// A projection's checkpoints are saved under its name, which by convention is its type's name.
+	// A projection's checkpoints are saved under its name, which ProjectionReadModelBase enforces to
+	// be its type's name, so deleting by Type.Name cannot miss them.
 	private static void Empty(NpgsqlConnection connection, NpgsqlTransaction transaction, IReadOnlyCollection<Type> projections) {
 		var tables = projections.SelectMany(ProjectionTables.Owned).Select(TableOf).Distinct().ToList();
 		if (tables.Count > 0)

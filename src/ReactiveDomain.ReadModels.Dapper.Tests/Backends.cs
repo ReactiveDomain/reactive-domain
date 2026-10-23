@@ -59,6 +59,7 @@ public sealed class PostgresFixture : IAsyncLifetime {
 				"user" TEXT      NOT NULL,
 				url    TEXT      NOT NULL,
 				credit INTEGER   NOT NULL,
+				note   TEXT      NULL,
 				tags   JSONB     NOT NULL,
 				sizes  INTEGER[] NOT NULL
 			);

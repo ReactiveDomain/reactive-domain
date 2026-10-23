@@ -91,6 +91,10 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 		var parameters = new DynamicParameters();
 		var clauses = matches.Select((m, i) => {
 			var column = RowMap<TRow>.Column(m.Column).Quoted;
+			// "= NULL" is never true in SQL, while the in-memory store's Equals matches a null
+			// column value; IS NULL is what keeps the two stores finding the same rows.
+			if (m.Value is null)
+				return $"{column} IS NULL";
 			parameters.Add($"p{i}", m.Value);
 			// UPPER on both sides, so a UNIQUE (UPPER(column)) index serves it. Writing
 			// "column = UPPER(@p)" would scan the table and still compare case-sensitively.
@@ -127,9 +131,13 @@ public sealed class PostgresRowStore<TKey, TRow> : IRowStore<TKey, TRow> where T
 		parameters.Add("Limit", limit);
 
 		using var connection = _dataSource.OpenConnection();
-		var total = connection.ExecuteScalar<int>($"SELECT COUNT(*) FROM {RowMap<TRow>.QuotedTable} {where}", parameters);
+		// One snapshot for both statements: read committed takes a new one per statement, under which
+		// a write landing between them makes the count disagree with the page.
+		using var transaction = connection.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
+		var total = connection.ExecuteScalar<int>($"SELECT COUNT(*) FROM {RowMap<TRow>.QuotedTable} {where}", parameters, transaction);
 		var items = connection.Query<TRow>(
-			$"{Select} {where} ORDER BY {OrderSql(order)} OFFSET @Offset LIMIT @Limit", parameters).AsList();
+			$"{Select} {where} ORDER BY {OrderSql(order)} OFFSET @Offset LIMIT @Limit", parameters, transaction).AsList();
+		transaction.Commit();
 		return new Page<TRow>(items, total);
 	}
 
@@ -190,17 +198,22 @@ public sealed class PostgresCheckpointStore : ICheckpointStore {
 	/// <inheritdoc/>
 	public void Save(IWriteScope scope, string projection, IEnumerable<StreamCheckpoint> checkpoints) {
 		var s = PostgresProjectionDb.Of(scope);
-		foreach (var checkpoint in checkpoints) {
-			if (checkpoint.Version is not { } version)
-				continue;
-			s.Connection.Execute("""
-				INSERT INTO projection_checkpoints (projection, stream_name, version, saved_at)
-				VALUES (@projection, @stream, @version, now())
-				ON CONFLICT (projection, stream_name) DO UPDATE SET
-					version = GREATEST(projection_checkpoints.version, EXCLUDED.version),
-					saved_at = EXCLUDED.saved_at
-				""", new { projection, stream = checkpoint.StreamName, version }, s.Transaction);
-		}
+		var pending = checkpoints.Where(c => c.Version is not null).ToList();
+		if (pending.Count == 0)
+			return;
+		// One statement however many streams: the save runs on the queue thread in every per-event flush.
+		s.Connection.Execute("""
+			INSERT INTO projection_checkpoints (projection, stream_name, version, saved_at)
+			SELECT @projection, stream, version, now()
+			FROM UNNEST(@Streams, @Versions) AS pending (stream, version)
+			ON CONFLICT (projection, stream_name) DO UPDATE SET
+				version = GREATEST(projection_checkpoints.version, EXCLUDED.version),
+				saved_at = EXCLUDED.saved_at
+			""", new {
+			projection,
+			Streams = pending.Select(c => c.StreamName).ToArray(),
+			Versions = pending.Select(c => c.Version!.Value).ToArray()
+		}, s.Transaction);
 	}
 }
 

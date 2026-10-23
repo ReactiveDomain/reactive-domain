@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 using ReactiveDomain.Foundation;
 using ReactiveDomain.Logging;
@@ -44,14 +43,19 @@ public abstract class ProjectionReadModelBase : BufferedReadModelBase {
 	private Dictionary<string, long> _saved = [];
 	private volatile Exception? _fault;
 
-	/// <summary>The projection's name, which its checkpoints are saved under.</summary>
+	/// <summary>The projection's name, which its checkpoints are saved under: always its type's name.</summary>
 	public string Name { get; }
 
 	/// <summary>The exception that stopped the projection, or null while it is running.</summary>
 	public Exception? Fault => _fault;
 
 	/// <summary>Creates a projection named <paramref name="name"/> over <paramref name="db"/>.</summary>
+	/// <param name="name">The projection's own type name. One type is one projection — table ownership is declared per type — and <see cref="ProjectionReset"/> finds a projection's checkpoints by its type's name, so another name would strand them.</param>
+	/// <exception cref="ArgumentException"><paramref name="name"/> is not the type's name.</exception>
 	protected ProjectionReadModelBase(string name, IConfiguredConnection connection, IProjectionDb db) : base(name, connection) {
+		if (!string.Equals(name, GetType().Name, StringComparison.Ordinal))
+			throw new ArgumentException(
+				$"{GetType().Name} must be named after its type; its checkpoints are found by that name.", nameof(name));
 		Name = name;
 		_db = db;
 		_namer = connection.StreamNamer;
@@ -59,6 +63,7 @@ public abstract class ProjectionReadModelBase : BufferedReadModelBase {
 	}
 
 	/// <summary>Where handlers subscribe. A handler that throws stops the projection; see the class remarks.</summary>
+	/// <remarks>Hides the base property rather than overriding it, so a <see cref="ReadModelBase"/>-typed reference reaches the unguarded base stream, where a throwing handler is only logged and the next flush checkpoints past the event it never applied. Subscribe through the derived type only. A handler subscribes to a message type once; a second subscription throws.</remarks>
 	public new ISubscriber EventStream => _eventStream;
 
 	/// <summary>Declares a table this projection writes, and returns the buffer its handlers write through.</summary>
@@ -152,24 +157,55 @@ public abstract class ProjectionReadModelBase : BufferedReadModelBase {
 
 	/// <summary>Stands between the base stream and each handler, so a throw stops the projection.</summary>
 	private sealed class GuardedStream(ISubscriber inner, ProjectionReadModelBase model) : ISubscriber {
-		// Unsubscribe matches on the handler, so each guard is kept against the handler it wraps.
-		private readonly ConcurrentDictionary<(object Handler, Type Message), object> _guards = new();
+		// Unsubscribe matches on the handler, so each guard is kept against the handler it wraps —
+		// once: a second subscription would register the same guard again, and detaching would then
+		// remove the bookkeeping while an inner subscription lived on.
+		private readonly object _gate = new();
+		private readonly Dictionary<(object Handler, Type Message), object> _guards = [];
 
-		public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage =>
-			inner.Subscribe(Guard(handler), includeDerived);
+		public IDisposable Subscribe<T>(IHandle<T> handler, bool includeDerived = true) where T : class, IMessage {
+			var subscription = inner.Subscribe(Guard(handler), includeDerived);
+			return new Release<T>(this, handler, subscription);
+		}
 
-		public IDisposable SubscribeToAll(IHandle<IMessage> handler) => inner.SubscribeToAll(Guard(handler));
+		public IDisposable SubscribeToAll(IHandle<IMessage> handler) {
+			var subscription = inner.SubscribeToAll(Guard(handler));
+			return new Release<IMessage>(this, handler, subscription);
+		}
 
 		public void Unsubscribe<T>(IHandle<T> handler) where T : class, IMessage {
-			if (_guards.TryRemove((handler, typeof(T)), out var guard))
+			if (Forget(handler) is { } guard)
 				inner.Unsubscribe((IHandle<T>)guard);
 		}
 
 		public bool HasSubscriberFor<T>(bool includeDerived = false) where T : class, IMessage =>
 			inner.HasSubscriberFor<T>(includeDerived);
 
-		private IHandle<T> Guard<T>(IHandle<T> handler) where T : class, IMessage =>
-			(IHandle<T>)_guards.GetOrAdd((handler, typeof(T)), _ => new Guarded<T>(handler, model));
+		private IHandle<T> Guard<T>(IHandle<T> handler) where T : class, IMessage {
+			lock (_gate) {
+				var key = ((object)handler, typeof(T));
+				if (_guards.ContainsKey(key))
+					throw new InvalidOperationException(
+						$"{handler.GetType().Name} already subscribed to {typeof(T).Name}; a handler subscribes to a message once.");
+				var guard = new Guarded<T>(handler, model);
+				_guards[key] = guard;
+				return guard;
+			}
+		}
+
+		private object? Forget<T>(IHandle<T> handler) where T : class, IMessage {
+			lock (_gate)
+				return _guards.Remove(((object)handler, typeof(T)), out var guard) ? guard : null;
+		}
+
+		/// <summary>Detaching forgets the guard too, so the handler can subscribe again.</summary>
+		private sealed class Release<T>(GuardedStream stream, IHandle<T> handler, IDisposable subscription) : IDisposable
+			where T : class, IMessage {
+			public void Dispose() {
+				stream.Forget(handler);
+				subscription.Dispose();
+			}
+		}
 	}
 
 	private sealed class Guarded<T>(IHandle<T> handler, ProjectionReadModelBase model) : IHandle<T> where T : class, IMessage {
