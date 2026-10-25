@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.1.35" />
+		<PackageReference Include="Npgsql" Version="10.0.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="../CourseRegistration.Domain/CourseRegistration.Domain.csproj" />
+	</ItemGroup>
+</Project>
