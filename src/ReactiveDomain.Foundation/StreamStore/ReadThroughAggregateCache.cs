@@ -28,10 +28,14 @@ public class ReadThroughAggregateCache : IAggregateCache {
 		try {
 			aggregate = GetById<TAggregate>(id, version);
 			return true;
-		} catch (Exception) {
-			aggregate = null;
+		} catch (Exception ex) {
+			// Evicted on any failure: whatever went wrong, the cached instance is no longer trusted.
 			Remove<TAggregate>(id);
-			return false;
+			if (ex is AggregateNotFoundException or AggregateDeletedException) {
+				aggregate = null;
+				return false;
+			}
+			throw;
 		}
 	}
 

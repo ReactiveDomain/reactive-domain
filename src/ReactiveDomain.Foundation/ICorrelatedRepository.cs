@@ -4,7 +4,11 @@ using ReactiveDomain.Messaging;
 namespace ReactiveDomain.Foundation;
 
 public interface ICorrelatedRepository {
+	/// <summary>Loads the aggregate armed with <paramref name="source"/>, or returns false when none lives at <paramref name="id"/>: the stream does not exist or was deleted.</summary>
+	/// <remarks>Only those two outcomes are false. A fault — the store unreachable, an event that no longer deserializes — propagates, so an outage cannot read as "does not exist" and feed a try-then-create path a phantom aggregate.</remarks>
 	bool TryGetById<TAggregate>(Guid id, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
+
+	/// <summary>Loads the aggregate at <paramref name="version"/>; false means not found or deleted, as on the other overload.</summary>
 	bool TryGetById<TAggregate>(Guid id, int version, [NotNullWhen(true)] out TAggregate? aggregate, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
 	TAggregate GetById<TAggregate>(Guid id, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;
 	TAggregate GetById<TAggregate>(Guid id, int version, ICorrelatedMessage source) where TAggregate : AggregateRoot, IEventSource;

@@ -40,7 +40,7 @@ public class CorrelatedStreamStoreRepository : ICorrelatedRepository, IDisposabl
 		try {
 			aggregate = GetById<TAggregate>(id, version, source);
 			return true;
-		} catch (Exception) {
+		} catch (Exception ex) when (ex is AggregateNotFoundException or AggregateDeletedException) {
 			aggregate = null;
 			return false;
 		}

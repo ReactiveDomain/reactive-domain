@@ -31,7 +31,7 @@ public class StreamStoreRepository : IRepository {
 		try {
 			aggregate = GetById<TAggregate>(id, version);
 			return true;
-		} catch (Exception) {
+		} catch (Exception ex) when (ex is AggregateNotFoundException or AggregateDeletedException) {
 			aggregate = null;
 			return false;
 		}
